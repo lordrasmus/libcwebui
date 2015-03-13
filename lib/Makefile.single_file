@@ -1,0 +1,15 @@
+
+INCLUDES=-I. -Iinclude -Iplatform/include/ -Ithird_party/src/rb_tree/ -Ithird_party/src/simclist/
+LIBS=-lssl -ldl -levent -lpthread
+
+ALL_EXTRA=-DALL_EXTRA="static inline " -DALL_SRC="static inline " -DALL_ATTR="__attribute__((always_inline))"
+FLAGS=-finline-functions -std=gnu99 -fPIC -O3
+
+ALL_EXTRA=
+FLAGS=-std=gnu99 -fPIC -O3 -g
+
+single:
+	gcc $(INCLUDES) $(ALL_EXTRA) -E src/all.c -o all.c.list 2>/dev/null 
+	gcc $(INCLUDES) $(ALL_EXTRA) -DLINUX $(FLAGS) -c src/all.c -o all.o 2>/dev/null
+	objdump -d  all.o > all.asm 
+	gcc -shared -Wl,--version-script=webserver.map -Wl,-soname,libWebserverDebugShared.so all.o $(LIBS) -o libWebserverDebugShared.so #lib/libWebserver.so 

@@ -1,0 +1,73 @@
+/*
+
+libCWebUI
+Copyright (C) 2012  Ramin Seyed-Moussavi
+
+Projekt URL : http://code.google.com/p/libcwebui/
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+*/
+
+#include "stdafx.h"
+
+#ifdef __GNUC__
+	#include "webserver.h"
+#endif
+
+
+
+
+void initRenderVariable(http_request* s){
+	s->render_var_store = createVariableStore();
+}
+
+ws_variable* getRenderVariable(http_request* s,const char* name){
+	return newVariable(s->render_var_store,name);
+}
+
+void clearRenderVariables(http_request* s){
+	deleteVariableStore(s->render_var_store);
+	s->render_var_store = 0;
+}
+
+
+void setRenderVariable(http_request* s,const char* name,const char* text){
+	ws_variable *var =  newVariable(s->render_var_store,name);
+	setWSVariableString(var,text);
+}
+
+
+DEFINE_FUNCTION( dump_render_vars ){
+	//char buffer[200];
+	//ws_variable* var = getFirstVariable( ((http_request*)s)->render_var_store );
+
+	dumpStoreText( (http_request*)s, ((http_request*)s)->render_var_store, 0  );
+
+	/*while( var ){
+		
+		printHTML(s, "Var : %s -> ",var->name);
+		if ( var->type == VAR_TYPE_ARRAY ){
+			
+		}else{
+			getWSVariableString(var,buffer,200);
+			printHTML(s, "%s\n",buffer);
+		}
+
+		var = getNextVariable( ((http_request*)s)->render_var_store );
+		
+	}
+	stopIterateVariable( ((http_request*)s)->render_var_store );*/
+}

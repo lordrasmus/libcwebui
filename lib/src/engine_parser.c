@@ -1,0 +1,179 @@
+/*
+
+libCWebUI
+Copyright (C) 2012  Ramin Seyed-Moussavi
+
+Projekt URL : http://code.google.com/p/libcwebui/
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+*/
+
+#include "stdafx.h"
+#include "webserver.h"
+
+
+ws_variable* __attribute__((warn_unused_result)) parseVariable(http_request *s,char* buffer) {
+	int i;
+	int l;
+	int name_space = 0;
+	int offset = 0;
+	char error_buffer[100];
+    //char* buffer2;
+	ws_variable *var,*tmp,*tmp2;
+
+	if(buffer == 0)
+		return 0;
+
+#ifdef _WEBSERVER_TEMPLATE_DEBUG_ 
+	LOG (TEMPLATE_LOG,NOTICE_LEVEL,0,"parseVariable string %s",buffer);
+#endif
+
+	if(0 == strncmp(buffer,"global;",7)){
+#ifdef _WEBSERVER_TEMPLATE_DEBUG_ 
+	LOG (TEMPLATE_LOG,NOTICE_LEVEL,0,"parseVariable Namespace global","");
+#endif
+		name_space = 1;
+		offset=7;
+	}
+	if(0 == strncmp(buffer,"render;",7)){
+#ifdef _WEBSERVER_TEMPLATE_DEBUG_ 
+	LOG (TEMPLATE_LOG,NOTICE_LEVEL,0,"parseVariable Namespace render","");
+#endif
+		name_space = 2;
+		offset=7;
+	}
+	if(0 == strncmp(buffer,"session;",8)){
+#ifdef _WEBSERVER_TEMPLATE_DEBUG_ 
+	LOG (TEMPLATE_LOG,NOTICE_LEVEL,0,"parseVariable Namespace session","");
+#endif
+		name_space = 3;
+		offset=8;
+	}
+	if(0 == strncmp(buffer,"parameter;",10)){
+#ifdef _WEBSERVER_TEMPLATE_DEBUG_ 
+	LOG (TEMPLATE_LOG,NOTICE_LEVEL,0,"parseVariable Namespace parameter","");
+#endif
+		name_space = 4;
+		offset=10;
+	}
+
+	//if ( name_space == 0)
+	//	return 0;
+	
+	var = newWSVariable("tmp");
+
+	l = strlen(buffer);
+//#ifdef _WEBSERVER_TEMPLATE_DEBUG_ 
+//		LOG (TEMPLATE_LOG,NOTICE_LEVEL,0,"parseVariable Name %s",&buffer[offset]);
+//#endif
+
+	if(0 == strncmp(&buffer[offset],"\"",1)){
+		offset++;
+		for(i=offset;i<l;i++){
+			if(buffer[i] == '\"')
+				break;
+		}
+		buffer[i] = '\0';
+		buffer = &buffer[offset];
+#ifdef _WEBSERVER_TEMPLATE_DEBUG_ 
+		LOG (TEMPLATE_LOG,NOTICE_LEVEL,0,"parseVariable Name %s",buffer);
+#endif
+		tmp = 0;
+		switch(name_space){
+			case 0 :	setWSVariableString(var,buffer);
+						return var;
+			case 1 :	tmp = getGlobalVariable(buffer); 
+						break;
+			case 2 :	tmp = getRenderVariable(s,buffer);
+						if(tmp->type == VAR_TYPE_EMPTY){
+							WebserverFree(var->name);
+							var->name_len=strlen(buffer);
+							var->name = (char*)WebserverMalloc( var->name_len + 1 );
+							strcpy(var->name,buffer);
+							tmp = 0;
+						}
+						break;
+			case 3 :	tmp = getSessionValue(s,SESSION_STORE, buffer); 
+						break;
+			case 4:		tmp = getParameter(s,buffer);
+						break;
+		}
+		if( tmp == 0){
+			switch(name_space){				
+				case 1 : snprintf(error_buffer,100,"GLOBAL VAR %s not found",buffer);	break;
+				case 2 : snprintf(error_buffer,100,"RENDER VAR %s not found",buffer);	break;
+				case 3 : snprintf(error_buffer,100,"SESSION VAR %s not found",buffer);	break;
+				case 4 : snprintf(error_buffer,100,"PARAMETER VAR %s not found",buffer);	break;
+			}
+			setWSVariableString(var,error_buffer);
+			return var;
+		}else{
+			if(tmp->type == VAR_TYPE_REF)
+				tmp = tmp->val.value_ref;
+			if(tmp->type == VAR_TYPE_ARRAY){
+                i=strlen(buffer)+1;
+                buffer = &buffer[i];
+                while(1){
+                    tmp2 = 0;   
+                    if(buffer[0]=='['){
+                        l = strlen(buffer);
+                        for(i=0;i<l;i++){
+                            if(buffer[i]==']'){
+                                break;
+                            }
+                        }
+                        buffer[i] = '\0';
+                        buffer = &buffer[1];
+                        if(buffer[0] == '\"'){		// String Index 
+                            buffer[i-2] = '\0';
+                            buffer = &buffer[1];
+                            tmp2 = getWSVariableArray(tmp,buffer);
+                        }else{						// Int Index
+                            i = atoi(buffer);
+                            tmp2 = getWSVariableArrayIndex(tmp,i);
+                        }
+                    }else{
+                        setWSVariableRef(var,tmp);
+                        return var;
+                    }		
+                          
+                    // bei verschachtelte arrays nochmal das array element suchen
+                    buffer = &buffer[strlen(buffer)+2];
+                    if( ( buffer[0] == '[' ) && (tmp2->type == VAR_TYPE_ARRAY) ){
+                        tmp = tmp2;
+                        continue;
+                    }
+                    break;
+                }
+                
+
+				if(tmp2 == 0){
+					snprintf(error_buffer,100,"ARRAY %s INDEX %s not found",tmp->name,buffer);
+					setWSVariableString(var,error_buffer);
+					return var;
+				}else{
+					setWSVariableRef(var,tmp2);
+					return var;
+				}
+			}
+			setWSVariableRef(var,tmp);
+		}		
+	}else{
+		i = atoi(buffer);	
+		setWSVariableInt(var,i);
+	}
+	return var;
+}

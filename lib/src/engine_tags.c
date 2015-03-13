@@ -1,0 +1,130 @@
+/*
+
+libCWebUI
+Copyright (C) 2012  Ramin Seyed-Moussavi
+
+Projekt URL : http://code.google.com/p/libcwebui/
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+*/
+
+#include "stdafx.h"
+
+#ifdef __GNUC__
+	#include "webserver.h"
+#endif
+
+struct template_tag {
+    unsigned int id;
+    const char* tag;
+    unsigned int tag_size;
+};
+
+#define IF_TAG_TEXT "{if:"
+#define ELSE_TAG_TEXT "{else}"
+#define ENDIF_TAG_TEXT "{endif}"
+
+#define MAKE_TAG_INFO( a ) { a , a##_TEXT, sizeof(a##_TEXT ) -1 }
+
+struct template_tag if_tags[3]={
+    MAKE_TAG_INFO ( IF_TAG ),
+    MAKE_TAG_INFO ( ELSE_TAG ),
+    MAKE_TAG_INFO ( ENDIF_TAG )
+};
+
+#define LOOP_TAG_TEXT "{loop:"
+#define ENDLOOP_TAG_TEXT "{endloop}"
+
+struct template_tag loop_tags[2]={
+    MAKE_TAG_INFO ( LOOP_TAG ),
+    MAKE_TAG_INFO ( ENDLOOP_TAG )
+};
+
+
+int getNextTag ( const char* pagedata,const int datalength, tag_groups search_tag_group,TAG_IDS *tag ) {
+    int i,i2;
+    int tags_in_group;
+    int pos=0;
+    const char *data = pagedata;
+    struct template_tag *search_tags = 0;
+    struct template_tag *tag_info =0;
+
+    switch ( search_tag_group ) {
+        case IF_TAG_GROUP:
+            search_tags = if_tags;
+            tags_in_group = sizeof ( if_tags );
+            break;
+
+        case LOOP_TAG_GROUP:
+            search_tags = loop_tags;
+            tags_in_group = sizeof ( loop_tags );
+            break;
+    }
+
+    if ( search_tags == 0 ) {
+        return -1;
+    }
+
+    tags_in_group /= sizeof ( struct template_tag );
+
+    for ( i=0;i<datalength;i++ ) {
+        data = &pagedata[i];
+        if ( data[0] != '{' )
+            continue;
+        for ( i2=0;i2<tags_in_group;i2++ ) {
+            tag_info = &search_tags[i2];
+
+            pos = strncmp ( data,tag_info->tag,tag_info->tag_size );
+            if ( 0 == pos ) {
+                *tag = (TAG_IDS)tag_info->id;
+                return i+tag_info->tag_size;
+            }
+        }
+
+    }
+
+    return -1;
+}
+
+
+int find_tag_end_pos ( const char *pagedata,int datalenght,const char *start_tag,const char *end_tag ) {
+  int pos1=0,pos2=0,level=1,offset=0;
+
+  /*
+  char bb1[10000];
+  memcpy(bb1,pagedata,datalenght);
+  bb1[datalenght]='\0';
+  bb1[datalenght]='\0';
+  */
+
+  do {
+    pos1 = stringnfind ( ( char* ) pagedata+offset,end_tag,datalenght-offset );
+    if ( pos1> 0 ) {
+      level--;
+    } else {
+      LOG ( TEMPLATE_LOG,NOTICE_LEVEL,0,"Endtag < %s > not found",end_tag );
+      return -1;
+    }
+
+    pos2 = stringnfind ( ( char* ) pagedata+offset,start_tag,pos1 );
+    if ( pos2>0 )
+      level++;
+    offset+=pos1;
+  } while ( level > 0 );
+
+  return offset+1;
+
+}

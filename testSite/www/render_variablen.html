@@ -1,0 +1,101 @@
+{set:render;"title":"Render Variablen"}
+
+{include:header.inc}
+
+{f:setrvvar}
+
+{b:startSession}
+
+{echo_funcs_on:<tr><td>:<td>}
+
+<table border=1>
+<tr><th>Befehl<th>Ausgabe
+{get:1}
+{get:3}
+{get:"g_test1"}
+</table>
+
+<table><tr><td valign=top>
+
+<table border=1>
+
+
+<tr><td colspan=2><h2>Globale Variablen</h2>
+
+{get:global;"g_test1"}
+{get:global;"g_test2"}
+{get:global;"g_test3"}
+{get:global;"g_test4"}
+
+
+
+<tr><td colspan=2><h2>Render Variablen</h2>
+
+{get:render;"test1"}
+{get:render;"test2"}
+{get:render;"test3"}
+{get:render;"test4"}
+
+
+<tr><td colspan=2><h2>Session Variablen</h2>
+
+{get:session;"test2"}
+{get:session;"test20"}
+
+</table>
+
+<td valign=top>
+
+<table border=1>
+
+<tr><td colspan=2><h2>Arrays</h2>
+
+{get:render;"testarray1"}
+
+<tr><td colspan=2><h3>Zugriff &uuml;ber Key</h3>
+
+{get:render;"testarray1"["entry_1"]}
+{get:render;"testarray1"["entry_2"]}
+{get:render;"testarray1"["entry_3"]}
+{get:render;"testarray1"["entry_N"]}
+
+
+<tr><td colspan=2><h3>Zugriff &uuml;ber Index</h3></tr></td>
+
+{get:render;"testarray1"[0]}
+{get:render;"testarray1"[1]}
+{get:render;"testarray1"[2]}
+{get:render;"testarray1"[3]}
+
+
+
+<tr><td colspan=2><h3><h3>Loops</h3>
+
+{echo_funcs_off}
+
+{echo_funcs_on:<td>}
+
+
+<tr>{loop:render;"testarray1":"tmp"}
+<tr>{get:render;"key"}{get:render;"tmp"}
+{endloop}
+
+
+<tr>{loop:render;"testarray1":"tmp":"key"}
+<tr>{get:render;"key"}{get:render;"tmp"}
+{endloop}
+
+<tr>{loop:render;"testarray1":"tmp"}
+<tr>{get:render;"key"}{get:render;"tmp"}
+{endloop}
+
+{echo_funcs_off}
+
+</table>
+
+</table>
+
+
+
+{include:footer.inc}
+

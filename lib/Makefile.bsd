@@ -1,0 +1,7 @@
+FLAGS= -D_WEBSERVER_DEBUG_ -DBSD -lpthread  -std=c99
+HEADER=builtinFunctions.h
+CC=gcc
+
+all: $(HEADER)
+	$(CC) $(FLAGS) -o webserver header.c convert.c main.c server.c system-unix.c system.c builtinFunctions.c engine.c webserver_api_functions.c 
+

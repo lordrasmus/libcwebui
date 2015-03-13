@@ -1,0 +1,78 @@
+{b:startSession}
+
+{set:render;"title":"Memory"}
+
+{include:header.inc}
+<h1>Hallo Memory!</h1>
+
+<a href=memory_info.html?menu=0 class={if:eq:0:parameter;"menu"}aktive{else}inaktive{endif}>&Uuml;bersicht</a>
+<a href=memory_info.html?menu=1 class={if:eq:1:parameter;"menu"}aktive{else}inaktive{endif}>Sessions</a>
+<a href=memory_info.html?menu=2 class={if:eq:2:parameter;"menu"}aktive{else}inaktive{endif}>Sockets</a>
+<a href=memory_info.html?menu=3 class={if:eq:3:parameter;"menu"}aktive{else}inaktive{endif}>Files</a>
+<a href=memory_info.html?menu=4 class={if:eq:4:parameter;"menu"}aktive{else}inaktive{endif}>Functions</a>
+<a href=memory_info.html?menu=5 class={if:eq:5:parameter;"menu"}aktive{else}inaktive{endif}>Plugins</a>
+<a href=memory_info.html?menu=6 class={if:eq:6:parameter;"menu"}aktive{else}inaktive{endif}>Globals</a>
+<br>
+
+
+{if:eq:parameter;"menu":0}
+	<div style="margin:0 10px 10px 0">
+	{b:memoryInfosDetail}
+	</div><br>
+{endif}
+
+{if:eq:parameter;"menu":1}
+	<div style="margin:0 10px 10px 0">
+	{b:dumpSessions}
+	</div><br>
+{endif}
+
+{if:eq:parameter;"menu":2}
+	<div style="margin:0 10px 10px 0">
+	{b:dumpSockets}
+	</div><br>
+{endif}
+
+{if:eq:parameter;"menu":3}
+	<div style="margin:0 10px 10px 0;float:left">
+	<table>
+	<tr><th>File<th>Bytes<th>Ram Cached
+	{b:printLoadedFiles}
+	</table>
+	</div>
+{endif}
+
+{if:eq:4:parameter;"menu"}
+	<div style="margin:0 10px 10px 0;float:left">
+	<table>
+	<tr><th>User Function<th>File<th>Line
+	{b:registeredFunctionsDetail}
+	</table>
+	</div>
+{endif}
+
+{if:eq:5:parameter;"menu"}
+	<div style="margin:0 10px 10px 0;float:left">
+	<table>
+	<tr><th>Plugins<th>File<th>Line
+	{b:registeredPlugins}
+	</table>
+	</div>
+{endif}
+
+{if:eq:6:parameter;"menu"}
+	<div style="margin:0 10px 10px 0;float:left">
+	{b:dumpGlobals}
+	<table>
+	<tr><th>Key<th>Value
+	{loop:render;"globals_dump":"value":"key"}	
+	<tr><td>{get:render;"key"}<td>{get:render;"value"}
+	{endloop}
+	</table>
+	</div>
+{endif}
+
+
+
+
+{include:footer.inc}

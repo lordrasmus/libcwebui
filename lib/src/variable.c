@@ -1,0 +1,423 @@
+/*
+
+ libCWebUI
+ Copyright (C) 2012  Ramin Seyed-Moussavi
+
+ Projekt URL : http://code.google.com/p/libcwebui/
+
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation; either
+ version 2.1 of the License, or (at your option) any later version.
+
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Lesser General Public License for more details.
+
+ You should have received a copy of the GNU Lesser General Public
+ License along with this library; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+ */
+
+
+#ifdef __GNUC__
+#include "webserver.h"
+#endif
+
+ALL_SRC int cmpVariableStoreName(void* var, char* name) {
+	ws_variable* sv;
+
+	if (var == 0) {
+		return -1;
+	}
+
+	sv = (ws_variable*) var;
+
+#ifdef _WEBSERVER_TEMPLATE_DEBUG_
+	LOG(TEMPLATE_LOG,NOTICE_LEVEL,0,"%s<->%s",name,sv->name);
+#endif
+
+	if (0 == strcmp((char*) name, (char*) sv->name)) {
+#ifdef _WEBSERVER_TEMPLATE_DEBUG_
+		LOG(TEMPLATE_LOG,NOTICE_LEVEL,0,"%s found",name);
+#endif
+		return 0;
+	}
+
+#ifdef _WEBSERVER_TEMPLATE_DEBUG_
+	LOG(TEMPLATE_LOG,NOTICE_LEVEL,0,"%s not found",name);
+#endif
+	return -1;
+}
+
+ALL_SRC void freeWSVariable(ws_variable* var) {
+	if (var == 0){
+		return;
+	}
+
+	if (var->name != 0) {
+		WebserverFree(var->name);
+		var->name = 0;
+	}
+
+	freeWSVariableValue(var);
+	WebserverFree(var);
+}
+
+ALL_SRC ws_variable* newWSVariable(const char* name) {
+	ws_variable* ret = WebserverMallocVariable_store();
+	if (name != 0) {
+		SIZE_TYPE length = strlen((char*) name);
+		ret->name = (char*) WebserverMalloc( length + 1 );
+		ret->name_len = length;
+		Webserver_strncpy((char*) ret->name, length + 1, (char*) name, length);
+	}
+	return ret;
+}
+
+ALL_SRC void freeWSVariableValue(ws_variable* var) {
+	if (var == 0) {
+		return;
+	}
+	switch (var->type) {
+	case VAR_TYPE_ARRAY:
+		deleteVariableStore(var->val.value_array);
+		break;
+	case VAR_TYPE_STRING:
+		WebserverFree(var->val.value_p);
+		break;
+	case VAR_TYPE_INT:
+		break;
+	case VAR_TYPE_ULONG:
+		break;
+	case VAR_TYPE_EMPTY:
+		break;
+	case VAR_TYPE_REF:
+		break;
+	case VAR_TYPE_CUSTOM_DATA:
+		var->extra.handle(var->val.value_p);
+		break;
+
+	}
+	var->val.value_p = 0;
+	var->type = VAR_TYPE_EMPTY;
+}
+
+SIZE_TYPE getWSVariableSize(ws_variable* var) {
+	SIZE_TYPE ret = 0;
+
+	if (var == 0) {
+		return 0;
+	}
+
+	ret = sizeof(ws_variable);
+	ret += var->name_len + 1;
+
+	if (var->type == VAR_TYPE_STRING)
+		ret += var->extra.str_len + 1;
+	if (var->type == VAR_TYPE_ARRAY)
+		ret += getVariableStoreSize(var->val.value_array);
+	return ret;
+}
+
+void setWSVariableString(ws_variable* var, const char* text) {
+	SIZE_TYPE length;
+	int ret;
+
+	if (var == 0)
+		return;
+
+	freeWSVariableValue(var);
+	var->type = VAR_TYPE_STRING;
+	if (text != 0) {
+
+#ifdef _WEBSERVER_TEMPLATE_DEBUG_
+		LOG (TEMPLATE_LOG,NOTICE_LEVEL,0,"setWSVariableString %s %s",var->name, text);
+#endif
+		length = strlen(text);
+		var->val.value_string = (char*) WebserverMalloc( length + 1 );
+		Webserver_strncpy(var->val.value_string, length + 1, text, length);
+		var->extra.str_len = length;
+	} else {
+#ifdef _WEBSERVER_TEMPLATE_DEBUG_
+		LOG (TEMPLATE_LOG,NOTICE_LEVEL,0,"setWSVariableString %s %s",var->name, text);
+#endif
+		var->val.value_string = (char*) WebserverMalloc( 100 );
+		ret = snprintf(var->val.value_string, 100, "Var %s text=0x0",var->name);
+		if ( ret  < 0 ){
+			perror("setWSVariableString: snprintf failed\n");
+			var->val.value_string[0] = '\0';
+			return;
+		}
+		var->extra.str_len = ret;
+	}
+}
+
+void setWSVariableCustomData(ws_variable* var, var_free_handler handle, void* data ) {
+	if (var == 0)
+		return;
+
+	freeWSVariableValue(var);
+
+	var->type = VAR_TYPE_CUSTOM_DATA;
+	var->val.value_p = data;
+	var->extra.handle = handle;
+}
+
+ALL_SRC int getWSVariableString(ws_variable* var, char* buffer,	unsigned int buffer_length) {
+	if (var == 0)
+		return -1;
+
+	if ((var->val.value_p == 0) && (var->type != VAR_TYPE_INT)) {
+		return snprintf(buffer, buffer_length, "Empty");
+	}
+
+	switch (var->type) {
+		case VAR_TYPE_EMPTY:
+			return snprintf(buffer, buffer_length, "Empty");
+
+		case VAR_TYPE_ARRAY:
+			return snprintf(buffer, buffer_length, "Array");
+
+		case VAR_TYPE_STRING:
+			return snprintf(buffer, buffer_length, "%s", var->val.value_string);
+
+		case VAR_TYPE_INT:
+			return snprintf(buffer, buffer_length, "%d", var->val.value_int);
+		case VAR_TYPE_ULONG:
+			return snprintf(buffer, buffer_length, "%"PRIu64, var->val.value_uint64_t);
+
+		case VAR_TYPE_CUSTOM_DATA:
+			return snprintf(buffer, buffer_length, "custom_data");
+
+		case VAR_TYPE_REF:
+#ifdef ENABLE_DEVEL_WARNINGS		
+			#warning noch testen
+#endif			
+			return getWSVariableString(var->val.value_ref, buffer, buffer_length);
+
+	}
+
+	return snprintf(buffer, buffer_length, "Unknown Type %d", var->type);
+
+}
+
+ALL_SRC void setWSVariableInt(ws_variable* var, int value) {
+//    int length;
+	if (var == 0){
+		return;
+	}
+	freeWSVariableValue(var);
+	var->type = VAR_TYPE_INT;
+	var->val.value_int = value;
+}
+
+ALL_SRC void setWSVariableULong(ws_variable* var, uint64_t value) {
+//    int length;
+	if (var == 0){
+		return;
+	}
+	freeWSVariableValue(var);
+	var->type = VAR_TYPE_INT;
+	var->val.value_uint64_t = value;
+}
+
+ALL_SRC int getWSVariableInt(ws_variable* var) {
+	int ret;
+	if ( var == 0 ){
+		return 0;
+	}
+	switch (var->type) {
+		case VAR_TYPE_ARRAY:
+		case VAR_TYPE_EMPTY:
+		case VAR_TYPE_CUSTOM_DATA:
+		case VAR_TYPE_REF:
+			return 0;
+		case VAR_TYPE_STRING:
+			sscanf(var->val.value_string, "%d", &ret);
+			return ret;
+		case VAR_TYPE_INT:
+			return var->val.value_int;
+		case VAR_TYPE_ULONG:
+			return var->val.value_uint64_t;
+	}
+
+	return 0;
+
+}
+
+ALL_SRC uint64_t getWSVariableULong(ws_variable* var) {
+	uint64_t ret;
+	if ( var == 0 ){
+		return 0;
+	}
+	switch (var->type) {
+		case VAR_TYPE_ARRAY:
+		case VAR_TYPE_EMPTY:
+		case VAR_TYPE_CUSTOM_DATA:
+		case VAR_TYPE_REF:
+			return 0;
+		case VAR_TYPE_STRING:
+			sscanf(var->val.value_string, "%"PRIu64, &ret);
+			return ret;
+		case VAR_TYPE_INT:
+			return var->val.value_int;
+		case VAR_TYPE_ULONG:
+			return var->val.value_uint64_t;
+	}
+
+	return 0;
+
+}
+
+ALL_SRC void setWSVariableRef(ws_variable* var, ws_variable* ref) {
+	if ( var == 0 ){
+		return;
+	}
+
+	freeWSVariableValue(var);
+	var->type = VAR_TYPE_REF;
+	var->val.value_ref = ref;
+}
+
+ALL_SRC void setWSVariableArray(ws_variable* var) {
+	if (var == 0){
+		return;
+	}
+
+	freeWSVariableValue(var);
+	var->type = VAR_TYPE_ARRAY;
+	var->val.value_array = createVariableStore();
+}
+
+ALL_SRC ws_variable* getWSVariableArray(ws_variable* var, const char* name) {
+	if ( var == 0 ){
+		return 0;
+	}
+	if (var->type == VAR_TYPE_ARRAY)
+		return getVariable(var->val.value_array, name);
+	if ((var->type == VAR_TYPE_REF)
+			&& (var->val.value_ref->type == VAR_TYPE_ARRAY))
+		return getVariable(var->val.value_ref->val.value_array, name);
+	return 0;
+}
+
+ALL_SRC ws_variable* addWSVariableArray(ws_variable* var, const char* name) {
+	if ( var == 0 ){
+		return 0;
+	}
+	if (var->type == VAR_TYPE_ARRAY){
+		return newVariable(var->val.value_array, name);
+	}
+	if (var->type == VAR_TYPE_REF){
+#ifdef ENABLE_DEVEL_WARNINGS		
+		#warning noch testen
+#endif		
+		return addWSVariableArray(var->val.value_ref,name);
+	}
+
+#ifdef ENABLE_DEVEL_WARNINGS	
+	#warning "Fehlermeldung wenn kein array"
+#endif
+
+	return 0;
+}
+
+ALL_SRC ws_variable* refWSVariableArray(ws_variable* var, ws_variable* ref) {
+	ws_variable *ret = newVariable(var->val.value_array, 0);
+	setWSVariableRef(ret, ref);
+	return ret;
+}
+
+ALL_SRC void delWSVariableArray(ws_variable* var, const char* name) {
+	ws_variable *tmp;
+	if (var == 0){
+		return;
+	}
+	if (var->type != VAR_TYPE_ARRAY)
+		return;
+	tmp = getWSVariableArray(var, name);
+	freeVariable(var->val.value_array, tmp);
+}
+
+ALL_SRC ws_variable* getWSVariableArrayFirst(ws_variable* var) {
+	if ( var == 0 ){
+		return 0;
+	}
+	if (var->type != VAR_TYPE_ARRAY)
+		return 0;
+
+	return getFirstVariable(var->val.value_array);
+}
+
+ALL_SRC ws_variable* getWSVariableArrayNext(ws_variable* var) {
+	if ( var == 0 ){
+		return 0;
+	}
+	if (var->type != VAR_TYPE_ARRAY)
+		return 0;
+
+	return getNextVariable(var->val.value_array);
+}
+
+ALL_SRC void stopWSVariableArrayIterate(ws_variable* var) {
+	if ( var == 0 ){
+		return;
+	}
+	if (var->type != VAR_TYPE_ARRAY)
+		return;
+	stopIterateVariable(var->val.value_array);
+}
+
+ALL_SRC ws_variable* getWSVariableArrayIndex(ws_variable* var, unsigned int index) {
+	ws_variable *tmp;
+	unsigned int i = 0;
+
+	if ( var == 0 ){
+		return 0;
+	}
+
+	if (var->type != VAR_TYPE_ARRAY)
+		return 0;
+
+	tmp = getFirstVariable(var->val.value_array);
+	while (tmp != 0) {
+		if (i++ == index) {
+			stopIterateVariable(var->val.value_array);
+			return tmp;
+		}
+		tmp = getNextVariable(var->val.value_array);
+	}
+	return 0;
+}
+
+ALL_SRC ws_variable* addWSVariableArrayIndex(ws_variable* var,
+		unsigned int index) {
+	ws_variable *tmp;
+	unsigned int i = 0;
+	char name_buf[10];
+
+	if ( var == 0 ){
+		return 0;
+	}
+
+	if (var->type != VAR_TYPE_ARRAY)
+		return 0;
+
+	tmp = getFirstVariable(var->val.value_array);
+	while (tmp != 0) {
+		if (i == index)
+			return tmp;
+		i++;
+		tmp = getNextVariable(var->val.value_array);
+	}
+	for (; i <= index; i++) {
+		snprintf(name_buf, 10, "%d", i);
+		tmp = newVariable(var->val.value_array, name_buf);
+	}
+
+	return tmp;
+}
+
