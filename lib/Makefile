@@ -2,7 +2,7 @@ SHELL=/bin/bash
 
 DEFS= -DLINUX
 
-FLAGS= -Wall -fPIC -Wextra -O0 -ggdb3 -std=c99 -Wunused-parameter -D_POSIX_SOURCE
+FLAGS= -Wall -fPIC -Wextra -O0 -ggdb3 -std=c99 -Wunused-parameter -D_POSIX_SOURCE -Wno-unused-parameter
 #FLAGS+= -Wpedantic
 
 INCLUDES= -I. -Iinclude -Iplatform/include -Ithird_party/src/simclist/ -Ithird_party/src/rb_tree/

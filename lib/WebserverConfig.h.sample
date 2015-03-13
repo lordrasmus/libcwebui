@@ -6,7 +6,7 @@
 #define WEBSOCKET_INBUFFER_SIZE		2000
 #define WRITE_DATA_SIZE				20000
                              
-
+#define WEBSERVER_MAX_POST_CONTENT_LENGTH    10000000 // 10 MB
 
 #define WEBSERVER_MAX_FILEID_TO_RAM	 FILE_TYPE_JS   // welche datein im ram gecached werden ( datatypes.h )
 #define MAX_CACHE_AGE				15				// zeit in sekunden bis der client daten neu abrufen soll

@@ -104,7 +104,7 @@ void handleCommandSocket(char *guid, char*msg) {
 		int ret = 0;
 		ret = pthread_mutex_lock(&uhr_mutex);
 		if (ret == 0) {
-			tmp = WebserverMalloc(strlen(guid)+1,0);
+			tmp = WebserverMalloc(strlen(guid)+1);
 			strcpy(tmp, guid);
 			ws_list_append(&uhr_clients, tmp);
 			pthread_mutex_unlock(&uhr_mutex);
@@ -142,7 +142,7 @@ void handleMultiSocket(char *guid) {
 	int ret = 0;
 	ret = pthread_mutex_lock(&multi_mutex);
 	if (ret == 0) {
-		tmp = WebserverMalloc(strlen(guid)+1,0);
+		tmp = WebserverMalloc(strlen(guid)+1);
 		strcpy(tmp, guid);
 		ws_list_append(&multi_clients, tmp);
 		multis++;
@@ -214,7 +214,7 @@ DEFINE_WEBSOCKET_HANDLER( "simple" , simple_handler ) {
 	switch (signal) {
 	case WEBSOCKET_CONNECT:
 		printf("Websocket API Connect    : %s simple\n", guid);
-		tmp = WebserverMalloc(strlen(guid)+1, 0);
+		tmp = WebserverMalloc(strlen(guid)+1);
 		strcpy(tmp, guid);
 		pthread_create(&thread1, NULL, simple_function, tmp);
 		break;
@@ -223,7 +223,7 @@ DEFINE_WEBSOCKET_HANDLER( "simple" , simple_handler ) {
 
 DEFINE_WEBSOCKET_HANDLER( "CommandSocket" , CommandSocket_handler) {
 	char *tmp;
-	tmp = WebserverMalloc(strlen(guid)+1, 0);
+	tmp = WebserverMalloc(strlen(guid)+1);
 strcpy(tmp, guid);
 switch (signal) {
 	case WEBSOCKET_MSG:
