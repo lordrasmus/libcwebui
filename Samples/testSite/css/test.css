@@ -1,0 +1,17 @@
+
+.h1 { font-size:16}
+
+body {background-color: #DFDDDE;}
+
+
+a:link, a:visited, a:hover { text-decoration: none; }
+
+.aktive { color: red}
+
+.inaktive { color: green}
+
+.table_even { background-color: green}
+.table_odd { background-color: red}
+
+
+

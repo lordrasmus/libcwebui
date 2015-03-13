@@ -1,0 +1,3 @@
+POST /index.html?p1=v1&p2=%20v2 HTTP/1.1
+User-Agent: HTTPTool/1.0
+Cookie: TestCookie1=value1; TestCookie2=value2

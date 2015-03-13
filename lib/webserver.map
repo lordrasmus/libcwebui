@@ -1,0 +1,80 @@
+WEBSERVER_1.0 {
+  global: 	WebserverInit;
+  			WebserverStart;
+  			WebserverShutdown;
+  			WebserverShutdownHandler;  			
+  			WebserverAddFileDir;
+  			WebserverAddTemplateFilePostfix;
+  			WebserverAddTemplateIgnoreFilePostfix;
+  			WebserverLoadPlugin;  			
+  			WebserverConfigSetInt;
+  			WebserverConfigSetText;
+  			
+  			  			
+  			setRenderVar;
+  			getRenderVar;
+  			setGlobalVar;
+  			getGlobalVar;
+  			setSessionVar;
+  			getSessionVar; 			
+  			
+
+			WebserverGenerateGUID;
+			getSessionGUID;
+			setSessionVarGUID;
+			getSessionVarGUID;
+  			
+  			setVariableAsInt;
+  			getVariableAsInt;
+  			
+  			setVariableAsString;
+  			getVariableAsString;
+  			getVariableAsStringP;
+  			setVariableToRef;
+  			
+  			printHTML;
+  			sendHTMLVariable;
+  			sendHTML;
+  			
+  			getArrayVariable;
+  			getArrayFirst;
+			getArrayNext;
+			stopArrayIterate;
+  			
+  			setUserRegisterStatus;  			
+  			checkUserRegisterStatus;
+  			
+  			getRequestURL;
+  			isRequestSecure;
+  			
+  			lockGlobalVars;
+  			unlockGlobalVars;
+  			
+  			addFireLogger;
+  			getURLParameter;
+  			getEngineParameter;
+  			
+  			addToVarArray;
+  			setVariableToArray;
+  			
+  			WebsocketGetStoreGUID;
+  			WebsocketSendTextFrame;
+  			WebsocketSendCloseFrame;
+  			
+  			RegisterEngineFunction;
+  			RegisterEngineCondition;
+  			RegisterWebsocketHandler;
+  			
+  			ws_list_iterator_start;
+  			ws_list_append;
+  			ws_list_init;
+  			ws_list_iterator_stop;
+  			ws_list_iterator_next;
+  			ws_list_delete;
+  			
+  			real_WebserverMalloc;
+  			WebserverFree;
+  			
+  			
+  local: *;
+};

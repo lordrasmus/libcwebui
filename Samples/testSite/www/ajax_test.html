@@ -1,0 +1,39 @@
+TEMPLATE_V1
+{set:render;"title":"AJAX Test"}
+
+{include:header.inc}
+
+<h1>AJAX Demo</h1><br>
+<h2>zum Testen von vielen gleichzeitigen verbindungen</h2><br>
+
+<div id=hook></div>
+
+
+
+<script type="text/javascript">
+	function handler () {	
+		if (this.readyState == 4){
+			if (this.status == 200){		
+				this.sender.innerHTML = this.responseText;											
+			}
+		}
+	}
+
+	var hook = document.getElementById("hook");
+	
+	for( var i=0;i<80;i++){
+		var tmp = document.createElement("span"); 
+		tmp.innerHTML = "<font color=red>Test" + i + " </font>";
+		hook.appendChild(tmp);
+	
+		var invocation = new XMLHttpRequest();		
+		invocation.open('GET', "ajax_data.html?id="+i, true);									
+		invocation.onreadystatechange = handler;
+		invocation.sender = tmp;	
+		invocation.send(null); 		
+	}
+	
+	
+</script>
+
+{include:footer.inc}

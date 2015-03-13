@@ -1,0 +1,24 @@
+---
+# See https://lgtm.com/help/lgtm/customizing-file-classification
+path_classifiers:
+  lib:
+    - lib/src/.*
+    
+extraction:
+  # https://lgtm.com/help/lgtm/cpp-extraction
+  cpp:
+    prepare:
+      packages:
+        - make 
+        - libssl-dev 
+        - libevent-dev 
+        - libpython2.7-dev
+        
+    configure:
+      command:
+        - echo "Not needed -- this is here to override LGTM from automatically running cmake"
+        
+    index:
+      build_command:
+        - make -j2 -s
+  

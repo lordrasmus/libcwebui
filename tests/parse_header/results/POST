@@ -1,0 +1,23 @@
+-----------  Header Info Start  ----------------------------
+Header Valid
+   Method: HTTP_POST
+   Version: HTTP/1.1
+   URL : index.html
+   Content-Length: 222
+   Host: localhost
+   If-Modified-Since: aa
+   If-None-Match: sa
+   Upgrade: up
+   Connection:  Connection
+   Origin: Origin
+   Sec-WebSocket-Key1: SecWebSocketKey1
+   Sec-WebSocket-Key2: SecWebSocketKey2
+   Sec-WebSocket-Key: SecWebSocketKey
+   Sec-WebSocket-Origin: SecWebSocketOrigin
+   Sec-WebSocket-Protocol: SecWebSocketProtocol
+   Sec-WebSocket-Version: 12
+Parameter :
+Cookies : 
+  Name  : dskjfh
+  Value : 
+-----------  Header Info End  ----------------------------

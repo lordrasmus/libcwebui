@@ -1,0 +1,29 @@
+POST /index.html HTTP/1.1
+From: frog@jmarshall.com
+User-Agent: HTTPTool/1.0
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 32
+Accept: all
+Accept-Language: de
+Accept-Encoding: de
+Accept-Charset: utf-8
+Keep-Alive: 1
+Referer: jo
+Cache-Control: bla
+Cookie: dskjfh
+Content-Length: 222
+Host: localhost
+If-Modified-Since: aa
+If-None-Match: sa
+Upgrade: up
+Connection:  Connection
+Origin: Origin
+Sec-WebSocket-Key1: SecWebSocketKey1
+Sec-WebSocket-Key2: SecWebSocketKey2
+Sec-WebSocket-Key: SecWebSocketKey
+Sec-WebSocket-Origin: SecWebSocketOrigin
+Sec-WebSocket-Protocol: SecWebSocketProtocol
+Sec-WebSocket-Version: 12
+
+
+home=Cosby&favorite+flavor=flies

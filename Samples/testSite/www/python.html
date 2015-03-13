@@ -1,0 +1,33 @@
+TEMPLATE_V1
+{echo_off}
+
+{set:render;"title":"Index"}
+
+{echo_on}{include:header.inc}
+
+{b:startSession}
+
+<h1>Hallo Python!</h1>
+
+<h2>Python Funktionen</h2>
+
+Py test1 : {f:test1}<br>
+Py test2 : {f:test2}<br>
+Py test3 : {f:test3}<br>
+Py test4 : {f:test4}<br>
+
+<h2>Render Variablen</h2>
+
+Render a : {get:render;"a"}<br>
+Render b : {get:render;"b"}<br>
+Render c : {get:render;"c"}<br>
+
+
+<h2>Session Variablen</h2>
+
+Session b : {get:session;"b"}<br>
+
+
+<br>
+<br>
+{f:py_version}<br>

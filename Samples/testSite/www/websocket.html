@@ -1,0 +1,30 @@
+TEMPLATE_V1
+{set:render;"title":"Websocket Test"}
+
+{include:header.inc}
+
+<h1>Uhrzeit : <span id=uhr_zeit>Uhr noch nicht gestartet</span></h1>
+
+<h1>Hallo Websocket!</h1>
+
+Websocket Data1 : <span id=websocket_data1>Leer</span><br>
+<input type=button id=ws_create1 value="Button 1" data-handle=simple data-element=websocket_data1 ><br>
+<br>
+
+Websocket Data2 : <span id=websocket_data2>Leer</span><br>
+<input type=button id=ws_create2 value="Button 2" data-handle=simple data-element=websocket_data2 ><br> 
+<br>
+
+Websocket Data3 : <span id=websocket_data3>Leer</span><br>
+<input type=button id=ws_create3 value="Button 3" data-handle=simple data-element=websocket_data3 ><br> 
+<br>
+
+<input type=button id=ws_send_ping value="Button Send Ping Command"><br> <!-- onclick=aberdas() -->
+<br>
+
+
+send : <input type=text id=echo_text><input type=button id=echo_text_button value="send"><br><br>
+recv : <input type=text id=echo_answer><br>
+
+
+{include:footer.inc}

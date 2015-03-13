@@ -1,0 +1,44 @@
+/**
+* \file builtinFunctions.c
+* \fn int builtinFunction(session* s,unsigned char *retBuffer,unsigned char* buffer,int ret_length)
+* \brief Abfragefunktion für Eigenschaften des Webservers.
+*
+* Mithilfe der Präprozessordirektive \e {b:\<Funktionsname\>} können die folgenden Eigenschaften
+* des Webservers abgefragt werden\n
+* <ul>
+*	<li>\b compiler: Compiler und dessen Versionsnummer, mit dem der Webserver kompiliert wurde</li>
+*	<li>\b memoryInfos: Gibt die Anzahl der geladenen Dateien und den von Webserver belegten RAM
+*				 in Bytes aus</li>
+*	<li>\b build_time: Datum und Uhrzeit, wann der Webserver kompiliert wurde</li>
+*	<li>\b ip: Die IP-Adresse des Webservers (z.B. 192.168.1.1)</li>
+*	<li>\b netmask: Die Netzmaske des Webservers (z.B. 255.255.255.0)</li>
+*	<li>\b MAC: Die MAC-Adresse des Webservers (z.B. **)</li>
+*	<li>\b server_name: Der Name des Webeservers</li>
+*	<li>\b server_port: Der Standardport des Webservers</li>
+*	<li>\b server_ssl_port: Der SSL Port des Webservers</li>
+*	<li>\b dumpSessionStore: Gibt eine Tabelle mit allen SessionStore Informationen aus</li>
+* </ul>
+*
+* \param s Ein Zeiger zum Sessionstruct der aktuellen Anfrage
+* \param retBuffer Ein Zeiger auf den Speicher (Typ: unsigned char), in den das Ergebniss der Anfrage geschrieben werden soll
+* \param buffer Ein Zeiger auf den Speicher (Typ: unsigned char), in dem die Anfrage steht
+* \param ret_length Länge des Speichers für die Rückgabe des Ergebnisses (siehe retBuffer)
+* \return Der Wert der Abfrage steht im übergebenen Speicher (siehe retBuffer)
+*
+* \fn int builtinConditions(session* s,unsigned char *conditionstring)
+* \brief Wertet die übergebenen Konditionen aus.
+*
+* Folgende Konditionen für die if-Abfrage sind vorhanden:\n
+* <ul>
+*	<li>\b is_user_registered: Ist der Benutzer angemeldet (normal oder SSL)</li>
+*	<li>\b is_user_registered_ssl: Ist der Benutzer über SSL angemeldet</li>
+*	<li>\b is_ssl_active: Wird die Verbindung über SSL verschlüsselt</li>
+*	<li>\b is_ssl_available: Ist SSL auf dem Webserver vorhanden</li>
+*	<li>\b is_false: Liefert immer false zurück</li>
+*	<li>\b is_true: Liefert immer true zurück</li>
+* </ul>
+*
+* \param s Ein Zeiger zum Sessionstruct der aktuellen Anfrage
+* \param conditionstring Ein Zeiger auf den Speicher (Typ: unsigned char), in dem die abzufragende Kondition steht
+* \return true = 1, false = -1, Kondition gibts es nicht = -2
+*/

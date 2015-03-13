@@ -1,0 +1,17 @@
+TEMPLATE_V1
+{set:render;"title":"Register"}
+
+{include:header.inc}
+
+<h1>Hallo Welt!</h1>
+
+{b:startSession}
+
+{b:dumpSessionStore}<br>
+
+<h2>aufruf von &#123;f:register}</h2>{f:register}<br>
+
+<h2>{f:checkregister}</h2><br>
+{b:dumpSessionStore}<br>
+
+{include:footer.inc}
