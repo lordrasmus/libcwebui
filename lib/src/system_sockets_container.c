@@ -26,7 +26,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "red_black_tree.h"
 
-//ListNode* sock_container;
 static list_t sock_list;
 static rb_red_blk_tree *sock_tree;
 static WS_MUTEX socks_mutex;
@@ -181,7 +180,6 @@ void dumpSockets(http_request* s) {
 	printHTMLChunk(s->socket, "<th>Status");
 
 	while ((sock = (socket_info*) ws_list_iterator_next(&sock_list))) {
-		//printHTMLChunk(s->socket, "<td valign=top ><table border=1>");
 		printHTMLChunk(s->socket, "<tr><td>");
 
 		if (sock->server == 1) {
