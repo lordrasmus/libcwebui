@@ -84,7 +84,6 @@ void generateEtag(WebserverFileInfo* wfi) {
 	}
 
 	convertBinToHexString(buf, SSL_SHA_DIG_LEN, wfi->etag, SSL_SHA_DIG_LEN * 2 + 1);
-//	printf("<%s>\n",wfi->etag);
 	wfi->etagLength = strlen(wfi->etag);
 
 #else
@@ -401,7 +400,7 @@ WebserverFileInfo *getFileInformation(char *name) {
 	WebserverFileInfo *file = 0;
 	char found = 0;
 
-	// um ein Zeichen weiterspringen wenn name mit / anfängt
+	/*  um ein Zeichen weiterspringen wenn name mit / anfängt */
 	if ( name[0] == '/' )
 		name = name + 1;
 
@@ -458,7 +457,7 @@ WebserverFileInfo *getFileInformation(char *name) {
 
 	copyFilePath(file, name_tmp);
 	copyURL(file, name);
-	// tmp_var ist permanent in der liste der prefixe darum pointer direkt nehmen
+	/* tmp_var ist permanent in der liste der prefixe darum pointer direkt nehmen */
 	file->FilePrefix = tmp_var->name;
 	setFileType(file);
 #ifdef _WEBSERVER_FILESYSTEM_CACHE_DEBUG_
@@ -476,7 +475,6 @@ WebserverFileInfo *getFileInformation(char *name) {
 
 static int doNotRamCacheFile( WebserverFileInfo *file ){
 	ws_variable *tmp;
-	//printf("doNotRamCacheFile : %s\n",file->Url);
 	if ( file->NoRamCache == 1 ){
 		return 1;
 	}
@@ -496,10 +494,12 @@ static int doNotRamCacheFile( WebserverFileInfo *file ){
 }
 
 void WebserverAddNoRamCacheFile( char* url ){
+	ws_variable *tmp;
+
 	if( url[0] == '/'){
 		url++;
 	}
-	ws_variable *tmp = getWSVariableArray(no_ram_cache_files, url);
+	tmp = getWSVariableArray(no_ram_cache_files, url);
 
 	if (tmp == 0) {
 		tmp = addWSVariableArray(no_ram_cache_files, url);
@@ -717,13 +717,12 @@ WebserverFileInfo *getFile(char *name) {
 
 char WebServerReadDataStart(void) {
 	unsigned int data[5];
-	//WebserverOpenDataReadStream();
-	data[0] = readInt(); // signatur
-	data[1] = readInt(); // signatur
-	data[2] = readInt(); // signatur
-	data[3] = readInt(); // signatur
+	data[0] = readInt(); /* signatur */
+	data[1] = readInt(); 
+	data[2] = readInt(); 
+	data[3] = readInt(); 
 
-	data[4] = readInt(); // L�nge des Datensatzes
+	data[4] = readInt(); /* Laenge des Datensatzes */
 
 	if ((data[0] != 1) || (data[1] != 255) || (data[2] != 1)
 			|| (data[3] != 255)) {
@@ -748,15 +747,10 @@ void WebserverSaveDataChunk ( unsigned char *data,unsigned int lenght ) {
 
 void WebserverSavaDataFinish ( void ) {
 	PlatformCloseDataStream();
-	//LOG("Saving Data finished !!\n");
 }
 
 void WebServerSaveDataStart ( unsigned int lenght ) {
-	//int i2;
 	LOG ( FILESYSTEM_LOG,NOTICE_LEVEL,"Saving Data ( %u bytes ) ...\n",lenght );
-	/*for(i2=0;i2<30;i2++){  LOG("0x%X ",data[i2]);   }*/
-	//while(1)
-	//i2++;
 	writeInt ( 1 );
 	writeInt ( 255 );
 	writeInt ( 1 );
