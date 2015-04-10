@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 void StringDest( UNUSED_PARA void* a) {
-	//free((int*) a);
+	/* free((int*) a); */
 }
 
 int StringComp(const void* a, const void* b) {
@@ -71,12 +71,13 @@ unsigned int readInt(void) {
 
 
 int stringfind(const char *buffer, const char *pattern) {
+	int length;
 	int i, i2 = 0;
 	if ( buffer == 0){
 		return 0;
 	}
-	int lenght = (int) strlen((char*) buffer);
-	for (i = 0; i < lenght; i++)
+	length = (int) strlen((char*) buffer);
+	for (i = 0; i < length; i++)
 		if (buffer[i] == pattern[i2]) {
 			i2++;
 			if (pattern[i2] == '\0') return i;
@@ -194,7 +195,7 @@ void getHTMLMonth(unsigned char month, char* buffer, SIZE_TYPE size) {
 	}
 }
 
-// HTML date  format http://www.hackcraft.net/web/datetime/#rfc822}
+/* HTML date  format http://www.hackcraft.net/web/datetime/#rfc822} */
 
 unsigned int getHTMLDateFormat(char* buffer, int day, int month, int year, int hour, int minute) {
 	char bb[30];
@@ -206,12 +207,8 @@ unsigned int getHTMLDateFormat(char* buffer, int day, int month, int year, int h
 }
 
 void convertBinToHexString(unsigned char* bin, int bin_length, char* text, int text_length) {
-	int l;//, ret;
-	//memset(text, 0, text_length);
+	int l;
 	for (l = 0; l < bin_length; l++) {
-		//ret = snprintf (&text[l*2],text_length-(l*2),"%02X",bin[l] );
-		//if ( ret !=2 )
-		//    LOG ( PLATFORM_LOG,NOTICE_LEVEL,0,"error converting Data","" );
 		text[l * 2 + 0] = bin[l] >> 4;
 		if (text[l * 2 + 0] <= 9)
 			text[l * 2 + 0] += 48;
@@ -229,8 +226,6 @@ void convertBinToHexString(unsigned char* bin, int bin_length, char* text, int t
 void generateGUID(char* buf, int length) {
 #ifdef WEBSERVER_USE_SSL
 	int l;
-	//  int ret;
-//    char tmp_buf[3];	// 3 wegen \0
 	unsigned char *tmp = (unsigned char*) WebserverMalloc ( length / 2 );
 	if (0 != WebserverRANDBytes(tmp, length / 2)) {
 		convertBinToHexString(tmp, length / 2, buf, length);
