@@ -48,8 +48,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #endif
 
-//#include "../WebserverConfig.h"
-//#include "dataTypes.h"
 
 #ifdef _MSC_VER
 	#include <winsock2.h>
@@ -84,6 +82,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 
-//#include "system.h"
 
-// TODO: Hier auf zustzliche Header, die das Programm erfordert, verweisen.
+/*
+ TODO: Hier auf zustzliche Header, die das Programm erfordert, verweisen.
+*/
