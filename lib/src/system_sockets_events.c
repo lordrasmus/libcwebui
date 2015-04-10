@@ -27,11 +27,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 	#include "webserver.h"
 #endif
 
-// http://tangentsoft.net/wskfaq/articles/bsd-compatibility.html
-// http://publib.boulder.ibm.com/infocenter/iseries/v5r3/index.jsp?topic=/rzab6/rzab6xnonblock.htm
-// http://www.wangafu.net/~nickm/libevent-book/01_intro.html
+/*
+ http://tangentsoft.net/wskfaq/articles/bsd-compatibility.html
+ http://publib.boulder.ibm.com/infocenter/iseries/v5r3/index.jsp?topic=/rzab6/rzab6xnonblock.htm
+ http://www.wangafu.net/~nickm/libevent-book/01_intro.html
 
-// libevent st�rtzt ab wenn man das event flag von einem beendeten socket ver�ndert ( struct event )
+ libevent stuertzt ab wenn man das event flag von einem beendeten socket veraendert ( struct event )
+
+*/
 
 #ifdef _WEBSERVER_MEMORY_DEBUG_
     extern int print_blocks_now;
@@ -39,7 +42,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifdef USE_LIBEVENT
 
-//#include <linux/types.h>
 typedef unsigned char u_char;
 #include <event2/event.h>
 #include <event2/thread.h>
@@ -59,14 +61,14 @@ void eventHandler(int a, short b, void *t) {
 	short tmp = b & ~( EV_TIMEOUT | EV_READ | EV_WRITE | EV_SIGNAL | EV_PERSIST | EV_ET ) ;
 	
 	if ( tmp != 0 ){
-		//
-		// Dürfte nie auftreten, es scheint das eine Event für eine bereits freigegeben Struktur aufgerufen wird
-		// möglicherweise Problem mit Websockets und / oder OpenSSL
+		/*
+		 Dürfte nie auftreten, es scheint das eine Event für eine bereits freigegeben Struktur aufgerufen wird
+		 möglicherweise Problem mit Websockets und / oder OpenSSL
+		*/
 		printf("BUG: Invalid Flags 0x%X\n",tmp);
 		return;
 	}
 
-	//printf("B: %d\n",b);
 
 	if ((b & EV_PERSIST) == EV_PERSIST) {
 		pers = EVENT_PERSIST;
@@ -74,27 +76,24 @@ void eventHandler(int a, short b, void *t) {
 	
 	if ((b & EV_SIGNAL) == EV_SIGNAL) {
 		printf("SIGNAL ignored a: %d  b : %d  t: 0x%p \n",a,b,t);
-		//handleer(a, EVENT_SIGNAL | pers, t);
+		/* handleer(a, EVENT_SIGNAL | pers, t); */
 		fflush(stdout);
 		return;
 	}
 
 	if ((b & EV_TIMEOUT) == EV_TIMEOUT) {
-		//printf("%d TIMEOUT \n",a);
 		handleer(a, EVENT_TIMEOUT | pers, t);
 		fflush(stdout);
 		return;
 	}
 
 	if ((b & EV_READ) == EV_READ) {
-		//printf("%d READ \n",a);
 		handleer(a, EVENT_READ | pers, t);
 		fflush(stdout);
 		return;
 	}
 
 	if ((b & EV_WRITE) == EV_WRITE) {
-		//printf("%d WRITE \n",a);
 		handleer(a, EVENT_WRITE | pers, t);
 		fflush(stdout);
 		return;
@@ -264,7 +263,6 @@ void delEventSocketReadPersist(socket_info* sock) {
 }
 
 void delEventSocketAll(socket_info* sock) {
-	//delEventSocketWritePersist(sock);
 	int ret;
 	if (sock->my_ev != 0) {
 				
@@ -286,7 +284,7 @@ void delEventSocketAll(socket_info* sock) {
 }
 
 /*char checkEventSocket(socket_info* sock) {
-//	struct timeval tv;
+	struct timeval tv;
 	return event_pending(sock->my_ev, EV_TIMEOUT | EV_READ | EV_WRITE | EV_SIGNAL, NULL );
 }*/
 
@@ -311,9 +309,9 @@ void initEvents() {
 #endif
 
 	config = event_config_new();
-	//event_config_avoid_method(config, "select");
+	/* event_config_avoid_method(config, "select"); */
 	/* We want a method that can work with non-socket file descriptors */
-	//event_config_require_features(config, EV_FEATURE_FDS);
+	/* event_config_require_features(config, EV_FEATURE_FDS); */
 	base = event_base_new_with_config(config);
 	if (!base) {
 		/* There is no backend method that does what we want. */
@@ -331,7 +329,7 @@ void initEvents() {
 
 	free(list);
 
-	//LOG(MESSAGE_LOG, NOTICE_LEVEL, 0, "libEvent %s using %s ( Methods: %s )", event_get_version() , event_get_method() , buffer);
+	/* LOG(MESSAGE_LOG, NOTICE_LEVEL, 0, "libEvent %s using %s ( Methods: %s )", event_get_version() , event_get_method() , buffer); */
 	LOG(MESSAGE_LOG, NOTICE_LEVEL, 0, "libEvent %s ( Methods: %s )", event_get_version() , buffer);
 
 }
@@ -346,7 +344,6 @@ void breakEvents(void){
 
 void freeEvents() {
 	event_base_free(base);
-	//event_free();
 }
 
 
