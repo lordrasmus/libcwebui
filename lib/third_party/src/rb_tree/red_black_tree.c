@@ -672,8 +672,9 @@ stk_stack* RBEnumerate(rb_red_blk_tree* tree, void* low, void* high) {
   }
 #warning "warum funktioniert der tree bei sessions nicht ???"
 
-  // so gehts bei sessions
-  //while ( (lastBest != nil) && (1 == tree->Compare(low,lastBest->key))) {
+  /* so gehts bei sessions
+  while ( (lastBest != nil) && (1 == tree->Compare(low,lastBest->key))) {
+*/
 
   while ( (lastBest != nil) && (1 != tree->Compare(low,lastBest->key))) {
     StackPush(enumResultStack,lastBest);
@@ -682,7 +683,7 @@ stk_stack* RBEnumerate(rb_red_blk_tree* tree, void* low, void* high) {
   return(enumResultStack);
 }
 
-#endif // USE_EXTERNAL_RBTREE
+#endif /* USE_EXTERNAL_RBTREE */
 
 
 
