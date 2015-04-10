@@ -47,9 +47,10 @@ unsigned long allocated_max = 0;
     int print_blocks_now = 0;
 #endif
 
-//unsigned long allocated_real = 0;
 
-//#define USE_MALLOC_CACHE
+/*
+#define USE_MALLOC_CACHE
+*/
 
 #ifdef _WEBSERVER_MEMORY_DEBUG_
 list_t block_list;
@@ -90,7 +91,7 @@ ALL_SRC void initMemoryManager(void) {
 
 	ws_list_init(&chunk_cache);
 
-	//ws_list_attributes_freer(&chunk_cache,freeChunkCallBack);
+	/* ws_list_attributes_freer(&chunk_cache,freeChunkCallBack); */
 #warning "chunk cache elemente richtig freigeben"
 }
 
@@ -254,6 +255,10 @@ void insert_cached_malloc(void* mem, unsigned long size) {
 
 #pragma GCC visibility push(default)
 
+#ifndef __BIGGEST_ALIGNMENT__
+	#define __BIGGEST_ALIGNMENT__ 8
+#endif
+
 #if __BIGGEST_ALIGNMENT__ < __SIZEOF_LONG__
 	#define MEM_OFFSET __SIZEOF_LONG__
 #else
@@ -306,7 +311,6 @@ void* real_WebserverMalloc(const unsigned long size ) {
 #endif
 
 	allocated += real_alloc;
-	//allocated_real += size + add_size;
 	if (allocated_max < allocated) allocated_max = allocated;
 
 
@@ -321,7 +325,6 @@ void* real_WebserverMalloc(const unsigned long size ) {
 	addBlock(block);
 
 	ret += sizeof(memory_block);
-	//ret += ((unsigned long)ret) % __BIGGEST_ALIGNMENT__;
 	memset(ret , 0xAB, __BIGGEST_ALIGNMENT__ * 2);
 	ret += __BIGGEST_ALIGNMENT__ * 2;
 	memset(ret + size, 0xAB, __BIGGEST_ALIGNMENT__ * 2);
@@ -533,7 +536,6 @@ void WebserverFree(void *mem) {
 #pragma GCC visibility pop
 
 void WebserverFreeMem(void) {
-	// int i=0;
 	/*    for (i=0;i<g_files.FileCount;i++)
 	 {
 	 WebserverFree(g_files.files[i]->Name);
@@ -541,8 +543,7 @@ void WebserverFreeMem(void) {
 	 WebserverFree(g_files.files[i]);
 	 }
 	 WebserverFree(g_files.files);*/
-	//g_files.FileCount=0;							// wird irgendwo was zu viel geschrieben ?
-	// TODO: "freigeben der datai infos wieder einbauen"
+	/* TODO: "freigeben der datai infos wieder einbauen" */
 }
 
 Parameter* WebserverMallocParameter(void) {
@@ -682,7 +683,6 @@ void WebserverResetHttpRequestHeader(HttpRequestHeader *header) {
 	clearVariables(header->parameter_store);
 	ws_list_clear(&header->cookie_list);
 
-	//clearFirePHPLog(header);
 
 	header->post_buffer_pos = 0;
 	header->contenttype = 0;
@@ -800,6 +800,6 @@ void WebserverFreeHtml_chunk(html_chunk* chunk) {
 	} else {*/
 		if (chunk->text != 0) WebserverFree(chunk->text);
 		WebserverFree(chunk);
-	//}
+	/*}*/
 }
 
