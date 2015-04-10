@@ -25,7 +25,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _WEBSERVERSYSTEM_H_
 #define _WEBSERVERSYSTEM_H_
 
-//#include "../platform/include/platform.h"
 #include "platform.h"
 #include "system_memory.h"
 
@@ -59,8 +58,8 @@ char isTemplateFile(const char* file);
 
 
 void	startWebServer( void );
-void	int_startWebServer( void );	// in system.c enthalten
-void	int_webserverTask(socket_info* request );			// in system.c enthalten
+void	int_startWebServer( void );					/* in system.c enthalten */
+void	int_webserverTask(socket_info* request );			/* in system.c enthalten */
 bool	startWebserverTask( socket_info* request );
 
 void  	printParameterInfo(HttpRequestHeader *header);
