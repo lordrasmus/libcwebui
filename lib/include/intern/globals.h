@@ -29,9 +29,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 typedef struct
 {
-    //char server_ip[100];
-    //char server_netmask[100];
-    //char server_mac[100];
     char server_name[100];
 }server_infos;
 
@@ -40,7 +37,6 @@ typedef struct
     unsigned char init_called;
     WebserverConfig config;
     server_infos    infos;
-    //ws_variable_store*	var_store;
 }global_vars;
 
 
