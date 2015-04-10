@@ -25,28 +25,27 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "webserver.h"
 
-#pragma GCC visibility push(default)
+#if __GNUC__ > 2
+	#pragma GCC visibility push(default)
+#endif
 
 
 void WebserverGenerateGUID(char* buf, int length){
 	generateGUID(buf,length);
 }
 
-void register_engine_function(const char* name, user_api_function f,
-		const char* file, int line) {
-	//void register_function(const char* name,user_function f,const char* file,int line)
+void register_engine_function(const char* name, user_api_function f, const char* file, int line) {
+	/* void register_function(const char* name,user_function f,const char* file,int line) */
 	register_function(name, (user_function) f, file, line);
 }
 
-void register_engine_condition(const char* name, user_api_condition f,
-		const char* file, int line) {
-	//void register_condition(const char* name,user_condition f,const char* file,int line)
+void register_engine_condition(const char* name, user_api_condition f,	const char* file, int line) {
+	/* void register_condition(const char* name,user_condition f,const char* file,int line) */
 	register_condition(name, (user_condition) f, file, line);
 }
 
-void register_websocket_handler(const char* url, websocket_api_handler f,
-		const char* file, int line) {
-	//void register_function_websocket_handler(const char* url,websocket_handler f,const char* file,int line)
+void register_websocket_handler(const char* url, websocket_api_handler f, const char* file, int line) {
+	/* void register_function_websocket_handler(const char* url,websocket_handler f,const char* file,int line) */
 	register_function_websocket_handler(url, (websocket_handler) f, file, line);
 }
 
@@ -60,7 +59,7 @@ void sendHTMLVariable(dummy_handler* s, dummy_var* var) {
 	sendHTMLChunkVariable(((http_request*) s)->socket, (ws_variable*) var);
 }
 
-// printHTMLChunk ( socket_info* sock,const char *fmt,... )
+/* printHTMLChunk ( socket_info* sock,const char *fmt,... ) */
 void printHTML(dummy_handler* s, const char *fmt, ...) {
 	va_list arg;
 	va_start ( arg, fmt );
@@ -69,13 +68,13 @@ void printHTML(dummy_handler* s, const char *fmt, ...) {
 }
 
 void sendHTML(dummy_handler* s, const char* text, const unsigned int length){
-	//void sendHTMLChunk(socket_info* sock, const char* text, const unsigned int length)
+	/* void sendHTMLChunk(socket_info* sock, const char* text, const unsigned int length) */
 	sendHTMLChunk( ((http_request*) s)->socket, text, length);
 }
 
 
 void addFireLogger(dummy_handler* s, const char* filename, int fileline, const char* fmt, ... ) {
-	//void addFirePHPLog ( http_request* s,char* filename,int fileline,char* text,... )
+	/* void addFirePHPLog ( http_request* s,char* filename,int fileline,char* text,... ) */
 	va_list arg;
 	va_start ( arg, fmt );
 	vaddFirePHPLog((http_request*) s,filename,fileline,fmt,arg);
@@ -109,12 +108,12 @@ char* getSessionGUID(dummy_handler* s){
 
 
 char setSessionVar(dummy_handler* s, int store, const char* name, const char* value) {
-	// char setSessionValue(http_request* s,STORE_TYPES store,const char* name,const char* value)
+	/* char setSessionValue(http_request* s,STORE_TYPES store,const char* name,const char* value) */
 	return setSessionValue((http_request*) s, (STORE_TYPES) store, name, value);
 }
 
 dummy_var* getSessionVar(dummy_handler* s, int store, const char* name,UNUSED_PARA WS_VAR_FLAGS flags) {
-	// ws_variable* getSessionValue(http_request* s,STORE_TYPES store,const char* name)
+	/* ws_variable* getSessionValue(http_request* s,STORE_TYPES store,const char* name) */
 	ws_variable* ret = getSessionValue((http_request*) s, (STORE_TYPES) store,	name);
 
 	if ( (  flags & DO_NOT_CREATE ) == 0 ){
@@ -140,10 +139,11 @@ void setRenderVar(dummy_handler* s, char* name, char* text) {
 }
 
 void setRenderVar_v(dummy_handler* s, char* name, char* format,...) {
+	char *buffer;
 	va_list arg;
 
 	va_start(arg, format);
-	char buffer[vsnprintf(0, 0, format, arg) + 1];
+	buffer = WebserverMalloc( vsnprintf(0, 0, format, arg) + 1);
 	va_end(arg);
 
 	va_start(arg, format);
@@ -151,6 +151,7 @@ void setRenderVar_v(dummy_handler* s, char* name, char* format,...) {
 	va_end(arg);
 
 	setRenderVariable((http_request*) s, name, buffer);
+	WebserverFree( buffer );
 }
 
 
@@ -262,12 +263,12 @@ void 		stopArrayIterate(dummy_var* var){
  *****************************************************************************/
 
 char setUserRegisterStatus(dummy_handler* s, char status) {
-	//char setUserRegistered(http_request* s,char status)
+	/* char setUserRegistered(http_request* s,char status) */
 	return setUserRegistered((http_request*) s, status);
 }
 
 int checkUserRegisterStatus(dummy_handler* s) {
-	//int checkUserRegistered(http_request* s) {
+	/* int checkUserRegistered(http_request* s)  */
 	return checkUserRegistered((http_request*) s);
 }
 
@@ -322,7 +323,6 @@ dummy_var* getURLParameter(dummy_handler* s,const char* name) {
 }
 
 char* getEngineParameter(dummy_handler* s, int index) {
-	//int i;
 	FUNCTION_PARAS* f = &((http_request*)s)->engine_current->func;
 	if ( index >= MAX_FUNC_PARAS ) return 0;
 
@@ -330,7 +330,8 @@ char* getEngineParameter(dummy_handler* s, int index) {
 }
 
 void  dumpEngineParameter(dummy_handler* s){
-	for( int i = 0; i < MAX_FUNC_PARAS ; i++ ){
+	int i;
+	for( i = 0; i < MAX_FUNC_PARAS ; i++ ){
 
 		if (getEngineParameter(s, i) != 0){
 			printHTML(s,"Para%d : %s<br>", i, getEngineParameter(s, i));
@@ -394,7 +395,7 @@ void WebserverAddTemplateIgnoreFilePostfix(const char* postfix){
 
 int WebserverInit(void){
 	if(initWebserver() != 0){
-		//asm (".symver WebserverShutdownHandler1__,WebserverShutdownHandler@@VERS_1.0");
+		/* asm (".symver WebserverShutdownHandler1__,WebserverShutdownHandler@@VERS_1.0"); */
 		return 0;
 	}
 	return -1;
@@ -410,9 +411,7 @@ void WebserverShutdown(void){
 
 void WebserverShutdownHandler(void){
 	breakEvents();
-	//shutdownWebserverHandler();
 }
-//#include <asm.h>
 
 
 
@@ -439,5 +438,6 @@ void WebserverInjectExternFD(int fd, extern_handler handle ){
 	addEventSocketReadPersist(sock);
 }
 
-
-#pragma GCC visibility pop
+#if __GNUC__ > 2
+	#pragma GCC visibility pop
+#endif
