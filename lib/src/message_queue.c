@@ -36,7 +36,6 @@ ALL_SRC ws_MessageQueue* ws_createMessageQueue(){
 ALL_SRC void *ws_popQueue(ws_MessageQueue* mq){
 	void* ret;
 	sem_wait(&mq->semid);
-	//printf("POP\n");
 	PlatformLockMutex(&mq->lock);
 	ret = ws_list_extract_at(&mq->entry_list,0);
 	PlatformUnlockMutex(&mq->lock);
