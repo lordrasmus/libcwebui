@@ -48,7 +48,6 @@ extern "C" {
 
 	int		WebserverStartConnectionManager( void );
 	void	WebserverConnectionManagerStartLoop( void );
-	//void	WebserverConnectionManagerCloseRequest(socket_info* sock,int del);
 	void	WebserverConnectionManagerCloseRequest(socket_info* sock);
 	void 	WebserverConnectionManagerCloseConnections(void);
 	int		handleWebRequest(socket_info* request);
