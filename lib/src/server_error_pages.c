@@ -40,7 +40,6 @@ int printAddressInfo(socket_info *socket){
 int sendFileNotFound(http_request *s){
 	int length = 0;
 	length += printHTMLChunk(s->socket,"<html><title>404 Not Found</title><body><h1>Not Found</h1><p>");
-	//length += printHTMLChunk(s->socket,"The requested URL /%s was not found on this server.</p><hr />",s->header->url);
 	length += printHTMLChunk(s->socket,"The requested URL was not found on this server.</p><hr />");
 	length += printAddressInfo(s->socket);
 	sendHeaderNotFound(s,length);
@@ -52,7 +51,6 @@ int sendMethodNotAllowed(socket_info *socket){
 	int length = 0;
 	length += printHTMLChunk( socket,"<html><title>405 Method Not Allowed</title><body>");
 	length += printHTMLChunk( socket,"<h1>405 Method Not Allowed</h1>");
-	//length += printHTMLChunk(s->socket,"<p>The Method is not allowed for %s on this server.</p><hr />",s->header->url);
 	length += printHTMLChunk( socket,"<p>The Method is not allowed on this server.</p><hr />");
 	length += printAddressInfo( socket);
 	sendHeaderError( socket,(char*)"405 Method Not Allowed",length);
