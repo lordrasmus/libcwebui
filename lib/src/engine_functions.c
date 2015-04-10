@@ -38,7 +38,6 @@ void engine_includeFile(http_request *s, const char* prefix, FUNCTION_PARAS* fun
 		return;
 	file = getFile(func->parameter[0].text);
 	if (file != 0) {
-		//WebServerPrintf("Filename : %s (%d) %X \n",bild->Name,bild->DataLenght,bild);
 		if (file->RamCached == 0) {
 			file->Data = (unsigned char*) WebserverMalloc( file->DataLenght );
 			getFileContents(file);
