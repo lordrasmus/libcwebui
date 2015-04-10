@@ -26,7 +26,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define _COOKIE_H_
 
 #ifdef __GNUC__
-	//#include "../platform/include/platform.h"
 	#include "dataTypes.h"
 #endif
 
