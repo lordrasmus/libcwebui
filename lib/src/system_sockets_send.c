@@ -49,7 +49,7 @@ SOCKET_SEND_STATUS WebserverSend(socket_info* s, unsigned char *buffer, int len,
 	}
 
 	if (ret == CLIENT_SEND_BUFFER_FULL) {
-		//LOG(SOCKET_LOG,WARNING_LEVEL,s->socket,"SOCKET_SEND_SEND_BUFFER_FULL    %d of %d send",ret,len);
+		/* LOG(SOCKET_LOG,WARNING_LEVEL,s->socket,"SOCKET_SEND_SEND_BUFFER_FULL    %d of %d send",ret,len); */
 		return SOCKET_SEND_SEND_BUFFER_FULL;
 	}
 
