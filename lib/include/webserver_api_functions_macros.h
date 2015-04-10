@@ -54,12 +54,18 @@ extern "C" {
 *                                                                                               *
 ************************************************************************************************/
 
+#if __GNUC__ > 2
+        #define VISIBLE_ATTR __attribute__ ((visibility("default")))
+#else
+        #define VISIBLE_ATTR
+#endif
+
 #define WEBSERVER_API_HOOK \
-		int get_webserver_api_version(void) __attribute__ ((visibility("default"))); \
+		int get_webserver_api_version(void) VISIBLE_ATTR ; \
 		int get_webserver_api_version(void)	{ \
 			return WEBSERVER_API;\
 		} \
-		char* init_webserver_plugin(void) __attribute__ ((visibility("default"))); \
+		char* init_webserver_plugin(void) VISIBLE_ATTR ; \
 		char* init_webserver_plugin(void)
 
 
@@ -69,21 +75,29 @@ extern "C" {
 *                                                                                              *
 ************************************************************************************************/
 
-#define DEFINE_FUNCTION( a ) \
+#if __GNUC__ > 2
+
+	#define DEFINE_FUNCTION( a ) \
 		const char*			ws_ef_##a##_df = __FILE__; \
-		const int			ws_ef_##a##_dl = __LINE__; \
-		void 				ws_ef_##a ( dummy_handler *s,dummy_func* func ) __attribute__ ((visibility("default"))); \
+		const int			ws_ef_##a##_dl = __LINE__; 	\
+		void 				ws_ef_##a ( dummy_handler *s,dummy_func* func ) VISIBLE_ATTR ; \
 		void 				ws_ef_##a ( dummy_handler *s,dummy_func* func )
 
-#define REGISTER_FUNCTION( a )	{ \
+	#define REGISTER_FUNCTION( a )	{ \
 		extern const char*	ws_ef_##a##_df; \
-		extern const int 	ws_ef_##a##_dl ; \
-		extern void 		ws_ef_##a ( dummy_handler *s,dummy_func* func ) __attribute__ ((visibility("default"))); \
+		extern const int 	ws_ef_##a##_dl; \
+		extern void 		ws_ef_##a ( dummy_handler *s,dummy_func* func ) VISIBLE_ATTR ; \
 		RegisterEngineFunction ( #a,ws_ef_##a,ws_ef_##a##_df,ws_ef_##a##_dl ); \
-	}
+		}
 
-#define REGISTER_LOCAL_FUNCTION( a ) \
-		RegisterEngineFunction ( #a,ws_ef_##a,ws_ef_##a##_df,ws_ef_##a##_dl );
+	#define REGISTER_LOCAL_FUNCTION( a ) 	RegisterEngineFunction ( #a,ws_ef_##a,ws_ef_##a##_df,ws_ef_##a##_dl );
+#else
+	#define DEFINE_FUNCTION( a ) void 			  ws_ef_##a ( dummy_handler *s,dummy_func* func ) VISIBLE_ATTR ; void ws_ef_##a ( dummy_handler *s,dummy_func* func )
+	#define REGISTER_FUNCTION( a )	{ extern void ws_ef_##a ( dummy_handler *s,dummy_func* func ) VISIBLE_ATTR ; RegisterEngineFunction ( #a,ws_ef_##a,"",0 ); 	}
+	#define REGISTER_LOCAL_FUNCTION( a ) 	RegisterEngineFunction ( #a,ws_ef_##a,"",0 );
+#endif
+
+
 
 
 
@@ -93,16 +107,17 @@ extern "C" {
 *                                                                                              *
 ************************************************************************************************/
 
+
 #define DEFINE_CONDITION( a )	\
 		const char*			ws_ec_##a##_df = __FILE__; \
 		const int          	ws_ec_##a##_dl = __LINE__; \
-		int                	ws_ec_##a ( dummy_handler *s,dummy_func* func ) __attribute__ ((visibility("default"))); \
+		int                	ws_ec_##a ( dummy_handler *s,dummy_func* func ) VISIBLE_ATTR ; \
 		int                	ws_ec_##a ( dummy_handler *s,dummy_func* func )
 
 #define REGISTER_CONDITION( a )	{ \
 		extern const char*	ws_ec_##a##_df; \
 		extern const int   	ws_ec_##a##_dl ; \
-		extern int         	ws_ec_##a ( dummy_handler *s,dummy_func* func ) __attribute__ ((visibility("default"))); \
+		extern int         	ws_ec_##a ( dummy_handler *s,dummy_func* func ) VISIBLE_ATTR ; \
 		RegisterEngineCondition ( #a,ws_ec_##a,ws_ec_##a##_df,ws_ec_##a##_dl ); \
 	}
 
@@ -142,14 +157,15 @@ extern "C" {
 *                                                                                              *
 ************************************************************************************************/
 
-// dummy_ structs werden nur als type def für den compiler gebraucht
 typedef struct{	void *p;} dummy_handler;
 typedef struct{	void *p;} dummy_func;
-typedef struct{	union { void *p; uint64_t t;}; } dummy_var;
+typedef struct{	union { void *p; uint64_t t;} dummy_u ; } dummy_var;
 
 
 typedef void ( *free_handler ) ( void* ptr);
-typedef void ( *extern_handler ) ( int fd , void* ptr);
+#ifndef _DATATYPES_H_
+	typedef void ( *extern_handler ) ( int fd , void* ptr);
+#endif
 typedef void ( *user_api_function ) ( dummy_handler *s,dummy_func* func );
 typedef int ( *user_api_condition ) ( dummy_handler* s,dummy_func* func );
 typedef void ( *websocket_api_handler ) ( const int signal, const char* guid, const char binary, const char* msg, const unsigned long long len );
