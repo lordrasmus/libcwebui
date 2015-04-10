@@ -35,10 +35,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 	#error WEBSERVER_MAX_POST_CONTENT_LENGTH muss definiert werden
 #endif
 
-// http://tangentsoft.net/wskfaq/articles/bsd-compatibility.html
-// http://publib.boulder.ibm.com/infocenter/iseries/v5r3/index.jsp?topic=/rzab6/rzab6xnonblock.htm
-// http://www.wangafu.net/~nickm/libevent-book/01_intro.html
-
+/* 
+ http://tangentsoft.net/wskfaq/articles/bsd-compatibility.html
+ http://publib.boulder.ibm.com/infocenter/iseries/v5r3/index.jsp?topic=/rzab6/rzab6xnonblock.htm
+ http://www.wangafu.net/~nickm/libevent-book/01_intro.html
+*/
 
 
 CLIENT_WRITE_DATA_STATUS handleClientWriteData(socket_info* sock);
@@ -48,7 +49,6 @@ int WebserverStartConnectionManager(void) {
 	int socket;
 	socket_info* info;
 
-//	PlatformCreateMutex(&socks_mutex);
 
 	socket = PlatformGetSocket(getConfigInt("port"), globals.config.connections);
 
@@ -65,12 +65,11 @@ int WebserverStartConnectionManager(void) {
 	info->socket = socket;
 	info->server = 1;
 	PlatformSetNonBlocking(socket);
-	//   socks = addNewListNode ( socks,info );
 	addSocketContainer(info);
 	addEventSocketReadPersist(info);
 
 
-	// AB hier wird der SSL SOcket initialisiert
+	/* AB hier wird der SSL Socket initialisiert */
 
 #ifdef WEBSERVER_USE_SSL
 	socket = PlatformGetSocket(getConfigInt("ssl_port"), globals.config.connections);
@@ -120,14 +119,13 @@ socket_info* addClientSocket(int s, char ssl) {
 	if (info != 0) {
 		PlatformCreateMutex(&info->socket_mutex);
 		info->header = WebserverMallocHttpRequestHeader();
-		//PlatformGetPeerName(info);
 		info->use_ssl = ssl;
 		info->client = 1;
 		info->server = 0;
 		info->active = 1;
 		info->socket = s;
 		addSocketContainer(info);
-		addEventSocketRead(info); //  | EV_PERSIST| EV_WRITE
+		addEventSocketRead(info); /*  | EV_PERSIST| EV_WRITE */
 		return info;
 	}
 	return 0;
@@ -135,7 +133,7 @@ socket_info* addClientSocket(int s, char ssl) {
 
 void reCopyHeaderBuffer(socket_info* sock, unsigned int end) {
 	unsigned int i, i2;
-	i2 = end; // end ist das letzte geparste zeichen
+	i2 = end; /* end ist das letzte geparste zeichen */
 	for (i = 0; i < sock->header_buffer_pos - end; i++, i2++) {
 		sock->header_buffer[i] = sock->header_buffer[i2];
 	}
@@ -143,17 +141,17 @@ void reCopyHeaderBuffer(socket_info* sock, unsigned int end) {
 	sock->header_buffer_pos = i;
 }
 
-//void WebserverConnectionManagerCloseRequest(socket_info* sock, int del) {
 void WebserverConnectionManagerCloseRequest(socket_info* sock) {
-	//websocket_queue_msg* msg;
 
 	sock->active = 0;
 	sock->closeSocket = 1;
 #ifdef WEBSERVER_USE_WEBSOCKETS
 	if ( sock->isWebsocket == 1 ) {
-		// lÃ¤nge 1 um keinen malloc mit 0 bytes zu machen
-		//msg = create_websocket_input_queue_msg(WEBSOCKET_SIGNAL_DISCONNECT,sock->websocket_guid,sock->header->url,1);
-		//insert_websocket_input_queue( msg);
+		/* laenge 1 um keinen malloc mit 0 bytes zu machen */
+		/*
+		msg = create_websocket_input_queue_msg(WEBSOCKET_SIGNAL_DISCONNECT,sock->websocket_guid,sock->header->url,1);
+		insert_websocket_input_queue( msg);
+		*/
 #if _WEBSERVER_CONNECTION_DEBUG_ > 1
 		LOG ( CONNECTION_LOG,NOTICE_LEVEL, sock->socket, "Websocket Close Request","" );
 #endif
@@ -161,7 +159,6 @@ void WebserverConnectionManagerCloseRequest(socket_info* sock) {
 #endif
 
 	delEventSocketAll(sock);
-	//if (del == 1)
 	deleteSocket(sock);
 
 	WebserverCloseSocket(sock);
@@ -171,11 +168,13 @@ void WebserverConnectionManagerCloseRequest(socket_info* sock) {
 
 int recv_post_payload( socket_info* sock, const char* buffer, uint32_t len){
 
-	//LOG(CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"POST Data %d of %d -> %d",sock->header->post_buffer_pos,sock->header->contentlenght, len);
+	/*
+	LOG(CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"POST Data %d of %d -> %d",sock->header->post_buffer_pos,sock->header->contentlenght, len);
+	*/
 
 	if ( sock->header->post_buffer == 0 ){
 		sock->header->post_buffer = WebserverMalloc( sock->header->contentlenght + 1 );
-		// um Payload Buffer neim Debug ausgeben zu können
+		/* um Payload Buffer neim Debug ausgeben zu können */
 		sock->header->post_buffer[sock->header->contentlenght] = '\0';
 	}
 
@@ -280,13 +279,15 @@ int handleClientHeaderData(socket_info* sock) {
 				return -1;
 			}
 			if ( sock->header->method == HTTP_POST ) {
-				//LOG(CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"POST %d of %d",sock->header->post_buffer_pos,sock->header->contentlenght);
+				/*
+				LOG(CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"POST %d of %d",sock->header->post_buffer_pos,sock->header->contentlenght);
+				*/
 				if ( sock->header->contentlenght > sock->header->post_buffer_pos ) {
 					if ( len == 0 ){
 						return 0;
 					}
 					if ( 1 == recv_post_payload( sock ,sock->header_buffer, len ) ){
-						return 1;	// Aktuellen POST Request  gelesen, weiter Daten sind der nächste Header
+						return 1;	/* Aktuellen POST Request  gelesen, weiter Daten sind der nächste Header */
 					}
 				}
 				this_post_read+=len;
@@ -308,18 +309,17 @@ int handleClientHeaderData(socket_info* sock) {
 			continue;
 		}
 
-		// Header zuende aber noch weitere daten vorhanden
+		/* Header zuende aber noch weitere daten vorhanden */
 		if (len2 == -3) {
 			if ( sock->header->method == HTTP_POST ){
 				if ( -1 == check_post_header( sock ) ){
 					sock->header->error = 1;
 					sendMethodBadRequest(sock);
 					LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"POST Method Header Error","" );
-					//sock->closeSocket = 1;
 					return -1;
 				}
 				if ( 1 == recv_post_payload( sock, &sock->header_buffer[parsed + 1], sock->header_buffer_pos - ( parsed + 1 ) )){
-					return 1; // Aktuellen POST Request  gelesen, weiter Daten sind der nächste Header
+					return 1; /* Aktuellen POST Request  gelesen, weiter Daten sind der nächste Header */
 				}
 				continue;
 			}
@@ -327,7 +327,7 @@ int handleClientHeaderData(socket_info* sock) {
 			return 1;
 		}
 
-		// Header ist zuende und keine weiteren daten
+		/* Header ist zuende und keine weiteren daten */
 		if (len2 == -2){
 			sock->header_buffer_pos = 0;
 			sock->header_buffer[0] = '\0';
@@ -336,11 +336,10 @@ int handleClientHeaderData(socket_info* sock) {
 					sock->header->error = 1;
 					sendMethodBadRequest(sock);
 					LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"POST Method Header Error","" );
-					//sock->closeSocket = 1;
 					return -1;
 				}
 
-				// Header ist zuende aber der POST Payload fehlt noch
+				/* Header ist zuende aber der POST Payload fehlt noch */
 				return 0;
 			}
 #if _WEBSERVER_CONNECTION_DEBUG_ > 4
@@ -368,12 +367,10 @@ int checkConnectionKeepAlive(socket_info *sock) {
 
 	if (sock->header->Connection != 0) {
 		if (strcmp(sock->header->Connection, "keep-alive") != 0) {
-			//WebserverConnectionManagerCloseRequest(sock);
 			return -1;
 		} else {
 			WebserverResetHttpRequestHeader(sock->header);
 			return 1;
-			//WebserverConnectionManagerCloseRequest(sock);
 		}
 	}
 
@@ -386,6 +383,7 @@ int checkConnectionKeepAlive(socket_info *sock) {
 
 int handleClient(socket_info* sock) {
 	int ret;
+
 #ifdef _WEBSERVER_SOCKET_DEBUG_
 	LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"Client Data","" );
 #endif
@@ -412,13 +410,12 @@ int handleClient(socket_info* sock) {
 		}
 	}
 #endif
-//if(sock->use_ssl == 0){
 	ret = handleClientHeaderData(sock);
 #if _WEBSERVER_CONNECTION_DEBUG_ > 4
 	LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"handleClientData ret : %d",ret );
 #endif
 
-	// das hier tritt auf wenn der header noch nicht zuende ist
+	/* das hier tritt auf wenn der header noch nicht zuende ist */
 	if (ret == 0) {
 		addEventSocketRead(sock);
 		return 0;
@@ -437,7 +434,7 @@ int handleClient(socket_info* sock) {
 			return 0;
 		}
 		
-		// Websocket Protokol Version wird nicht unterstützt
+		/* Websocket Protokol Version wird nicht unterstützt */
 		if ( sock->header->isWebsocket == 2 )
 		{
 			#if _WEBSERVER_CONNECTION_DEBUG_ > 2
@@ -453,7 +450,7 @@ int handleClient(socket_info* sock) {
 #if _WEBSERVER_HANDLER_DEBUG_ > 4
 		LOG ( HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Handle Web Request","" );
 #endif
-		// das hier tritt auf wenn mehrer requests ueber einen Socket im Burst gesendet werden
+		/* das hier tritt auf wenn mehrer requests ueber einen Socket im Burst gesendet werden */
 		if (handleWebRequest(sock) < 0) {
 			return -1;
 		}
@@ -473,7 +470,7 @@ int handleClient(socket_info* sock) {
 }
 
 char sendData(socket_info* sock, unsigned char* buffer, FILE_OFFSET length) {
-	int ret; //,i;
+	int ret; 
 	int to_send;
 	SOCKET_SEND_STATUS status;
 
@@ -585,22 +582,22 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendFileSystem_sendfile(socket_inf
 
 	if (send == -1) {
 		switch (errno) {
-		// Nonblocking I/O has been selected using O_NONBLOCK and the write would block.
+		/* Nonblocking I/O has been selected using O_NONBLOCK and the write would block. */
 		case EAGAIN:
 			return DATA_PENDING;
-			// The input file was not opened for reading or the output file was not opened for writing.
+			/* The input file was not opened for reading or the output file was not opened for writing. */
 		case EBADF:
 			return CLIENT_DICONNECTED;
-			// Bad address.
+			/* Bad address. */
 		case EFAULT:
 			return CLIENT_DICONNECTED;
-			// Descriptor is not valid or locked, or an mmap(2)-like operation is not available for in_fd.
+			/* Descriptor is not valid or locked, or an mmap(2)-like operation is not available for in_fd. */
 		case EINVAL:
 			return CLIENT_DICONNECTED;
-			// Unspecified error while reading from in_fd.
+			/* Unspecified error while reading from in_fd. */
 		case EIO:
 			return CLIENT_DICONNECTED;
-			// Insufficient memory to read from in_fd.
+			/* Insufficient memory to read from in_fd. */
 		case ENOMEM:
 			return CLIENT_DICONNECTED;
 		}
@@ -622,7 +619,6 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCached(socket_info* sock) {
 }
 
 CLIENT_WRITE_DATA_STATUS handleClientWriteData(socket_info* sock) {
-//int ret;
 	CLIENT_WRITE_DATA_STATUS status_ret;
 
 	if (sock->output_buffer != 0) {
@@ -653,7 +649,6 @@ void handleServer(socket_info* sock) {
 	int c;
 	unsigned int port;
 	socket_info *client_sock;
-	//char buffer[256];
 
 	while (1) {
 		c = PlatformAccept(sock, &port);
@@ -702,8 +697,6 @@ int WebserverCloseSocket(socket_info* s) {
 #ifdef WEBSERVER_USE_SSL
 	if (s->use_ssl == 1) {
 		WebserverSSLCloseSockets(s);
-		//WebserverFree(s->ssl);
-		#warning "Das noch freigeben ??"
 		return PlatformCloseSocket(s->socket);
 	} else {
 		return PlatformCloseSocket(s->socket);
@@ -845,7 +838,6 @@ void handleer( int a, short b, void *t ) {
 
 	if (sock->server == 1) {
 		handleServer(sock);
-		//PlatformUnlockMutex(&sock->sock_mutex);
 		return;
 	}
 	if (sock->client == 1) {
@@ -854,8 +846,10 @@ void handleer( int a, short b, void *t ) {
 			if(sock->use_ssl == 1){
 				
 				
-				// Im SSL read muss die event registrierung blockiert werden bis 
-				// alle pending bytes gelesen wurden
+				/* 
+  				 Im SSL read muss die event registrierung blockiert werden bis 
+				 alle pending bytes gelesen wurden 
+				*/
 				sock->ssl_block_event_flags = 1;
 				ret = handleClient(sock);
 				if (ret < 0) {
@@ -935,19 +929,16 @@ void handleer( int a, short b, void *t ) {
 				LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "UNDEFINED STATUS", "");
 				return;
 			}
-			//handleClientWriteData(sock);
 		}
-		//PlatformUnlockMutex(&sock->sock_mutex);
 		return;
 	}
-//PlatformUnlockMutex(&sock->sock_mutex);
 }
 
 unsigned long getSocketInfoSize(socket_info* sock) {
 	unsigned long ret = sizeof(socket_info);
 
-	if (sock->header_buffer != 0) ret += MAX_HEADER_LINE_LENGHT + 1; //header_buffer
-	if (sock->header != 0) ret += sizeof(HttpRequestHeader); //header
+	if (sock->header_buffer != 0) ret += MAX_HEADER_LINE_LENGHT + 1; /* header_buffer */
+	if (sock->header != 0) ret += sizeof(HttpRequestHeader); /* header */
 #ifdef WEBSERVER_USE_WEBSOCKETS
 	if(sock->websocket_buffer != 0)
 		ret+= WebserverMallocedSize(sock->websocket_buffer);
@@ -956,8 +947,6 @@ unsigned long getSocketInfoSize(socket_info* sock) {
 		ret+= WEBSERVER_GUID_LENGTH+1;
 #endif
 	ret += sock->output_buffer_size;
-//my_ev
-//websocket_chunks
 
 	return ret;
 }
