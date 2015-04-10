@@ -25,7 +25,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _WEBSERVER_UTILS_H_
 #define _WEBSERVER_UTILS_H_
 
-//#include "../WebserverConfig.h"
 #include "red_black_tree.h"
 
 #ifdef __cplusplus
@@ -36,7 +35,6 @@ rb_red_blk_tree* initStringRBTree(void);
 
 unsigned int readInt( void );
 
-//void writeInt( unsigned int data );
 
 int stringfind(const char *buffer,const char *pattern);
 long stringnfind(const char *buffer,const char *pattern,unsigned int length);
@@ -50,8 +48,10 @@ unsigned long Webserver_strlen( char *text);
 
 unsigned int getHTMLDateFormat( char* buffer,int day,int month,int year,int hour,int minute);
 
-// int pos=0; in der funktion definieren zum benutzen, in pos steht dann die string l���nge
-#define BufferPrint(...) pos+=snprintf((char*)retBuffer+pos,ret_length-pos, __VA_ARGS__)
+/*
+ int pos=0; in der funktion definieren zum benutzen, in pos steht dann die string laenge
+*/
+#define BufferPrint( ARGS... ) pos+=snprintf((char*)retBuffer+pos,ret_length-pos, __VA_ARGS__)
 
 void 	generateGUID ( char* buf,int length );
 
