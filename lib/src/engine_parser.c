@@ -25,13 +25,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "webserver.h"
 
 
-ws_variable* __attribute__((warn_unused_result)) parseVariable(http_request *s,char* buffer) {
+ws_variable* NEED_RESUL_CHECK parseVariable(http_request *s,char* buffer) {
 	int i;
 	int l;
 	int name_space = 0;
 	int offset = 0;
 	char error_buffer[100];
-    //char* buffer2;
 	ws_variable *var,*tmp,*tmp2;
 
 	if(buffer == 0)
@@ -70,15 +69,13 @@ ws_variable* __attribute__((warn_unused_result)) parseVariable(http_request *s,c
 		offset=10;
 	}
 
-	//if ( name_space == 0)
-	//	return 0;
 	
 	var = newWSVariable("tmp");
 
 	l = strlen(buffer);
-//#ifdef _WEBSERVER_TEMPLATE_DEBUG_ 
-//		LOG (TEMPLATE_LOG,NOTICE_LEVEL,0,"parseVariable Name %s",&buffer[offset]);
-//#endif
+#ifdef _WEBSERVER_TEMPLATE_DEBUG_ 
+		LOG (TEMPLATE_LOG,NOTICE_LEVEL,0,"parseVariable Name %s",&buffer[offset]);
+#endif
 
 	if(0 == strncmp(&buffer[offset],"\"",1)){
 		offset++;
@@ -137,11 +134,11 @@ ws_variable* __attribute__((warn_unused_result)) parseVariable(http_request *s,c
                         }
                         buffer[i] = '\0';
                         buffer = &buffer[1];
-                        if(buffer[0] == '\"'){		// String Index 
+                        if(buffer[0] == '\"'){		/* String Index */
                             buffer[i-2] = '\0';
                             buffer = &buffer[1];
                             tmp2 = getWSVariableArray(tmp,buffer);
-                        }else{						// Int Index
+                        }else{						/* Int Index */
                             i = atoi(buffer);
                             tmp2 = getWSVariableArrayIndex(tmp,i);
                         }
@@ -150,7 +147,7 @@ ws_variable* __attribute__((warn_unused_result)) parseVariable(http_request *s,c
                         return var;
                     }		
                           
-                    // bei verschachtelte arrays nochmal das array element suchen
+                    /* bei verschachtelte arrays nochmal das array element suchen */
                     buffer = &buffer[strlen(buffer)+2];
                     if( ( buffer[0] == '[' ) && (tmp2->type == VAR_TYPE_ARRAY) ){
                         tmp = tmp2;
