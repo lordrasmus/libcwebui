@@ -50,29 +50,28 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 CLIENT_WRITE_DATA_STATUS handleClientWriteData(socket_info* sock);
 
 
-// http://tangentsoft.net/wskfaq/articles/bsd-compatibility.html
-// http://publib.boulder.ibm.com/infocenter/iseries/v5r3/index.jsp?topic=/rzab6/rzab6xnonblock.htm
-// http://www.wangafu.net/~nickm/libevent-book/01_intro.html
+/* 
+ http://tangentsoft.net/wskfaq/articles/bsd-compatibility.html
+ http://publib.boulder.ibm.com/infocenter/iseries/v5r3/index.jsp?topic=/rzab6/rzab6xnonblock.htm
+ http://www.wangafu.net/~nickm/libevent-book/01_intro.html
 
-// ---------------------------------- SSL --------------------------------------------
-// http://www.moserware.com/2009/06/first-few-milliseconds-of-https.html
-// http://prefetch.net/articles/debuggingssl.html
+ ---------------------------------- SSL --------------------------------------------
+ http://www.moserware.com/2009/06/first-few-milliseconds-of-https.html
+ http://prefetch.net/articles/debuggingssl.html
 
+*/
 
-
-//int WebserverSLLRecvNonBlocking(socket_info* s, unsigned char *buf, int len, int flags);
 
 
 int     WebserverRecv(socket_info* s, unsigned char *buf, int len, int flags)
 {
 	#ifdef WEBSERVER_USE_SSL
-		//int ret=0;
 		int l=0;
 		if(s->use_ssl == 1){
 			l = WebserverSSLRecvNonBlocking(s,buf,len,flags);
 			return l;
 		}else{
-			//printf("Not an SSL Connection. Reading unencrypted\r\n");
+			/* printf("Not an SSL Connection. Reading unencrypted\r\n"); */
 			return PlatformRecvSocketNonBlocking(s->socket,buf,len,0);
 		}
 	#else
