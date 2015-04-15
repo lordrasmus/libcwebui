@@ -11,7 +11,7 @@ LIBS=
 
 COMPILER=/opt/ppc-tools/bin/powerpc-eabi-gcc
 
-include Makefile.files.ricos
+include Makefile.files.powerpc
 
 OBJ_T := $(patsubst %.c,%.o,$(SOURCES))
 OBJ := $(patsubst %,obj/%,$(OBJ_T))
@@ -38,7 +38,7 @@ all:
 	@mkdir -p obj/third_party/src/rb_tree/
 
 	
-	@$(MAKE) build -f Makefile.ricos
+	@$(MAKE) build -f Makefile.powerpc
 
 
 build: $(OBJ)
