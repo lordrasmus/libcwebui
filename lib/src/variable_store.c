@@ -41,7 +41,6 @@ int var_seeker(const void *el, const void *key) {
 
 
 static char initVariableStore(ws_variable_store* store) {
-	//store->vars = 0;
 	ws_list_init(&store->var_list);
 	ws_list_attributes_seeker(&store->var_list, var_seeker);
 	PlatformCreateMutex(&store->lock);
@@ -207,11 +206,12 @@ void dumpStore(http_request* s, ws_variable_store* store) {
 
 void dumpStoreText(http_request* s, ws_variable_store* store, int tabs) {
 	ws_variable *var;
+	int i;
 	
 	var = getFirstVariable(store);
 	while (var != 0) {
 
-		for( int i = 0 ; i < tabs ; i++ ){
+		for( i = 0 ; i < tabs ; i++ ){
 			printHTMLChunk(s->socket, " ");
 		}
 		

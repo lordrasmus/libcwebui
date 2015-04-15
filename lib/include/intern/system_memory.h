@@ -25,7 +25,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _WEBSERVERSYSTEM_MEMORY_H_
 #define _WEBSERVERSYSTEM_MEMORY_H_
 
-//#include "../platform/include/platform.h"
 
 #include "webserver.h"
 
@@ -110,8 +109,6 @@ HttpRequestHeader* WebserverMallocHttpRequestHeader(void);
 void WebserverResetHttpRequestHeader(HttpRequestHeader *header);
 void WebserverFreeHttpRequestHeader(HttpRequestHeader* header);
 
-//ListNode* MallocListNode(void);
-//void FreeListNode(ListNode* node);
 
 #ifdef __cplusplus
 }

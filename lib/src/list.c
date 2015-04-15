@@ -27,14 +27,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 	#include "webserver.h"
 #endif
 
-// unter win64 ist der node* der zurckgegeben wird nur 32 bit lang ??
+/* unter win64 ist der node* der zurckgegeben wird nur 32 bit lang ?? */
 
 #ifndef USE_SIMCLIST
 
 #ifdef ENABLE_OLD_LIST
 
 ListNode* getNewListNode(void){
-	//ListNode* ret = (ListNode*)WebserverMalloc(sizeof(ListNode),0);
 	ListNode* ret = MallocListNode();
 	ret->next=0;
 	ret->prev=0;
@@ -43,7 +42,7 @@ ListNode* getNewListNode(void){
 }
 
 ListNode* addNewListNode(ListNode* list,void* value){
-	ListNode *newLN; // *next,
+	ListNode *newLN;
 	newLN = getNewListNode();
 	newLN->value = value;
 
@@ -61,7 +60,7 @@ ListNode* addNewListNode(ListNode* list,void* value){
 }
 
 ListNode* addNewListNodeEnd(ListNode* list,void* value){
-	ListNode *newLN,*cur;//*next,
+	ListNode *newLN,*cur;
 	if(list == 0){
 		newLN = getNewListNode();
 		newLN->value = value;

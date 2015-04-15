@@ -50,20 +50,15 @@ void printHeaderInfo(HttpRequestHeader *header){
 	}
 	
 
-/*	for(i=0;i<header->multiparametercount;i++){
-		WebServerPrintf("  Name  : %s\n",header->multipartparameter[i]->name);
-		if(header->multipartparameter[i]->contenttype==CONTENTTYP_TEXT)
-			WebServerPrintf("  Value : %s\n\n",header->multipartparameter[i]->data);
-		else
-			WebServerPrintf("  Value : binary ( %d bytes )\n",header->multipartparameter[i]->lenght);
-	}*/
 }
 
 
 
 
 
-// http://www.ietf.org/rfc/rfc2616.txt
-// http://tools.ietf.org/html/rfc2965
-// http://en.wikipedia.org/wiki/List_of_HTTP_headers
+/*
+ http://www.ietf.org/rfc/rfc2616.txt
+ http://tools.ietf.org/html/rfc2965
+ http://en.wikipedia.org/wiki/List_of_HTTP_headers
+*/
 

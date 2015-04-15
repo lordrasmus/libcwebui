@@ -26,11 +26,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "webserver.h"
 
-//#include "files.h"
-//#include "cookie.h"
-//#include "utils.h"
-
-//#include "sock_info.h"
 
 #define CONTENTTYP_TEXT 1
 #define CONTENTTYP_OCTETSTREAM 2
@@ -43,18 +38,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 
-/*typedef struct{
-	char *name;
-	unsigned char *data;
-	unsigned int lenght;
-	short contenttype;
-}MultiPartParameter;*/
-
-
-
-//MultiPartParameter *getMultipartParameterByName(char* name,HttpRequestHeader* header);
-
-//void sendHeader(socket_info* sock, WebserverFileInfo *info,int p_lenght);
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,8 +52,6 @@ void sendHeaderNotFound(http_request* s, int p_lenght);
 
 int analyseHeaderLine(socket_info* socket,char *line,unsigned int length,HttpRequestHeader *header);
 int analyseFormDataLine(socket_info* sock, char *line, unsigned int length, HttpRequestHeader *header);
-
-//void recievePostFormUrlencoded(int sock,HttpRequestHeader *header);
 
 int getHttpRequestHeader(http_request* s);
 

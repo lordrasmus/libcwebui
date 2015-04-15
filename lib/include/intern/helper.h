@@ -5,7 +5,13 @@
 #include <signal.h>
 
 #define UNUSED_PARA __attribute__((unused))
-#define NEED_RESUL_CHECK __attribute__((warn_unused_result))
+
+#if __GNUC__ > 2
+        #define NEED_RESUL_CHECK __attribute__((warn_unused_result))
+#else
+        #define NEED_RESUL_CHECK
+#endif
+
 
 
 #define likely(x)       __builtin_expect((x),1)

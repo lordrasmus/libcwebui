@@ -55,7 +55,7 @@ void	PlatformEndNetwork ( void ) {}
 int		PlatformSetNonBlocking ( int socket )
 {
     long arg;
-    // Set non-blocking
+    /* Set non-blocking */
     if ( ( arg = fcntl ( socket, F_GETFL, NULL ) ) < 0 )
     {
         LOG ( CONNECTION_LOG,ERROR_LEVEL,socket, "Error fcntl(..., F_GETFL) (%s)", strerror ( errno ) );
@@ -73,7 +73,7 @@ int		PlatformSetNonBlocking ( int socket )
 int		PlatformSetBlocking ( int socket )
 {
     long arg;
-    // Set blocking
+    /* Set blocking */
     if ( ( arg = fcntl ( socket, F_GETFL, NULL ) ) < 0 )
     {
         LOG ( CONNECTION_LOG,ERROR_LEVEL,socket, "Error fcntl(..., F_GETFL) (%s)", strerror ( errno ) );
@@ -117,7 +117,7 @@ int		PlatformGetSocket ( unsigned short port,int connections )
     addr->sin_family = AF_INET;
 #endif
     on = 1;
-   // setsockopt ( s, SOL_SOCKET, SO_REUSEPORT, ( char* ) &on, sizeof ( on ) );
+   /* setsockopt ( s, SOL_SOCKET, SO_REUSEPORT, ( char* ) &on, sizeof ( on ) ); */
     setsockopt ( s, SOL_SOCKET, SO_REUSEADDR, ( char* ) &on, sizeof ( on ) );
 
 
@@ -175,8 +175,10 @@ int		PlatformSelect ( void )
 {
     int ret;
 
-    //printf("Warte auf select .. ");
-    //fflush(stdout);
+    /*
+	printf("Warte auf select .. ");
+    fflush(stdout);
+	*/
 
     ret = select ( select_listen_max + 1, &read_fds, &write_fds, NULL, NULL );
 
@@ -186,19 +188,18 @@ int		PlatformSelect ( void )
     }
     else
     {
-        //printf("OK\n");
+        /*printf("OK\n"); */
     }
 
     return ret;
 }
 
-#endif // SELECT_HELPER_FUNCS
+#endif /* SELECT_HELPER_FUNCS */
 
 int		PlatformAccept(socket_info* sock, unsigned int *port)
 {
     int ret=0;
 	char* ret2;
-	//int len;
 
 #ifdef WEBSERVER_USE_IPV6
     struct sockaddr_in6 clientaddr;
@@ -217,12 +218,13 @@ int		PlatformAccept(socket_info* sock, unsigned int *port)
     {
         getpeername ( ret, ( struct sockaddr * ) &clientaddr, &addrlen );
 		*port = ntohl(clientaddr.sin_port);
-		//len = sizeof ( sock->client_ip_str );
 #ifdef WEBSERVER_USE_IPV6
         if ( inet_ntop ( AF_INET6, &clientaddr.sin6_addr, sock->ip_str, sizeof ( sock->ip_str ) ) )
         {
-            //if(0==IN6_IS_ADDR_V4MAPPED(&clientaddr))	ipv6 = 0;
-            //if(0==IN6_IS_ADDR_V4COMPAT(&clientaddr))	ipv6 = 0;
+            /*
+		if(0==IN6_IS_ADDR_V4MAPPED(&clientaddr))	ipv6 = 0;
+            	if(0==IN6_IS_ADDR_V4COMPAT(&clientaddr))	ipv6 = 0;
+	    */
             if ( clientaddr.sin6_addr.__in6_u.__u6_addr32[0] == 0 )
             {
                 if ( clientaddr.sin6_addr.__in6_u.__u6_addr32[1] == 0 )
@@ -244,8 +246,8 @@ int		PlatformAccept(socket_info* sock, unsigned int *port)
         if ( ret2 != 0  )
         {
 #endif
-            //printf("Client address is %s\n", sock->ip_str);
-            //printf("Client port is %d\n", ntohs(clientaddr.sin6_port));
+            /*printf("Client address is %s\n", sock->ip_str);
+            printf("Client port is %d\n", ntohs(clientaddr.sin6_port));*/
         }
     }
 
@@ -254,7 +256,6 @@ int		PlatformAccept(socket_info* sock, unsigned int *port)
 
 int     PlatformSendSocket ( int socket, unsigned char *buf, SIZE_TYPE len, int flags )
 {
-    //return send(socket,buf,len,flags);
     int ret,ret2;
 	SIZE_TYPE send_bytes = 0;
 
@@ -271,7 +272,7 @@ int     PlatformSendSocket ( int socket, unsigned char *buf, SIZE_TYPE len, int 
             ret2 = errno;
             if ( ( ret2 == EWOULDBLOCK ) || ( ret2 == EAGAIN ) )
             {
-                //tx_thread_sleep(100);
+                /*tx_thread_sleep(100); */
                 continue;
             }
             else
@@ -288,17 +289,14 @@ int     PlatformSendSocket ( int socket, unsigned char *buf, SIZE_TYPE len, int 
 
 int     PlatformSendSocketNonBlocking ( int socket, unsigned char *buf, SIZE_TYPE len, int flags )
 {
-    //return send(socket,buf,len,flags);
     int ret,ret2;
-    //printf("PlatformSendSocketNonBlocking %d %d\n",socket,len);
     ret = send ( socket,buf,len,flags );
-    //LOG ( CONNECTION_LOG,ERROR_LEVEL,socket,"ret %d",ret );
     if ( ret == -1 )
     {
         ret2 = errno;
         if ( ( ret2 == EWOULDBLOCK ) || ( ret2 == EAGAIN ) )
         {
-            //LOG ( CONNECTION_LOG,ERROR_LEVEL,socket,"EWOULDBLOCK | EAGAIN","" );
+            /*LOG ( CONNECTION_LOG,ERROR_LEVEL,socket,"EWOULDBLOCK | EAGAIN","" );*/
             return CLIENT_SEND_BUFFER_FULL;
         }
         if ( errno == ECONNRESET )
@@ -315,7 +313,6 @@ int     PlatformSendSocketNonBlocking ( int socket, unsigned char *buf, SIZE_TYP
         LOG ( CONNECTION_LOG,ERROR_LEVEL,socket,"Unhandled Error %d",ret2 );
         return ret;
     }
-    //printf("PlatformSendSocketNonBlocking return\n");
     return ret;
 }
 

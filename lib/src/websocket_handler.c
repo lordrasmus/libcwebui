@@ -45,21 +45,20 @@ static int handleWebsocket(socket_info* sock, EVENT_TYPES type) {
 			LOG( WEBSOCKET_LOG, ERROR_LEVEL, 0, "Event Type EVENT_PERSIST not handled", "");
 			return -1;
 
-		case EVENT_READ: // READ
-			//
-			// Read muss nicht gelockt werden da nicht auf die websocket_chunk_list zugegriffen wird
-			// ausserdem liest nur der Hauptthread vom socket
-			//
+		case EVENT_READ: /* READ */
+			/*
+			  Read muss nicht gelockt werden da nicht auf die websocket_chunk_list zugegriffen wird
+			  ausserdem liest nur der Hauptthread vom socket
+			*/
 			#if _WEBSERVER_WEBSOCKET_DEBUG_ > 4
 				LOG( WEBSOCKET_LOG, ERROR_LEVEL, 0, "Event Type EVENT_READ", "");
 			#endif
 			if (recFrame(sock) < 0) {
-				//WebserverConnectionManagerCloseRequest ( sock );
 				return -1;
 			}
 			break;
 
-		case EVENT_WRITE: // WRITE
+		case EVENT_WRITE: /* WRITE */
 
 			#if _WEBSERVER_WEBSOCKET_DEBUG_ > 4
 				LOG( WEBSOCKET_LOG, ERROR_LEVEL, 0, "Event Type EVENT_WRITE", "");
@@ -91,7 +90,7 @@ static int handleWebsocket(socket_info* sock, EVENT_TYPES type) {
 					return -1;
 				}
 
-				// Der Buffer konnte nur teilweise gesendet werden
+				/* Der Buffer konnte nur teilweise gesendet werden */
 				if ((status == SOCKET_SEND_NO_MORE_DATA) && (send_bytes < to_send)) {
 					sock->file_infos.file_send_pos = send_bytes;
 					break;
@@ -125,7 +124,7 @@ void websocket_event_handler(socket_info* sock, EVENT_TYPES event_type) {
 	ret = ws_list_empty(&sock->websocket_chunk_list);
 	PlatformUnlockMutex(&sock->socket_mutex);
 
-	// Socket nur schliessen wenn alle Daten gesendet wurden
+	/* Socket nur schliessen wenn alle Daten gesendet wurden */
 	if ((sock->closeSocket == 1) && (ret == 1)) {
 		WebserverConnectionManagerCloseRequest(sock);
 		return;

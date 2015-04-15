@@ -29,12 +29,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "list.h"
 #include "variable.h"
-//#include "dataTypes.h"
-//#include "../platform/include/platform-defines.h"
 #include "platform-defines.h"
 
 struct ws_variable_store_s {
-	//ListNode	*vars;
 	list_t var_list;
 	WS_MUTEX lock;
 };
@@ -45,7 +42,6 @@ typedef struct ws_variable_store_s ws_variable_store;
 extern "C" {
 #endif
 
-//char initVariableStore(ws_variable_store* store);
 ws_variable_store* createVariableStore(void);
 void lockStore(ws_variable_store* store);
 void unlockStore(ws_variable_store* store);
@@ -65,8 +61,6 @@ void freeVariable(ws_variable_store* store, ws_variable* vs);
 ws_variable* getFirstVariable(ws_variable_store* store);
 ws_variable* getNextVariable(ws_variable_store* store);
 void stopIterateVariable(ws_variable_store* store);
-
-//void				dumpStore(session* s,ws_variable_store* store);
 
 
 #ifdef __cplusplus

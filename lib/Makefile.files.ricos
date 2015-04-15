@@ -1,0 +1,49 @@
+
+SOURCES := 	src/builtinFunctions.c \
+			src/cookie.c src/convert.c \
+			src/conditions.c src/engine.c \
+			src/engine_parser.c \
+			src/engine_functions.c \
+			src/engine_api_extensions.c \
+			src/engine_if.c \
+			src/engine_tags.c \
+			src/file_manager.c \
+			src/globals.c \
+			src/header.c \
+			src/header_parser.c \
+			src/header_send.c \
+			src/list.c \
+			src/message_queue.c \
+			src/server.c \
+			src/server_chunk_functions.c \
+			src/server_config.c \
+			src/server_error_pages.c \
+			src/session.c \
+			src/system.c \
+			src/system_memory.c \
+			src/system_sockets.c \
+			src/system_sockets_recv.c \
+			src/system_sockets_send.c \
+			src/system_sockets_container.c \
+			src/system_sockets_events.c \
+			src/system_file_access.c \
+			src/system_file_cache.c \
+			src/webserver_api_functions.c \
+			src/utils.c \
+			src/log.c \
+			src/list.c  \
+			src/variable.c \
+			src/variable_global.c \
+			src/variable_store.c \
+			src/variable_render.c \
+			src/websockets.c \
+			src/websockets_send_recv.c \
+			src/websocket_handler.c \
+			platform/linux/platform-file-access.c \
+			platform/linux/platform-sockets.c \
+			platform/linux/system-unix.c \
+			third_party/src/simclist/simclist.c \
+			third_party/src/rb_tree/red_black_tree.c third_party/src/rb_tree/misc.c third_party/src/rb_tree/stack.c		
+
+
+

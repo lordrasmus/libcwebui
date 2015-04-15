@@ -205,7 +205,6 @@ ALL_SRC int getWSVariableString(ws_variable* var, char* buffer,	unsigned int buf
 }
 
 ALL_SRC void setWSVariableInt(ws_variable* var, int value) {
-//    int length;
 	if (var == 0){
 		return;
 	}
@@ -215,7 +214,6 @@ ALL_SRC void setWSVariableInt(ws_variable* var, int value) {
 }
 
 ALL_SRC void setWSVariableULong(ws_variable* var, uint64_t value) {
-//    int length;
 	if (var == 0){
 		return;
 	}

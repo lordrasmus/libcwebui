@@ -27,9 +27,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 	#include "webserver.h"
 #endif
 
-//extern ListNode *user_conditions;
 
-//#define IF_DEBUG
+/*
+#define IF_DEBUG
+*/
 
 int find_if_tags_pos ( const char *pagedata,const int datalenght,int* else_tag_pos,int* endif_tag_pos ) {
     int pos_start=0,level=0,offset=0;
@@ -91,7 +92,6 @@ int find_if_tags_pos ( const char *pagedata,const int datalenght,int* else_tag_p
 
 
 void engine_TemplateIF ( http_request *s,const char* prefix ,const char *pagename,const char *pagedata,const int datalenght,FUNCTION_PARAS* func,int* i ) {
-    //int retvalue;
     int else_tag_pos,endif_tag_pos;
     CONDITION_RETURN cond_ret;
 #ifdef IF_DEBUG
@@ -108,16 +108,12 @@ void engine_TemplateIF ( http_request *s,const char* prefix ,const char *pagenam
 	return;
     }
 
-    //pos1 = find_tag_end_pos(pagedata,datalenght,"{if:","{endif}");
     then_length = endif_tag_pos -7;
 
 #ifdef IF_DEBUG
     memcpy ( bb1,pagedata,then_length );
     bb1[then_length]='\0';
 #endif
-
-    //pos2 = find_else_tag_pos(pagedata,datalenght);
-
 
     cond_ret = engine_callCondition ( s,func );
 
@@ -171,7 +167,7 @@ void engine_TemplateIF ( http_request *s,const char* prefix ,const char *pagenam
             s->engine_current->return_found = processHTML ( s,prefix,pagename,pagedata,then_length );
             break;
 
-        case CONDITION_FALSE : // kein else zweig vorhanden
+        case CONDITION_FALSE : /* kein else zweig vorhanden */
             break;
         default:
             LOG ( TEMPLATE_LOG,ERROR_LEVEL,0,"Condition Error","" );

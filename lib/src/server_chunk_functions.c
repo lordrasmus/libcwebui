@@ -84,7 +84,6 @@ void writeChunk(list_t* liste, const unsigned char* text, unsigned int length) {
 
 	 */
 
-	//return chunk;
 }
 
 void writeChunkVariable(list_t* liste, ws_variable* var) {
@@ -133,7 +132,6 @@ void sendHeaderChunk(socket_info* sock, const char* text, const unsigned int len
 }
 
 void sendHTMLChunk(socket_info* sock, const char* text, const unsigned int length) {
-	//html_chunk* chunk=0;//,*tmp;
 	if (length == 0) return;
 	if (sock->disable_output == 1) return;
 	writeChunk(&sock->html_chunk_list, (unsigned char*) text, length);
@@ -232,12 +230,10 @@ unsigned long writeChunksToBuffer(list_t* liste, char* out_buffer) {
 }
 
 void generateOutputBuffer(socket_info* sock) {
-	//ListNode* liste;
-	//html_chunk* chunk;
 	char* buffer;
 	unsigned long offset = 0;
 	unsigned long size = getChunkListSize(&sock->header_chunk_list) + getChunkListSize(&sock->html_chunk_list);
-	buffer = (char*) WebserverMalloc ( size + 1  ); // +1 fuer Header Debug '\0'
+	buffer = (char*) WebserverMalloc ( size + 1  ); /* +1 fuer Header Debug '\0' */
 
 	offset = writeChunksToBuffer(&sock->header_chunk_list, buffer);
 

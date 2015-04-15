@@ -21,19 +21,24 @@
 
  */
 
+
 #include "stdafx.h"
 
 #ifdef __GNUC__
 #include <dlfcn.h>
 #endif
 
+
 #include "webserver.h"
 #include "red_black_tree.h"
 #include "webserver_api_functions.h"
 
+
+
 rb_red_blk_tree *user_func_tree;
 rb_red_blk_tree *user_condition_tree;
 rb_red_blk_tree *websocket_handler_tree;
+
 list_t plugin_liste;
 plugin_error_handler error_handler = 0;
 
@@ -109,11 +114,13 @@ int check_platformFunction_exists(FUNCTION_PARAS* func) {
 
 void engine_platformFunction(http_request *s, FUNCTION_PARAS* func) {
 	user_func_s *tmp;
+	rb_red_blk_node* node;
+	char dummy[] = "compiled in";
+       	char *name;
+
 	if (func->parameter[0].text == 0)
 		return;
-	rb_red_blk_node* node = func->platform_function;
-	char dummy[] = "compiled in";
-	char *name;
+	node = func->platform_function;
 
 	tmp = (user_func_s*) node->info;
 #ifdef _WEBSERVER_ENGINE_PLUGINS_DEBUG_
@@ -267,14 +274,16 @@ void register_condition(const char* name, user_condition f, const char* file, in
 	RBTreeInsert(user_condition_tree, tmp->name, tmp);
 }
 
-//ListNode *plugins = 0;
 
-//http://ctpp.havoc.ru/doc/en/
+/*
+	http://ctpp.havoc.ru/doc/en/
 
-//
-// Kein Locking fuer Websocket Handler weil Plugins im init_hook handler registrieren muessen
-//
+
+ Kein Locking fuer Websocket Handler weil Plugins im init_hook handler registrieren muessen
+*/
+
 void register_function_websocket_handler(const char* url, websocket_handler f, const char* file, int line) {
+	websocket_handler_s *tmp;
 	rb_red_blk_node* node = RBExactQuery(websocket_handler_tree, (char*) url);
 	websocket_handler_list_s *list;
 
@@ -289,12 +298,11 @@ void register_function_websocket_handler(const char* url, websocket_handler f, c
 		list = (websocket_handler_list_s*) node->info;
 	}
 
-	websocket_handler_s *tmp = (websocket_handler_s*) WebserverMalloc( sizeof(websocket_handler_s) );
+	tmp = (websocket_handler_s*) WebserverMalloc( sizeof(websocket_handler_s) );
 	tmp->wsh = f;
 	tmp->file = file;
 	tmp->line = line;
 	ws_list_append(list->handler_list, tmp);
-	//printf("Register Websocket Handler >%s< %s:%d\n", url, file, line);
 
 }
 
@@ -325,6 +333,7 @@ int loadPlugin(const char* name, const char* path) {
 	int version;
 	char *error_text;
 	char ldd_buffer[1000];
+	void *dl;
 
 #ifdef _WIN32
 #pragma message ( "loadPlugin not implemented on WIN32" )
@@ -332,7 +341,7 @@ int loadPlugin(const char* name, const char* path) {
 
 	plugin_s *plugin, *plugin_tmp;
 
-	// Pr��fen on Plugin schon geladen wurde
+	/* Pruefen on Plugin schon geladen wurde */
 	ws_list_iterator_start(&plugin_liste);
 	while ((plugin_tmp = (plugin_s*) ws_list_iterator_next(&plugin_liste))) {
 		if (0 == strcmp(plugin_tmp->path, path)) {
@@ -343,7 +352,7 @@ int loadPlugin(const char* name, const char* path) {
 	}
 	ws_list_iterator_stop(&plugin_liste);
 
-	// Plugin Struktur erzeugen
+	/* Plugin Struktur erzeugen */
 	plugin = (plugin_s*) WebserverMalloc( sizeof(plugin_s) );
 	plugin->name = (char*) WebserverMalloc( strlen(name) + 1 );
 	strcpy(plugin->name, name);
@@ -352,7 +361,7 @@ int loadPlugin(const char* name, const char* path) {
 
 	ws_list_append(&plugin_liste, plugin);
 
-	// Pr��fen ob die Plugin Init Funktion abgest��rtzt ist
+	/* Prueen ob die Plugin Init Funktion abgestuertzt ist */
 	if (error_handler != 0) {
 		if (0 != error_handler(PLUGIN_CHECK_ERROR, name, "", "")) {
 			COPY_ERROR("crashed")
@@ -360,12 +369,12 @@ int loadPlugin(const char* name, const char* path) {
 		}
 	}
 
-	// Plugin Shared Object laden
+	/* Plugin Shared Object laden */
 #ifdef RTLD_DEEPBIND
-	//void *dl = dlopen(path,RTLD_NOW | RTLD_GLOBAL | RTLD_DEEPBIND);
-	void *dl = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
+	/* dlopen(path, RTLD_NOW | RTLD_GLOBAL | RTLD_DEEPBIND ); */
+	dl = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
 #else
-	void *dl = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
+	dl = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
 #endif
 	error_text = dlerror();
 	if (dl == 0) {
@@ -379,8 +388,8 @@ int loadPlugin(const char* name, const char* path) {
 		return -2;
 	}
 
-	// Funktion zum abfragen der API Version suchen
-	get_webserver_api_version = (int (*)(void)) dlsym(dl, "get_webserver_api_version"); // hier muss das plugin seine template funktionen registrieren
+	/* Funktion zum abfragen der API Version suchen */
+	get_webserver_api_version = (int (*)(void)) dlsym(dl, "get_webserver_api_version"); /* hier muss das plugin seine template funktionen registrieren */
 	error_text = dlerror();
 
 	if (get_webserver_api_version == 0) {
@@ -392,7 +401,7 @@ int loadPlugin(const char* name, const char* path) {
 		return -3;
 	}
 
-	// API Version abfragen
+	/* API Version abfragen */
 	version = (*get_webserver_api_version)();
 	if (version > WEBSERVER_API) {
 		if (error_handler != 0) {
@@ -403,8 +412,8 @@ int loadPlugin(const char* name, const char* path) {
 		return -4;
 	}
 
-	// Plugin Init Funktion suchen
-	init_webserver_plugin = (char *(*)(void)) dlsym(dl, "init_webserver_plugin"); // hier muss das plugin seine template funktionen registrieren
+	/* Plugin Init Funktion suchen */
+	init_webserver_plugin = (char *(*)(void)) dlsym(dl, "init_webserver_plugin"); /* hier muss das plugin seine template funktionen registrieren */
 	error_text = dlerror();
 
 	if (init_webserver_plugin == 0) {
@@ -459,7 +468,6 @@ void printRegisteredPlugins(http_request* s) {
 			printHTMLChunk(s->socket, "<tr><td>%s<td>%s<td><font color=red>%s</font>", p->name, p->path, p->error);
 		else
 			printHTMLChunk(s->socket, "<tr><td>%s<td>%s<td><font color=green>%s</font>", p->name, p->path, p->error);
-		//printHTMLChunk(s->socket, "<tr><td>%s<td>%s", p->name, p->path);
 	}
 	ws_list_iterator_stop(&plugin_liste);
 }

@@ -67,7 +67,7 @@ typedef struct {
 	char mask_bit;
 	unsigned char playload_length;
 	WEBSOCK_LEN_T real_length;
-	unsigned char *mask; //[4];
+	unsigned char *mask; 
 } websocket_frame;
 
 
@@ -82,9 +82,9 @@ int sendWebsocketBinaryFrame(const char* guid,const unsigned  char* in, const WE
 }
 
 int sendWebsocketFrame(const Opcodes op_code, const char* guid,const  char* in, const WEBSOCK_LEN_T length) {
-	//
-	//	Daten im Text Frame nicht 0 terminieren
-	//
+	/*
+		Daten im Text Frame nicht 0 terminieren
+	*/
 	websocket_queue_msg* msg;
 	if (length < 126) {
 		msg = create_websocket_output_queue_msg(WEBSOCKET_SIGNAL_MSG, guid, length + 2);
@@ -135,19 +135,19 @@ void insert_websocket_output_chunk(socket_info *sock, const unsigned char* in, c
 
 	sendWebsocketChunk(sock, in, length);
 
-	// Write Event nur hinzufuegen wenn noch keine frames in der liste waren
+	/* Write Event nur hinzufuegen wenn noch keine frames in der liste waren */
 	if (ret == 1) {
 		delEventSocketAll(sock);
 		addEventSocketReadWritePersist(sock);
 	}
 }
 
-//
-// Schreibt Daten aus der output queue in die Socket chunk liste
-//
+/*
+ Schreibt Daten aus der output queue in die Socket chunk liste
+*/
 int sendWebsocketFrameReal(const char* guid, const unsigned char* in, const WEBSOCK_LEN_T length) {
 
-	// getSocketByGUID locked den socket mutex
+	/* getSocketByGUID locked den socket mutex */
 	socket_info *sock = getSocketByGUID(guid);
 	if (sock == 0) return -1;
 
@@ -196,7 +196,6 @@ int recFrameV8(socket_info *sock) {
 
 	while (1) {
 		max_read = WebserverMallocedSize(sock->websocket_buffer) - sock->websocket_buffer_offset;
-		//max_read = 18;
 		ret = WebserverRecv(sock, &sock->websocket_buffer[sock->websocket_buffer_offset], max_read, 0);
 		if (ret <= 0) return ret;
 
@@ -215,7 +214,7 @@ int recFrameV8(socket_info *sock) {
 			if (diff < 2)
 				goto recopy_buffer;
 
-			// Reserved Bits must be 0
+			/* Reserved Bits must be 0 */
 			if ( ( sock->websocket_buffer[offset] & 0x70 ) != 0 ){
 				goto close_socket_error;
 			}
@@ -228,19 +227,19 @@ int recFrameV8(socket_info *sock) {
 
 			if (sock->websocket_buffer[offset] & 0x80){
 				wsf.mask_bit = 1;
-				// 4 Byte Mask
+				/* 4 Byte Mask */
 				extra_bytes += 4;
 			}
 			wsf.playload_length = sock->websocket_buffer[offset++] & 0x7F;
 
 
 			if (wsf.playload_length == 126) {
-				// 2 byte extended payload
+				/* 2 byte extended payload */
 				offset += 2;
 				extra_bytes += 2;
 			}
 			if (wsf.playload_length == 127) {
-				// 8 byte extended payload
+				/* 8 byte extended payload */
 				offset += 8;
 				extra_bytes += 8;
 			}
@@ -430,8 +429,10 @@ int recFrameV8(socket_info *sock) {
 				return 0;*/
 			}
 
-			// Wenn alle Bytes aus dem websocket_buffer verarbeitet wurden
-			// beide offset wieder auf anfang setzen
+			/* 
+			 Wenn alle Bytes aus dem websocket_buffer verarbeitet wurden
+			 beide offset wieder auf anfang setzen
+			*/
 			if (offset == sock->websocket_buffer_offset) {
 				sock->websocket_buffer_offset = 0;
 				offset = 0;
@@ -442,7 +443,7 @@ int recFrameV8(socket_info *sock) {
 
 		recopy_buffer:
 
-			// Wenn bearbeitete Frames im Buffer sind letztes Frame nach vorne kopieren
+			/* Wenn bearbeitete Frames im Buffer sind letztes Frame nach vorne kopieren */
 			if ( last_frame_start > 0 ) {
 				diff = sock->websocket_buffer_offset - last_frame_start;
 				for (i = 0; i < diff; i++) {

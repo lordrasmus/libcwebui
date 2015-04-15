@@ -59,7 +59,7 @@ typedef struct{
 #else
 
 	#ifdef __GNUC__
-		#define FireLog(a,...) addFirePHPLog(a,(char*)__FILE__, __LINE__, __VA_ARGS__)
+		#define FireLog(a,ARGS...) addFirePHPLog(a,(char*)__FILE__, __LINE__, __VA_ARGS__)
 	#else
 		#error "Compiler nicht erkannt"
 	#endif
@@ -73,14 +73,17 @@ extern "C" {
 void addFirePHPLog(http_request* s,char* filename,int fileline,char* text,...);
 void vaddFirePHPLog ( http_request* s,const char* filename,int fileline,const char* text, va_list ap );
 
-//void clearFirePHPLog(HttpRequestHeader* header);
 
 
 #ifdef _MSC_VER
 	#define LOG(a,b,c,...) addLog(a,b,__FILE__, __LINE__,__FUNCTION__,c, __VA_ARGS__)
 #endif
 #ifdef __GNUC__
-	#define LOG(a,b,c,d,...) addLog(a,b,(char*)__BASE_FILE__, __LINE__,__FUNCTION__,c,(char*)d, __VA_ARGS__)
+	#if __GNUC__ > 2
+		#define LOG(a,b,c,d,ARGS...) addLog(a,b,(char*)__BASE_FILE__, __LINE__,__FUNCTION__,c,(char*)d, __VA_ARGS__)
+	#else
+		#define LOG(a,b,c,d,ARGS...)
+	#endif
 #endif
 
 

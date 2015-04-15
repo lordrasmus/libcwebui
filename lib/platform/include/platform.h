@@ -47,10 +47,7 @@ void	PlatformFree( void* mem );
 ********************************************************************/
 
 void 			PlatformGetGUID(char* buf,SIZE_TYPE length);
-//void			PlatformGetIP(session *s);
 void 			PlatformGetIPv6(char* bytes);
-//void 			PlatformGetMAC(session *s);
-//void 			PlatformGetNetmask(session *s);
 TIME_TYPE   	PlatformGetTick(void);
 unsigned long	PlatformGetTicksPerSeconde(void);
 

@@ -40,9 +40,9 @@ int checkCacheHeader(http_request* s, WebserverFileInfo *info) {
 #ifndef WEBSERVER_DISABLE_CACHE
 	if (info->FileType != FILE_TYPE_HTML) {
 		if (likely( s->header->etag != 0 )) {
-			//
-			//	ETag Header vorhanden
-			//
+			/*
+				ETag Header vorhanden
+			*/
 			if ((0 == strcmp(ET1, ET2))) {
 #ifdef _WEBSERVER_CACHE_DEBUG_
 				LOG(CACHE_LOG,NOTICE_LEVEL,s->socket->socket, "Cache Hit ETag %s",info->Name );
@@ -59,9 +59,9 @@ int checkCacheHeader(http_request* s, WebserverFileInfo *info) {
 			}
 		} else if ((s->header->If_Modified_Since != 0)
 				&& (info->lastmodified != 0)) {
-			//
-			//		Modified_Since Header vorhanden
-			//
+			/*
+					Modified_Since Header vorhanden
+			*/
 			if ((0 == strcmp(LM1, LM2)) && (strlen(LM1) == strlen(LM2))) {
 #ifdef _WEBSERVER_CACHE_DEBUG_
 				LOG(CACHE_LOG,NOTICE_LEVEL,s->socket->socket,"Cache Hit Last Modified %s",info->Name );

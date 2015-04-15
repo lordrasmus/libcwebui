@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 	#include "webserver.h"
 #endif
 
-//http://www.campin.net/newlogcheck.html
+/* http://www.campin.net/newlogcheck.html */
 
 
 void vaddFirePHPLog ( http_request* s,const char* filename,int fileline,const char* text, va_list ap ) {
@@ -81,11 +81,10 @@ void writeToLog ( char* buffer ) {
 int last_log_length=0;
 
 void addLog ( LogChannels channel,LogLevels level,char* filename,int fileline,const char* function,int socket,char* text,... ) {
-	static char buff[450];// viel l�nger darf eine logzeile nicht sein
+	static char buff[450];/* viel laenger darf eine logzeile nicht sein */
 	int len=0,i;
 	va_list ap;
 
-	//len = snprintf (buff, 450,"%s : %s %d  ",function,filename,fileline);
 	len = snprintf (buff, 450,"%s :  ",function);
 	if(len < last_log_length){
 		for(i=len;i<last_log_length;i++){
@@ -127,6 +126,5 @@ void addLog ( LogChannels channel,LogLevels level,char* filename,int fileline,co
 	}
 
 	len+= snprintf ( &buff[len], 450-len,"\n" );
-	//printf("%s",buff);
 	writeToLog ( buff );
 }
