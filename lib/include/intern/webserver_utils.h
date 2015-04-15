@@ -51,7 +51,7 @@ unsigned int getHTMLDateFormat( char* buffer,int day,int month,int year,int hour
 /*
  int pos=0; in der funktion definieren zum benutzen, in pos steht dann die string laenge
 */
-#define BufferPrint( ARGS... ) pos+=snprintf((char*)retBuffer+pos,ret_length-pos, __VA_ARGS__)
+#define BufferPrint( ARGS... ) pos+=snprintf((char*)retBuffer+pos,ret_length-pos, ARGS)
 
 void 	generateGUID ( char* buf,int length );
 

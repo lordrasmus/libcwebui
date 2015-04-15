@@ -59,7 +59,7 @@ typedef struct{
 #else
 
 	#ifdef __GNUC__
-		#define FireLog(a,ARGS...) addFirePHPLog(a,(char*)__FILE__, __LINE__, __VA_ARGS__)
+		#define FireLog(a,ARGS...) addFirePHPLog(a,(char*)__FILE__, __LINE__, ARGS)
 	#else
 		#error "Compiler nicht erkannt"
 	#endif
@@ -80,7 +80,7 @@ void vaddFirePHPLog ( http_request* s,const char* filename,int fileline,const ch
 #endif
 #ifdef __GNUC__
 	#if __GNUC__ > 2
-		#define LOG(a,b,c,d,ARGS...) addLog(a,b,(char*)__BASE_FILE__, __LINE__,__FUNCTION__,c,(char*)d, __VA_ARGS__)
+		#define LOG(a,b,c,d,ARGS...) addLog(a,b,(char*)__BASE_FILE__, __LINE__,__FUNCTION__,c,(char*)d, ARGS)
 	#else
 		#define LOG(a,b,c,d,ARGS...)
 	#endif

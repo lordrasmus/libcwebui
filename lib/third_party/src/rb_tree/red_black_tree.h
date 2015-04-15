@@ -90,5 +90,5 @@
 #endif
 
 
-#endif // USE_EXTERNAL_RBTREE
+#endif /* USE_EXTERNAL_RBTREE */
 

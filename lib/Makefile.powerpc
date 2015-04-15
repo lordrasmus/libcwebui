@@ -3,7 +3,7 @@ SHELL=/bin/bash
 
 DEFS= -DLINUX
 
-FLAGS= -save-temps -Wall -fPIC -O0    -D_POSIX_SOURCE -ansi
+FLAGS= -save-temps -Wall -fPIC -O0    -D_POSIX_SOURCE -std=c9x #-ansi
 #FLAGS+= -Wpedantic
 
 INCLUDES= -I. -Iinclude -Iplatform/include -Ithird_party/src/simclist/ -Ithird_party/src/rb_tree/ -I/home/ilja/libevent-2.0.22-stable/include/ -I/opt/powerpc-linux/powerpc-linux/include/
