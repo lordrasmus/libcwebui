@@ -684,15 +684,19 @@ void handleServer(socket_info* sock) {
 
 int WebserverCloseSocket(socket_info* s) {
 
+#ifdef WEBSERVER_USE_WEBSOCKETS
 	if ( s->isWebsocket == 1 ) {
 #if _WEBSERVER_CONNECTION_DEBUG_ > 1
 		LOG( CONNECTION_LOG, NOTICE_LEVEL, s->socket, "Closing Websocket Connection", "");
 #endif
 	}else{
+#endif
 #if _WEBSERVER_CONNECTION_DEBUG_ > 1
 		LOG( CONNECTION_LOG, NOTICE_LEVEL, s->socket, "Closing Client Connection", "");
 #endif
+#ifdef WEBSERVER_USE_WEBSOCKETS
 	}
+#endif
 
 #ifdef WEBSERVER_USE_SSL
 	if (s->use_ssl == 1) {
@@ -842,6 +846,7 @@ void handleer( int a, short b, void *t ) {
 	}
 	if (sock->client == 1) {
 		if (b == EVENT_READ) {
+			#ifdef WEBSERVER_USE_SSL
 			sock->ssl_pending = 0;			
 			if(sock->use_ssl == 1){
 				
@@ -871,6 +876,7 @@ void handleer( int a, short b, void *t ) {
 				
 				return;
 			}else{
+			#endif
 				ret = handleClient(sock);
 				if (ret < 0) {
 					WebserverConnectionManagerCloseRequest(sock);
@@ -878,7 +884,9 @@ void handleer( int a, short b, void *t ) {
 				}
 				
 				return;
+			#ifdef WEBSERVER_USE_SSL
 			}
+			#endif
 			
 		}
 		if (b == EVENT_WRITE) {
@@ -907,11 +915,13 @@ void handleer( int a, short b, void *t ) {
 						return;
 					}
 				}
-
+		
+				#ifdef WEBSERVER_USE_WEBSOCKETS
 				if( sock->header->isWebsocket == 2 ){
 					addEventSocketRead(sock);
 					return;
 				}
+				#endif
 
 				WebserverConnectionManagerCloseRequest(sock);
 				return;

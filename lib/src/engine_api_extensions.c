@@ -63,7 +63,9 @@ int StrKeyComp(const void* a, const void* b) {
 
 void init_extension_api(void) {
 
+#ifdef WEBSERVER_USE_WEBSOCKETS
 	initWebsocketApi();
+#endif
 
 	user_func_tree = RBTreeCreate(StrKeyComp, DummyFunc, DummyFunc, DummyFuncConst, DummyFunc);
 	user_condition_tree = RBTreeCreate(StrKeyComp, DummyFunc, DummyFunc, DummyFuncConst, DummyFunc);

@@ -243,11 +243,13 @@ typedef struct {
 	char print_func_prefix[50];
 	char print_func_postfix[50];
 
+
 	char use_ssl;
+	
+#ifdef WEBSERVER_USE_SSL
 	char ssl_pending;
 	char ssl_block_event_flags;
 	uint32_t ssl_event_flags;
-#ifdef WEBSERVER_USE_SSL
 	char run_ssl_accept;
 	struct ssl_store_s *ssl_context;
 #endif

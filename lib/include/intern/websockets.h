@@ -27,6 +27,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "webserver.h"
 
+#ifdef WEBSERVER_USE_WEBSOCKETS
+
+
 #define SHORT_WS_FRAMES_T 1
 
 #ifdef SHORT_WS_FRAMES_T
@@ -91,5 +94,7 @@ void websocket_event_handler(socket_info* sock, EVENT_TYPES event_type);
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* WEBSERVER_USE_WEBSOCKETS */
 
 #endif

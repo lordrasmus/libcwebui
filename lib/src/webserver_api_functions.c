@@ -88,9 +88,17 @@ void addFireLogger(dummy_handler* s, const char* filename, int fileline, const c
  *
  *****************************************************************************/
 
+
+
 char* WebsocketGetStoreGUID(char* guid){
+	#ifdef WEBSERVER_USE_WEBSOCKETS
 	return getWebsocketStoreGUID(guid);
+	#endif
+	
+	return "";
 }
+
+
 
 
 char setSessionVarGUID(char* store_guid, int store, const char* name, const char* value){
@@ -356,7 +364,9 @@ int WebsocketSendBinaryFrame(const char* guid, const char* in, const int length)
 }
 
 int WebsocketSendCloseFrame(const char* guid){
+	#ifdef WEBSERVER_USE_WEBSOCKETS
 	sendCloseFrame2(guid);
+	#endif
 	return 0;
 }
 

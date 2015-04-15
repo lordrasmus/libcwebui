@@ -41,6 +41,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifdef WEBSERVER_USE_WEBSOCKETS
 
+#ifndef WEBSERVER_USE_SSL
+	#error "Webockets nur mit SSL support"
+#endif
+
 #ifndef WEBSOCKET_INIT_INBUFFER_SIZE
 	#define WEBSOCKET_INIT_INBUFFER_SIZE 50
 	#warning WEBSOCKET_INIT_INBUFFER_SIZE not defined, defaults to 50
