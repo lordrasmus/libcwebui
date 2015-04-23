@@ -53,12 +53,11 @@ void url_decode(char *line) {
 		if (unlikely(line[i]=='%')) {
 			hex = (unsigned char)(toHex(line[i + 1]) << 4);
 			hex =  (unsigned char)( hex + toHex(line[i + 2]) );
-			line[i] = hex; /*  hexcode des zeichens als char speichern und 2 zeichen lschen */
-			memcpy(&line[i + 1], &line[i + 3], lenght - i + 3);
+			line[i] = hex; /*  hexcode des zeichens als char speichern und 2 zeichen loeschen */
+			memcpy(&line[i + 1], &line[i + 3], lenght - i );
 			lenght -= 2;
 		}
-		if (line[i] == '+') /* + durch whitespace ersetzen */
-				{
+		if (line[i] == '+'){ /* + durch whitespace ersetzen */
 			line[i] = ' ';
 		}
 	}
@@ -66,14 +65,19 @@ void url_decode(char *line) {
 
 void createParameter(HttpRequestHeader *header, char* name, unsigned int name_length, char* value, unsigned int value_length) {
 	ws_variable *var;
+	char back = name[name_length]; /* Buffer muss im original Zustand belassen werden */
 
 	name[name_length] = '\0';
 	var = newVariable(header->parameter_store, name);
 
 	if (value != 0) {
+		char back2 = value[value_length];
 		value[value_length] = '\0';
 		setWSVariableString(var, value);
+		value[value_length] = back2;
 	}
+
+	name[name_length] = back;
 }
 
 void recieveParameterFromGet(char *line, HttpRequestHeader *header) {
