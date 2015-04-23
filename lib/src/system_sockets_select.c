@@ -28,11 +28,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifdef __GNUC__
 	#include "webserver.h"
+	#include <sys/ioctl.h>
 #endif
 
 
 
 #ifdef USE_SELECT
+
+/* #define DEBUG_SELECT */
 
 #ifdef WEBSERVER_USE_SSL
 	#error "SSL mit select nicht implementiert"
@@ -51,67 +54,6 @@ static int sock_max = 0,max = 0;
 
 
 
-
-void eventHandler(int a, short b, void *t) {
-	char pers = 0;
-
-	printf("eventHandler  ");
-	printf("Nicht implementiert\n");
-	exit(1);
-	
-	#ifdef _WEBSERVER_MEMORY_DEBUG_
-		if ( print_blocks_now == 1 ){
-			printBlocks();
-			print_blocks_now = 0;
-		}
-	#endif
-	
-	short tmp = b & ~( EV_TIMEOUT | EV_READ | EV_WRITE | EV_SIGNAL | EV_PERSIST | EV_ET ) ;
-	
-	if ( tmp != 0 ){
-		//
-		// Dürfte nie auftreten, es scheint das eine Event für eine bereits freigegeben Struktur aufgerufen wird
-		// möglicherweise Problem mit Websockets und / oder OpenSSL
-		printf("BUG: Invalid Flags 0x%X\n",tmp);
-		return;
-	}
-
-	//printf("B: %d\n",b);
-
-	if ((b & EV_PERSIST) == EV_PERSIST) {
-		pers = EVENT_PERSIST;
-	}
-	
-	if ((b & EV_SIGNAL) == EV_SIGNAL) {
-		printf("SIGNAL ignored a: %d  b : %d  t: 0x%p \n",a,b,t);
-		//handleer(a, EVENT_SIGNAL | pers, t);
-		fflush(stdout);
-		return;
-	}
-
-	if ((b & EV_TIMEOUT) == EV_TIMEOUT) {
-		//printf("%d TIMEOUT \n",a);
-		handleer(a, EVENT_TIMEOUT | pers, t);
-		fflush(stdout);
-		return;
-	}
-
-	if ((b & EV_READ) == EV_READ) {
-		//printf("%d READ \n",a);
-		handleer(a, EVENT_READ | pers, t);
-		fflush(stdout);
-		return;
-	}
-
-	if ((b & EV_WRITE) == EV_WRITE) {
-		//printf("%d WRITE \n",a);
-		handleer(a, EVENT_WRITE | pers, t);
-		fflush(stdout);
-		return;
-	}
-
-}
-
 void addEventSocketRead(socket_info* sock) {
 	int i;
 	
@@ -126,7 +68,7 @@ void addEventSocketRead(socket_info* sock) {
 		if(client_sock[i].socket < 0) {
 			client_sock[i].socket = sock->socket;
 			client_sock[i].sock = sock;
-			client_sock[i].flags = EV_READ;
+			client_sock[i].flags = EVENT_READ;
             break;
 		}
 	}
@@ -144,7 +86,9 @@ void addEventSocketRead(socket_info* sock) {
 		
 	FD_SET(sock->socket, &gesamt_lese_sockets);
 	
-	printf("\naddEventSocketRead : %d\n\n",sock->socket);
+	#ifdef DEBUG_SELECT
+		printf("\naddEventSocketRead : %d\n\n",sock->socket);
+	#endif
 	
 }
 
@@ -162,7 +106,7 @@ void addEventSocketReadPersist(socket_info* sock) {
 		if(client_sock[i].socket < 0) {
 			client_sock[i].socket = sock->socket;
 			client_sock[i].sock = sock;
-			client_sock[i].flags = EV_READ | EV_PERSIST;
+			client_sock[i].flags = EVENT_READ | EVENT_PERSIST;
             break;
 		}
 	}
@@ -179,8 +123,10 @@ void addEventSocketReadPersist(socket_info* sock) {
 		max = i;
 		
 	FD_SET(sock->socket, &gesamt_lese_sockets);
-		
-	printf("\naddEventSocketReadPersist : %d\n\n",sock->socket);
+
+	#ifdef DEBUG_SELECT
+		printf("\naddEventSocketReadPersist : %d\n\n",sock->socket);
+	#endif
 
 }
 
@@ -206,7 +152,7 @@ void addEventSocketWritePersist(socket_info* sock) {
 		if(client_sock[i].socket < 0) {
 			client_sock[i].socket = sock->socket;
 			client_sock[i].sock = sock;
-			client_sock[i].flags = EV_WRITE | EV_PERSIST;
+			client_sock[i].flags = EVENT_WRITE | EVENT_PERSIST;
             break;
 		}
 	}
@@ -223,8 +169,10 @@ void addEventSocketWritePersist(socket_info* sock) {
 		max = i;
 		
 	FD_SET(sock->socket, &gesamt_schreibe_sockets);
-		
-	printf("\naddEventSocketWritePersist : %d\n\n",sock->socket);
+
+	#ifdef DEBUG_SELECT
+		printf("\naddEventSocketWritePersist : %d\n\n",sock->socket);
+	#endif
 
 }
 
@@ -272,9 +220,6 @@ void commitSslEventFlags( socket_info* sock ) {
 
 void delEventSocketReadPersist(socket_info* sock) {
 	
-	 //FD_CLR(sock3, &gesamt_sock);  //aus Menge löschen
-     //client_sock[i] = -1;          //auf -1 setzen
-     //printf("Ein Client hat sich beendet\n");
      
 	printf("delEventSocketReadPersist ");
 	printf("Nicht implementiert\n");
@@ -287,25 +232,28 @@ void delEventSocketWrite2( int socket ) {
 	int i;
 	
     for( i=0; i< FD_SETSIZE; i++){
-		if( (client_sock[i].socket == socket) && ( (client_sock[i].flags & EV_WRITE ) == EV_WRITE ) ) {
+		if( (client_sock[i].socket == socket) && ( (client_sock[i].flags & EVENT_WRITE ) == EVENT_WRITE ) ) {
 			client_sock[i].socket = -1;
 			client_sock[i].sock = 0;
 			client_sock[i].flags = 0;
 			
 			FD_CLR(socket, &gesamt_schreibe_sockets);
-             
-			printf("\ndelEventSocketWrite2 : %d\n\n",socket);
+
+            #ifdef DEBUG_SELECT
+				printf("\ndelEventSocketWrite2 : %d\n\n",socket);
+			#endif
             return;
 		}
 	}
-	
-	         
-	printf("\ndelEventSocketWrite2 : not found %d\n\n",socket);
+
+
+	/* printf("\ndelEventSocketWrite2 : not found %d\n\n",socket); */
 }
 
 void delEventSocketWritePersist(socket_info* sock) {
-	
-	 printf("\ndelEventSocketWritePersist : %d\n\n",sock->socket);
+
+	 /* printf("\ndelEventSocketWritePersist : %d\n\n",sock->socket); */
+
 	 delEventSocketWrite2( sock->socket );
 }
 
@@ -313,20 +261,22 @@ void delEventSocketRead2( int socket ) {
 	int i;
 	
     for( i=0; i< FD_SETSIZE; i++){
-		if( (client_sock[i].socket == socket) && ( (client_sock[i].flags & EV_READ ) == EV_READ ) ){
+		if( (client_sock[i].socket == socket) && ( (client_sock[i].flags & EVENT_READ ) == EVENT_READ ) ){
 			client_sock[i].socket = -1;
 			client_sock[i].sock = 0;
 			client_sock[i].flags = 0;
 			
 			FD_CLR(socket, &gesamt_lese_sockets);
-             
-			printf("\ndelEventSocketRead2 : %d\n\n",socket);
+
+            #ifdef DEBUG_SELECT
+				printf("\ndelEventSocketRead2 : %d\n\n",socket);
+			#endif
             return;
 		}
 	}
 	
 	         
-	printf("\ndelEventSocketRead2 : not found %d\n\n",socket);
+	/* printf("\ndelEventSocketRead2 : not found %d\n\n",socket); */
 }
 
 	
@@ -342,14 +292,16 @@ void delEventSocketAll2( int socket ) {
 			
 			FD_CLR(socket, &gesamt_lese_sockets);
 			FD_CLR(socket, &gesamt_schreibe_sockets);
-             
-			printf("\ndelEventSocketAll : %d\n\n",socket);
+
+            #ifdef DEBUG_SELECT
+				printf("\ndelEventSocketAll : %d\n\n",socket);
+			#endif
             return;
 		}
 	}
 	
 	         
-	printf("\ndelEventSocketAll : not found %d\n\n",socket);
+	/* printf("\ndelEventSocketAll : not found %d\n\n",socket); */
 }
 
 void delEventSocketAll(socket_info* sock) {
@@ -372,7 +324,6 @@ void initEvents() {
 		
 	FD_ZERO(&gesamt_lese_sockets);
 	FD_ZERO(&gesamt_schreibe_sockets);
-	//FD_SET(sock1, &gesamt_sock);
 }
 
 int check_sock_exists( int socket ){
@@ -394,45 +345,68 @@ char waitEvents() {
 	fd_set send_sock;
 	
 	while( 1 ){
-		printf("select max : %d  sock_max : %d\n", max,  sock_max);
-		fflush(stdout);
+		#ifdef DEBUG_SELECT
+			printf("select max : %d  sock_max : %d\n", max,  sock_max);
+			fflush(stdout);
+		#endif
 		
 		lese_sock = gesamt_lese_sockets;
 		send_sock = gesamt_schreibe_sockets;
 		
-		for(i=0; i<=max; i++) {
-			printf("Sock %d : %d 0x%X ( %p )\n",i,client_sock[i].socket, client_sock[i].flags, client_sock[i].sock);
-		}
+		#ifdef DEBUG_SELECT
+			for(i=0; i<=max; i++) {
+				if ( client_sock[i].socket > -1 ){
+					printf("Sock %d : %d 0x%X ( %p )\n",i,client_sock[i].socket, client_sock[i].flags, client_sock[i].sock);
+				}
+			}
+		#endif
 		
-		ready = select( sock_max+1, &lese_sock, &send_sock, NULL, NULL ); // &send_sock
+		ready = select( sock_max+1, &lese_sock, &send_sock, NULL, NULL );
 		
-		printf("select ret : %d\n",ready);
-		fflush(stdout);
+		#ifdef DEBUG_SELECT
+			printf("select ret : %d\n",ready);
+			fflush(stdout);
+		#endif
 		
 		for(i=0; i<=max; i++) {
 			
 			if(( sock3 = client_sock[i].socket) < 0)
 				continue;
-			
+
 			if(FD_ISSET(sock3, &lese_sock)){
-			  
-				if ( ( client_sock[i].flags & EV_PERSIST ) == EV_PERSIST ){
-					printf("Socket %d Read\n",sock3);
+				int totalPending; 
+				socket_info *client_sock_info = client_sock[i].sock;
+
+				if ( ( client_sock[i].flags & EVENT_PERSIST ) == EVENT_PERSIST ){
+					#ifdef DEBUG_SELECT
+						printf("Socket %d ( %d ) Read\n",sock3,i);
+						fflush(stdout);
+					#endif
 					handleer(sock3 , EVENT_READ , client_sock[i].sock );
-				}else{			  
+				}else{
 					int socket = client_sock[i].sock->socket;
-					handleer(sock3 , EVENT_READ , client_sock[i].sock );
 					
-					#ifdef WEBSERVER_USE_SSL
-					if ( ( client_sock[i].socket == socket ) && ( client_sock[i].sock->ssl_event_flags & EV_READ ) ){
-						client_sock[i].sock->ssl_event_flags &= ~EV_READ;
-					}else{
-					#endif
+					#ifdef DEBUG_SELECT
 						printf("Socket %d Read not Persist\n",sock3);
-						delEventSocketRead2( socket );
-					#ifdef WEBSERVER_USE_SSL
-					}
+						fflush(stdout);
 					#endif
+
+					delEventSocketRead2( socket );
+
+					handleer(sock3 , EVENT_READ , client_sock_info );
+
+				}
+
+				if( ioctl( sock3, FIONREAD, &totalPending) == -1 )
+				{
+					if ( totalPending > 0 ){
+						/*#ifdef DEBUG_SELECT */
+							printf("\nPending ( %d ): %d\n\n", sock3, totalPending);
+							fflush(stdout);
+						/*#endif */
+
+						handleer(sock3 , EVENT_READ , client_sock_info );
+					}
 				}
 				
 				if( --ready <= 0 )
@@ -441,32 +415,32 @@ char waitEvents() {
 
 			if(FD_ISSET(sock3, &send_sock)){
 				
-				if ( ( client_sock[i].flags & EV_PERSIST ) == EV_PERSIST ){
-					printf("Socket %d Write\n",sock3);
+				if ( ( client_sock[i].flags & EVENT_PERSIST ) == EVENT_PERSIST ){
+					#ifdef DEBUG_SELECT
+						printf("Socket %d Write\n",sock3);
+						fflush(stdout);
+					#endif
 					handleer(sock3 , EVENT_WRITE , client_sock[i].sock );
 				}else{
 					int socket = client_sock[i].sock->socket;
-					handleer(sock3 , EVENT_WRITE , client_sock[i].sock );
 					
-					#ifdef WEBSERVER_USE_SSL
-					if ( ( client_sock[i].socket == socket ) &&  ( client_sock[i].sock->ssl_event_flags & EVENT_WRITE  ) ){
-						client_sock[i].sock->ssl_event_flags &= ~EVENT_WRITE;
-					}else{
-					#endif
+					delEventSocketWrite2( socket );
+
+					#ifdef DEBUG_SELECT
 						printf("Socket %d Write not Persist\n",sock3);
-						delEventSocketWrite2( socket );
-					#ifdef WEBSERVER_USE_SSL
-					}
+						fflush(stdout);
 					#endif
+
+					handleer(sock3 , EVENT_WRITE , client_sock[i].sock );
+
 				}
-				
+
 				if( --ready <= 0 )
 					break;
 			}
 			
 		}
-		
-		//sleep(1);
+
 	}
     
     return 0;
