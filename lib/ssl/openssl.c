@@ -42,7 +42,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "stdafx.h"
 
-
+#include "WebserverConfig.h"
 
 #ifndef WEBSERVER_USE_OPENSSL_CRYPTO
 	#warning "OPENSSL Support Disabled"
@@ -76,7 +76,7 @@ struct sha_context {
 	SHA_CTX *sha_ctx;
 };
 
-SSL_CTX *ctx;
+SSL_CTX *g_ctx;
 
 
 BIO *bio_err = 0;
@@ -135,36 +135,36 @@ int initOpenSSL(void) {
 	OpenSSL_add_all_algorithms(); // load & register cryptos
 	SSL_load_error_strings(); // load all error messages
 
-	ctx = initialize_ctx(
+	g_ctx = initialize_ctx(
 							getConfigText("ssl_key_file"),
 							getConfigText("ssl_key_file_backup"),
 							getConfigText("ssl_ca_list_file"),
 							getConfigText("ssl_key_file_password")
 						);
 
-	if ( ctx == NULL ){
+	if ( g_ctx == NULL ){
 		LOG( SSL_LOG, ERROR_LEVEL, 0, "SSL fehler init ctx, SSL disabled", "");
 		return -1;
 	}
-	if (load_dh_params(ctx, getConfigText("ssl_dh_file") ) < 0) {
+	if (load_dh_params(g_ctx, getConfigText("ssl_dh_file") ) < 0) {
 		LOG( SSL_LOG, ERROR_LEVEL, 0, "SSL fehler dh_params", "");
 		return -1;
 	}
 
 	cache_mode = SSL_SESS_CACHE_OFF; // No session caching for client or server takes place.
 	//cache_mode = SSL_SESS_CACHE_SERVER|SSL_SESS_CACHE_NO_INTERNAL;
-	SSL_CTX_set_session_cache_mode(ctx, cache_mode);
+	SSL_CTX_set_session_cache_mode(g_ctx, cache_mode);
 	//SSL_CTX_sess_set_new_cb(ctx,    ssl_callback_NewSessionCacheEntry);
 	//SSL_CTX_sess_set_get_cb(ctx,    ssl_callback_GetSessionCacheEntry);
 	//SSL_CTX_sess_set_remove_cb(ctx, ssl_callback_DelSessionCacheEntry);
 
 
-	SSL_CTX_set_mode(ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
-	SSL_CTX_set_read_ahead(ctx, 1);
+	SSL_CTX_set_mode(g_ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+	SSL_CTX_set_read_ahead(g_ctx, 1);
 
 
 	// SSLv2, SSLv3 deaktivieren , testen :   nmap --script ssl-cert,ssl-enum-ciphers -p 443 192.168.11.94
-	SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+	SSL_CTX_set_options(g_ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 
 
 	return 0;
@@ -303,7 +303,7 @@ int WebserverSSLInit(socket_info* s) {
 		 s->ssl_context = (struct ssl_store_s*) WebserverMalloc ( sizeof ( struct ssl_store_s ) );
 	}
 
-	s->ssl_context->ssl = SSL_new(ctx);
+	s->ssl_context->ssl = SSL_new(g_ctx);
 	if (s->ssl_context->ssl == 0){
 		LOG(CONNECTION_LOG, ERROR_LEVEL, s->socket, "WebserverSSLInit fehler", "");
 	}
