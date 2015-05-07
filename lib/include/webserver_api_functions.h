@@ -352,7 +352,7 @@ void WebserverConfigSetText(const char* name, const char* text);
 
 void WebserverInjectExternFD(int fd, extern_handler handle );
 
-<<<<<<< HEAD
+
 void WebserverSetPostHandler( post_handler handler );
 
 
@@ -360,9 +360,6 @@ void WebserverSetPostHandler( post_handler handler );
 //int handleWebsocketConnection(WEBSOCKET_SIGNALS signal ,char* guid, char* url,char* msg);
 
 
-
-=======
->>>>>>> ce4fd7dd4533662da3f25543820c09bcba90b8c3
 #ifdef __cplusplus
 }
 #endif
