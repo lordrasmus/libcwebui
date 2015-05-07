@@ -35,7 +35,7 @@ int sendHeaderWebsocket(socket_info* sock) {
 		printWebsocketChunk(sock, "HTTP/1.1 101 Web Socket Protocol Handshake\r\n");
 		printWebsocketChunk(sock, "Upgrade: WebSocket\r\n");
 		printWebsocketChunk(sock, "Connection: Upgrade\r\n");
-		if (sock->header->SecWebSocketKey1 != 0) { // neuers websocket handshake protokol
+		if (sock->header->SecWebSocketKey1 != 0) { /* neuers websocket handshake protokol */
 			printWebsocketChunk(sock, "sec-websocket-origin: %s\r\n", sock->header->Origin);
 			printWebsocketChunk(sock, "sec-websocket-location: ws://%s/%s\r\n", sock->header->Host, sock->header->url);
 		} else {
@@ -71,12 +71,11 @@ void addConnectionStatusLines(socket_info* socket) {
 }
 
 void addCacheControlLines(http_request* s, WebserverFileInfo *info) {
-	// Cache-Control: no-cache, no-store, must-revalidate, pre-check=0, post-check=0
+	/* Cache-Control: no-cache, no-store, must-revalidate, pre-check=0, post-check=0 */
 #ifndef WEBSERVER_DISABLE_CACHE
 	if ( ( info->FileType != FILE_TYPE_HTML ) && ( ! isTemplateFile( info->Url )  ) ) {
-		printHeaderChunk ( s->socket,"Cache-Control: max-age=%d, public\r\n",MAX_CACHE_AGE ); // sekunden bis refresh
-		//printHeaderChunk ( s->socket,"Expires: Thu, 15 Apr 2060 20:00:00 GMT\r\n");
-		//#warning "Durch eine Webserver Setting ersetzen"
+		printHeaderChunk ( s->socket,"Cache-Control: max-age=%d, public\r\n",MAX_CACHE_AGE ); /* sekunden bis refresh */
+		/* printHeaderChunk ( s->socket,"Expires: Thu, 15 Apr 2060 20:00:00 GMT\r\n"); */
 
 		if ( info->etag != 0 )
 			printHeaderChunk ( s->socket,"ETag: %s\r\n",info->etag );
@@ -116,7 +115,7 @@ void sendHeaderError(socket_info* socket, char* ErrorMessage, int p_lenght) {
 }
 
 void addContentTypeLines(http_request *s, WebserverFileInfo *info) {
-	//http://www.w3schools.com/media/media_mimeref.asp
+	/* http://www.w3schools.com/media/media_mimeref.asp */
 	switch (info->FileType) {
 	case FILE_TYPE_PLAIN:
 		printHeaderChunk(s->socket, "%s", "Content-Type: text/plain\r\n");
@@ -175,9 +174,9 @@ void addContentTypeLines(http_request *s, WebserverFileInfo *info) {
 		break;
 
 	case FILE_TYPE_JSON:
-		//if ( info->ForceDownload == 0){
+		/* if ( info->ForceDownload == 0){ */
 			printHeaderChunk(s->socket, "%s", "Content-Type: application/json\r\n");
-		//}
+		/* } */
 		break;
 
 	case FILE_TYPE_PDF:
@@ -229,7 +228,6 @@ void addFirePHPHeaderLines(http_request* s) {
 		ws_list_clear(&s->socket->firephplogs);
 		input_offset--;
 		input_offset += sprintf(&buffer2[input_offset], "]}");
-		//printf("%s", buffer2);
 
 		WebserverBase64Encode((const unsigned char *) buffer2, strlen(buffer2), (unsigned char *) buffer, 10000);
 
@@ -253,11 +251,12 @@ void addFirePHPHeaderLines(http_request* s) {
 	 FireLogger-7ff46714-4	eC5waHAiLCJsaW5lbm8iOjN9XX0=
 	 */
 
-	//len = snprintf ( buff, 450,"[{\"Type\":\"LOG\",\"File\":\"%s\",\"Line\":%d},\"",filename,fileline );
-	//len+= snprintf ( buff+len,450-len,"\"]" );
-	//len = snprintf(buff,200,"[{\"Type\":\"LOG\",\"File\":\"%s\",\"Line\":%d},\"%s\"]",filename,fileline,text);
-	// http://www.firephp.org/Wiki/Reference/Protocol
-	// http://wildfirehq.org/
+	/*len = snprintf ( buff, 450,"[{\"Type\":\"LOG\",\"File\":\"%s\",\"Line\":%d},\"",filename,fileline );
+	len+= snprintf ( buff+len,450-len,"\"]" );
+	len = snprintf(buff,200,"[{\"Type\":\"LOG\",\"File\":\"%s\",\"Line\":%d},\"%s\"]",filename,fileline,text);
+	 http://www.firephp.org/Wiki/Reference/Protocol
+	 http://wildfirehq.org/
+	*/
 	/*printHeaderChunk ( s->socket,"FireLogger: http://meta.wildfirehq.org/Protocol/JsonStream/0.2\r\n" );
 	 printHeaderChunk ( s->socket,"X-Wf-Protocol-1: http://meta.wildfirehq.org/Protocol/JsonStream/0.2\r\n" );
 	 printHeaderChunk ( s->socket,"X-Wf-1-Plugin-1: http://meta.firephp.org/Wildfire/Plugin/FirePHP/Library-FirePHPCore/0.3\r\n" );
@@ -278,12 +277,12 @@ void addCSPHeaderLines(http_request* s){
 	if ( getConfigInt( "use_csp") == 0 )
 		return;
 
-	// ; style-src 'self' ; img-src 'self' ; script-src 'self'
+	/* ; style-src 'self' ; img-src 'self' ; script-src 'self' */
 
 #ifdef WEBSERVER_USE_SSL
 
 	offset += snprintf(&buff[offset],1000-offset,"default-src http://%s https://%s; ",s->header->Host ,s->header->Host);
-	//offset += snprintf(&buff[offset],1000-offset,"script-src 'self' 'unsafe-eval' http://%s https://%s; ",s->header->Host ,s->header->Host);
+	/*offset += snprintf(&buff[offset],1000-offset,"script-src 'self' 'unsafe-eval' http://%s https://%s; ",s->header->Host ,s->header->Host);*/
 	offset += snprintf(&buff[offset],1000-offset,"script-src http://%s https://%s; ",s->header->Host ,s->header->Host);
 	offset += snprintf(&buff[offset],1000-offset,"style-src http://%s https://%s; ",s->header->Host ,s->header->Host);
 	offset += snprintf(&buff[offset],1000-offset,"connect-src ws://%s http://%s wss://%s https://%s ; ",s->header->Host ,s->header->Host,s->header->Host ,s->header->Host );
@@ -298,8 +297,10 @@ void addCSPHeaderLines(http_request* s){
 #endif
 
 
-//	printHeaderChunk(s->socket, "%s %s\r\n", "X-WebKit-CSP: ", buff);
-//	printHeaderChunk(s->socket, "%s %s\r\n", "X-Content-Security-Policy: ", buff);
+/*
+	printHeaderChunk(s->socket, "%s %s\r\n", "X-WebKit-CSP: ", buff);
+	printHeaderChunk(s->socket, "%s %s\r\n", "X-Content-Security-Policy: ", buff);
+*/
 	printHeaderChunk(s->socket, "%s %s\r\n", "Content-Security-Policy: ",buff);
 
 
@@ -319,25 +320,28 @@ void addSessionCookies(http_request* s,WebserverFileInfo *info){
 
 	#ifdef WEBSERVER_USE_SSL
 
-	if ((s->create_cookie == 1) && (info->FileType == FILE_TYPE_HTML)) { // Nur bei HTML Seiten Session cookies senden
-		//printHeaderChunk(s->socket, "Set-Cookie: session-id=%s; Version=\"1\"; Path=\"/\"; Discard; HttpOnly; domain=%s\r\n", s->guid,s->header->Host);
-		//printHeaderChunk(s->socket, "Set-Cookie: session-id=%s; Discard; domain=%s\r\n", s->guid,s->header->Host);
+	if ((s->create_cookie == 1) && (info->FileType == FILE_TYPE_HTML)) { /* Nur bei HTML Seiten Session cookies senden */
+		/*
+		printHeaderChunk(s->socket, "Set-Cookie: session-id=%s; Version=\"1\"; Path=\"/\"; Discard; HttpOnly; domain=%s\r\n", s->guid,s->header->Host);
+		printHeaderChunk(s->socket, "Set-Cookie: session-id=%s; Discard; domain=%s\r\n", s->guid,s->header->Host);
+		printHeaderChunk(s->socket, "Set-Cookie: session-id=%s; Path=\"/\"; Discard\r\n", s->guid);	// Working but IE
+		*/
 
-		//printHeaderChunk(s->socket, "Set-Cookie: session-id=%s; Path=\"/\"; Discard\r\n", s->guid);	// Working but IE
-
-		printHeaderChunk(s->socket, "Set-Cookie: session-id=%s; HttpOnly; Discard\r\n", s->guid); // Working IE 11 , Opera 20 , Firefox, Chrome
+		printHeaderChunk(s->socket, "Set-Cookie: session-id=%s; HttpOnly; Discard\r\n", s->guid); /* Working IE 11 , Opera 20 , Firefox, Chrome */
 	}
 
 	if ((s->create_cookie_ssl == 1) && (s->socket->use_ssl == 1 && (info->FileType == FILE_TYPE_HTML))) {
-		//printHeaderChunk(s->socket, "Set-Cookie: session-id-ssl=%s; Version=\"1\"; Path=\"/\"; Discard; Secure; HttpOnly; domain=%s\r\n",s->guid_ssl, s->header->Host);
-		//printHeaderChunk(s->socket, "Set-Cookie: session-id-ssl=%s; Path=\"/\"; Discard\r\n",s->guid_ssl, s->header->Host);
+		/*
+		printHeaderChunk(s->socket, "Set-Cookie: session-id-ssl=%s; Version=\"1\"; Path=\"/\"; Discard; Secure; HttpOnly; domain=%s\r\n",s->guid_ssl, s->header->Host);
+		printHeaderChunk(s->socket, "Set-Cookie: session-id-ssl=%s; Path=\"/\"; Discard\r\n",s->guid_ssl, s->header->Host);
+		*/
 		printHeaderChunk(s->socket, "Set-Cookie: session-id-ssl=%s; HttpOnly; Discard\r\n",s->guid_ssl);
 
 	}
 
 	#else
 
-	if ((s->create_cookie == 1) && (info->FileType == FILE_TYPE_HTML)) { // Nur bei HTML Seiten Session cookies senden
+	if ((s->create_cookie == 1) && (info->FileType == FILE_TYPE_HTML)) { /* Nur bei HTML Seiten Session cookies senden */
 		printHeaderChunk(s->socket, "Set-Cookie: session-id=%s; Version=\"1\"; Path=\"/\"; Discard; HttpOnly; domain=http://%s\r\n", s->guid,s->header->Host);
 	}
 
@@ -367,7 +371,9 @@ int sendHeader(http_request* s, WebserverFileInfo *info, int p_lenght) {
 
 	if ( info->ForceDownload == 1){
 		printHeaderChunk(s->socket, "Content-Description: File Transfer\r\n");
-		//printHeaderChunk(s->socket, "Content-Type: application/octet-stream\r\n");
+		/*
+		printHeaderChunk(s->socket, "Content-Type: application/octet-stream\r\n");
+		*/
 		if ( 0 == strcmp("",(char*)info->ForceDownloadName)){
 			printHeaderChunk(s->socket, "Content-Disposition: attachment; filename=%s\r\n",info->Url);
 		}else{
@@ -379,7 +385,7 @@ int sendHeader(http_request* s, WebserverFileInfo *info, int p_lenght) {
 		printHeaderChunk(s->socket, "Pragma: public\r\n");
 	}
 
-	printHeaderChunk(s->socket, "\r\n"); // HTTP Header beenden
+	printHeaderChunk(s->socket, "\r\n"); /* HTTP Header beenden */
 	return 1;
 }
 

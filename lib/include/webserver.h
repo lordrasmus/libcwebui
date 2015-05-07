@@ -39,10 +39,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 #include <math.h>
-#include <event2/event.h>
-#include <event2/thread.h>
+
+#ifdef USE_LIBEVENT
+	#include <event2/event.h>
+	#include <event2/thread.h>
+#endif
 
 #include "WebserverConfig.h"
+
+#ifdef WEBSERVER_USE_WEBSOCKETS
+	#ifndef WEBSERVER_USE_SSL
+		#error "Webockets nur mit SSL support"
+	#endif
+#endif
 
 #include "simclist.h"
 #include "red_black_tree.h"

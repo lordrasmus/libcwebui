@@ -51,23 +51,7 @@ void setRenderVariable(http_request* s,const char* name,const char* text){
 
 
 DEFINE_FUNCTION( dump_render_vars ){
-	//char buffer[200];
-	//ws_variable* var = getFirstVariable( ((http_request*)s)->render_var_store );
 
 	dumpStoreText( (http_request*)s, ((http_request*)s)->render_var_store, 0  );
 
-	/*while( var ){
-		
-		printHTML(s, "Var : %s -> ",var->name);
-		if ( var->type == VAR_TYPE_ARRAY ){
-			
-		}else{
-			getWSVariableString(var,buffer,200);
-			printHTML(s, "%s\n",buffer);
-		}
-
-		var = getNextVariable( ((http_request*)s)->render_var_store );
-		
-	}
-	stopIterateVariable( ((http_request*)s)->render_var_store );*/
 }

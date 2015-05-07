@@ -59,9 +59,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "webserver.h"
 
-// http://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html
-// http://gcc.gnu.org/onlinedocs/cpp/Standard-Predefined-Macros.html
-
+/* http://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html
+ http://gcc.gnu.org/onlinedocs/cpp/Standard-Predefined-Macros.html
+*/
 
 
 /**************************************************************
@@ -69,21 +69,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 *                   Speicher Verwaltung                       *
 *                                                             *
 **************************************************************/
-//#define MALLOC_DEBUG
+/*#define MALLOC_DEBUG*/
 #ifdef MALLOC_DEBUG
 static int mallocs;
 #endif
 void*	PlatformMalloc ( SIZE_TYPE size ) {
 #ifdef MALLOC_DEBUG
     unsigned char *p;
-	//printf ( "Malloc 1 %X (%d) %d\r\n",0,size,mallocs );
-	//malloc_stats(NULL);
+	/*printf ( "Malloc 1 %X (%d) %d\r\n",0,size,mallocs );
+	malloc_stats(NULL);*/
     p = malloc ( size+2 );
-	//printf ( "Malloc 2 %X (%d) %d\r\n",p,size,mallocs );
     p[0]=size;
     p[1]=size>>8;
-    //printf ( "Malloc 3 %X (%d) %d\r\n",p+2,size,++mallocs );
-	printf ( "Malloc  %X (%d) %d\r\n",p+2,size,++mallocs );
+    printf ( "Malloc  %X (%d) %d\r\n",p+2,size,++mallocs );
     return p+2;
 #else
     return malloc ( size );
@@ -102,7 +100,7 @@ void	PlatformFree ( void *mem ) {
 #endif
 }
 
-void	WebserverPrintMemInfo ( void ) {}			// gibt auf dem DSTni verfuegbaren Arbeitspeicher aus
+void	WebserverPrintMemInfo ( void ) {}			/* gibt auf dem DSTni verfuegbaren Arbeitspeicher aus */
 
 
 
@@ -126,7 +124,7 @@ TIME_TYPE PlatformGetTick ( void ) {
 }
 
 unsigned long PlatformGetTicksPerSeconde ( void ) {
-    return (unsigned long)1; // Konstante HZ benutzen ??
+    return (unsigned long)1; /* Konstante HZ benutzen ?? */
 }
 
 #ifdef WEBSERVER_USE_SESSIONS
@@ -166,7 +164,6 @@ void 	PlatformGetGUID ( char* buf,SIZE_TYPE length ) {
 ********************************************************************/
 
 ALL_SRC int PlatformCreateMutex(WS_MUTEX* m){
-	//printf("Creating Mutex\n");
 	pthread_mutexattr_t att;
 
 	if ( m == 0 ){
@@ -175,18 +172,19 @@ ALL_SRC int PlatformCreateMutex(WS_MUTEX* m){
 	}
 
 	pthread_mutexattr_init(&att);
-//	pthread_mutexattr_settype(&att,PTHREAD_MUTEX_ERRORCHECK_NP);
+/*	pthread_mutexattr_settype(&att,PTHREAD_MUTEX_ERRORCHECK_NP); */
 	m->locked = 0;
 	return pthread_mutex_init(&m->handle,&att);
 }
 
 ALL_SRC int PlatformLockMutex(WS_MUTEX* m){
-	//printf("Locking %X\n",m);
+	/*printf("Locking %X\n",m);*/
+	int ret;	
 	if ( m == 0 ){
 		printf("PlatformLockMutex wurde nicht initialisiert\n");
 		return EINVAL;
 	}
-	int ret =  pthread_mutex_lock(&m->handle);
+	ret =  pthread_mutex_lock(&m->handle);
 	m->locked++;
 	if ( m->locked > 1)
 		printf("PlatformLockMutex wurde doppelt gelocked\n");
@@ -194,7 +192,7 @@ ALL_SRC int PlatformLockMutex(WS_MUTEX* m){
 }
 
 ALL_SRC int PlatformUnlockMutex(WS_MUTEX* m){
-	//printf("Unlocking %X\n",m);
+	/*printf("Unlocking %X\n",m);*/
 	if ( m == 0 ){
 		printf("PlatformLockMutex wurde nicht initialisiert\n");
 		return EINVAL;
@@ -205,7 +203,7 @@ ALL_SRC int PlatformUnlockMutex(WS_MUTEX* m){
 }
 
 ALL_SRC int PlatformDestroyMutex(WS_MUTEX* m){
-	//printf("Destroy Mutex\n");
+	/*printf("Destroy Mutex\n");*/
 	if ( m == 0 ){
 		return EINVAL;
 	}

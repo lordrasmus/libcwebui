@@ -39,7 +39,7 @@ void * SafeMalloc(size_t size);
 
 
 
-#endif // USE_EXTERNAL_RBTREE
+#endif /* USE_EXTERNAL_RBTREE */
 
 
 

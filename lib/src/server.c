@@ -29,21 +29,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 unsigned char *g_lastmodified;
 
-//extern ws_variable* filepath;
 
 void WebserverPrintShortInfos(void);
 
 void endHTTPRequest(http_request *s) {
+	upload_file_info * f_info;
 
 	clearRenderVariables(s);
 	if (s->store != 0) unlockStore(s->store->vars);
 	if (s->store_ssl != 0) unlockStore(s->store_ssl->vars);
 
-	upload_file_info * f_info;
 
 	ws_list_iterator_start(&s->upload_files);
 	while( ( f_info = (upload_file_info*)ws_list_iterator_next(&s->upload_files) ) ){
-		//printf("End File Size : %ld\n",f_info->length);
 		WebserverFree(f_info->name);
 		WebserverFree(f_info->data);
 		WebserverFree(f_info);
@@ -63,6 +61,9 @@ void parsePostData(http_request *s){
 	uint64_t offset3 = 0;
 	char end= 0;
 	uint32_t tmp;
+	HttpRequestHeader *header;
+	uint32_t bound_len;
+	char* bound_end;
 
 	if ( s->socket->header->post_buffer == 0 ){
 		return;
@@ -72,19 +73,17 @@ void parsePostData(http_request *s){
 		return;
 	}
 
-	HttpRequestHeader *header = WebserverMallocHttpRequestHeader();
+	header = WebserverMallocHttpRequestHeader();
 
-	uint32_t bound_len = WebserverMallocedSize(s->socket->header->boundary) - 1;
+	bound_len = WebserverMallocedSize(s->socket->header->boundary) - 1;
 
-	char* bound_end = WebserverMalloc(WebserverMallocedSize(s->socket->header->boundary) + 2);
+	bound_end = WebserverMalloc(WebserverMallocedSize(s->socket->header->boundary) + 2);
 
 	strcpy(bound_end, s->socket->header->boundary);
 	strcat(bound_end,"--");
 
 	header->method = 1;
 
-	//printf("Boundary = %s\n",s->socket->header->boundary);
-	//printf("Data ( %ld ) : ||%s||\n",s->socket->header->contentlenght,s->socket->header->post_buffer);
 
 	for ( offset = 0; offset < s->socket->header->contentlenght ; offset++ ){
 
@@ -107,37 +106,38 @@ void parsePostData(http_request *s){
 
 				pos2 = &pos[ offset3 ];
 
-				// Ein Boundary beendet / startet einen Abschnitt
+				/* Ein Boundary beendet / startet einen Abschnitt */
 				if ( 0 == strncmp( pos2 , bound_end , bound_len ) ){
+					upload_file_info * file_info;
 
-					// Am Ender Der Daten ist \r\n darum -2
+					/* Am Ender Der Daten ist \r\n darum -2 */
 					data = WebserverMalloc( ( offset3 - offset2 ) - 1 );
 					memcpy( data, data_start , ( offset3 - offset2 ) - 2);
 					data[ ( offset3 - offset2 ) - 2 ] = '\0';
 
-					upload_file_info * file_info = WebserverMalloc( sizeof ( upload_file_info ) );
+					file_info = WebserverMalloc( sizeof ( upload_file_info ) );
 
 					file_info->data = data;
 					file_info->length = ( offset3 - offset2 )  -2;
 
 					tmp = stringfind(header->Content_Disposition, "filename=");
 					if ( 0 != tmp){
-						tmp += 2; // = und " stehen noch am anfang
-						uint32_t len = strlen( header->Content_Disposition ) - tmp - 1; // am ende ist noch ein "
+						uint32_t len;
+						tmp += 2; /* = und " stehen noch am anfang */
+						len = strlen( header->Content_Disposition ) - tmp - 1; /* am ende ist noch ein " */
 						file_info->name= WebserverMalloc( len + 1);
 						strncpy( file_info->name , &header->Content_Disposition[ tmp ] , len );
 						file_info->name[len] = '\0';
-						//printf("Filename <%s>\n",file_info->name);
 					}else{
 						LOG ( CONNECTION_LOG,ERROR_LEVEL,s->socket->socket,"Kein filename in Content_Disposition ( %s )", s->socket->header->Content_Disposition);
 					}
 
 					ws_list_append(&s->upload_files, file_info);
-					offset = offset3 + offset + bound_len - 1;	// -1 weil die Hauptschelife +1 macht
+					offset = offset3 + offset + bound_len - 1;	/* -1 weil die Hauptschelife +1 macht */
 					break;
 				}
 
-				// Ein Boundary mit -- am ende beendet das multipart/form-data
+				/* Ein Boundary mit -- am ende beendet das multipart/form-data */
 				if ( 0 == strncmp(  pos2 , bound_end , bound_len + 2) ){
 					end = 1;
 					break;
@@ -251,13 +251,15 @@ int getHttpRequest(socket_info* sockp) {
 		WebServerPrintf ( "  ... OK builtin Site\n" );
 #endif
 	} else {
+		ws_variable *download;
+
 		if (0 != strlen((char*) s.header->url)){
-			file = getFile(s.header->url); // Eingabe von zB http://192.168.2.80/test.html
+			file = getFile(s.header->url); /* Eingabe von zB http://192.168.2.80/test.html */
 		}else{
-			file = getFile((char*) "index.html"); // Eingabe von zB http://192.168.2.80/
+			file = getFile((char*) "index.html"); /* Eingabe von zB http://192.168.2.80/ */
 		}
 
-		ws_variable *download = getParameter(&s, "download");
+		download = getParameter(&s, "download");
 
 		if ( file && download ) {
 			file->ForceDownload = 1;
@@ -272,22 +274,22 @@ int getHttpRequest(socket_info* sockp) {
 #if __GNUC__ > 3
 		WebServerPrintf ( " ..%X..  ", ( unsigned int ) ( unsigned long ) file ); // file ist ein Pointer
 #else
-		WebServerPrintf ( " ..%X..  ",file ); // file ist ein Pointer
+		WebServerPrintf ( " ..%X..  ",file ); /* file ist ein Pointer */
 #endif
 #endif
 		if (file != 0) {
 
 			if ( file->TemplateFile == 1){
-				sendHTMLFile(&s, file); // Schickt die HTML Seite durch die Template Engine
+				sendHTMLFile(&s, file); /* Schickt die HTML Seite durch die Template Engine */
 			}else{
-				sendFile(&s, file); 	// Sendet die Daten direkt an den Socket ohne den Pagebuffer zu benutzen
+				sendFile(&s, file); 	/* Sendet die Daten direkt an den Socket ohne den Pagebuffer zu benutzen */
 			}
 
 #ifdef _WEBSERVER_DEBUG_
 			WebServerPrintf ( " ... OK\n" );
 #endif
 		} else {
-			sendFileNotFound(&s); // nichts gefunden Fehlermeldung senden
+			sendFileNotFound(&s); /* nichts gefunden Fehlermeldung senden */
 #ifdef _WEBSERVER_DEBUG_
 					WebServerPrintf ( " ... file not found !!\n" );
 #endif
@@ -348,9 +350,6 @@ int checkBuilinSites(http_request *s) {
 }
 
 void WebserverPrintInfos(void) {
-	//int i;
-	//int size=0;
-	//WebServerPrintf ( "-------------------\n" );
 	/*for(i=0;i<g_files.FileCount;i++){
 	 if(g_files.files[i]->DataLenght == 0) continue;
 	 WebServerPrintf("Name : %s\n",g_files.files[i]->Name);
@@ -389,9 +388,6 @@ void WebserverPrintInfos(void) {
 }
 
 void WebserverPrintShortInfos(void) {
-	//int i;
-	//int size=0;
-	//WebServerPrintf ( "-------------------\n" );
 	/*for(i=0;i<g_files.FileCount;i++){
 	 if(strlen((char*)g_files.files[i]->Name) < 50)
 	 WebServerPrintf("Name : %s",g_files.files[i]->Name);

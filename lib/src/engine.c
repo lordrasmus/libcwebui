@@ -27,9 +27,11 @@
 #include "webserver.h"
 #endif
 
-//#pragma GCC push_options
-//#pragma GCC optimize ("O0")
-//#warning "Optimierung fuer Engine Parser deaktiviert"
+/*
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
+#warning "Optimierung fuer Engine Parser deaktiviert"
+*/
 
 void template_engine_start(http_request *s) {
 	s->engine_current = &s->engine_list[s->engine_index++];
@@ -52,12 +54,10 @@ void getFunction(unsigned char *para, int *function, int *id) {
 
 void engine_loop_array(http_request *s, const char* prefix, const char *pagename, const char *pagedata, const int datalenght,
 		FUNCTION_PARAS* func, int* i) {
-	//char buffer[1000];
 	ws_variable *var_array, *tmp, *var_value_name = 0, *var_key_name = 0, *tmp_value, *tmp_key;
 	int pos1 = find_tag_end_pos((char*) pagedata, datalenght, "{loop:", "{endloop}");
 	*i += pos1;
 	pos1 -= 9;
-	//strncpy(buffer,pagedata,pos1);
 
 	tmp_key = 0;
 
@@ -109,25 +109,9 @@ void engine_loop_array(http_request *s, const char* prefix, const char *pagename
 
 }
 
-#define FUNC_CMP(a,c) {\
-	int b = strlen(a); \
-	if ( \
-		( 0 == strncmp((char*)&buffer2[1],a,b) ) \
-		&& ( buffer2[b+1] == '}' ) \
-		){ \
-		return c; \
-	}\
-}
+#define FUNC_CMP(a,c) { int b = strlen(a); if ( ( 0 == strncmp((char*)&buffer2[1],a,b) ) && ( buffer2[b+1] == '}' ) ){ 	return c; } }
 
-#define FUNC_CMP_OPTS(a,c) {\
-	int b = strlen(a); \
-	if ( \
-		( 0 == strncmp((char*)&buffer2[1],a,b) ) \
-		&& ( ( buffer2[b+1] == ':' ) || ( buffer2[b+1] == '}' ) ) \
-		){ \
-		return c; \
-	}\
-}
+#define FUNC_CMP_OPTS(a,c) { int b = strlen(a); if ( ( 0 == strncmp((char*)&buffer2[1],a,b) ) && ( ( buffer2[b+1] == ':' ) || ( buffer2[b+1] == '}' ) ) ){ return c; }}
 
 ENGINE_FUNCTIONS func_cmp_extendet(const char *buffer, int length, const char*name, ENGINE_FUNCTIONS func) {
 	int b = strlen(name);
@@ -337,7 +321,8 @@ void printFoundEngineFunction(FUNCTION_PARAS* func) {
 
 #endif
 
-//int __attribute__((optimize("O0")))
+/*int __attribute__((optimize("O0"))) */
+
 int processHTML(http_request* s, const char* prefix, const char *pagename, const char *pagedata,
 		const int datalenght) {
 	int i, last_chunk_send_pos;
@@ -347,10 +332,6 @@ int processHTML(http_request* s, const char* prefix, const char *pagename, const
 	int function_length;
 	char return_found = 0;
 
-	//char bb1[100000];
-	//memcpy(bb1,pagedata,datalenght);
-	//bb1[datalenght]=0;
-	//WebServerPrintf("HTML Source (%d) : %s\n",datalenght,bb0);
 
 	template_engine_start(s);
 	s->engine_current->prefix = (char*) prefix;
@@ -360,7 +341,6 @@ int processHTML(http_request* s, const char* prefix, const char *pagename, const
 
 	last_chunk_send_pos = 0;
 	for (i = 0; i < datalenght; i++) {
-		//WebServerPrintf("Char %d (%c)",i,pagedata[i]);
 		if (pagedata[i] == '{') {
 			function_start_pos = i;
 			end_pos = i;
@@ -375,7 +355,7 @@ int processHTML(http_request* s, const char* prefix, const char *pagename, const
 			function_length = function_end_pos - function_start_pos;
 			parseFunction(s->engine_current, &pagedata[function_start_pos], function_length);
 
-			if (s->engine_current->func.function == TEMPLATE_UNKNOWN) {		// JS Klammer ignorieren
+			if (s->engine_current->func.function == TEMPLATE_UNKNOWN) {		/* JS Klammer ignorieren */
 				freeFunction(s->engine_current);
 				i++;
 				continue;
@@ -389,19 +369,17 @@ int processHTML(http_request* s, const char* prefix, const char *pagename, const
 
 			if ((s->socket->enable_print_funcs == 1) && (s->engine_current->func.function != TEMPLATE_ECHO_FUNCS_OFF)) {
 				sendHTMLChunk(s->socket, s->socket->print_func_prefix, strlen(s->socket->print_func_prefix));
-				sendHTMLChunk(s->socket, &pagedata[function_start_pos], function_length);	// {} mit ausgeben
+				sendHTMLChunk(s->socket, &pagedata[function_start_pos], function_length);	/* {} mit ausgeben */
 				sendHTMLChunk(s->socket, s->socket->print_func_postfix, strlen(s->socket->print_func_postfix));
 			}
 
 			i = end_pos - 1;
 
-			//lenght = i-i3-1;
 
 #ifdef _WEBSERVER_TEMPLATE_DEBUG_
 			printFoundEngineFunction(func);
 #endif
 
-			//function = getEngineFunctionCode(buffer2);
 
 			switch (s->engine_current->func.function) {
 
@@ -427,7 +405,6 @@ int processHTML(http_request* s, const char* prefix, const char *pagename, const
 				last_chunk_send_pos = i + 1;
 				break;
 			case TEMPLATE_LOOP_ARRAY:
-				//i++;
 				engine_loop_array(s, prefix, pagename, &pagedata[i + 1], datalenght - i, &s->engine_current->func, &i);
 				last_chunk_send_pos = i + 1;
 				break;
@@ -485,7 +462,7 @@ int processHTML(http_request* s, const char* prefix, const char *pagename, const
 		}
 	}
 
-	// bei einem if bei dem  hinter dem {else} keine bytes mehr sind springt auf  datalenght + 1
+	/* bei einem if bei dem  hinter dem {else} keine bytes mehr sind springt auf  datalenght + 1 */
 	if (i > (datalenght + 1)) {
 		char* tmp = (char*) WebserverMalloc(datalenght + 1 );
 		strncpy(tmp, pagedata, datalenght);
@@ -494,18 +471,16 @@ int processHTML(http_request* s, const char* prefix, const char *pagename, const
 		WebserverFree(tmp);
 	}
 
-	//printf("Send End %s %d %d %d\n",pagename ,i,datalenght,last_chunk_send_pos);
 	sendHTMLChunk(s->socket, (char*) &pagedata[last_chunk_send_pos], datalenght - last_chunk_send_pos);
 
-	/*for(;i<datalenght;i++){
-	 printf("Char (%X) %c\n",pagedata[i],pagedata[i]);
-	 }*/
 
 	template_engine_stop(s);
 
 	return return_found;
 }
 
-//#pragma GCC pop_options
-//http://ctpp.havoc.ru/doc/en/
+/*
+#pragma GCC pop_options
+http://ctpp.havoc.ru/doc/en/
+*/
 

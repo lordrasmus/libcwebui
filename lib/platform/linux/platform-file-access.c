@@ -23,10 +23,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 #include <stdio.h>
+#include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -37,8 +37,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 static FILE *g_fp;
 unsigned short l;
 
-//#define __USE_XOPEN2K8 1
-//#define __USE_MISC 1
 
 /**************************************************************
  *                                                             *
@@ -52,7 +50,7 @@ int PlatformOpenDataReadStream(char* name) {
 	g_fp = fopen(name, "rb");
 	if (g_fp == NULL) return false;
 
-	// Auf normale Datei Prüfen
+	/* Auf normale Datei Prüfen */
 	fstat(fileno(g_fp), &st);
 	if (!S_ISREG(st.st_mode)) return false;
 
@@ -62,13 +60,8 @@ int PlatformOpenDataReadStream(char* name) {
 
 int PlatformGetFileSize(void) {
 	struct stat st;
-	//int size;
-	//fseek(g_fp, 0, SEEK_END);
-	//size = ftell(g_fp);
-	//fseek(g_fp, 0, SEEK_SET); // Anfang der Datei
 	fstat(fileno(g_fp), &st);
 	return st.st_size;
-	//return size;
 }
 
 char PlatformCloseDataStream(void) {
@@ -77,7 +70,7 @@ char PlatformCloseDataStream(void) {
 }
 
 void PlatformResetDataStream(void) {
-	fseek(g_fp, 0, SEEK_SET); // Anfang der Datei
+	fseek(g_fp, 0, SEEK_SET); /* Anfang der Datei */
 }
 
 int PlatformReadBytes(unsigned char *data, FILE_OFFSET lenght) {
@@ -123,10 +116,11 @@ char PlatformGetFileTime(WebserverFileInfo* file) {
 	f_nsec = st.st_mtim.tv_nsec;
 #else
 	f_sec = st.st_mtime;
-	f_nsec = st.st_atimensec;
+/*	f_nsec = st.st_atimensec;*/
+	f_nsec = st.st_atime;
 #endif
 
-	//st.st_mtim.tv_nsec;
+	/* st.st_mtim.tv_nsec; */
 	if ( ( file->last_mod_sec == (unsigned long int)f_sec) && ( file->last_mod_nsec == (unsigned long int)f_nsec) && (file->DataLenght == st.st_size) )
 		return false;
 

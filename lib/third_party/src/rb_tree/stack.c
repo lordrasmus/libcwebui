@@ -90,4 +90,4 @@ void StackDestroy(stk_stack * theStack, void DestFunc(void * a)) {
 	}
 }
 
-#endif // USE_EXTERNAL_RBTREE
+#endif /* USE_EXTERNAL_RBTREE */

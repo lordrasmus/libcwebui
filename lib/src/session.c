@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "stack.h"
 #include "red_black_tree.h"
 
-// * Session Managment *
+/* * Session Managment *
 // http://de.wikipedia.org/wiki/Session-ID
 // Formulare mit versteckten Feldern
 // Status in der URI
@@ -47,8 +47,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 // * optimierungen *
 // beim erzeugen eines session stores für eine session immer eine neue session-id generieren ( session fixation )
+*/
 
-//ListNode* sessionStores;
 static rb_red_blk_tree* session_store_tree;
 static unsigned long last_timeout_check = 0;
 
@@ -62,7 +62,6 @@ void DummyFunc( UNUSED_PARA void* a);
 void DummyFuncConst( UNUSED_PARA const void* a);
 int StrKeyComp( UNUSED_PARA const void* a, UNUSED_PARA const void* b);
 
-//static int  int_getSessionValue(session* s,STORE_TYPES store,char* name,char* value,int value_size);
 static ws_variable* int_getSessionValue(http_request* s, STORE_TYPES store, const char* name);
 static char int_setSessionValue(http_request* s, STORE_TYPES store, const char* name, const char* value);
 static ws_variable* int_addSessionValue(http_request* s, STORE_TYPES store, const char* name );
@@ -81,7 +80,6 @@ void DummFreeFunc( UNUSED_PARA void * a){
 }
 
 void checkSessionTimeout(void) {
-	//ListNode *list;
 	sessionStore* ss;
 	unsigned long diff;
 	unsigned int deleted = 0;
@@ -89,7 +87,7 @@ void checkSessionTimeout(void) {
 	rb_red_blk_node* node;
 	list_t del_list;
 
-	// nur alle 10 sekunden auf timeouts testen
+	/* nur alle 10 sekunden auf timeouts testen */
 	diff = PlatformGetTick() - last_timeout_check;
 	if (diff < (10 * PlatformGetTicksPerSeconde())) return;
 
@@ -99,11 +97,13 @@ void checkSessionTimeout(void) {
 	stack = RBEnumerate(session_store_tree, (void*)"0", (void*)"z");
 
 	while (0 != StackNotEmpty(stack)) {
+		int timeout;
+
 		node = (rb_red_blk_node*) StackPop(stack);
 		ss = (sessionStore*) node->info;
 		diff = PlatformGetTick() - ss->last_use;
 		
-		int timeout = getConfigInt("session_timeout");
+		timeout = getConfigInt("session_timeout");
 		
 		if ( ( timeout != 0 ) && ( ( diff < 0 ) || (diff > timeout * PlatformGetTicksPerSeconde() ) ) ) {
 #ifdef _WEBSERVER_SESSION_DEBUG_
@@ -119,9 +119,9 @@ void checkSessionTimeout(void) {
 		ws_list_iterator_start(&del_list);
 		while ((node = (rb_red_blk_node*) ws_list_iterator_next(&del_list))) {
 
-			// 
-			// Freigeben der Elemente ist in der RBTree Freer Function eingetragen ( SessionFreerFunc )
-			//
+			/* 
+			 Freigeben der Elemente ist in der RBTree Freer Function eingetragen ( SessionFreerFunc )
+			*/
 			RBDelete(session_store_tree, node);			
 		}
 		ws_list_iterator_stop(&del_list);
@@ -146,7 +146,6 @@ char guid_cmp(char* a, char* b) {
 
 int checkUserRegistered(http_request* s) {
 	bool got_normal;
-	//bool got_ssl;
 	bool true_normal, true_ssl, true_both, got_giud, got_guid_ssl, guid_match;
 
 	ws_variable* var;
@@ -156,7 +155,6 @@ int checkUserRegistered(http_request* s) {
 #endif
 
 	got_normal = false;
-	//got_ssl = false;
 	true_normal = false;
 	true_ssl = false;
 	true_both = false;
@@ -184,7 +182,6 @@ int checkUserRegistered(http_request* s) {
 	if (s->socket->use_ssl == 1) {
 		var = int_getSessionValue(s, SESSION_STORE_SSL, (char*) "registered");
 		if (var != 0) {
-			//got_ssl = true;
 			if (var->type == VAR_TYPE_STRING) {
 				if (0 == strcmp(var->val.value_string, "true")) {
 					true_ssl = true;
@@ -251,7 +248,7 @@ if(	status==false) {
 			int_setSessionValue(s, SESSION_STORE, (char*) "registered", (char*) "true");
 			int_setSessionValue(s, SESSION_STORE_SSL, (char*) "registered", (char*) "true");
 
-			// Zur sicherheit die Variablen inhalte nochmal pruefen
+			/* Zur sicherheit die Variablen inhalte nochmal pruefen */
 			var = int_getSessionValue(s, SESSION_STORE, (char*) "session-id");
 			if (var != 0) {
 				if (guid_cmp(var->val.value_string, buf1)) {
@@ -274,7 +271,7 @@ void createSession(http_request* s, unsigned char ssl_store) {
 
 
 	if (ssl_store == 0) {
-		memcpy(ss->guid, s->guid, WEBSERVER_GUID_LENGTH); //strlen((char*)s->guid));
+		memcpy(ss->guid, s->guid, WEBSERVER_GUID_LENGTH); /* strlen((char*)s->guid)); */
 #ifdef _WEBSERVER_SESSION_DEBUG_
 				WebServerPrintf("Create SessionStore GUID : %s\r\n",s->guid);
 #endif
@@ -282,7 +279,7 @@ void createSession(http_request* s, unsigned char ssl_store) {
 		s->store = ss;
 	}
 	if (ssl_store == 1) {
-		memcpy(ss->guid, s->guid_ssl, WEBSERVER_GUID_LENGTH); //strlen((char*)s->guid));
+		memcpy(ss->guid, s->guid_ssl, WEBSERVER_GUID_LENGTH); /* strlen((char*)s->guid)); */
 #ifdef _WEBSERVER_SESSION_DEBUG_
 				WebServerPrintf("Create SessionStore SSL GUID : %s\r\n",s->guid_ssl);
 #endif
@@ -292,7 +289,6 @@ void createSession(http_request* s, unsigned char ssl_store) {
 
 	ss->last_use = PlatformGetTick();
 	RBTreeInsert(session_store_tree, ss->guid, ss);
-	//sessionStores = addNewListNode(sessionStores,ss);
 
 }
 
@@ -416,7 +412,6 @@ char setSessionValue(http_request* s, STORE_TYPES store, const char* name, const
 
 static char int_setSessionValue(http_request* s, STORE_TYPES store, const char* name, const char* value) {
 	ws_variable* var = 0;
-//	unsigned int length;
 	if (store == SESSION_STORE) {
 		if (s->store == 0) return false;
 		var = newVariable(s->store->vars, name);
@@ -466,23 +461,22 @@ static ws_variable* int_addSessionValue(http_request* s, STORE_TYPES store, cons
 
 
 static ws_variable* int_getSessionValue(http_request* s, STORE_TYPES store, const char* name) {
-	//ListNode *liste,*start;
 	ws_variable* var = 0;
 
 	if (s == 0) return 0;
 
 	if (store == SESSION_STORE) {
-		if (s->store == 0) return 0; //snprintf(value,value_size,"value %s not found",name);
+		if (s->store == 0) return 0; /* snprintf(value,value_size,"value %s not found",name); */
 		var = getVariable(s->store->vars, name);
 	}
 	if (store == SESSION_STORE_SSL) {
 #ifdef WEBSERVER_USE_SSL
-		if (s->socket == 0) return 0; //snprintf(value,value_size,"value %s not found",name);
-		if (s->socket->use_ssl == 0) return 0; //snprintf(value,value_size,"value %s not found",name);
-		if (s->store_ssl == 0) return 0; //snprintf(value,value_size,"value %s not found",name);
+		if (s->socket == 0) return 0; /* snprintf(value,value_size,"value %s not found",name); */
+		if (s->socket->use_ssl == 0) return 0; /*snprintf(value,value_size,"value %s not found",name); */
+		if (s->store_ssl == 0) return 0; /*snprintf(value,value_size,"value %s not found",name); */
 		var = getVariable(s->store_ssl->vars, name);
 #else
-		return 0; // kein SSL verfügbar
+		return 0; /* kein SSL verfügbar */
 #endif
 	}
 
@@ -552,10 +546,6 @@ void checkSessionCookie(http_request* s) {
 
 
 int dumpSession( http_request* s ) {
-	//  int pos=0;
-//		char text_buffer[200];
-//		ListNode *liste;
-//		ws_variable *var;
 	unsigned long s1 = 0;
 	unsigned long s2 = 0;
 
@@ -589,7 +579,6 @@ int dumpSession( http_request* s ) {
 }
 
 void dumpSessions(http_request* s) {
-	//ListNode *list;
 	sessionStore* ss;
 	unsigned long size, ticks;
 	ws_variable *var;
@@ -598,13 +587,12 @@ void dumpSessions(http_request* s) {
 
 	stack = RBEnumerate(session_store_tree, (void*)"0", (void*)"z");
 
-	//list = getFirstListNode(sessionStores);
 	while (0 != StackNotEmpty(stack)) {
 		node = (rb_red_blk_node*) StackPop(stack);
 		ss = (sessionStore*) node->info;
 		size = getVariableStoreSize(ss->vars);
 		size += sizeof(sessionStore);
-		//size -= sizeof(ws_variable_store); // ist in getVariableStoreSize schon mit drin
+		/* size -= sizeof(ws_variable_store); // ist in getVariableStoreSize schon mit drin */
 
 		printHTMLChunk(s->socket, "<table border=1>");
 		printHTMLChunk(s->socket, "<tr><th>Store %ld Byte<th>%s", size, ss->guid);
@@ -624,7 +612,6 @@ void dumpSessions(http_request* s) {
 		}
 
 		printHTMLChunk(s->socket, "</table>");
-		//list = getNextListNode(list);
 	}
 	free(stack);
 }

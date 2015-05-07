@@ -104,11 +104,10 @@ void startWebServer(void) {
 
 
 	WebserverConnectionManagerStartLoop();
-	//shutdownWebserver();
+	/* shutdownWebserver(); */
 }
 
 int handleWebRequest(socket_info* sock) {
-	//session *s;
 	if (sock == 0) return -1;
 
 	if (sock->header == 0) return -1;
@@ -144,7 +143,7 @@ void shutdownWebserver(void) {
 	LOG(CONNECTION_LOG, NOTICE_LEVEL, 0, "Webserver Shutdown", "");
 	freeSocketContainer();
 	freeFileCache();
-	// filepath erst NACH files freigeben weil der prefix direkt verlinkt wird
+	/* filepath erst NACH files freigeben weil der prefix direkt verlinkt wird */
 	freeWSVariable(filepath);
 	free_extension_api();
 	freeSessions();
@@ -206,7 +205,7 @@ char isTemplateFile(const char* file) {
 	int i, i2;
 	int ret = 0;
 
-	// prüfen ob file postfix in der liste ist
+	/* prüfen ob file postfix in der liste ist */
 	tmp = getWSVariableArrayFirst(template_file_postfix);
 	while (tmp != 0) {
 		for (i2 = strlen(file), i = tmp->name_len; (i >= 0) && (i2 >= 0); i--, i2--) {
@@ -223,7 +222,7 @@ char isTemplateFile(const char* file) {
 
 	if (ret == 0) return 0;
 
-	// template ignores suchen
+	/* template ignores suchen */
 	tmp = getWSVariableArrayFirst(template_file_postfix);
 	while (tmp != 0) {
 		for (i2 = strlen(file), i = tmp->name_len; (i >= 0) && (i2 >= 0); i--, i2--) {

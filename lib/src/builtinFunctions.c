@@ -35,9 +35,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 extern unsigned long allocated;
 extern unsigned long allocated_max;
 
-//extern ListNode* sessionStores;
-//extern ListNode *user_functions;
-
 
 DEFINE_FUNCTION( compiler ) {
 #ifdef __INTEL_COMPILER
@@ -58,7 +55,8 @@ DEFINE_FUNCTION( compiler ) {
     printHTML ( s ,"GCC %d.%d.%d",__GNUC__,__GNUC_MINOR__,__GNUC_PATCHLEVEL__ );
     return;
 #else
-    return sprintf ( retBuffer,"GCC %d.%d",__GNUC__,__GNUC_MINOR__ );
+     printHTML ( s ,"GCC %d.%d",__GNUC__,__GNUC_MINOR__ );
+     return;
 #endif
 #endif
 
@@ -218,13 +216,11 @@ void getServerLink ( http_request* s ) {
         	printHTMLChunk ( s->socket,"http://%s:%d",mybuf,webserver_port );
     }
 #else
-    //static char mybuf[INET_ADDRSTRLEN];
     if ( s->socket->use_ssl == 1 ) {
         printHTMLChunk ( s->socket , "https://" );
     } else {
         printHTMLChunk ( s->socket , "http://" );
     }
-    //PlatformGetIP ( s );
     printHTMLChunk ( s->socket,"%s",getConfigText( "server_ip") );
     if ( s->socket->use_ssl == 1 ) {
         printHTMLChunk ( s->socket ,":%d",getConfigInt("ssl_port") );

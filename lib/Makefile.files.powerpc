@@ -26,7 +26,6 @@ SOURCES := 	src/builtinFunctions.c \
 			src/system_sockets_send.c \
 			src/system_sockets_container.c \
 			src/system_sockets_events.c \
-			src/system_sockets_select.c \
 			src/system_file_access.c \
 			src/system_file_cache.c \
 			src/webserver_api_functions.c \
@@ -40,7 +39,6 @@ SOURCES := 	src/builtinFunctions.c \
 			src/websockets.c \
 			src/websockets_send_recv.c \
 			src/websocket_handler.c \
-			ssl/openssl.c \
 			platform/linux/platform-file-access.c \
 			platform/linux/platform-sockets.c \
 			platform/linux/system-unix.c \

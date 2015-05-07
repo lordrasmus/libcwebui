@@ -24,29 +24,32 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "webserver.h"
 
 
-//#include <Utils/bbs_common_log.h>
 
-//
-// Protokoll
-//
-// http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-16
-//
+/*
+ Protokoll
 
-//http://www.cs.uwaterloo.ca/~brecht/servers/openfiles.html
-//http://www.hpl.hp.com/techreports/2000/HPL-2000-174.pdf
-//http://www.kegel.com/c10k.html#top
-//http://www.acme.com/software/thttpd/
-//http://redmine.lighttpd.net/wiki/1/Docs:Performance
-//http://jwebsocket.org/
+ http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-16
+
+
+ http://www.cs.uwaterloo.ca/~brecht/servers/openfiles.html
+ http://www.hpl.hp.com/techreports/2000/HPL-2000-174.pdf
+ http://www.kegel.com/c10k.html#top
+ http://www.acme.com/software/thttpd/
+ http://redmine.lighttpd.net/wiki/1/Docs:Performance
+ http://jwebsocket.org/
+*/
 
 #ifdef WEBSERVER_USE_WEBSOCKETS
+
+#ifndef WEBSERVER_USE_SSL
+	#error "Webockets nur mit SSL support"
+#endif
 
 #ifndef WEBSOCKET_INIT_INBUFFER_SIZE
 	#define WEBSOCKET_INIT_INBUFFER_SIZE 50
 	#warning WEBSOCKET_INIT_INBUFFER_SIZE not defined, defaults to 50
 #endif
 
-//#define uint32_t unsigned int
 
 pthread_t websocket_input_thread;
 pthread_t websocket_output_thread;
@@ -140,15 +143,12 @@ void initWebsocketStructures(socket_info* sock) {
 }
 
 int checkIskWebsocketConnection(socket_info* sock,HttpRequestHeader* header) {
-	//session *s;
-	//printf("checkIskWebsocketConnection\n");
 	if (header == 0) {
 		return -1;
 	}
 
 	if (header->Connection != 0) {
-		//if(0==strcmp(header->Connection,"Upgrade")){
-		if (0 != strstr(header->Connection, "Upgrade")) { // Firefox sendet keep-alive, Upgrade
+		if (0 != strstr(header->Connection, "Upgrade")) { /* Firefox sendet keep-alive, Upgrade */
 			if (header->Upgrade != 0) {
 				if ((0 == strcmp(header->Upgrade, "websocket")) || (0 == strcmp(header->Upgrade, "WebSocket")) || (0 == strcmp(header->Upgrade, "Websocket"))  ) {
 					header->isWebsocket = 1;
@@ -178,11 +178,9 @@ int startWebsocketConnection(socket_info* sock) {
 	char buffer2[21];
 	http_request *s;
 	sock->active = 0;
-	//printf("Websocket Connection %d\n",sock->socket);
 
 	if (sock->header->SecWebSocketVersion < 7) {
 		if (sock->header->SecWebSocketKey1 != 0) {
-			//printf("%X %s\n",sock->header->SecWebSocketKey1,sock->header->SecWebSocketKey1);
 			calcWebsocketSecKeys(sock);
 		}
 	} else {
@@ -274,7 +272,7 @@ void calcWebsocketSecKeys(socket_info* request) {
 	unsigned int k1, k2;
 	unsigned char google[16];
 
-	if (request->header->SecWebSocketKey1 == 0) // Alte (BETA) Protokoll Version
+	if (request->header->SecWebSocketKey1 == 0) /* Alte (BETA) Protokoll Version */
 		return;
 
 	if (request->header->SecWebSocketKey2 == 0) return;
@@ -290,12 +288,11 @@ void calcWebsocketSecKeys(socket_info* request) {
 
 
 char* getWebsocketStoreGUID(char* guid) {
-	socket_info *sock = getSocketByGUID(guid); // Locked
+	socket_info *sock = getSocketByGUID(guid); /* Locked */
 	http_request *s;
 	char* ret = 0;
 	if (sock == 0) return 0;
 	if (sock->closeSocket == 1){
-		//BBS_LOG_ERROR("getWebsocketStoreGUID");
 		PlatformUnlockMutex(&sock->socket_mutex);
 		return 0;
 #ifdef ENABLE_DEVEL_WARNINGS		
@@ -314,7 +311,7 @@ char* getWebsocketStoreGUID(char* guid) {
 }
 
 int closeWebsocket(char* guid) {
-	socket_info *sock = getSocketByGUID(guid); // Locked
+	socket_info *sock = getSocketByGUID(guid); /* Locked */
 	if (sock == 0) return 0;
 	if (sock != 0) sock->closeSocket = 1;
 

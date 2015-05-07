@@ -42,6 +42,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "stdafx.h"
 
+
+
+#ifndef WEBSERVER_USE_OPENSSL_CRYPTO
+	#warning "OPENSSL Support Disabled"
+#else
+
 #ifdef __GNUC__
 #include <openssl/md5.h>
 #include <openssl/err.h>
@@ -49,10 +55,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <openssl/ssl.h>
 #include "webserver.h"
 #endif
-
-#ifndef WEBSERVER_USE_OPENSSL_CRYPTO
-	#warning "OPENSSL Support Disabled"
-#else
 
 #if SHA_DIGEST_LENGTH != SSL_SHA_DIG_LEN
 	#error "SHA Digest Length mismatch"

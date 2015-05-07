@@ -59,18 +59,22 @@ typedef enum {
 	TEMPLATE_UNKNOWN = 0x00,
 	TEMPLATE_IF = 0x01,
 
-	//TEMPLATE_SESSION_STORAGE  	= 0x02,
-	//TEMPLATE_GET_RENDER_VARIABLE  	= 0x03,
-	//TEMPLATE_SET_RENDER_VARIABLE  	= 0x04,
-	//TEMPLATE_LOOP_RENDER_ARRAY	= 0x05,
+	/*
+	TEMPLATE_SESSION_STORAGE  	= 0x02,
+	TEMPLATE_GET_RENDER_VARIABLE  	= 0x03,
+	TEMPLATE_SET_RENDER_VARIABLE  	= 0x04,
+	TEMPLATE_LOOP_RENDER_ARRAY	= 0x05,
+	*/
 
 	TEMPLATE_GET_VARIABLE = 0x04,
 	TEMPLATE_SET_VARIABLE = 0x05,
 	TEMPLATE_LOOP_ARRAY = 0x06,
 
-	//TEMPLATE_GET_GLOBAL_VARIABLE  	= 0x10,
-	//TEMPLATE_SET_GLOBAL_VARIABLE  	= 0x11,
-	//TEMPLATE_LOOP_GLOBAL_ARRAY	= 0x12,
+	/*
+	TEMPLATE_GET_GLOBAL_VARIABLE  	= 0x10,
+	TEMPLATE_SET_GLOBAL_VARIABLE  	= 0x11,
+	TEMPLATE_LOOP_GLOBAL_ARRAY	= 0x12,
+	*/
 
 	TEMPLATE_ECHO_OFF = 0x20,
 	TEMPLATE_ECHO_ON = 0x21,
@@ -85,11 +89,8 @@ typedef enum {
 } ENGINE_FUNCTIONS;
 
 typedef struct {
-	//int port;
-	//int ssl_port;
 	int connections;
 	char use_ssl;
-	//char ssl_file_path[100];
 } WebserverConfig;
 
 typedef struct {
@@ -167,7 +168,7 @@ typedef struct {
 	short deflate;
 	uint64_t contentlenght;
 	short contenttype;
-	char *If_Modified_Since; //Wed, 12 Dec 2007 13:13:08 GMT
+	char *If_Modified_Since; /* Wed, 12 Dec 2007 13:13:08 GMT */
 	char *etag;
 	char *Upgrade;
 	char *Connection;
@@ -179,9 +180,10 @@ typedef struct {
 	char *SecWebSocketKey1;
 	char *SecWebSocketKey2;
 	char WebSocketKey3[8];
-	unsigned char WebSocketOutHash[40]; // Versionen vor 8 benutzen nur 16 byte
+	unsigned char WebSocketOutHash[40]; /* Versionen vor 8 benutzen nur 16 byte */
 	char *SecWebSocketProtocol;
-	// ab protokol version 8
+
+	/* ab protokol version 8 */
 	char *SecWebSocketOrigin;
 	char *SecWebSocketKey;
 	int SecWebSocketVersion;
@@ -202,18 +204,17 @@ typedef struct {
 } HttpRequestHeader;
 
 typedef struct {
-	char guid[WEBSERVER_GUID_LENGTH + 1];unsigned char ssl;
+	char guid[WEBSERVER_GUID_LENGTH + 1];
+	unsigned char ssl;
 	ws_variable_store* vars;
 	unsigned long last_use;
 }sessionStore;
 
 struct ssl_store_s;
 
-//typedef struct ssl_store_s ssl_store;
 
 
 typedef struct{
-	//char sendFile;
 	FILE_OFFSET file_send_pos;
 	WebserverFileInfo *file_info;
 } socket_file_infos;
@@ -224,7 +225,6 @@ typedef void ( *extern_handler ) ( int fd, void* ptr );
 
 typedef struct {
 	int socket;
-	//unsigned int port;
 
 #ifdef WEBSERVER_USE_IPV6
 	char client_ip_str[INET6_ADDRSTRLEN];
@@ -238,16 +238,18 @@ typedef struct {
 	char console;
 	char client;
 	char server;
-	char disable_output; // den output der template engine ausschalten ( f��r echo off )
-	char enable_print_funcs; // template engine funktionen ausgeben
+	char disable_output;     /* den output der template engine ausschalten ( fuer echo off ) */
+	char enable_print_funcs; /* template engine funktionen ausgeben */
 	char print_func_prefix[50];
 	char print_func_postfix[50];
 
+
 	char use_ssl;
+	
+#ifdef WEBSERVER_USE_SSL
 	char ssl_pending;
 	char ssl_block_event_flags;
 	uint32_t ssl_event_flags;
-#ifdef WEBSERVER_USE_SSL
 	char run_ssl_accept;
 	struct ssl_store_s *ssl_context;
 #endif
@@ -336,7 +338,6 @@ typedef struct {
 	char* path;
 	char* name;
 	char* error;
-	//void* lib_dl;
 } plugin_s;
 
 
@@ -388,11 +389,19 @@ void dumpStoreText(http_request* s, ws_variable_store* store, int tabs);
 
 int checkCGIFunctions(http_request* s);
 
-#define DEFINE_FUNCTION_INT( a ) \
-		const char*			ws_ef_##a##_df = __FILE__; \
-		const int			ws_ef_##a##_dl = __LINE__; \
-		void 				ws_ef_##a ( http_request *s,dummy_handler* func ) __attribute__ ((visibility("default"))); \
-		void 				ws_ef_##a ( http_request *s,dummy_handler* func )
+#if __GNUC__ > 2
+        #define VISIBLE_ATTR __attribute__ ((visibility("default")))
+#else
+       	#define VISIBLE_ATTR
+#endif
+
+#if __GNUC__ > 2
+
+	#define DEFINE_FUNCTION_INT( a ) 	const char*			ws_ef_##a##_df = __FILE__; const int			ws_ef_##a##_dl = __LINE__; 	void 				ws_ef_##a ( http_request *s,dummy_handler* func ) VISIBLE_ATTR ; 		void 				ws_ef_##a ( http_request *s,dummy_handler* func )
+#else
+	#define DEFINE_FUNCTION_INT( a ) 	void 				ws_ef_##a ( http_request *s,dummy_handler* func ) VISIBLE_ATTR ; 		void 				ws_ef_##a ( http_request *s,dummy_handler* func )
+	
+#endif
 
 #endif
 

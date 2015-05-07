@@ -66,6 +66,6 @@ void * SafeMalloc(size_t size) {
 /*  as a function to RBTreeCreate when no other suitable function has */
 /*  been defined */
 
-//void NullFunction(void * junk) { junk = junk ; }
+/*void NullFunction(void * junk) { junk = junk ; } */
 
-#endif // USE_EXTERNAL_RBTREE
+#endif /* USE_EXTERNAL_RBTREE */

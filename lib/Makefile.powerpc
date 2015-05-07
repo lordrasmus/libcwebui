@@ -1,0 +1,63 @@
+
+SHELL=/bin/bash
+
+DEFS= -DLINUX
+
+FLAGS= -save-temps -Wall -fPIC -O0    -D_POSIX_SOURCE -std=c9x #-ansi
+#FLAGS+= -Wpedantic
+
+INCLUDES= -I. -Iinclude -Iplatform/include -Ithird_party/src/simclist/ -Ithird_party/src/rb_tree/ -I/home/ilja/libevent-2.0.22-stable/include/ -I/opt/powerpc-linux/powerpc-linux/include/
+LIBS= 
+
+COMPILER=/opt/ppc-tools/bin/powerpc-eabi-gcc
+
+include Makefile.files.powerpc
+
+OBJ_T := $(patsubst %.c,%.o,$(SOURCES))
+OBJ := $(patsubst %,obj/%,$(OBJ_T))
+
+all:
+	@echo '------------------------------------------------'
+	@echo 'Includes : ' $(INCLUDES)
+	@echo '------------------------------------------------'
+	@echo 'Compiler : ' $(COMPILER)
+	@echo '------------------------------------------------'
+	@echo 'Defs     : ' $(DEFS)
+	@echo '------------------------------------------------'
+	@echo 'Flags     : ' $(FLAGS)
+	@echo '------------------------------------------------'
+
+	@mkdir -p lib
+
+	@mkdir -p obj
+	@mkdir -p obj/src
+	@mkdir -p obj/ssl
+	@mkdir -p obj/platform
+	@mkdir -p obj/platform/linux
+	@mkdir -p obj/third_party/src/simclist/
+	@mkdir -p obj/third_party/src/rb_tree/
+
+	
+	@$(MAKE) build -f Makefile.powerpc
+
+
+build: $(OBJ)
+	@echo 'Building Lib : libWebserver.so'	
+	$(COMPILER) -shared -Wl,-soname,libWebserver.so -o lib/libWebserver.so \
+		obj/src/*.o obj/platform/linux/*.o obj/third_party/src/rb_tree/*.o \
+		obj/third_party/src/simclist/*.o 
+	
+
+obj/%.o : %.c
+	@echo 'Compiling File : $<'
+	@$(COMPILER) $(INCLUDES) $(DEFS) $(FLAGS) -c -o $@ $<
+
+
+clean:
+	@echo 'Deleting Object Files'
+	@rm -rvf .lib/obj/*
+	@rm -rvf obj/*
+
+
+
+

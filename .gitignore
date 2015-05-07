@@ -1,0 +1,5 @@
+lib/WebserverConfig.h
+testSite/src/webserver_api_functions.c.list
+testSite/src/websocket_api.c.list
+testSite/src/test_plugin.so
+LinuxMain/libWebserver.so

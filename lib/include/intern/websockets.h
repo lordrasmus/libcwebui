@@ -27,11 +27,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "webserver.h"
 
+#ifdef WEBSERVER_USE_WEBSOCKETS
+
+
 #define SHORT_WS_FRAMES_T 1
 
 #ifdef SHORT_WS_FRAMES_T
-	// 64 Bit Laenge muss auf arm auf 8 byte aligned sein
-	// darum websocket frames auf 32 bit begrenzen
+	/* 
+          64 Bit Laenge muss auf arm auf 8 byte aligned sein
+	  darum websocket frames auf 32 bit begrenzen
+	*/
 	#define WEBSOCK_LEN_T uint32_t
 	#define WEBSOCK_LEN_ALLIGN
 #else
@@ -89,5 +94,7 @@ void websocket_event_handler(socket_info* sock, EVENT_TYPES event_type);
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* WEBSERVER_USE_WEBSOCKETS */
 
 #endif
