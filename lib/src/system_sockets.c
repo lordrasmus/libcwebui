@@ -169,6 +169,24 @@ void WebserverConnectionManagerCloseRequest(socket_info* sock) {
 	WebserverFreeSocketInfo(sock);
 }
 
+post_handler post_handle_func = 0;
+
+static void call_pre_post_handler( socket_info* sock ){
+
+	if ( post_handle_func != 0 ){
+		post_handle_func( "pre", sock->header->url );
+	}
+
+}
+
+static void call_post_post_handler( socket_info* sock ){
+
+	if ( post_handle_func != 0 ){
+		post_handle_func( "post", sock->header->url );
+	}
+
+}
+
 int recv_post_payload( socket_info* sock, const char* buffer, uint32_t len){
 
 	//LOG(CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"POST Data %d of %d -> %d",sock->header->post_buffer_pos,sock->header->contentlenght, len);
@@ -177,6 +195,9 @@ int recv_post_payload( socket_info* sock, const char* buffer, uint32_t len){
 		sock->header->post_buffer = WebserverMalloc( sock->header->contentlenght + 1 );
 		// um Payload Buffer neim Debug ausgeben zu können
 		sock->header->post_buffer[sock->header->contentlenght] = '\0';
+
+		call_pre_post_handler( sock );
+
 	}
 
 	if ( ( sock->header->post_buffer_pos + len) <= sock->header->contentlenght ){
@@ -196,6 +217,9 @@ int recv_post_payload( socket_info* sock, const char* buffer, uint32_t len){
 			sock->header_buffer_pos = diff;
 			reCopyHeaderBuffer(sock, diff);
 			#warning "verarbeitung von weiteren header bytes noch testen"
+
+			call_post_post_handler( sock );
+
 			return 1;
 		}
 
@@ -203,6 +227,9 @@ int recv_post_payload( socket_info* sock, const char* buffer, uint32_t len){
 	}
 
 	if ( sock->header->post_buffer_pos == sock->header->contentlenght ){
+
+		call_post_post_handler( sock );
+
 		return 1;
 	}
 

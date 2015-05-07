@@ -353,6 +353,9 @@ void WebserverConfigSetText(const char* name, const char* text);
 
 void WebserverInjectExternFD(int fd, extern_handler handle );
 
+void WebserverSetPostHandler( post_handler handler );
+
+
 //void loadPlugin(char* path);
 //int handleWebsocketConnection(WEBSOCKET_SIGNALS signal ,char* guid, char* url,char* msg);
 

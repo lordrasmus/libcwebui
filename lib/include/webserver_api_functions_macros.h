@@ -154,6 +154,8 @@ typedef void ( *user_api_function ) ( dummy_handler *s,dummy_func* func );
 typedef int ( *user_api_condition ) ( dummy_handler* s,dummy_func* func );
 typedef void ( *websocket_api_handler ) ( const int signal, const char* guid, const char binary, const char* msg, const unsigned long long len );
 
+typedef void ( *post_handler ) ( char* status, char* url );
+
 typedef enum {
 	PLUGIN_LOADING,
 	PLUGIN_LOADED,

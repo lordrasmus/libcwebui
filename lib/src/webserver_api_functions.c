@@ -439,5 +439,10 @@ void WebserverInjectExternFD(int fd, extern_handler handle ){
 	addEventSocketReadPersist(sock);
 }
 
+extern post_handler post_handle_func;
+
+void WebserverSetPostHandler( post_handler handler ){
+	post_handle_func = handler;
+}
 
 #pragma GCC visibility pop
