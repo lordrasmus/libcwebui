@@ -1,187 +1,163 @@
-function test(){
-	alert("Hallo Button "+1);
-}
 
-function templateTest(){
-	alert("{f:js_func}");
-}
+// variable for the CommandSocket Websocket connection
+var commad_socket = undefined;
 
-function createWindow(){
-	/*console.log("ja");
-	var mywindowWindow = function(){
-		new MochaUI.Window({
-			id: 'mywindow',
-			title: 'My Window',
-			loadMethod: 'xhr',
-			contentURL: 'pages/lipsum.html',
-			width: 340,
-			height: 150
-		});
-	}
-	mywindowWindow();*/
-}
-function createMultiSocket(url,element){
-	var i=0
-	for (i=0;i<500;i++)
-	{
-		createSocket(url,element);
-	}
 
-}
-
-function createSocket(url,element){
-	var ok=false;
+// create Websocket Helper Function
+function create_websocket_inst( url ){
+	
+	var ws=undefined;
+	
 	try {
 		ws = new WebSocket(url);
-		ok = true;
 	}
-	catch(err) {}
+	catch(err) {
+		console.log(err)
+	}	
 
-	try {
-		ws = new MozWebSocket(url);
-		ok = true;
-	}
-	catch(err) {}
-
-	if(ok==false){
-		alert("Keine Websockets im Browser ( Chrome ,Webkit , Firefox >= 6 benutzen)\n"+err );
-		return null;
-	}
-
-
-//	if ( ("WebSocket" in window) || ("MozWebSocket" in window ) ) {		
-	
-
-	
-		ws.onopen = function()
-		{
-		    console.log("Connected.");			
-		};
-	
-		ws.onmessage = function(messageEvent)
-		{
-		    console.log("recv -> '" + messageEvent.data + "'");
-			if( "closeconnection" == messageEvent.data){
-				console.log("close");
-				this.close();
-				return;
-			}
-			if(element != 0)
-				document.getElementById(element).innerHTML = messageEvent.data;			
-		};
-	
-		ws.onclose = function()
-		{
-		    console.log("Closed.");		    
-			console.log(ws.URL);		    
-			//createSocket(ws.URL,0);
-		};
-		
-		return ws;
-
-}
-
-
-function createCommandSocket(url){
-	var ok=false;
-	try {
-		ws = new WebSocket("ws://"+url+"/CommandSocket");
-		ok = true;
-	}
-	catch(err) {}
-
-	try {
-		ws = new MozWebSocket("ws://"+url+"/CommandSocket");
-		ok = true;
-	}
-	catch(err) {}
-
-	if(ok==false){
-		alert("Keine Websockets im Browser ( Chrome ,Webkit , Firefox >= 6 benutzen)\n"+err );
+	if( ws == undefined ){
+		alert("no websockets supported by the browser ( use Chrome , IE >= 11 or Firefox >= 6)\n");
 		return null;
 	}
 	
-		
-	
-		ws.onopen = function(){	    
-			console.log("Connected.");	
-			sendCommand("startUhr");
-		};
-		ws.onclose = function(){    console.log("Closed.");	};
-	
-		ws.onmessage = function(messageEvent)
-		{		    
-			console.log("recv -> '" + messageEvent.data + "'");
-			parseCommand(messageEvent.data);
-		    //document.getElementById(element).innerHTML = messageEvent.data;
-			/*var r = JSON.parse("{ \"command\":\"as\"}");
-			var tmp = JSON.parse(messageEvent.data);
-			var t = 1;
-			console.log("Command : " + tmp.command);
-			for(var i=0;i<tmp.parameter[1].length;i++){
-				//processGUI_Text(tmp.parameter[1][i][0],tmp.parameter[1][i][1]);
-				setGUI_TextByTitle(tmp.parameter[1][i][0],tmp.parameter[1][i][1]);
-				var status = document.getElementById("status");
-				status.value ="got from Network " + tmp.parameter[1][i][0]; 
-				if(tmp.parameter[1][i][1] != "UNKNOWN"){
-					insertLangText(tmp.parameter[1][i][0],"DE",tmp.parameter[1][i][1]);
-				}
-			}*/
-		};
-		commad_socket = ws;
-		return ws;
-	
-}
-var cc=0;
-function aberdas(){
-	commad_socket.send("Test"+(cc++));
-	commad_socket.send("Test"+(cc++));
-	commad_socket.send("Test"+(cc++));
-	commad_socket.send("Test"+(cc++));
+	return ws;	
 }
 
-function sendEcho(){
-	var text_ele = document.getElementById("echo_text");
-	var text = "Echo:"+text_ele.value;
-	sendCommand(text);
+
+// create CommandSocket Websocket connection
+function createCommandSocket(){
+	
+	var ws = create_websocket_inst( "ws://" + document.location.host + "/CommandSocket" )
+	
+	ws.onopen = function(){	    
+		console.log("Connected CommandSocket");	
+		sendCommand("connect_clock")
+	};
+	
+	ws.onclose = function(){                 console.log("Closed CommandSocket");	};
+	ws.onmessage = function(messageEvent) {	 parseCommand( messageEvent.data ); };
+	
+	commad_socket = ws;
+	return ws;
 	
 }
 
+
+// parse Messages from Server on CommandSocket
+function parseCommand(text){
+	
+	var tmp = text.substring(0, 5);
+	if( tmp == "time:"){
+		if ( document.getElementById("uhr_zeit") ) 
+			document.getElementById("uhr_zeit").innerHTML = text.substring(5);
+		if ( document.getElementById("uhr_zeit_div") ) 
+			document.getElementById("uhr_zeit_div").innerHTML = text.substring(5);
+		return;
+	}
+	
+	console.log("recv -> " + text )
+	tmp = text.substring(0, 4);
+	if( tmp == "pong"){
+		alert("Pong");
+		return;
+	}
+	
+	tmp = text.substring(0, 5);
+	if( tmp == "echo:"){
+		document.getElementById("echo_answer").value = text.substring(5);
+		return;
+	}
+	
+	console.log("unknown command received: '" + text + "'");
+}
+
+// send command on the CommandSocket to the Server
 function sendCommand(command){
 	console.log("send -> '" + command + "'");
 	commad_socket.send(command);
 }
 
-function parseCommand(text){
-	var tmp = text.substring(0, 8);
-	if( tmp == "UhrZeit:"){
-		document.getElementById("uhr_zeit").innerHTML = text.substring(8);
-		document.getElementById("uhr_zeit_div").innerHTML = text.substring(8);
-		return;
-	}
-	tmp = text.substring(0, 4);
-	if( tmp == "Pong"){
-		//document.getElementById("uhr_zeit").innerHTML = text.substring(8);
-		alert("Pong");
-		return;
-	}
-	tmp = text.substring(0, 5);
-	if( tmp == "Echo:"){
-		document.getElementById("echo_antwort").value = text.substring(5);
-		return;
-	}
-	
-	console.log("Unknown Command Received: '" + text + "'");
+// send echo command with text from DOM Element echo_text
+function sendEcho(){
+	var text_ele = document.getElementById("echo_text");
+	var text = "echo:"+text_ele.value;
+	sendCommand(text);
 }
 
 
 
+// create Websocket Helper Function for Simple Websockets
+function createSocket(url,element){
+	
+	var ws = create_websocket_inst( url )
+
+	ws.onopen = function()
+	{
+		console.log("Connected to " + url + " -> updating element id : " + element);			
+	};
+
+	ws.onmessage = function(messageEvent)
+	{
+		if(element != undefined ){
+			document.getElementById(element).innerHTML = messageEvent.data;			
+		}else{
+			console.log("recv -> " + messageEvent.data )
+		}
+	};
+
+	ws.onclose = function()
+	{
+		console.log("Closed: " + ws.URL);		    
+	};
+	
+	return ws;
+
+}
+
+// Button onclick Handler
+function start_simple_websocket( para ){
+	
+	// get sending DOM Element
+	var ele = para.target
+	
+	var url = "ws://" + document.location.host + "/" + ele.dataset.handle
+	createSocket( url ,ele.dataset.element) 
+}
 
 
+// register Button onclick Events JS Handler 
+function testsite_init(){
 
+	var ele = document.getElementById("ws_create1")
+	if ( ele ){ 
+		ele.onclick = start_simple_websocket
+	}
+	
+	var ele = document.getElementById("ws_create2")
+	if ( ele ){ 
+		ele.onclick = start_simple_websocket
+	}
+	
+	var ele = document.getElementById("ws_create3")
+	if ( ele ){ 
+		ele.onclick = start_simple_websocket
+	}	
+	
+	var ele = document.getElementById("echo_text_button")
+	if ( ele ){
+		ele.onclick = sendEcho
+	}
+	
+	var ele = document.getElementById("ws_send_ping")
+	if ( ele ){
+		ele.onclick = function() { sendCommand("ping"); }
+	}
+	
+	createCommandSocket()
+}
 
-
-
+// register DOM ready Event
+document.addEventListener("DOMContentLoaded", testsite_init, false )
 
 
 

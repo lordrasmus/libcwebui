@@ -1,12 +1,23 @@
 <table>
-<tr><td>Server : {f:server_name}<br>
-Compiler : {f:compiler}<br>
-Build Time : {f:build_time}<br>
-SSL: {b:ssl_avaible}<br>
-64 Bit: {b:64bit_avaible}<br>
+<tr><td>
+
+	Server:<td>{f:server_name}
+	
+<tr><td>
+	
+<table>
+
+	<tr><td>Compiler:<td>{f:compiler}
+	<tr><td>Build Time:<td>{f:build_time}
+	<tr><td>64 Bit:<td>{b:64bit_avaible}
+</table>
+
 <td>
-IP : {f:ip}<br>
-IPv6 : {f:ipv6}<br>
-Port : {f:server_port} / {f:server_ssl_port}<br>
+
+<table>
+	<tr><td>Host:<td>{f:host}
+	<tr><td>SSL:<td>{b:ssl_avaible}
+	<tr><td>Port:<td>{f:server_port} / {f:server_ssl_port}
+</table>
 
 </table>

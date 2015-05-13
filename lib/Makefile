@@ -36,6 +36,7 @@ all:
 	@mkdir -p obj/third_party/src/simclist/
 	@mkdir -p obj/third_party/src/rb_tree/
 
+	( if [ ! -e WebserverConfig.h ] ; then cp WebserverConfig.h.sample WebserverConfig.h ; fi )
 	
 	@$(MAKE) build
 

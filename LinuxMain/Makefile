@@ -7,4 +7,4 @@ all:
 	cp ../lib/lib/libWebserver.so .
 
 clean:
-	rm main.o main
+	rm -f main.o main

@@ -7,37 +7,23 @@
 <h1>Hallo Websocket!</h1>
 
 Websocket Data1 : <span id=websocket_data1>Leer</span><br>
-<input type=button onclick=createSocket("ws://{b:ip}:{b:server_port}/simple","websocket_data1") value="Button 1"><br>
+<input type=button id=ws_create1 value="Button 1" data-handle=simple data-element=websocket_data1 ><br>
 <br>
 
 Websocket Data2 : <span id=websocket_data2>Leer</span><br>
-<input type=button onclick=createSocket("ws://{b:ip}:{b:server_port}/simple","websocket_data2") value="Button 2"><br>
+<input type=button id=ws_create2 value="Button 2" data-handle=simple data-element=websocket_data2 ><br> 
 <br>
 
 Websocket Data3 : <span id=websocket_data3>Leer</span><br>
-<input type=button onclick=createSocket("ws://{b:ip}:{b:server_port}/simple","websocket_data3") value="Button 3"><br>
+<input type=button id=ws_create3 value="Button 3" data-handle=simple data-element=websocket_data3 ><br> 
 <br>
 
-Baut 500!! Websocket Verbindungen auf <br>
-<input type=button onclick=createMultiSocket("ws://{b:ip}:{b:server_port}/multi",0) value="Button Multi"><br>
-
-<br>
-
-<input type=button onclick=aberdas() value="Button Send Ping Command"><br>
+<input type=button id=ws_send_ping value="Button Send Ping Command"><br> <!-- onclick=aberdas() -->
 <br>
 
 
-Eingabe : <input type=text id=echo_text><input type=button onclick=sendEcho() value="Senden"><br><br>
-Antwort : <input type=text id=echo_antwort><br>
-<!--<input type=button onclick=sendCommand("startUhr") value="Button Send startUhr Command"><br>-->
+send : <input type=text id=echo_text><input type=button id=echo_text_button value="send"><br><br>
+recv : <input type=text id=echo_answer><br>
 
-<script type="text/javascript">
-	// "websocket_dataMulti"
-	//createSocket("ws://jwebsocket.org:8787/");
-	createCommandSocket("{b:ip}:{b:server_port}");	
-	//if ("WebSocket" in window)
-	//	sendCommand("startUhr");
-	
-</script>
 
 {include:footer.inc}

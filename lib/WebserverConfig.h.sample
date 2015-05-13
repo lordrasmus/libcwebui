@@ -24,7 +24,7 @@
 *                                                                                   *
 ************************************************************************************/
 
-#define SERVER_NAME                 "miniWebserver 0.2-svn"
+#define SERVER_NAME                 "libcwebui"
 #define SERVER_DOMAIN				"Testserver"
 #define WEBSERVER_GUID_LENGTH		50					// l��nge der guids f��r die sessions
 //#define WEBSERVER_DISABLE_CACHE						// deaktiviert die http cache header

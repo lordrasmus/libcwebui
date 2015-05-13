@@ -1,29 +1,10 @@
 
-/*#include "stdafx.h"
-#include "dataTypes.h"
-#include "system.h"
-#include "server.h"
-#include "header.h"
-#include "buildins.h"
-#include "cookie.h"
-#include "variable_render.h"
-#include "webserver_log.h"
-#include "session.h"
-#include "variable_store.h"
-#include "webserver_api_functions.h"
-#include "engine.h"
-#include "list.h"*/
+
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-//#include <sleep.h>
 
 #include "webserver_api_functions.h"
-
-#ifdef _MSC_VER
-#define _CRT_SECURE_NO_DEPRECATE
-#define _CRT_SECURE_NO_WARNINGS
-#endif
 
 
 #define OUT_BUFFER_SIZE 10000
@@ -34,8 +15,6 @@ void startApiThreads(void);
 
 DEFINE_FUNCTION ( checkregister ) {
     int i;
-    //char out_buffer[OUT_BUFFER_SIZE];
-    //int len;
 
     i = checkUserRegisterStatus ( s );
     switch ( i ) {
@@ -66,8 +45,7 @@ DEFINE_FUNCTION ( unregister ) {
 }
 
 DEFINE_FUNCTION ( setrvvar ) {
-//    char buffer[1000];
-//    ws_variable *array1,*array2;
+
 	dummy_var *var;
 	dummy_var *var_array;
 
@@ -149,7 +127,7 @@ DEFINE_FUNCTION ( sessionmenustart ) {
 
 DEFINE_FUNCTION ( menustart ) {
 
-    FireLoggger ( s, ( ( char* ) "menustart" ) );
+    FireLoggger (  "menustart" );
     setRenderVar ( s, ( char* ) "mp1_class", ( char* ) "inaktive" );
     setRenderVar ( s, ( char* ) "mp2_class", ( char* ) "inaktive" );
     setRenderVar ( s, ( char* ) "mp3_class", ( char* ) "inaktive" );
@@ -280,7 +258,6 @@ WEBSERVER_API_HOOK{
 #ifdef WEBSERVER_USE_WEBSOCKETS
     REGISTER_WEBSOCKET_HANDLER ( simple_handler );
     REGISTER_WEBSOCKET_HANDLER ( CommandSocket_handler );
-    REGISTER_WEBSOCKET_HANDLER ( CommandSocket_handler_2 );
 #endif
 
     startApiThreads();
