@@ -232,7 +232,6 @@ DEFINE_FUNCTION( js_func ){
 
 WEBSERVER_API_HOOK{
 
-//void register_test_functions ( void ) {
 
     REGISTER_LOCAL_FUNCTION ( checkregister );
 	REGISTER_LOCAL_FUNCTION  ( register );

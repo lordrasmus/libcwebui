@@ -4,9 +4,17 @@ var commad_socket = undefined;
 
 
 // create Websocket Helper Function
-function create_websocket_inst( url ){
+function create_websocket_inst( handle ){
 	
 	var ws=undefined;
+	
+	if ( document.location.protocol == "http:" ) {	
+		var url  = "ws://" + document.location.host + "/" + handle
+	}
+	
+	if ( document.location.protocol == "https:" ) {
+		var url  = "wss://" + document.location.host + "/" + handle
+	}
 	
 	try {
 		ws = new WebSocket(url);
@@ -27,7 +35,7 @@ function create_websocket_inst( url ){
 // create CommandSocket Websocket connection
 function createCommandSocket(){
 	
-	var ws = create_websocket_inst( "ws://" + document.location.host + "/CommandSocket" )
+	var ws = create_websocket_inst( "CommandSocket" )
 	
 	ws.onopen = function(){	    
 		console.log("Connected CommandSocket");	
@@ -87,13 +95,13 @@ function sendEcho(){
 
 
 // create Websocket Helper Function for Simple Websockets
-function createSocket(url,element){
+function createSocket( handle ,element){
 	
-	var ws = create_websocket_inst( url )
+	var ws = create_websocket_inst( handle )
 
 	ws.onopen = function()
 	{
-		console.log("Connected to " + url + " -> updating element id : " + element);			
+		console.log("Connected to " + handle + " -> updating element id : " + element);			
 	};
 
 	ws.onmessage = function(messageEvent)
@@ -119,9 +127,8 @@ function start_simple_websocket( para ){
 	
 	// get sending DOM Element
 	var ele = para.target
-	
-	var url = "ws://" + document.location.host + "/" + ele.dataset.handle
-	createSocket( url ,ele.dataset.element) 
+		
+	createSocket( ele.dataset.handle ,ele.dataset.element) 
 }
 
 
