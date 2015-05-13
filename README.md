@@ -2,4 +2,9 @@
 
 webserver lib for c programs
 
-supports Websockets and SSL
+Features:
+	Small
+	Fast
+	Websockets
+	SSL
+	Template Engine
