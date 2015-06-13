@@ -19,8 +19,6 @@
  * SimCList library. See http://mij.oltrelinux.com/devel/simclist
  */
 
-#pragma GCC visibility push(default)
-
 
 /* SimCList implementation, version 1.5 */
 #include "stdafx.h"
@@ -1507,4 +1505,3 @@ static int list_attrOk(const list_t *restrict l) {
 
 #endif
 
-#pragma GCC visibility pop
