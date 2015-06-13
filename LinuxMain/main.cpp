@@ -27,22 +27,12 @@ void sig_pipe_hanler(int signum) {
 
 
 int main(int argc, char **argv) {
+	
 
-	char buffer[1000];
-	int i;
-	void* a;
-
-	if (signal(SIGINT, termination_handler) == SIG_IGN
-	) signal(SIGINT, SIG_IGN);
-
-	if (signal(SIGHUP, termination_handler) == SIG_IGN
-	) signal(SIGHUP, SIG_IGN);
-
-	if (signal(SIGTERM, termination_handler) == SIG_IGN
-	) signal(SIGTERM, SIG_IGN);
-
-	if (signal(SIGPIPE, sig_pipe_hanler) == SIG_IGN
-	) signal(SIGPIPE, SIG_IGN);
+	if (signal(SIGINT, termination_handler) == SIG_IGN )  signal(SIGINT, SIG_IGN);
+	if (signal(SIGHUP, termination_handler) == SIG_IGN )  signal(SIGHUP, SIG_IGN);
+	if (signal(SIGTERM, termination_handler) == SIG_IGN ) signal(SIGTERM, SIG_IGN);
+	if (signal(SIGPIPE, sig_pipe_hanler) == SIG_IGN	)     signal(SIGPIPE, SIG_IGN);
 
 	openlog("webserver", LOG_CONS, LOG_LOCAL0);
 
@@ -50,14 +40,10 @@ int main(int argc, char **argv) {
 		WebserverAddFileDir("", "../testSite/www");
 		WebserverAddFileDir("img", "../testSite/img");
 
-		WebserverAddTemplateFilePostfix(".js");
-		WebserverAddTemplateIgnoreFilePostfix("mootools-core-1.4.1-full-nocompat.js");
-
 		WebserverLoadPlugin("TestPlugin", "../testSite/src/test_plugin.so");
 
 		WebserverConfigSetInt("port",8080);
 		WebserverConfigSetInt("ssl_port",4443);
-		WebserverConfigSetText("server_ip", "127.0.0.1");
 		WebserverConfigSetText("ssl_file_path", "./");
 		WebserverConfigSetText("ssl_key_file", "server.pem");
 		WebserverConfigSetText("ssl_key_file_password", "password");

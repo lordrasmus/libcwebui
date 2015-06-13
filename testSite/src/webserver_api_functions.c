@@ -14,10 +14,10 @@ void startApiThreads(void);
 
 
 DEFINE_FUNCTION ( checkregister ) {
-    int i;
+    int status;
 
-    i = checkUserRegisterStatus ( s );
-    switch ( i ) {
+    status = checkUserRegisterStatus ( s );
+    switch ( status ) {
         case NORMAL_CHECK_OK		:
         	printHTML( s , "NORMAL CHECK OK" );
 			return;
@@ -31,7 +31,7 @@ DEFINE_FUNCTION ( checkregister ) {
         	printHTML( s , "SESSION MISMATCH ERROR" );
 			return;
         default			:
-        	printHTML( s , "checkUserRegistered unknown return value : %d",i );
+        	printHTML( s , "checkUserRegistered unknown return value : %d",status );
 			return;
 	}
 }
@@ -53,23 +53,16 @@ DEFINE_FUNCTION ( setrvvar ) {
     setGlobalVar("g_test2","G_t2");
     setGlobalVar("g_test3","G_t3");
 
-	var = getRenderVar ( s, ( char* ) "test1", NO_FLAGS);
-	setVariableAsString(var,"test var 1");
+	setRenderVar ( s, "test1", "test var 1");
+	setRenderVar ( s, "test2", "test var 2");
+	setRenderVar ( s, "test3", "test var 3");
 
-	var = getRenderVar ( s, ( char* ) "test2", NO_FLAGS);
-	setVariableAsString(var,"test var 2");
 
-	var = getRenderVar ( s, ( char* ) "test3", NO_FLAGS);
-	setVariableAsString(var,"test var 3");
-
-	var_array = getRenderVar ( s, ( char* ) "testarray1", NO_FLAGS);
-	setVariableToArray(var_array);
-	var = addToVarArray(var_array,"entry_2");
-	setVariableAsString(var,"entry_2_text");
-	var = addToVarArray(var_array,"entry_3");
-	setVariableAsString(var,"entry_3_text");
-	var = addToVarArray(var_array,"entry_1");
-	setVariableAsString(var,"entry_1_text");
+	var_array = getRenderVar ( s, "testarray1", NO_FLAGS);	
+	setVariableToArray(var_array);	
+	addToVarArrayStr(var_array,"entry_2","entry_2_text");	
+	addToVarArrayStr(var_array,"entry_3","entry_3_text");
+	addToVarArrayStr(var_array,"entry_1","entry_1_text");
 
 
 }
@@ -79,29 +72,29 @@ DEFINE_FUNCTION ( cachemenustart ) {
     char buffer2[1000];
     dummy_var *var;
 
-    setRenderVar ( s, ( char* ) "ctmp1_class", ( char* ) "inaktive" );
-    setRenderVar ( s, ( char* ) "ctmp2_class", ( char* ) "inaktive" );
-    setRenderVar ( s, ( char* ) "ctmp3_class", ( char* ) "inaktive" );
-    setRenderVar ( s, ( char* ) "ctmp4_class", ( char* ) "inaktive" );
-    setRenderVar ( s, ( char* ) "ctmp5_class", ( char* ) "inaktive" );
-	setRenderVar ( s, ( char* ) "ctmp6_class", ( char* ) "inaktive" );
+    setRenderVar ( s, "ctmp1_class", "inaktive" );
+    setRenderVar ( s, "ctmp2_class", "inaktive" );
+    setRenderVar ( s, "ctmp3_class", "inaktive" );
+    setRenderVar ( s, "ctmp4_class", "inaktive" );
+    setRenderVar ( s, "ctmp5_class", "inaktive" );
+	setRenderVar ( s, "ctmp6_class", "inaktive" );
     
-    setRenderVar ( s, ( char* ) "ctmp11_class", ( char* ) "inaktive" );
-    setRenderVar ( s, ( char* ) "ctmp22_class", ( char* ) "inaktive" );
-    setRenderVar ( s, ( char* ) "ctmp33_class", ( char* ) "inaktive" );
-    setRenderVar ( s, ( char* ) "ctmp44_class", ( char* ) "inaktive" );
-    setRenderVar ( s, ( char* ) "ctmp55_class", ( char* ) "inaktive" );
-	setRenderVar ( s, ( char* ) "ctmp66_class", ( char* ) "inaktive" );
+    setRenderVar ( s, "ctmp11_class", "inaktive" );
+    setRenderVar ( s, "ctmp22_class", "inaktive" );
+    setRenderVar ( s, "ctmp33_class", "inaktive" );
+    setRenderVar ( s, "ctmp44_class", "inaktive" );
+    setRenderVar ( s, "ctmp55_class", "inaktive" );
+	setRenderVar ( s, "ctmp66_class", "inaktive" );
 
-    var = getRenderVar ( s, ( char* ) "cache_menu", NO_FLAGS);
+    var = getRenderVar ( s, "cache_menu", NO_FLAGS);
     if ( var != 0 ) {
 		getVariableAsString(var,buffer,1000);
         if ( isRequestSecure(s) == 1 ) {
-            snprintf ( buffer2,1000, ( char* ) "ctmp%s%s_class",buffer,buffer );
-            setRenderVar ( s,buffer2, ( char* ) "aktive" );
+            snprintf ( buffer2,1000, "ctmp%s%s_class",buffer,buffer );
+            setRenderVar ( s,buffer2, "aktive" );
         }
-        snprintf ( buffer2,1000, ( char* ) "ctmp%s_class",buffer );
-        setRenderVar ( s,buffer2, ( char* ) "aktive" );
+        snprintf ( buffer2,1000, "ctmp%s_class",buffer );
+        setRenderVar ( s,buffer2, "aktive" );
     }
 
 }
