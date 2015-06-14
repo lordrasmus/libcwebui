@@ -42,6 +42,10 @@
 #define SIMCLIST_NO_DUMPRESTORE
 
 
+#define EXPORT_API
+
+// __attribute__((visibility("default")))
+
 /* work around lack of inttypes.h support in broken Microsoft Visual Studio compilers */
 #if !defined(WIN32) || !defined(_MSC_VER)
 #   include <inttypes.h>   /* (u)int*_t */
@@ -240,7 +244,7 @@ static inline long get_random() {
 
 
 /* list initialization */
-int ws_list_init(list_t *restrict l) {
+int EXPORT_API ws_list_init(list_t *restrict l) {
     if (l == NULL) return -1;
 
     seed_random();
@@ -274,7 +278,7 @@ int ws_list_init(list_t *restrict l) {
     assert(list_attrOk(l));
 
     return 0;
-}
+}  
 
 void ws_list_destroy(list_t *restrict l) {
     unsigned int i;
@@ -374,7 +378,7 @@ int ws_list_attributes_unserializer(list_t *restrict l, element_unserializer uns
     return 0;
 }
 
-int ws_list_append(list_t *restrict l, const void *data) {
+int EXPORT_API ws_list_append(list_t *restrict l, const void *data) {
     return ws_list_insert_at(l, data, l->numels);
 }
 
@@ -514,7 +518,7 @@ int ws_list_insert_at(list_t *restrict l, const void *data, unsigned int pos) {
     return 1;
 }
 
-int ws_list_delete(list_t *restrict l, const void *data) {
+int EXPORT_API ws_list_delete(list_t *restrict l, const void *data) {
 	int pos, r;
 
 	pos = ws_list_locate(l, data);
@@ -925,7 +929,7 @@ static void ws_list_sort_quicksort(list_t *restrict l, int versus,
 #endif
 }
 
-int ws_list_iterator_start(list_t *restrict l) {
+int EXPORT_API ws_list_iterator_start(list_t *restrict l) {
     if (l->iter_active) return 0;
     l->iter_pos = 0;
     l->iter_active = 1;
@@ -933,7 +937,7 @@ int ws_list_iterator_start(list_t *restrict l) {
     return 1;
 }
 
-void *ws_list_iterator_next(list_t *restrict l) {
+void EXPORT_API *ws_list_iterator_next(list_t *restrict l) {
     void *toret;
 
     if (! l->iter_active) return NULL;
@@ -950,7 +954,7 @@ int ws_list_iterator_hasnext(const list_t *restrict l) {
     return (l->iter_pos < l->numels);
 }
 
-int ws_list_iterator_stop(list_t *restrict l) {
+int EXPORT_API ws_list_iterator_stop(list_t *restrict l) {
     if (! l->iter_active) return 0;
     l->iter_pos = 0;
     l->iter_active = 0;

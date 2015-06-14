@@ -2,8 +2,19 @@ SHELL=/bin/bash
 
 DEFS= -DLINUX
 
-FLAGS= -Wall -fPIC -Wextra -O0 -ggdb3 -std=c99  -D_POSIX_SOURCE -Wno-unused-parameter \
-	-fdata-sections -ffunction-sections -fvisibility=hidden 
+#
+#	WICHTIG muss beim compilieren UND linken gleich sein
+#
+COMP_OPT= -Os -flto
+
+FLAGS= $(COMP_OPT) -Wall -fPIC -Wextra  -std=c99  -D_POSIX_SOURCE -Wno-unused-parameter \
+	-fdata-sections -ffunction-sections -fvisibility=hidden  \
+	$(SIZE_OPTS)
+
+SIZE_OPTS= -finline -fno-inline-functions -finline-functions-called-once \
+	--param max-inline-insns-auto=62 --param inline-unit-growth=0 --param large-unit-insns=0 #--param inline-call-cost=4
+
+#	-finline-functions -fno-inline-functions-called-once
 
 #-fvisibility-inlines-hidden
 #FLAGS+= -Wpedantic
@@ -43,12 +54,24 @@ all:
 	
 	@$(MAKE) build
 
+OBJ_LIST = obj/src/*.o obj/platform/linux/*.o obj/ssl/*.o obj/third_party/src/rb_tree/*.o obj/third_party/src/simclist/*.o 
+
+LINK_OPTS = -shared -Wl,-O2 -Wl,--gc-sections -Wl,--strip-all
 
 build: $(OBJ)
 	@echo 'Building Lib : libWebserver.so'	
-	$(COMPILER) -shared   -Wl,-soname,libWebserver.so -Wl,--gc-sections -o lib/libWebserver.so \
-		obj/src/*.o obj/platform/linux/*.o obj/ssl/*.o obj/third_party/src/rb_tree/*.o \
-		obj/third_party/src/simclist/*.o 
+	
+	# ld / gold no lto link 
+	@echo -e "\033[01;32mnormal link\033[00m"
+	$(COMPILER)  $(LINK_OPTS) -Wl,-soname,libWebserver.so  -o lib/libWebserver.so $(OBJ_LIST)
+	$(COMPILER) -fuse-ld=gold -Wl,--icf=all  $(LINK_OPTS) -Wl,-soname,libWebserver_gold.so  -o lib/libWebserver_gold.so $(OBJ_LIST)
+	
+	# ld / gold lto link
+	@echo -e "\033[01;32mlto link\033[00m"
+	$(COMPILER) -Os -flto  $(LINK_OPTS) -Wl,-soname,libWebserver_lto.so -o lib/libWebserver_lto.so $(OBJ_LIST)
+	$(COMPILER) -Os -flto -fuse-ld=gold -Wl,--icf=all   $(LINK_OPTS) -Wl,-soname,libWebserver_ltog.so -o lib/libWebserver_ltog.so $(OBJ_LIST)
+		
+		
 	@echo -e "\033[01;32mexported symbols : "$$(nm -C lib/libWebserver.so | grep " T " | wc -l)"\033[00m"
 	
 
@@ -64,5 +87,14 @@ clean:
 	@rm -rvf obj/*
 
 
+
+#gold --icf all  --hash-style=gnu -soname,libWebserver_lto.so -o lib/libWebserver_lto.so $(OBJ_LIST) \
+	#-lpthread -lssl -lc -ldl -lcrypto -levent   \
+	#/usr/lib/x86_64-linux-gnu/libc_nonshared.a \
+	#/usr/lib/gcc/x86_64-linux-gnu/4.8/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/4.8/crtbeginS.o \
+	#--no-as-needed /usr/lib/gcc/x86_64-linux-gnu/4.8/crtendS.o \
+	#/usr/lib/gcc/x86_64-linux-gnu/4.8/../../../x86_64-linux-gnu/crtn.o 
+	
+	#gold --icf all -lpthread -lssl -lc -lgcc -ldl -lcrypto -levent -soname,libWebserver_lto.so -o lib/libWebserver_lto.so $(OBJ_LIST)
 
 
