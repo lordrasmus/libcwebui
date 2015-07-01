@@ -42,9 +42,11 @@
 #define SIMCLIST_NO_DUMPRESTORE
 
 
-#define EXPORT_API
-
-// __attribute__((visibility("default")))
+#if __GNUC__ >= 4
+	#define EXPORT_API __attribute__((visibility("default")))
+#else
+	#define EXPORT_API
+#endif
 
 /* work around lack of inttypes.h support in broken Microsoft Visual Studio compilers */
 #if !defined(WIN32) || !defined(_MSC_VER)
