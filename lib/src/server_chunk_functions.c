@@ -137,7 +137,7 @@ void sendHTMLChunk(socket_info* sock, const char* text, const unsigned int lengt
 	writeChunk(&sock->html_chunk_list, (unsigned char*) text, length);
 }
 
-void sendHTMLChunkVariable(socket_info* sock, ws_variable* var) {
+void VISIBLE_ATTR sendHTMLChunkVariable(socket_info* sock, ws_variable* var) {
 	if (sock->disable_output == 1) return;
 	writeChunkVariable(&sock->html_chunk_list, var);
 }

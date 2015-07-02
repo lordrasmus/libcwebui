@@ -394,7 +394,7 @@ unsigned char getFileContents(WebserverFileInfo* info) {
 
 #ifdef WEBSERVER_USE_LOCAL_FILE_SYSTEM
 
-WebserverFileInfo *getFileInformation(char *name) {
+WebserverFileInfo VISIBLE_ATTR * getFileInformation(char *name) {
 	char name_tmp[1000];
 	ws_variable *tmp_var;
 	WebserverFileInfo *file = 0;
@@ -493,7 +493,7 @@ static int doNotRamCacheFile( WebserverFileInfo *file ){
 	return 0;
 }
 
-void WebserverAddNoRamCacheFile( char* url ){
+void VISIBLE_ATTR WebserverAddNoRamCacheFile( char* url ){
 	ws_variable *tmp;
 
 	if( url[0] == '/'){

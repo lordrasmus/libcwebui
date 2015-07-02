@@ -340,7 +340,7 @@ ALL_SRC void delWSVariableArray(ws_variable* var, const char* name) {
 	freeVariable(var->val.value_array, tmp);
 }
 
-ALL_SRC ws_variable* getWSVariableArrayFirst(ws_variable* var) {
+ALL_SRC ws_variable VISIBLE_ATTR * getWSVariableArrayFirst(ws_variable* var) {
 	if ( var == 0 ){
 		return 0;
 	}
@@ -350,7 +350,7 @@ ALL_SRC ws_variable* getWSVariableArrayFirst(ws_variable* var) {
 	return getFirstVariable(var->val.value_array);
 }
 
-ALL_SRC ws_variable* getWSVariableArrayNext(ws_variable* var) {
+ALL_SRC ws_variable VISIBLE_ATTR * getWSVariableArrayNext(ws_variable* var) {
 	if ( var == 0 ){
 		return 0;
 	}
@@ -360,7 +360,7 @@ ALL_SRC ws_variable* getWSVariableArrayNext(ws_variable* var) {
 	return getNextVariable(var->val.value_array);
 }
 
-ALL_SRC void stopWSVariableArrayIterate(ws_variable* var) {
+ALL_SRC void VISIBLE_ATTR stopWSVariableArrayIterate(ws_variable* var) {
 	if ( var == 0 ){
 		return;
 	}

@@ -80,20 +80,21 @@ extern "C" {
 	#define DEFINE_FUNCTION( a ) \
 		const char*			ws_ef_##a##_df = __FILE__; \
 		const int			ws_ef_##a##_dl = __LINE__; 	\
-		void 				ws_ef_##a ( dummy_handler *s,dummy_func* func ) VISIBLE_ATTR ; \
+		void 				ws_ef_##a ( dummy_handler *s,dummy_func* func ) ; \
 		void 				ws_ef_##a ( dummy_handler *s,dummy_func* func )
 
 	#define REGISTER_FUNCTION( a )	{ \
 		extern const char*	ws_ef_##a##_df; \
 		extern const int 	ws_ef_##a##_dl; \
-		extern void 		ws_ef_##a ( dummy_handler *s,dummy_func* func ) VISIBLE_ATTR ; \
+		extern void 		ws_ef_##a ( dummy_handler *s,dummy_func* func ) ; \
 		RegisterEngineFunction ( #a,ws_ef_##a,ws_ef_##a##_df,ws_ef_##a##_dl ); \
 		}
 
 	#define REGISTER_LOCAL_FUNCTION( a ) 	RegisterEngineFunction ( #a,ws_ef_##a,ws_ef_##a##_df,ws_ef_##a##_dl );
+
 #else
-	#define DEFINE_FUNCTION( a ) void 			  ws_ef_##a ( dummy_handler *s,dummy_func* func ) VISIBLE_ATTR ; void ws_ef_##a ( dummy_handler *s,dummy_func* func )
-	#define REGISTER_FUNCTION( a )	{ extern void ws_ef_##a ( dummy_handler *s,dummy_func* func ) VISIBLE_ATTR ; RegisterEngineFunction ( #a,ws_ef_##a,"",0 ); 	}
+	#define DEFINE_FUNCTION( a ) void 			  ws_ef_##a ( dummy_handler *s,dummy_func* func )  ; void ws_ef_##a ( dummy_handler *s,dummy_func* func )
+	#define REGISTER_FUNCTION( a )	{ extern void ws_ef_##a ( dummy_handler *s,dummy_func* func )  ; RegisterEngineFunction ( #a,ws_ef_##a,"",0 ); 	}
 	#define REGISTER_LOCAL_FUNCTION( a ) 	RegisterEngineFunction ( #a,ws_ef_##a,"",0 );
 #endif
 
@@ -111,13 +112,13 @@ extern "C" {
 #define DEFINE_CONDITION( a )	\
 		const char*			ws_ec_##a##_df = __FILE__; \
 		const int          	ws_ec_##a##_dl = __LINE__; \
-		int                	ws_ec_##a ( dummy_handler *s,dummy_func* func ) VISIBLE_ATTR ; \
+		int                	ws_ec_##a ( dummy_handler *s,dummy_func* func ) ; \
 		int                	ws_ec_##a ( dummy_handler *s,dummy_func* func )
 
 #define REGISTER_CONDITION( a )	{ \
 		extern const char*	ws_ec_##a##_df; \
 		extern const int   	ws_ec_##a##_dl ; \
-		extern int         	ws_ec_##a ( dummy_handler *s,dummy_func* func ) VISIBLE_ATTR ; \
+		extern int         	ws_ec_##a ( dummy_handler *s,dummy_func* func ) ; \
 		RegisterEngineCondition ( #a,ws_ec_##a,ws_ec_##a##_df,ws_ec_##a##_dl ); \
 	}
 

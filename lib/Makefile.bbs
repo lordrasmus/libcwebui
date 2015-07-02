@@ -3,7 +3,7 @@ SHELL=/bin/bash
 STD_FLAGS= -Wno-conversion # -fsanitize=address
 
 EXTRA_INCLUDE= -I. -Iinclude -Iplatform/include -Ithird_party/src/rb_tree -Ithird_party/src/simclist
-#EXTRA_INCLUDE+=-fvisibility=hidden
+EXTRA_INCLUDE+=-fvisibility=hidden
 EXTRA_INCLUDE+=-DLINUX -D__USE_POSIX
 
 STD_LIBS= -levent -levent_pthreads -lssl -pthread -lcrypto -lUtils

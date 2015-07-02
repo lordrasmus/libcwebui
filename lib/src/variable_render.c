@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 
-void initRenderVariable(http_request* s){
+void VISIBLE_ATTR initRenderVariable(http_request* s){
 	s->render_var_store = createVariableStore();
 }
 
@@ -38,7 +38,7 @@ ws_variable* getRenderVariable(http_request* s,const char* name){
 	return newVariable(s->render_var_store,name);
 }
 
-void clearRenderVariables(http_request* s){
+void VISIBLE_ATTR clearRenderVariables(http_request* s){
 	deleteVariableStore(s->render_var_store);
 	s->render_var_store = 0;
 }
