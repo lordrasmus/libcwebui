@@ -76,8 +76,9 @@ void parsePostData(http_request *s){
 	header = WebserverMallocHttpRequestHeader();
 
 	bound_len = WebserverMallocedSize(s->socket->header->boundary) - 1;
+	//printf("%d\n",bound_len);
 
-	bound_end = WebserverMalloc(WebserverMallocedSize(s->socket->header->boundary) + 2);
+	bound_end = WebserverMalloc( bound_len + 3 );
 
 	strcpy(bound_end, s->socket->header->boundary);
 	strcat(bound_end,"--");
@@ -130,6 +131,8 @@ void parsePostData(http_request *s){
 						file_info->name[len] = '\0';
 					}else{
 						LOG ( CONNECTION_LOG,ERROR_LEVEL,s->socket->socket,"Kein filename in Content_Disposition ( %s )", s->socket->header->Content_Disposition);
+						file_info->name = file_info->name= WebserverMalloc( 2 );
+						file_info->name[0] = '\0';
 					}
 
 					ws_list_append(&s->upload_files, file_info);

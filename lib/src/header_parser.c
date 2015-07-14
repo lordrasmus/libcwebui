@@ -186,7 +186,7 @@ int analyseFormDataLine(socket_info* sock, char *line, unsigned int length, Http
 
 	while( length2 > 0 ){
 
-		if ( 3 == stringfind(line2, "\r\n\r\n") ){
+		if ( 0 == strncmp(line2, "\r\n\r\n",4) ){
 			/* Ende des Form Multipart Header Abschnitts */
 			line2+=4;
 			break;
