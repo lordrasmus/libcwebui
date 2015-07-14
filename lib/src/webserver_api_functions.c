@@ -292,6 +292,7 @@ int  getFileCount(dummy_handler* s){
 
 char*     getFileName(dummy_handler* s,int index){
 	upload_file_info* tmp = ws_list_get_at( &((http_request*) s)->upload_files, index );
+	if ( ! tmp ) return 0;
 	return tmp->name;
 }
 
