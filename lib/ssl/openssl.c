@@ -197,7 +197,7 @@ int load_dh_params(SSL_CTX *ctx, char *file) {
 }
 
 
-int WebserverSSLTestKeyfile( char* keyfile ){
+int VISIBLE_ATTR WebserverSSLTestKeyfile( char* keyfile ){
 	SSL_METHOD *meth;
 	SSL_CTX *ctx;
 	
