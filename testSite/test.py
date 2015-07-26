@@ -1,0 +1,114 @@
+"""Python Test Module"""
+
+
+import sys
+
+import libcwebui, traceback, inspect
+
+from pprint import pprint
+
+
+def test1( a ):
+	"""JO"""
+	global b
+	#print("JO test1")
+	libcwebui.send("b : " + str( b ))
+
+
+
+
+def test2( a ):
+	global b
+	#print("JO test2")
+	b += 1
+	libcwebui.send("b : " + str( b ))
+
+	try:
+		libcwebui.setRenderVar( "a",a )
+
+		libcwebui.setRenderVar( "b",b )
+
+		libcwebui.setRenderVar( "c","c" )
+
+		ret = libcwebui.getSessionVar( "STORE_NORMAL", "b" )
+		if ret == None:
+			ret = 1
+		ret += 1
+		libcwebui.setSessionVar( "STORE_NORMAL", "b",ret )
+
+	except:
+		traceback.print_exc(file=sys.stdout)
+
+print("")
+print("  Python Test Script " )
+print("")
+
+
+libcwebui.set_plugin_name("PyTest1")
+libcwebui.register_function( test1 )
+libcwebui.register_function( test2 )
+
+b = 5
+
+def set_test( a ):
+	pprint ( a )
+	try:
+		libcwebui.setRenderVar( str(a),a )
+		libcwebui.getRenderVar( str(a) )
+	except:
+		traceback.print_exc(file=sys.stdout)
+
+#set_test( b )
+#set_test( "c" )
+#set_test( test2 )
+#set_test( ["a","b"] )
+#set_test( {"a":"a","b":"b"} )
+
+print( "b : " + str( b ) )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def test2_bak( a ):
+	global b
+	#print("JO test2")
+	b += 1
+	libcwebui.send("b : " + str( b ))
+
+	try:
+		libcwebui.setRenderVar( "a",a )
+		ret = libcwebui.getRenderVar( "a" )
+		pprint ( ret )
+
+		libcwebui.setRenderVar( "b",b )
+		ret = libcwebui.getRenderVar( "b" )
+		pprint ( ret )
+
+		libcwebui.setRenderVar( "c","c" )
+		ret = libcwebui.getRenderVar( "c" )
+		pprint ( ret )
+
+	except:
+		traceback.print_exc(file=sys.stdout)
+
+
+

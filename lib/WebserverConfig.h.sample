@@ -5,7 +5,7 @@
 #define ENGINE_BUFFER_SIZE          2000
 #define WEBSOCKET_INBUFFER_SIZE		2000
 #define WRITE_DATA_SIZE				20000
-                             
+
 #define WEBSERVER_MAX_POST_CONTENT_LENGTH    10000000 // 10 MB
 
 #define WEBSERVER_MAX_FILEID_TO_RAM	 FILE_TYPE_JS   // welche datein im ram gecached werden ( datatypes.h )
@@ -13,7 +13,7 @@
 
 
 
-//#define WEBSERVER_ONLY_SSL_COOKIES				// cookies nur ���ber ssl verschicken ( ben���tigt SSL )
+//#define WEBSERVER_ONLY_SSL_COOKIES				// cookies nur über ssl verschicken ( benötigt SSL )
 
 
 #define MAX_FUNC_PARAS 20
@@ -26,12 +26,16 @@
 
 #define SERVER_NAME                 "libcwebui"
 #define SERVER_DOMAIN				"Testserver"
-#define WEBSERVER_GUID_LENGTH		50					// l��nge der guids f��r die sessions
+#define WEBSERVER_GUID_LENGTH		50					// länge der guids für die sessions
 //#define WEBSERVER_DISABLE_CACHE						// deaktiviert die http cache header
 
-#define WEBSERVER_USE_SSL							// HTTPS ( SSL ) Support 
+#define WEBSERVER_USE_PYTHON							// Python Support
+
+#define WEBSERVER_USE_SSL							// HTTPS ( SSL ) Support
 //#define WEBSERVER_USE_YASSL_CRYPTO					// SSL mit yaSSL
 #define WEBSERVER_USE_OPENSSL_CRYPTO				// SSL mit openssl
+
+
 
 #ifndef WEBSERVER_USE_SSL
 	#undef WEBSERVER_USE_YASSL_CRYPTO
@@ -77,7 +81,7 @@
 *                                                                                   *
 ************************************************************************************/
 
-#define WEBSERVER_USE_SESSIONS						
+#define WEBSERVER_USE_SESSIONS
 #define WEBSERVER_SESSION_TIMEOUT	300
 
 //#define _WEBSERVER_DEBUG_                         // Debugausgaben f��r den Webserver aktivieren

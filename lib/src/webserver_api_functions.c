@@ -94,7 +94,7 @@ char* WebsocketGetStoreGUID(char* guid){
 	#ifdef WEBSERVER_USE_WEBSOCKETS
 	return getWebsocketStoreGUID(guid);
 	#endif
-	
+
 	return "";
 }
 
@@ -455,6 +455,24 @@ extern post_handler post_handle_func;
 void WebserverSetPostHandler( post_handler handler ){
 	post_handle_func = handler;
 }
+
+/*
+ *		Python API
+ *
+ */
+
+#ifdef WEBSERVER_USE_PYTHON
+
+
+void WebserverInitPython( void ){
+	py_init_modules();
+}
+
+int WebserverLoadPyPlugin( const char* path ){
+	return py_load_python_plugin( path );
+}
+
+#endif
 
 #if __GNUC__ > 2
 	#pragma GCC visibility pop

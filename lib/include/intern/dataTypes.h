@@ -21,7 +21,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
 
-
 #ifndef _DATATYPES_H_
 #define _DATATYPES_H_
 
@@ -32,6 +31,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifdef _WIN32
 #include <ws2tcpip.h>
+#endif
+
+#ifdef WEBSERVER_USE_PYTHON
+	#include <Python.h>
 #endif
 
 #define FORCE_DOWNLOAD_NAME_LENGTH 200
@@ -245,7 +248,7 @@ typedef struct {
 
 
 	char use_ssl;
-	
+
 #ifdef WEBSERVER_USE_SSL
 	char ssl_pending;
 	char ssl_block_event_flags;
@@ -333,11 +336,26 @@ typedef struct {
 
 }http_request;
 
+#ifdef WEBSERVER_USE_PYTHON
+struct web_py_plugin{
+	PyThreadState* thread_state;
+	PyObject* global_namespace;
+	PyObject* local_namespace;
+	char* path;
+	char plugin_name[60];
+};
+#endif
 
 typedef struct {
 	char* path;
 	char* name;
 	char* error;
+
+	int type;
+#ifdef WEBSERVER_USE_PYTHON
+	struct web_py_plugin* py_plugin;
+#endif
+
 } plugin_s;
 
 
@@ -358,11 +376,19 @@ typedef struct {
 typedef void (*user_function)(http_request *s, FUNCTION_PARAS* func);
 
 typedef struct {
-	user_function uf;
+
 	char* name;
 	plugin_s* plugin;
 	const char* file;
 	int line;
+	int type;
+
+#ifdef WEBSERVER_USE_PYTHON
+	PyObject * py_func;
+#endif
+
+	user_function uf;
+
 } user_func_s;
 
 typedef enum {
@@ -400,7 +426,7 @@ int checkCGIFunctions(http_request* s);
 	#define DEFINE_FUNCTION_INT( a ) 	const char*			ws_ef_##a##_df = __FILE__; const int			ws_ef_##a##_dl = __LINE__; 	void 				ws_ef_##a ( http_request *s,dummy_handler* func ) VISIBLE_ATTR ; 		void 				ws_ef_##a ( http_request *s,dummy_handler* func )
 #else
 	#define DEFINE_FUNCTION_INT( a ) 	void 				ws_ef_##a ( http_request *s,dummy_handler* func ) VISIBLE_ATTR ; 		void 				ws_ef_##a ( http_request *s,dummy_handler* func )
-	
+
 #endif
 
 #endif

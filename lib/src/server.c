@@ -131,7 +131,7 @@ void parsePostData(http_request *s){
 						file_info->name[len] = '\0';
 					}else{
 						LOG ( CONNECTION_LOG,ERROR_LEVEL,s->socket->socket,"Kein filename in Content_Disposition ( %s )", s->socket->header->Content_Disposition);
-						file_info->name = file_info->name= WebserverMalloc( 2 );
+						file_info->name= WebserverMalloc( 2 );
 						file_info->name[0] = '\0';
 					}
 

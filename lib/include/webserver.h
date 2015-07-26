@@ -90,6 +90,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "intern/system_file_cache.h"
 #include "intern/server_config.h"
 
+
+#ifdef WEBSERVER_USE_PYTHON
+	#include "intern/py_plugin.h"
+#endif
+
 WebserverFileInfo *getFileInformation(char *name);
 
 #include "webserver_api_functions.h"

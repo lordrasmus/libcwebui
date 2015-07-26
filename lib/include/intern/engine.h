@@ -63,6 +63,9 @@ void getFunction(unsigned char *para,int *function,int *id);
 int processHTML(http_request* s,const char* prefix,const char *pagename,const char *pagedata,const int datalenght);
 
 void register_function(const char* name,user_function,const char* file,int line);
+#ifdef WEBSERVER_USE_PYTHON
+void register_py_function(const char* name, PyObject * py_func, const char* file, int line);
+#endif
 void register_condition(const char* name,user_condition f,const char* file,int line);
 void register_function_websocket_handler(const char* name,websocket_handler f,const char* file,int line);
 int loadPlugin(const char* name,const char* path);

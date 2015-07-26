@@ -327,6 +327,7 @@ void WebserverAddFileDirNoCache(const char* alias,const char* dir);
 int WebserverLoadPlugin(const char* name,const char* path);
 
 
+
 void WebserverAddTemplateFilePostfix(const char* postfix);
 
 void WebserverAddTemplateIgnoreFilePostfix(const char* postfix);
@@ -355,6 +356,15 @@ void WebserverInjectExternFD(int fd, extern_handler handle );
 
 void WebserverSetPostHandler( post_handler handler );
 
+
+/*
+ *		Python API
+ *
+ */
+
+
+void WebserverInitPython( void );
+int WebserverLoadPyPlugin( const char* path );
 
 //void loadPlugin(char* path);
 //int handleWebsocketConnection(WEBSOCKET_SIGNALS signal ,char* guid, char* url,char* msg);

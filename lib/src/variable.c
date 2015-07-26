@@ -26,7 +26,7 @@
 #include "webserver.h"
 #endif
 
-ALL_SRC int cmpVariableStoreName(void* var, char* name) {
+int cmpVariableStoreName(void* var, char* name) {
 	ws_variable* sv;
 
 	if (var == 0) {
@@ -52,7 +52,7 @@ ALL_SRC int cmpVariableStoreName(void* var, char* name) {
 	return -1;
 }
 
-ALL_SRC void freeWSVariable(ws_variable* var) {
+void freeWSVariable(ws_variable* var) {
 	if (var == 0){
 		return;
 	}
@@ -66,7 +66,7 @@ ALL_SRC void freeWSVariable(ws_variable* var) {
 	WebserverFree(var);
 }
 
-ALL_SRC ws_variable* newWSVariable(const char* name) {
+ws_variable* newWSVariable(const char* name) {
 	ws_variable* ret = WebserverMallocVariable_store();
 	if (name != 0) {
 		SIZE_TYPE length = strlen((char*) name);
@@ -77,7 +77,7 @@ ALL_SRC ws_variable* newWSVariable(const char* name) {
 	return ret;
 }
 
-ALL_SRC void freeWSVariableValue(ws_variable* var) {
+void freeWSVariableValue(ws_variable* var) {
 	if (var == 0) {
 		return;
 	}
@@ -166,7 +166,7 @@ void setWSVariableCustomData(ws_variable* var, var_free_handler handle, void* da
 	var->extra.handle = handle;
 }
 
-ALL_SRC int getWSVariableString(ws_variable* var, char* buffer,	unsigned int buffer_length) {
+int getWSVariableString(ws_variable* var, char* buffer,	unsigned int buffer_length) {
 	if (var == 0)
 		return -1;
 
@@ -193,9 +193,9 @@ ALL_SRC int getWSVariableString(ws_variable* var, char* buffer,	unsigned int buf
 			return snprintf(buffer, buffer_length, "custom_data");
 
 		case VAR_TYPE_REF:
-#ifdef ENABLE_DEVEL_WARNINGS		
+#ifdef ENABLE_DEVEL_WARNINGS
 			#warning noch testen
-#endif			
+#endif
 			return getWSVariableString(var->val.value_ref, buffer, buffer_length);
 
 	}
@@ -204,7 +204,7 @@ ALL_SRC int getWSVariableString(ws_variable* var, char* buffer,	unsigned int buf
 
 }
 
-ALL_SRC void setWSVariableInt(ws_variable* var, int value) {
+void setWSVariableInt(ws_variable* var, int value) {
 	if (var == 0){
 		return;
 	}
@@ -213,7 +213,7 @@ ALL_SRC void setWSVariableInt(ws_variable* var, int value) {
 	var->val.value_int = value;
 }
 
-ALL_SRC void setWSVariableULong(ws_variable* var, uint64_t value) {
+void setWSVariableULong(ws_variable* var, uint64_t value) {
 	if (var == 0){
 		return;
 	}
@@ -222,7 +222,7 @@ ALL_SRC void setWSVariableULong(ws_variable* var, uint64_t value) {
 	var->val.value_uint64_t = value;
 }
 
-ALL_SRC int getWSVariableInt(ws_variable* var) {
+int getWSVariableInt(ws_variable* var) {
 	int ret;
 	if ( var == 0 ){
 		return 0;
@@ -246,7 +246,7 @@ ALL_SRC int getWSVariableInt(ws_variable* var) {
 
 }
 
-ALL_SRC uint64_t getWSVariableULong(ws_variable* var) {
+uint64_t getWSVariableULong(ws_variable* var) {
 	uint64_t ret;
 	if ( var == 0 ){
 		return 0;
@@ -270,7 +270,7 @@ ALL_SRC uint64_t getWSVariableULong(ws_variable* var) {
 
 }
 
-ALL_SRC void setWSVariableRef(ws_variable* var, ws_variable* ref) {
+void setWSVariableRef(ws_variable* var, ws_variable* ref) {
 	if ( var == 0 ){
 		return;
 	}
@@ -280,7 +280,7 @@ ALL_SRC void setWSVariableRef(ws_variable* var, ws_variable* ref) {
 	var->val.value_ref = ref;
 }
 
-ALL_SRC void setWSVariableArray(ws_variable* var) {
+void setWSVariableArray(ws_variable* var) {
 	if (var == 0){
 		return;
 	}
@@ -290,7 +290,7 @@ ALL_SRC void setWSVariableArray(ws_variable* var) {
 	var->val.value_array = createVariableStore();
 }
 
-ALL_SRC ws_variable* getWSVariableArray(ws_variable* var, const char* name) {
+ws_variable* getWSVariableArray(ws_variable* var, const char* name) {
 	if ( var == 0 ){
 		return 0;
 	}
@@ -302,7 +302,7 @@ ALL_SRC ws_variable* getWSVariableArray(ws_variable* var, const char* name) {
 	return 0;
 }
 
-ALL_SRC ws_variable* addWSVariableArray(ws_variable* var, const char* name) {
+ws_variable* addWSVariableArray(ws_variable* var, const char* name) {
 	if ( var == 0 ){
 		return 0;
 	}
@@ -310,26 +310,26 @@ ALL_SRC ws_variable* addWSVariableArray(ws_variable* var, const char* name) {
 		return newVariable(var->val.value_array, name);
 	}
 	if (var->type == VAR_TYPE_REF){
-#ifdef ENABLE_DEVEL_WARNINGS		
+#ifdef ENABLE_DEVEL_WARNINGS
 		#warning noch testen
-#endif		
+#endif
 		return addWSVariableArray(var->val.value_ref,name);
 	}
 
-#ifdef ENABLE_DEVEL_WARNINGS	
+#ifdef ENABLE_DEVEL_WARNINGS
 	#warning "Fehlermeldung wenn kein array"
 #endif
 
 	return 0;
 }
 
-ALL_SRC ws_variable* refWSVariableArray(ws_variable* var, ws_variable* ref) {
+ws_variable* refWSVariableArray(ws_variable* var, ws_variable* ref) {
 	ws_variable *ret = newVariable(var->val.value_array, 0);
 	setWSVariableRef(ret, ref);
 	return ret;
 }
 
-ALL_SRC void delWSVariableArray(ws_variable* var, const char* name) {
+void delWSVariableArray(ws_variable* var, const char* name) {
 	ws_variable *tmp;
 	if (var == 0){
 		return;
@@ -340,7 +340,7 @@ ALL_SRC void delWSVariableArray(ws_variable* var, const char* name) {
 	freeVariable(var->val.value_array, tmp);
 }
 
-ALL_SRC ws_variable VISIBLE_ATTR * getWSVariableArrayFirst(ws_variable* var) {
+ws_variable VISIBLE_ATTR * getWSVariableArrayFirst(ws_variable* var) {
 	if ( var == 0 ){
 		return 0;
 	}
@@ -350,7 +350,7 @@ ALL_SRC ws_variable VISIBLE_ATTR * getWSVariableArrayFirst(ws_variable* var) {
 	return getFirstVariable(var->val.value_array);
 }
 
-ALL_SRC ws_variable VISIBLE_ATTR * getWSVariableArrayNext(ws_variable* var) {
+ws_variable VISIBLE_ATTR * getWSVariableArrayNext(ws_variable* var) {
 	if ( var == 0 ){
 		return 0;
 	}
@@ -360,7 +360,7 @@ ALL_SRC ws_variable VISIBLE_ATTR * getWSVariableArrayNext(ws_variable* var) {
 	return getNextVariable(var->val.value_array);
 }
 
-ALL_SRC void VISIBLE_ATTR stopWSVariableArrayIterate(ws_variable* var) {
+void VISIBLE_ATTR stopWSVariableArrayIterate(ws_variable* var) {
 	if ( var == 0 ){
 		return;
 	}
@@ -369,7 +369,7 @@ ALL_SRC void VISIBLE_ATTR stopWSVariableArrayIterate(ws_variable* var) {
 	stopIterateVariable(var->val.value_array);
 }
 
-ALL_SRC ws_variable* getWSVariableArrayIndex(ws_variable* var, unsigned int index) {
+ws_variable* getWSVariableArrayIndex(ws_variable* var, unsigned int index) {
 	ws_variable *tmp;
 	unsigned int i = 0;
 
@@ -391,7 +391,7 @@ ALL_SRC ws_variable* getWSVariableArrayIndex(ws_variable* var, unsigned int inde
 	return 0;
 }
 
-ALL_SRC ws_variable* addWSVariableArrayIndex(ws_variable* var,
+ws_variable* addWSVariableArrayIndex(ws_variable* var,
 		unsigned int index) {
 	ws_variable *tmp;
 	unsigned int i = 0;

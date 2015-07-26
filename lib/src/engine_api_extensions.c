@@ -89,12 +89,37 @@ void register_function(const char* name, user_function f, const char* file, int 
 	len = strlen(name) + 1;
 	tmp->name = (char*) WebserverMalloc( len );
 	strncpy(tmp->name, name, len);
-	tmp->uf = f;
+
 	tmp->file = file;
 	tmp->line = line;
 	tmp->plugin = current_plugin;
+
+	tmp->type = 0;
+	tmp->uf = f;
+
 	RBTreeInsert(user_func_tree, tmp->name, tmp);
 }
+
+#ifdef WEBSERVER_USE_PYTHON
+void register_py_function(const char* name, PyObject * py_func, const char* file, int line) {
+	int len = 0;
+
+	user_func_s *tmp = (user_func_s*) WebserverMalloc( sizeof(user_func_s) );
+
+	len = strlen(name) + 1;
+	tmp->name = (char*) WebserverMalloc( len );
+	strncpy(tmp->name, name, len);
+
+	tmp->file = file;
+	tmp->line = line;
+	tmp->plugin = current_plugin;
+
+	tmp->type = 1;
+	tmp->py_func = py_func;
+
+	RBTreeInsert(user_func_tree, tmp->name, tmp);
+}
+#endif
 
 int check_platformFunction_exists(FUNCTION_PARAS* func) {
 	rb_red_blk_node* node;
@@ -138,7 +163,13 @@ void engine_platformFunction(http_request *s, FUNCTION_PARAS* func) {
 		error_handler(PLUGIN_FUNCTION_CALLING, name, func->parameter[0].text, "crashed");
 	}
 
-	tmp->uf(s, func);
+	if ( tmp->type == 0 )
+		tmp->uf(s, func);
+
+#ifdef WEBSERVER_USE_PYTHON
+	if ( tmp->type == 1 )
+		py_call_engine_function( s, tmp->py_func, func );
+#endif
 
 	if (error_handler != 0) {
 		error_handler(PLUGIN_FUNCTION_CALLED, name, func->parameter[0].text, "crashed");
@@ -180,10 +211,13 @@ void printRegisteredFunctions(http_request* s) {
 			sprintf(buffer, "<FONT color=red>crashed</font>");
 		}
 
+
+
+
 		if (uf->plugin == 0){
-			printHTMLChunk(s->socket, "<tr><td>internal<td>%s<td>%s<td>%d<td>%s", uf->name, uf->file, uf->line, buffer);
+			printHTMLChunk(s->socket, "<tr><td>internal<td>%s<td>%s<td>%s<td>%d<td>%s", uf->name, "C", uf->file, uf->line, buffer);
 		}
-		
+
 	}
 	free(stack);
 
@@ -204,8 +238,12 @@ void printRegisteredFunctions(http_request* s) {
 			sprintf(buffer, "<FONT color=red>crashed</font>");
 		}
 
+		char type[10];
+		if( uf->type == 0 ) sprintf(type,"C");
+		if( uf->type == 1 ) sprintf(type,"Python");
+
 		if (uf->plugin != 0){
-			printHTMLChunk(s->socket, "<tr><td>%s<td>%s<td>%s<td>%d<td>%s", uf->plugin->name, uf->name, uf->file, uf->line, buffer);
+			printHTMLChunk(s->socket, "<tr><td>%s<td>%s<td>%s<td>%s<td>%d<td>%s", uf->plugin->name,  uf->name, type, uf->file, uf->line, buffer);
 		}
 	}
 	free(stack);
@@ -427,12 +465,14 @@ int loadPlugin(const char* name, const char* path) {
 		return -5;
 	}
 
-	
+
 	if (error_handler != 0) {
 		error_handler(PLUGIN_LOADING, name, "", "crashed on init");
 	}
 
 	current_plugin = plugin;
+
+	plugin->type = 0;
 
 	(*init_webserver_plugin)();
 
@@ -466,10 +506,14 @@ void printRegisteredPlugins(http_request* s) {
 
 	ws_list_iterator_start(&plugin_liste);
 	while ((p = (plugin_s*) ws_list_iterator_next(&plugin_liste))) {
+		char type[10];
+		if( p->type == 0 ) sprintf(type,"C");
+		if( p->type == 1 ) sprintf(type,"Python");
+
 		if (0 == strcmp(p->error, "crashed"))
-			printHTMLChunk(s->socket, "<tr><td>%s<td>%s<td><font color=red>%s</font>", p->name, p->path, p->error);
+			printHTMLChunk(s->socket, "<tr><td>%s<td>%s<td>%s<td><font color=red>%s</font>", p->name, p->path, type, p->error);
 		else
-			printHTMLChunk(s->socket, "<tr><td>%s<td>%s<td><font color=green>%s</font>", p->name, p->path, p->error);
+			printHTMLChunk(s->socket, "<tr><td>%s<td>%s<td>%s<td><font color=green>%s</font>", p->name, p->path, type, p->error);
 	}
 	ws_list_iterator_stop(&plugin_liste);
 }
