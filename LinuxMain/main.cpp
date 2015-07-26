@@ -27,7 +27,7 @@ void sig_pipe_hanler(int signum) {
 
 
 int main(int argc, char **argv) {
-	
+
 
 	if (signal(SIGINT, termination_handler) == SIG_IGN )  signal(SIGINT, SIG_IGN);
 	if (signal(SIGHUP, termination_handler) == SIG_IGN )  signal(SIGHUP, SIG_IGN);
@@ -37,6 +37,15 @@ int main(int argc, char **argv) {
 	openlog("webserver", LOG_CONS, LOG_LOCAL0);
 
 	if (0 == WebserverInit()) {
+
+		#ifdef WEBSERVER_USE_PYTHON
+
+		WebserverInitPython();
+		WebserverLoadPyPlugin( "../testSite/test.py" );
+		WebserverLoadPyPlugin( "../testSite/test2.py" );
+
+		#endif
+
 		WebserverAddFileDir("", "../testSite/www");
 		WebserverAddFileDir("img", "../testSite/img");
 

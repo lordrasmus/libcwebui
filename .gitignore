@@ -3,3 +3,16 @@ testSite/src/webserver_api_functions.c.list
 testSite/src/websocket_api.c.list
 testSite/src/test_plugin.so
 LinuxMain/libWebserver.so
+LinuxMain/a.out
+LinuxMain/libWebserver_gold.so
+LinuxMain/libWebserver_lto.so
+LinuxMain/libWebserver_ltog.so
+LinuxMain/main
+LinuxMain/main.o
+lib/lib/
+lib/obj/
+testSite/src/testfunktions.o
+testSite/src/var_test.o
+testSite/src/webserver_api_functions.o
+testSite/src/websocket_api.o
+

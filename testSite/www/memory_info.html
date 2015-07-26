@@ -45,7 +45,7 @@
 {if:eq:4:parameter;"menu"}
 	<div style="margin:0 10px 10px 0;float:left">
 	<table>
-	<tr><th>User Function<th>File<th>Line
+	<tr><th>Plugin</th><th>User Function<th>Type</th><th>File<th>Line<th>Status</th>
 	{b:registeredFunctionsDetail}
 	</table>
 	</div>
@@ -54,7 +54,7 @@
 {if:eq:5:parameter;"menu"}
 	<div style="margin:0 10px 10px 0;float:left">
 	<table>
-	<tr><th>Plugins<th>File<th>Line
+	<tr><th>Plugins<th>File<th>Type</th><th>Status
 	{b:registeredPlugins}
 	</table>
 	</div>
@@ -65,7 +65,7 @@
 	{b:dumpGlobals}
 	<table>
 	<tr><th>Key<th>Value
-	{loop:render;"globals_dump":"value":"key"}	
+	{loop:render;"globals_dump":"value":"key"}
 	<tr><td>{get:render;"key"}<td>{get:render;"value"}
 	{endloop}
 	</table>

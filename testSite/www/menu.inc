@@ -1,7 +1,7 @@
 {f:menustart}
 <table>
 	<tr><td>
-		<table width=200>		
+		<table width=200>
 			<tr><td><a class=inaktive href={b:link}/index.html>Index ( Auto Link )</a>
 			<tr><td><a class={get:render;"mp1_class"} href={b:link_std}/index.html>Normal</a>
 {if:is_ssl_available}
@@ -9,15 +9,15 @@
 			<tr><td><a class={get:render;"mp3_class"} href={b:link_ssl}/register.html>Register SSL</a>
 			<tr><td><a class={get:render;"mp4_class"} href={b:link_ssl}/unregister.html>Unregister SSL</a>
 {endif}
-			
+
 			<tr><td><a class={get:render;"mp5_class"} href={b:link_std}/render_variablen.html>Render Variablen</a>
 {if:is_ssl_available}
-			<a class={get:render;"mp6_class"} href={b:link_ssl}/render_variablen.html>SSL</a>	
+			<a class={get:render;"mp6_class"} href={b:link_ssl}/render_variablen.html>SSL</a>
 {endif}
 
 			<tr><td><a class={get:render;"mp7_class"} href={b:link_std}/session_storage.html>Session Storage</a>
 {if:is_ssl_available}
-			<a class={get:render;"mp8_class"} href={b:link_ssl}/session_storage.html>SSL</a>	
+			<a class={get:render;"mp8_class"} href={b:link_ssl}/session_storage.html>SSL</a>
 {endif}
 			<tr><td><a class={get:render;"mp9_class"} href={b:link_std}/cache_test.html>Cache Test</a>
 {if:is_ssl_available}
@@ -37,7 +37,9 @@
 {if:is_ssl_available}
 			<a class={get:render;"mp16_class"} href={b:link_ssl}/if_test.html>SSL</a>
 {endif}
-			
+
+			<tr><td><a class={get:render;"mp17_class"} href={b:link_std}/python.html>Python API</a>
+
 		</table>
 </table>
 <br>

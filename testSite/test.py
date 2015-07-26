@@ -43,6 +43,7 @@ print("")
 print("  Python Test Script " )
 print("")
 
+#pprint ( dir ( test1 ) )
 
 libcwebui.set_plugin_name("PyTest1")
 libcwebui.register_function( test1 )

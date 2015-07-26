@@ -58,9 +58,9 @@ DEFINE_FUNCTION ( setrvvar ) {
 	setRenderVar ( s, "test3", "test var 3");
 
 
-	var_array = getRenderVar ( s, "testarray1", NO_FLAGS);	
-	setVariableToArray(var_array);	
-	addToVarArrayStr(var_array,"entry_2","entry_2_text");	
+	var_array = getRenderVar ( s, "testarray1", NO_FLAGS);
+	setVariableToArray(var_array);
+	addToVarArrayStr(var_array,"entry_2","entry_2_text");
 	addToVarArrayStr(var_array,"entry_3","entry_3_text");
 	addToVarArrayStr(var_array,"entry_1","entry_1_text");
 
@@ -78,7 +78,7 @@ DEFINE_FUNCTION ( cachemenustart ) {
     setRenderVar ( s, "ctmp4_class", "inaktive" );
     setRenderVar ( s, "ctmp5_class", "inaktive" );
 	setRenderVar ( s, "ctmp6_class", "inaktive" );
-    
+
     setRenderVar ( s, "ctmp11_class", "inaktive" );
     setRenderVar ( s, "ctmp22_class", "inaktive" );
     setRenderVar ( s, "ctmp33_class", "inaktive" );
@@ -137,6 +137,7 @@ DEFINE_FUNCTION ( menustart ) {
     setRenderVar ( s, ( char* ) "mp14_class", ( char* ) "inaktive" );
     setRenderVar ( s, ( char* ) "mp15_class", ( char* ) "inaktive" );
     setRenderVar ( s, ( char* ) "mp16_class", ( char* ) "inaktive" );
+    setRenderVar ( s, ( char* ) "mp17_class", ( char* ) "inaktive" );
 
     if ( 0==strcmp ( getRequestURL(s),"index.html" ) ) {
         if ( isRequestSecure(s) == 1 ) {
@@ -217,6 +218,9 @@ DEFINE_FUNCTION ( menustart ) {
             setRenderVar ( s, ( char* ) "mp15_class", ( char* ) "aktive" );
         }
     }
+    if ( 0==strcmp ( getRequestURL(s),"python.html" ) ) {
+       setRenderVar ( s, ( char* ) "mp17_class", ( char* ) "aktive" );
+    }
 }
 
 DEFINE_FUNCTION( js_func ){
@@ -228,12 +232,12 @@ WEBSERVER_API_HOOK{
 
     REGISTER_LOCAL_FUNCTION ( checkregister );
 	REGISTER_LOCAL_FUNCTION  ( register );
-	REGISTER_LOCAL_FUNCTION ( unregister );	
+	REGISTER_LOCAL_FUNCTION ( unregister );
 	REGISTER_LOCAL_FUNCTION ( setrvvar );
 	REGISTER_LOCAL_FUNCTION ( cachemenustart );
 	REGISTER_LOCAL_FUNCTION ( sessionmenustart );
 	REGISTER_LOCAL_FUNCTION ( menustart );
-    
+
 	REGISTER_LOCAL_FUNCTION ( js_func );
 
     REGISTER_FUNCTION ( testfunction1 );
