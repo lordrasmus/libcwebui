@@ -393,7 +393,7 @@ int handleClientHeaderData(socket_info* sock) {
 int checkConnectionKeepAlive(socket_info *sock) {
 
 	if (sock->header->Connection != 0) {
-		if (strcmp(sock->header->Connection, "keep-alive") != 0) {
+		if (strcasecmp(sock->header->Connection, "keep-alive") != 0) {
 			return -1;
 		} else {
 			WebserverResetHttpRequestHeader(sock->header);
