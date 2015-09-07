@@ -81,6 +81,7 @@ ALL_EXTRA int 			cmpVariableStoreName(void* var,char* name) ALL_ATTR;
 **********************************************************/
 
 ws_variable* 	newWSVariable(const char* name) ALL_ATTR;
+ws_variable*    newWSArray(const char* name) ALL_ATTR;
 void 			freeWSVariable(ws_variable* var) ALL_ATTR;
 void 			freeWSVariableValue(ws_variable* var) ALL_ATTR;
 SIZE_TYPE		getWSVariableSize(ws_variable* var) ALL_ATTR;

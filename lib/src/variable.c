@@ -77,6 +77,15 @@ ws_variable* newWSVariable(const char* name) {
 	return ret;
 }
 
+ws_variable* newWSArray(const char* name) {
+	
+	ws_variable* ret = newWSVariable( name );
+	
+	setWSVariableArray( ret );
+	
+	return ret;
+}
+
 void freeWSVariableValue(ws_variable* var) {
 	if (var == 0) {
 		return;
@@ -206,6 +215,7 @@ int getWSVariableString(ws_variable* var, char* buffer,	unsigned int buffer_leng
 
 void setWSVariableInt(ws_variable* var, int value) {
 	if (var == 0){
+		LOG( VARIABLE_LOG,ERROR_LEVEL,0,"var pointer is 0" ,"");
 		return;
 	}
 	freeWSVariableValue(var);
@@ -215,6 +225,7 @@ void setWSVariableInt(ws_variable* var, int value) {
 
 void setWSVariableULong(ws_variable* var, uint64_t value) {
 	if (var == 0){
+		LOG( VARIABLE_LOG,ERROR_LEVEL,0,"var pointer is 0","" );
 		return;
 	}
 	freeWSVariableValue(var);
@@ -296,8 +307,8 @@ ws_variable* getWSVariableArray(ws_variable* var, const char* name) {
 	}
 	if (var->type == VAR_TYPE_ARRAY)
 		return getVariable(var->val.value_array, name);
-	if ((var->type == VAR_TYPE_REF)
-			&& (var->val.value_ref->type == VAR_TYPE_ARRAY))
+		
+	if ((var->type == VAR_TYPE_REF) && (var->val.value_ref->type == VAR_TYPE_ARRAY))
 		return getVariable(var->val.value_ref->val.value_array, name);
 	return 0;
 }
@@ -309,16 +320,14 @@ ws_variable* addWSVariableArray(ws_variable* var, const char* name) {
 	if (var->type == VAR_TYPE_ARRAY){
 		return newVariable(var->val.value_array, name);
 	}
-	if (var->type == VAR_TYPE_REF){
+	if ( (var->type == VAR_TYPE_REF) && (var->val.value_ref->type == VAR_TYPE_ARRAY) ) {
 #ifdef ENABLE_DEVEL_WARNINGS
 		#warning noch testen
 #endif
 		return addWSVariableArray(var->val.value_ref,name);
 	}
 
-#ifdef ENABLE_DEVEL_WARNINGS
-	#warning "Fehlermeldung wenn kein array"
-#endif
+	LOG( VARIABLE_LOG,ERROR_LEVEL,0,"var %s is not an array",var->name );
 
 	return 0;
 }
