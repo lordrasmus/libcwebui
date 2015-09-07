@@ -1,0 +1,10 @@
+
+ist warscheinlich im ssl teil entstanden
+allerdings kan der status da eigentlich nicht rauskommen
+
+2015-09-07_12:44:14.47284 Webserver: sendData :                          ERROR   : ( 30 ) : send error not handled 30
+2015-09-07_12:44:14.47322    ->   File: /mnt/entwicklung/entwicklung/Default/IP67/TRUNK/BBS_plugins/Webserver_TRUNK/libcwebui/lib/src/system_sockets.c, Line :527
+2015-09-07_12:44:14.50288 Webserver: sendData :                          ERROR   : ( 29 ) : send error not handled 29
+2015-09-07_12:44:14.50307    ->   File: /mnt/entwicklung/entwicklung/Default/IP67/TRUNK/BBS_plugins/Webserver_TRUNK/libcwebui/lib/src/system_sockets.c, Line :527
+2015-09-07_12:44:14.52267 Webserver: sendData :                          ERROR   : ( 34 ) : send error not handled 34
+2015-09-07_12:44:14.52286    ->   File: /mnt/entwicklung/entwicklung/Default/IP67/TRUNK/BBS_plugins/Webserver_TRUNK/libcwebui/lib/src/system_sockets.c, Line :527
