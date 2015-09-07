@@ -333,7 +333,10 @@ void WebserverAddTemplateFilePostfix(const char* postfix);
 void WebserverAddTemplateIgnoreFilePostfix(const char* postfix);
 
 /* Urls die nicht im RAM gecached werden soll */
-void WebserverAddNoRamCacheFile( char* path );
+void WebserverAddNoRamCacheFile( const char* url );
+
+/* Urls die nicht sichtbar sein sellen */
+void WebserverAddBlockedFile( const char* url );
 
 void RegisterEngineFunction(const char* name,user_api_function f,const char* file,int line);
 void RegisterEngineCondition(const char* name,user_api_condition f,const char* file,int line);

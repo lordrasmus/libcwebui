@@ -32,11 +32,14 @@ extern ws_variable* filepath_no_cache;
 
 
 static ws_variable* no_ram_cache_files;
+static ws_variable* blocked_files;
 
 bool initLocalFileSystem(void) {
 	initFileCache();
-	no_ram_cache_files = newWSVariable("no_ram_cache_files");
-	setWSVariableArray(no_ram_cache_files);
+	
+	no_ram_cache_files = newWSArray("no_ram_cache_files");
+	blocked_files = newWSArray("blocked_files");
+		
 	return true;
 }
 
@@ -493,16 +496,30 @@ static int doNotRamCacheFile( WebserverFileInfo *file ){
 	return 0;
 }
 
-void VISIBLE_ATTR WebserverAddNoRamCacheFile( char* url ){
+void VISIBLE_ATTR WebserverAddNoRamCacheFile( const char* url ){
 	ws_variable *tmp;
 
-	if( url[0] == '/'){
+	while( url[0] == '/'){
 		url++;
 	}
 	tmp = getWSVariableArray(no_ram_cache_files, url);
 
 	if (tmp == 0) {
 		tmp = addWSVariableArray(no_ram_cache_files, url);
+	}
+	setWSVariableInt(tmp, 1);
+}
+
+void VISIBLE_ATTR WebserverAddBlockedFile( const char* url ){
+	ws_variable *tmp;
+	
+	while( url[0] == '/'){
+		url++;
+	}
+	tmp = getWSVariableArray( blocked_files, url);
+
+	if (tmp == 0) {
+		tmp = addWSVariableArray( blocked_files, url);
 	}
 	setWSVariableInt(tmp, 1);
 }
@@ -671,6 +688,24 @@ WebserverFileInfo *getFileNFS ( char *name ) {
 
 #endif
 
+
+static int check_blocked_urls( char* name ){
+	ws_variable *tmp;
+	
+	tmp = getWSVariableArrayFirst( blocked_files );
+	while (tmp != 0) {
+		if( 0 == strcmp( tmp->name , name ) ){
+			stopWSVariableArrayIterate( blocked_files );
+			return 1;
+		}
+		tmp = getWSVariableArrayNext( blocked_files );
+	}
+	stopWSVariableArrayIterate( blocked_files );
+	
+	return 0;
+}
+
+
 WebserverFileInfo *getFile(char *name) {
 	WebserverFileInfo *file = 0;
 
@@ -679,6 +714,10 @@ WebserverFileInfo *getFile(char *name) {
 
 	if( name[0] == '/'){
 		name++;
+	}
+	
+	if ( 1 == check_blocked_urls( name ) ){
+		return 0;
 	}
 
 #ifdef WEBSERVER_USE_LOCAL_FILE_SYSTEM
