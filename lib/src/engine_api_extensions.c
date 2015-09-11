@@ -34,6 +34,11 @@
 #include "webserver_api_functions.h"
 
 
+#ifdef DMALLOC
+#include <dmalloc/dmalloc.h>
+#endif
+
+
 
 rb_red_blk_tree *user_func_tree;
 rb_red_blk_tree *user_condition_tree;

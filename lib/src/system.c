@@ -27,6 +27,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "webserver.h"
 #endif
 
+#ifdef DMALLOC
+#include <dmalloc/dmalloc.h>
+#endif
+
+
 ws_variable* filepath;
 ws_variable* filepath_no_cache;
 ws_variable* template_file_postfix;

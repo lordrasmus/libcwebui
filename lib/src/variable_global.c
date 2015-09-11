@@ -27,6 +27,11 @@
 #include "webserver.h"
 #endif
 
+#ifdef DMALLOC
+#include <dmalloc/dmalloc.h>
+#endif
+
+
 static ws_variable_store *global_v_store;
 
 void initGlobalVariable() {

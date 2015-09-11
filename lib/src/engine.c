@@ -27,6 +27,11 @@
 #include "webserver.h"
 #endif
 
+#ifdef DMALLOC
+#include <dmalloc/dmalloc.h>
+#endif
+
+
 /*
 #pragma GCC push_options
 #pragma GCC optimize ("O0")

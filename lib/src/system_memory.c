@@ -40,6 +40,11 @@ Webserver: WebserverSLLSendNonBlocking : ssl/openssl.c 478             ERROR   :
 #include <math.h>
 #endif
 
+#ifdef DMALLOC
+#include <dmalloc/dmalloc.h>
+#endif
+
+
 unsigned long allocated = 0;
 unsigned long allocated_max = 0;
 

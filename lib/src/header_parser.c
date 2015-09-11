@@ -27,6 +27,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "webserver.h"
 #endif
 
+#ifdef DMALLOC
+#include <dmalloc/dmalloc.h>
+#endif
+
+
 unsigned char toHex(unsigned char in) {
 	if ((in <= '9') && (in >= '0')) {
 		return (unsigned char)(in - '0');

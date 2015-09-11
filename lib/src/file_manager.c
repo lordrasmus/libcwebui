@@ -27,6 +27,11 @@
 #include "webserver.h"
 #endif
 
+#ifdef DMALLOC
+#include <dmalloc/dmalloc.h>
+#endif
+
+
 #define LM1 (char*)s->header->If_Modified_Since
 #define LM2 (char*)info->lastmodified
 

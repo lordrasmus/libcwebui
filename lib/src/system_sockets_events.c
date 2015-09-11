@@ -46,6 +46,11 @@ typedef unsigned char u_char;
 #include <event2/event.h>
 #include <event2/thread.h>
 
+
+#ifdef DMALLOC
+#include <dmalloc/dmalloc.h>
+#endif
+
 struct event_base* base;
 
 void eventHandler(int a, short b, void *t) {

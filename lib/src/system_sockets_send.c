@@ -27,6 +27,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "webserver.h"
 #endif
 
+#ifdef DMALLOC
+#include <dmalloc/dmalloc.h>
+#endif
+
+
 
 
 SOCKET_SEND_STATUS WebserverSend(socket_info* s, unsigned char *buffer, int len, int flags, int* bytes_send) {

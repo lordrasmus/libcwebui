@@ -30,6 +30,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <limits.h>
 
+
+#ifdef DMALLOC
+#include <dmalloc/dmalloc.h>
+#endif
+
 #ifndef WEBSOCKET_MAX_INBUFFER_SIZE
 	#define WEBSOCKET_MAX_INBUFFER_SIZE 65000
 	#warning #define WEBSOCKET_MAX_INBUFFER_SIZE x missing, assuming 65000 byte

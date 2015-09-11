@@ -24,6 +24,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "stdafx.h"
 #include "webserver.h"
 
+
+#ifdef DMALLOC
+#include <dmalloc/dmalloc.h>
+#endif
+
 CONDITION_RETURN is_user_registered(http_request* s) {
 	int i = checkUserRegistered(s);
 	if ((i == NORMAL_CHECK_OK) || (i == SSL_CHECK_OK)) return CONDITION_TRUE;

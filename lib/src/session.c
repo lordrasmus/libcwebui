@@ -30,6 +30,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "stack.h"
 #include "red_black_tree.h"
 
+
+#ifdef DMALLOC
+#include <dmalloc/dmalloc.h>
+#endif
+
 /* * Session Managment *
 // http://de.wikipedia.org/wiki/Session-ID
 // Formulare mit versteckten Feldern

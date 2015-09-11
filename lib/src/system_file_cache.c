@@ -27,6 +27,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "red_black_tree.h"
 
+
+#ifdef DMALLOC
+#include <dmalloc/dmalloc.h>
+#endif
+
 rb_red_blk_tree* file_cache;
 
 void FileDest( UNUSED_PARA void* a) {

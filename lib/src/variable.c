@@ -26,6 +26,11 @@
 #include "webserver.h"
 #endif
 
+#ifdef DMALLOC
+#include <dmalloc/dmalloc.h>
+#endif
+
+
 int cmpVariableStoreName(void* var, char* name) {
 	ws_variable* sv;
 

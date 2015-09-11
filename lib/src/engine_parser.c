@@ -25,6 +25,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "webserver.h"
 
 
+#ifdef DMALLOC
+#include <dmalloc/dmalloc.h>
+#endif
+
+
 ws_variable* NEED_RESUL_CHECK parseVariable(http_request *s,char* buffer) {
 	int i;
 	int l;

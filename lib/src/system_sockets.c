@@ -31,6 +31,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <sys/sendfile.h>
 #endif
 
+#ifdef DMALLOC
+#include <dmalloc/dmalloc.h>
+#endif
+
+
 #ifndef WEBSERVER_MAX_POST_CONTENT_LENGTH
 	#error WEBSERVER_MAX_POST_CONTENT_LENGTH muss definiert werden
 #endif

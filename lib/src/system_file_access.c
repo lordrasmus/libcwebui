@@ -25,6 +25,11 @@
 #include "webserver.h"
 #endif
 
+#ifdef DMALLOC
+#include <dmalloc/dmalloc.h>
+#endif
+
+
 void initFileCache(void);
 
 extern ws_variable* filepath;

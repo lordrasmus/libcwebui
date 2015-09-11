@@ -25,6 +25,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "webserver.h"
 
+
+#ifdef DMALLOC
+#include <dmalloc/dmalloc.h>
+#endif
+
 int var_seeker(const void *el, const void *key) {
 	/* let's assume el and key being always != NULL */
 	ws_variable *var = (ws_variable *) el;
