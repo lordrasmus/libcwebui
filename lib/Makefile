@@ -85,6 +85,7 @@ build: $(OBJ)
 
 obj/%.o : %.c
 	@echo 'Compiling File : $<'
+	./check_src.py $<
 	@$(COMPILER) $(INCLUDES) $(DEFS) $(FLAGS) -fno-lto -c -o $@ $<
 #	@$(COMPILER) $(INCLUDES) $(DEFS) $(FLAGS) -flto -c -o $@.lto $<
 
