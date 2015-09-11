@@ -28,6 +28,7 @@ SOURCES := 	src/builtinFunctions.c \
 			src/system_sockets_events.c \
 			src/system_sockets_select.c \
 			src/system_file_access.c \
+			src/system_file_access_utils.c \
 			src/system_file_cache.c \
 			src/webserver_api_functions.c \
 			src/utils.c \

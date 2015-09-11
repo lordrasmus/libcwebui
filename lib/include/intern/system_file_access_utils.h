@@ -1,3 +1,5 @@
+
+
 /*
 
 libCWebUI
@@ -21,4 +23,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
 
+#ifndef _WEBSERVER_SYSTEM_FILE_ACCESS_UTILS_H_
+#define _WEBSERVER_SYSTEM_FILE_ACCESS_UTILS_H_
 
+void init_file_access_utils(void) ;
+
+int check_blocked_urls( const char* url );
+
+
+int doNotRamCacheFile( WebserverFileInfo *file );
+
+void copyFilePath(WebserverFileInfo* file, const char* name);
+void copyURL(WebserverFileInfo* file, const char* url);
+
+void setFileType(WebserverFileInfo* file);
+void generateEtag( WebserverFileInfo *file );
+
+
+#endif
