@@ -56,6 +56,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "webserver.h"
 #endif
 
+#ifdef DMALLOC
+#include <dmalloc/dmalloc.h>
+#endif
+
+
 #if SHA_DIGEST_LENGTH != SSL_SHA_DIG_LEN
 	#error "SHA Digest Length mismatch"
 #endif
