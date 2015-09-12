@@ -34,7 +34,7 @@ void add_local_file_system_dir(const char* alias,const char* dir, const int use_
 int local_file_system_read_content( WebserverFileInfo *file );
 int local_file_system_check_file_modified( WebserverFileInfo *file );
 
-WebserverFileInfo *getFileLocalFileSystem(char *name);
+WebserverFileInfo *getFileLocalFileSystem( const unsigned char *name);
 
 
 #endif

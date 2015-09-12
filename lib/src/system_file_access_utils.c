@@ -88,24 +88,28 @@ void VISIBLE_ATTR WebserverAddBlockedFile( const char* url ){
 
 
 
-void copyFilePath(WebserverFileInfo* file, const char* name) {
+void copyFilePath(WebserverFileInfo* file, const unsigned char* name) {
 	file->FilePathLengt = strlen((char*) name);
 	if (file->FilePath != 0) {
-		WebserverFree(file->FilePath);
+		WebserverFree( (void*) file->FilePath);
 	}
-	file->FilePath = (char*) WebserverMalloc(file->FilePathLengt + 1 );
+	file->FilePath = (unsigned char*) WebserverMalloc(file->FilePathLengt + 1 );
 	strncpy((char*) file->FilePath, (char*) name, file->FilePathLengt);
-	file->FilePath[file->FilePathLengt] = '\0';
+	((char*)file->FilePath)[file->FilePathLengt] = '\0';
 }
 
-void copyURL(WebserverFileInfo* file, const char* url) {
+void copyURL(WebserverFileInfo* file, const unsigned char* url) {
+	
+	while( url[0] == '/' )
+		url++;
+	
 	file->UrlLengt = strlen((char*) url);
 	if (file->Url != 0) {
-		WebserverFree(file->Url);
+		WebserverFree( (void*) file->Url);
 	}
 	file->Url = (char*) WebserverMalloc( file->UrlLengt + 1 );
 	strncpy((char*) file->Url, (char*) url, file->UrlLengt);
-	file->Url[file->UrlLengt] = '\0';
+	((char*)file->Url)[file->UrlLengt] = '\0';
 }
 
 
@@ -139,6 +143,10 @@ void setFileType(WebserverFileInfo* file) {
 	}else{
 		ext[0] = '\0';
 	}
+	
+	/* http://wiki.selfhtml.org/wiki/Referenz:MIME-Typen
+	 * http://www.sitepoint.com/web-foundations/mime-types-complete-list/
+	 */
 
 	if (0 == strncmp((char*) ext, ".html", 10))
 		file->FileType = FILE_TYPE_HTML;
@@ -176,6 +184,8 @@ void setFileType(WebserverFileInfo* file) {
 		file->FileType = FILE_TYPE_EOT;
 	else if (0 == strncmp((char*) ext, ".ttf", 10))
 		file->FileType = FILE_TYPE_TTF;
+	else if (0 == strncmp((char*) ext, ".c", 10))
+		file->FileType = FILE_TYPE_C_SRC;
 	else
 		LOG(FILESYSTEM_LOG, NOTICE_LEVEL, 0, "%s is FILE_TYPE_PLAIN", file->Url );
 }
@@ -203,9 +213,9 @@ void generateEtag(WebserverFileInfo* wfi) {
 #else
 
 	unsigned char buf[SSL_SHA_DIG_LEN];
-	if (wfi->etag != 0) WebserverFree(wfi->etag);
-	wfi->etag = (char *) WebserverMalloc ( SSL_SHA_DIG_LEN * 2 + 1 );
-	memset(wfi->etag,0,SSL_SHA_DIG_LEN*2+1);
+	if (wfi->etag != 0) WebserverFree( (void*) wfi->etag);
+	wfi->etag = (unsigned char *) WebserverMalloc ( SSL_SHA_DIG_LEN * 2 + 1 );
+	memset( (void*) wfi->etag ,0,SSL_SHA_DIG_LEN*2+1);
 
 	if (wfi->RamCached == 1) {
 		WebserverSHA1(wfi->Data, wfi->DataLenght, buf);
@@ -246,8 +256,8 @@ void generateEtag(WebserverFileInfo* wfi) {
 		WebserverFree(data);
 	}
 
-	convertBinToHexString(buf, SSL_SHA_DIG_LEN, wfi->etag, SSL_SHA_DIG_LEN * 2 + 1);
-	wfi->etagLength = strlen(wfi->etag);
+	convertBinToHexString(buf, SSL_SHA_DIG_LEN, (char*)wfi->etag, SSL_SHA_DIG_LEN * 2 + 1);
+	wfi->etagLength = strlen( ( char*) wfi->etag);
 
 
 #endif

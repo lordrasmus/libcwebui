@@ -42,6 +42,7 @@ int checkCacheHeader(http_request* s, WebserverFileInfo *info) {
 	if ((s == 0) || (s->header == 0) || (info == 0)) {
 		return -1;
 	}
+	
 #ifndef WEBSERVER_DISABLE_CACHE
 	if (info->FileType != FILE_TYPE_HTML) {
 		if (likely( s->header->etag != 0 )) {
@@ -88,6 +89,7 @@ int checkCacheHeader(http_request* s, WebserverFileInfo *info) {
 		}
 	}
 #endif
+
 
 	return 0;
 

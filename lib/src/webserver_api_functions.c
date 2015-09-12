@@ -401,6 +401,9 @@ void WebserverAddFileDirNoCache(const char* alias,const char* dir){
 	add_local_file_system_dir(alias,dir,0);
 }
 
+void WebserverAddBinaryData(const unsigned char* data){
+	read_binary_data( data );
+}
 
 void WebserverAddTemplateFilePostfix(const char* postfix){
 	addTemplateFilePostfix(postfix);

@@ -56,12 +56,13 @@ all:
 	@mkdir -p obj/platform/linux
 	@mkdir -p obj/third_party/src/simclist/
 	@mkdir -p obj/third_party/src/rb_tree/
+	@mkdir -p obj/third_party/src/miniz/
 
 	( if [ ! -e WebserverConfig.h ] ; then cp WebserverConfig.h.sample WebserverConfig.h ; fi )
 
 	@$(MAKE) build
 
-OBJ_LIST = obj/src/*.o obj/platform/linux/*.o obj/ssl/*.o obj/python/*.o obj/third_party/src/rb_tree/*.o obj/third_party/src/simclist/*.o
+OBJ_LIST = obj/src/*.o obj/platform/linux/*.o obj/ssl/*.o obj/python/*.o obj/third_party/src/rb_tree/*.o obj/third_party/src/simclist/*.o obj/third_party/src/miniz/*.o
 OBJ_LIST_LTO = obj/src/*.o.lto obj/platform/linux/*.o.lto obj/ssl/*.o.lto obj/third_party/src/rb_tree/*.o.lto obj/third_party/src/simclist/*.o.lto
 
 LINK_OPTS =  -shared -Wl,-O2 -Wl,--gc-sections $(PY_LINK) #-Wl,--strip-all

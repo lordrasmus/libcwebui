@@ -31,6 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "intern/system_file_access_utils.h"
 
 #include "intern/system_file_access_fs.h"
+#include "intern/system_file_access_binary.h"
 
 
 

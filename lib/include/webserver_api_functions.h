@@ -321,16 +321,22 @@ int WebsocketSendCloseFrame(const char* guid);
 void WebserverAddFileDir(const char* alias,const char* dir);
 void WebserverAddFileDirNoCache(const char* alias,const char* dir);
 
+void WebserverAddBinaryData(const unsigned char* data);
+
 /*
 		Datei <path> als Webserver Plugin laden
 */
 int WebserverLoadPlugin(const char* name,const char* path);
 
 
+/*
+ 
+		Regeln um einzustellen was als Template behandelt werden soll
+*/
 
 void WebserverAddTemplateFilePostfix(const char* postfix);
-
 void WebserverAddTemplateIgnoreFilePostfix(const char* postfix);
+
 
 /* Urls die nicht im RAM gecached werden soll */
 void WebserverAddNoRamCacheFile( const char* url );
@@ -369,8 +375,7 @@ void WebserverSetPostHandler( post_handler handler );
 void WebserverInitPython( void );
 int WebserverLoadPyPlugin( const char* path );
 
-//void loadPlugin(char* path);
-//int handleWebsocketConnection(WEBSOCKET_SIGNALS signal ,char* guid, char* url,char* msg);
+
 
 
 #ifdef __cplusplus

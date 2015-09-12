@@ -38,6 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 #define FORCE_DOWNLOAD_NAME_LENGTH 200
+// TUDU diesen festen buffer entfernen
 
 
 typedef enum {
@@ -50,6 +51,7 @@ typedef enum {
 	FILE_TYPE_MANIFEST, FILE_TYPE_SVG,
 
 	FILE_TYPE_PDF, FILE_TYPE_JSON, FILE_TYPE_WOFF, FILE_TYPE_EOT, FILE_TYPE_TTF,
+	FILE_TYPE_C_SRC,
 
 	FILE_TYPE_ALL
 } FILE_TYPES;
@@ -125,25 +127,27 @@ typedef struct {
 } Cookie;
 
 enum fs_types{
-	FS_LOCAL_FILE_SYSTEM
+	FS_LOCAL_FILE_SYSTEM,
+	FS_BINARY
 };
 
 typedef struct {
 	unsigned char Id;
 
-	char *Url;
+	const char *Url;
 	unsigned int UrlLengt;
 
-	char *FilePath;
+	const unsigned char *FilePath;
 	unsigned int FilePathLengt;
 
-	char *FilePrefix;
+	const unsigned char *FilePrefix;
 
-	unsigned char *Data;
+	const unsigned char *Data;
 	FILE_OFFSET DataLenght;
 
 	FILE_TYPES FileType;
 
+	unsigned char Compressed;
 	unsigned char TemplateFile;
 	unsigned char RamCached;
 
@@ -155,7 +159,7 @@ typedef struct {
 
 	char* lastmodified;
 	unsigned int lastmodifiedLength;
-	char* etag;
+	const unsigned char* etag;
 	unsigned char etagLength;
 
 	unsigned long int	last_mod_sec;

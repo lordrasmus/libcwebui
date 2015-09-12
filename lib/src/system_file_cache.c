@@ -57,11 +57,11 @@ void InfoPrint( UNUSED_PARA void* a) {
 
 void InfoDest(void *a) {
 	WebserverFileInfo* wfi = (WebserverFileInfo*) a;
-	if (wfi->Url != 0) WebserverFree(wfi->Url);
-	if (wfi->FilePath != 0) WebserverFree(wfi->FilePath);
-	if (wfi->Data != 0) WebserverFree(wfi->Data);
+	if (wfi->Url != 0) WebserverFree( (void*) wfi->Url);
+	if (wfi->FilePath != 0) WebserverFree( (void*) wfi->FilePath);
+	if (wfi->Data != 0) WebserverFree( (void*) wfi->Data);
 	if (wfi->lastmodified != 0) WebserverFree(wfi->lastmodified);
-	if (wfi->etag != 0) WebserverFree(wfi->etag);
+	if (wfi->etag != 0) WebserverFree( (void*) wfi->etag);
 	WebserverFree(wfi);
 }
 
@@ -74,7 +74,7 @@ void freeFileCache(void) {
 }
 
 void addFileToCache(WebserverFileInfo* wfi) {
-	RBTreeInsert(file_cache, wfi->Url, wfi);
+	RBTreeInsert(file_cache, (char*)wfi->Url, wfi);
 }
 
 WebserverFileInfo* getFileFromRBCache(char* name) {
@@ -136,8 +136,38 @@ void dumpLoadedFiles(http_request *s) {
 		if (wfi->RamCached == 1) filesize += wfi->DataLenght;
 		filesize += wfi->FilePathLengt;
 		filesize += sizeof(WebserverFileInfo);
-		printHTMLChunk(s->socket, "<tr><td>%s<td>%d<td>%d", wfi->Url, filesize, wfi->RamCached);
+		
+		printHTMLChunk(s->socket, "<tr><td>%s", wfi->Url);
+		if ( filesize > 1024 )
+			printHTMLChunk(s->socket, "<td>%d kB", filesize / 1024);
+		else
+			printHTMLChunk(s->socket, "<td>%d B", filesize );
+		
+		switch ( wfi->fs_type ){
+			case FS_BINARY: printHTMLChunk(s->socket, "<td>binary"); break;
+			case FS_LOCAL_FILE_SYSTEM: printHTMLChunk(s->socket, "<td>fs"); break;
+		}
+		
+		if ( wfi->RamCached == 1 )
+			printHTMLChunk(s->socket, "<td>true");
+		else
+			printHTMLChunk(s->socket, "<td>false");
+			
+		if ( wfi->Compressed == 1 )
+			printHTMLChunk(s->socket, "<td>true");
+		else
+			printHTMLChunk(s->socket, "<td>false");
+			
+		if ( wfi->TemplateFile == 1 )
+			printHTMLChunk(s->socket, "<td>true");
+		else
+			printHTMLChunk(s->socket, "<td>false");
+			
+		
 	}
+	
 	free(stack);
 }
+
+
 

@@ -120,7 +120,14 @@ void sendHeaderError(socket_info* socket, char* ErrorMessage, int p_lenght) {
 }
 
 void addContentTypeLines(http_request *s, WebserverFileInfo *info) {
-	/* http://www.w3schools.com/media/media_mimeref.asp */
+	
+	if ( info->Compressed == 1 ){
+		printHeaderChunk(s->socket, "%s", "Content-Encoding: gzip\r\n");
+	}
+	
+	/* http://wiki.selfhtml.org/wiki/Referenz:MIME-Typen
+	 * http://www.sitepoint.com/web-foundations/mime-types-complete-list/
+	 */
 	switch (info->FileType) {
 	case FILE_TYPE_PLAIN:
 		printHeaderChunk(s->socket, "%s", "Content-Type: text/plain\r\n");
@@ -198,6 +205,10 @@ void addContentTypeLines(http_request *s, WebserverFileInfo *info) {
 
 	case FILE_TYPE_TTF:
 		printHeaderChunk(s->socket, "%s", "Content-Type: application/x-font-ttf\r\n");
+		break;
+
+	case FILE_TYPE_C_SRC:
+		printHeaderChunk(s->socket, "%s", "Content-Type: text/x-c\r\n");
 		break;
 
 
@@ -354,6 +365,9 @@ void addSessionCookies(http_request* s,WebserverFileInfo *info){
 #endif
 }
 
+/*
+ * 	p_lenght ist wichtig für die Template Engine
+ */
 int sendHeader(http_request* s, WebserverFileInfo *info, int p_lenght) {
 
 	printHeaderChunk(s->socket, "HTTP/1.1 200 OK\r\n");
@@ -363,7 +377,7 @@ int sendHeader(http_request* s, WebserverFileInfo *info, int p_lenght) {
 
 	printHeaderChunk(s->socket, "Accept-Ranges: bytes\r\n");
 	printHeaderChunk(s->socket, "%s %d\r\n", "Content-Length:", p_lenght);
-
+	
 	addCSPHeaderLines(s);
 
 	addContentTypeLines(s, info);

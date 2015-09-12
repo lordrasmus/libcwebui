@@ -34,7 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ********************************************************************/
 
 char			WebServerReadDataStart( void );
-int 			PlatformOpenDataReadStream( char* name );
+int 			PlatformOpenDataReadStream( const unsigned char* name );
 int				PlatformGetFileSize(void);
 int 			PlatformGetFileInfo(WebserverFileInfo* file, int* time_changed, int *new_size);
 char			PlatformCloseDataStream( void );
@@ -42,7 +42,7 @@ void			PlatformResetDataStream( void );
 unsigned long	PlatformGetDataStreamPosition( void );
 void  			PlatformSeek(long offset);
 void  			PlatformSeekToPosition( long position );
-int				PlatformReadBytes(unsigned char *data,FILE_OFFSET lenght);
+int				PlatformReadBytes(unsigned char *data, FILE_OFFSET lenght);
 
 void  			PlatformPrintPosition( void );
 

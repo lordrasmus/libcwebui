@@ -49,10 +49,10 @@ unsigned short l;
  *                                                             *
  **************************************************************/
 
-int PlatformOpenDataReadStream(char* name) {
+int PlatformOpenDataReadStream( const unsigned char* name ) {
 	struct stat st;
 
-	g_fp = fopen(name, "rb");
+	g_fp = fopen( ( char* ) name, "rb");
 	if (g_fp == NULL) return false;
 
 	/* Auf normale Datei Prüfen */
@@ -114,7 +114,7 @@ int PlatformGetFileInfo(WebserverFileInfo* file, int* time_changed, int *new_siz
 	char* buffer;
 	__time_t f_sec,f_nsec;
 
-	if ( 0 > stat(file->FilePath, &st) ){
+	if ( 0 > stat( (char*) file->FilePath, &st) ){
 		return 0;
 	}
 

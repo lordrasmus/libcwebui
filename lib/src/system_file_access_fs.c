@@ -52,9 +52,9 @@ int local_file_system_check_file_modified( WebserverFileInfo *file ){
 		// zur sicherheit die länge mit geöffnetem filehandel nochmal lesen
 		file->DataLenght = PlatformGetFileSize();
 
-		WebserverFree( file->Data );
+		WebserverFree( ( void* )file->Data );
 		file->Data = (unsigned char*) WebserverMalloc( file->DataLenght );
-		PlatformReadBytes(file->Data, file->DataLenght);
+		PlatformReadBytes( ( unsigned char*) file->Data, file->DataLenght);
 
 		PlatformCloseDataStream();
 	}
@@ -69,7 +69,7 @@ int local_file_system_read_content( WebserverFileInfo *file ){
 
 		file->DataLenght = PlatformGetFileSize();
 		file->Data = (unsigned char*) WebserverMalloc( file->DataLenght );
-		PlatformReadBytes(file->Data, file->DataLenght);
+		PlatformReadBytes( ( unsigned char*) file->Data, file->DataLenght);
 		PlatformCloseDataStream();
 
 		return 1;
@@ -106,8 +106,8 @@ void add_local_file_system_dir(const char* alias, const char* dir, const int use
 
 
 
-static WebserverFileInfo* getFileInformation(char *name) {
-	char name_tmp[1000];
+static WebserverFileInfo* getFileInformation( const unsigned char *name) {
+	unsigned char name_tmp[1000];
 	ws_variable *tmp_var;
 	WebserverFileInfo *file = 0;
 	char found = 0;
@@ -119,10 +119,10 @@ static WebserverFileInfo* getFileInformation(char *name) {
 	/* Pfade für Datein die nicht gecached werden sollen */
 	tmp_var = getWSVariableArrayFirst(filepath_no_cache);
 	while (tmp_var != 0) {
-		if (0 == strncmp(tmp_var->name, name, tmp_var->name_len)) {
-			getWSVariableString(tmp_var, name_tmp, 1000);
-			if (strlen(name) > tmp_var->name_len) {
-				strcat(name_tmp, name + tmp_var->name_len);
+		if (0 == strncmp(tmp_var->name, (char*) name, tmp_var->name_len)) {
+			getWSVariableString(tmp_var, (char*) name_tmp, 1000);
+			if (strlen( (char*) name) > tmp_var->name_len) {
+				strcat( (char*)name_tmp, (char*)(name + tmp_var->name_len));
 				if (PlatformOpenDataReadStream(name_tmp)) {
 					found = 2;
 					break;
@@ -143,10 +143,10 @@ static WebserverFileInfo* getFileInformation(char *name) {
 		}
 
 		while (tmp_var != 0) {
-			if (0 == strncmp(tmp_var->name, name, tmp_var->name_len)) {
-				getWSVariableString(tmp_var, name_tmp, 1000);
-				if (strlen(name) > tmp_var->name_len) {
-					strcat(name_tmp, name + tmp_var->name_len);
+			if (0 == strncmp(tmp_var->name, (char*) name, tmp_var->name_len)) {
+				getWSVariableString(tmp_var, (char*)name_tmp, 1000);
+				if (strlen( (char*) name) > tmp_var->name_len) {
+					strcat( (char*) name_tmp, (char*)(name + tmp_var->name_len));
 					if (PlatformOpenDataReadStream(name_tmp)) {
 						found = 1;
 						break;
@@ -169,11 +169,11 @@ static WebserverFileInfo* getFileInformation(char *name) {
 		file->NoRamCache = 1;
 	}
 
-	copyFilePath(file, name_tmp);
+	copyFilePath(file, (unsigned char*) name_tmp);
 	copyURL(file, name);
 
 	/* tmp_var ist permanent in der liste der prefixe darum pointer direkt nehmen */
-	file->FilePrefix = tmp_var->name;
+	file->FilePrefix = (unsigned char*) tmp_var->name;
 	setFileType(file);
 
 #ifdef _WEBSERVER_FILESYSTEM_CACHE_DEBUG_
@@ -189,7 +189,7 @@ static WebserverFileInfo* getFileInformation(char *name) {
 }
 
 
-WebserverFileInfo *getFileLocalFileSystem(char *name) {
+WebserverFileInfo *getFileLocalFileSystem( const unsigned char *name) {
 	WebserverFileInfo *file = 0;
 	int a,b;
 
@@ -202,6 +202,7 @@ WebserverFileInfo *getFileLocalFileSystem(char *name) {
 		return 0;
 	}
 
+	file->fs_type = FS_LOCAL_FILE_SYSTEM;
 	PlatformGetFileInfo ( file , &a, &b);
 
 #ifdef _WEBSERVER_FILESYSTEM_CACHE_DEBUG_

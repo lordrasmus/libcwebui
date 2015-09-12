@@ -49,10 +49,10 @@ void free_file_access( void ){
 
 	// TODO alle elemente richtig freigeben
 
-	freeFileCache();
+	//freeFileCache();
 
 	/* filepath erst NACH files freigeben weil der prefix direkt verlinkt wird */
-	free_local_file_system();
+	//free_local_file_system();
 
 }
 
@@ -103,6 +103,8 @@ static char ramCacheFile(WebserverFileInfo *file) {
 		case FS_LOCAL_FILE_SYSTEM :
 			local_file_system_read_content( file );
 			break;
+		case FS_BINARY :	// sind immer RAM cached
+			break;
 	}
 
 
@@ -125,6 +127,8 @@ int prepare_file_content(WebserverFileInfo* file) {
 					#endif
 				}
 				break;
+			case FS_BINARY :	// verändern sich nie
+				return 1;
 		}
 
 		return 1;
@@ -133,7 +137,7 @@ int prepare_file_content(WebserverFileInfo* file) {
 
 		if ( file->Data != 0 ) {
 			printf("prepare_file_content:  File Data not 0 !!!! %s \n", file->FilePath );
-			WebserverFree(file->Data);
+			WebserverFree( ( void*) file->Data);
 		}
 	}
 
@@ -144,6 +148,9 @@ int prepare_file_content(WebserverFileInfo* file) {
 		case FS_LOCAL_FILE_SYSTEM :
 			printf("prepare_file_content: prepare content %s  File System -> FS_LOCAL_FILE_SYSTEM \n", file->FilePath );
 			local_file_system_read_content( file );
+			break;
+		
+		case FS_BINARY :	// sind immer RAM cached
 			break;
 	}
 
@@ -157,7 +164,7 @@ void release_file_content(WebserverFileInfo* file) {
 		return;
 	}
 
-	WebserverFree(file->Data);
+	WebserverFree( ( void*) file->Data);
 	file->Data = 0;
 
 }
@@ -165,7 +172,7 @@ void release_file_content(WebserverFileInfo* file) {
 
 
 
-WebserverFileInfo *getFile(char *name) {
+WebserverFileInfo *getFile( char *name) {
 	WebserverFileInfo *file = 0;
 
 	if (name == 0)
@@ -174,6 +181,8 @@ WebserverFileInfo *getFile(char *name) {
 	while( name[0] == '/'){
 		name++;
 	}
+	
+	//printf("getFile : %s\n", name );
 
 	if ( 1 == check_blocked_urls( name ) ){
 		return 0;
@@ -183,19 +192,13 @@ WebserverFileInfo *getFile(char *name) {
 	if ( file != 0 )
 		return file;
 
-	#ifdef WEBSERVER_USE_LOCAL_FILE_SYSTEM
-		file = getFileLocalFileSystem(name);
-		file->fs_type = FS_LOCAL_FILE_SYSTEM;
-	#endif
-
-	#ifdef WebserverUseNFS
-		file = getFileNFS ( name );
-	#endif
-
+	file = getFileLocalFileSystem( ( unsigned char*) name);
+	
 	if ( file == 0 ){
+		printf("getFile : Error File %s not found\n", name );
 		return 0;
 	}
-
+	
 #ifndef WEBSERVER_DISABLE_CACHE
 	generateEtag ( file );
 #endif
