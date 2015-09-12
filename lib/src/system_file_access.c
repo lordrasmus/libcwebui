@@ -47,7 +47,7 @@ void init_file_access( void ){
 
 void free_file_access( void ){
 
-	#warning noch implementieren
+	// TODO alle elemente richtig freigeben
 
 	freeFileCache();
 

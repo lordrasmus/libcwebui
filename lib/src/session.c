@@ -110,7 +110,7 @@ void checkSessionTimeout(void) {
 		
 		timeout = getConfigInt("session_timeout");
 		
-		if ( ( timeout != 0 ) && ( ( diff < 0 ) || (diff > timeout * PlatformGetTicksPerSeconde() ) ) ) {
+		if ( ( timeout != 0 ) && ( diff > timeout * PlatformGetTicksPerSeconde() ) ) {
 #ifdef _WEBSERVER_SESSION_DEBUG_
 			WebServerPrintf("Delete SessionStore GUID : %s\r\n",ss->guid);
 #endif
