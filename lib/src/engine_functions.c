@@ -39,24 +39,31 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 void engine_includeFile(http_request *s, const char* prefix, FUNCTION_PARAS* func) {
 	WebserverFileInfo *file;
+
 	if ( func->parameter[0].text == 0 )
 		return;
+
 	file = getFile(func->parameter[0].text);
-	if (file != 0) {
-		if (file->RamCached == 0) {
-			file->Data = (unsigned char*) WebserverMalloc( file->DataLenght );
-			getFileContents(file);
-			processHTML(s, prefix, file->Url, (char*) file->Data, file->DataLenght);
-			WebserverFree(file->Data);
-		} else {
-			processHTML(s, prefix, file->Url, (char*) file->Data, file->DataLenght);
-		}
-	} else {
-#ifdef _WEBSERVER_TEMPLATE_DEBUG_
+	if (file == 0) {
+		#ifdef _WEBSERVER_TEMPLATE_DEBUG_
 		WebServerPrintf("File : %s not found\n",func->para1);
-#endif
+		#endif
 		printHTMLChunk(s->socket, "<font color=\"#FF0000\" >include %s not found</font>", func->parameter[0].text);
+		return;
 	}
+
+	if ( 0 == prepare_file_content( file ) ){
+		#ifdef _WEBSERVER_TEMPLATE_DEBUG_
+		WebServerPrintf("File : %s error loading content \n",func->para1);
+		#endif
+		printHTMLChunk(s->socket, "<font color=\"#FF0000\" >include %s read error</font>", func->parameter[0].text);
+		return;
+	}
+
+	processHTML(s, prefix, file->Url, (char*) file->Data, file->DataLenght);
+
+	release_file_content( file );
+
 }
 
 

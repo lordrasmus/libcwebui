@@ -29,13 +29,32 @@
 #include <dmalloc/dmalloc.h>
 #endif
 
-#include "intern/system_file_access_utils.h"
+#include "intern/system_file_access.h"
 
 
-void initFileCache(void);
 
-extern ws_variable* filepath;
-extern ws_variable* filepath_no_cache;
+
+
+void init_file_access( void ){
+
+	initFileCache();
+
+	init_file_access_utils();
+
+	init_local_file_system();
+
+}
+
+void free_file_access( void ){
+
+	#warning noch implementieren
+
+	freeFileCache();
+
+	/* filepath erst NACH files freigeben weil der prefix direkt verlinkt wird */
+	free_local_file_system();
+
+}
 
 
 bool WebServerloadData(void) {
@@ -45,11 +64,8 @@ bool WebServerloadData(void) {
 		return false;
 	}
 
-	init_file_access_utils();
-
 #ifdef WebserverUseNFS
 	LOG (FILESYSTEM_LOG,NOTICE_LEVEL,0, "Webserver Load Data Use NFS","" );
-	return initLocalFileSystem();
 #endif
 
 #ifdef WEBSERVER_USE_LOCAL_FILE_SYSTEM
@@ -62,221 +78,89 @@ bool WebServerloadData(void) {
 
 
 
-unsigned char getFileContents(WebserverFileInfo* info) {
-#ifdef WebserverUseNFS
-	// die datein sind immer RAM cached da sie komplette über ethernet geladen werden
-#endif
-#ifdef WEBSERVER_USE_BINARY_FORMAT
-	if ( info->RamCached == 0 ) {
-#ifdef _WEBSERVER_DEBUG_
-#if __GNUC__ > 3
-		LOG ( FILESYSTEM_LOG,NOTICE_LEVEL,"Flash Position %u ", ( unsigned int ) info->DataStreamPosition );
-#else
-		LOG ( FILESYSTEM_LOG,NOTICE_LEVEL,"Flash Position %u ",info->DataStreamPosition );
-#endif
-#endif
-		PlatformOpenDataReadStream ( "data.bin" );
-		PlatformSeekToPosition ( info->DataStreamPosition );
-		PlatformReadBytes ( info->Data,info->DataLenght );
-		PlatformCloseDataStream();
-		return 1;
-	}
-	return 0;
-#endif
+static char ramCacheFile(WebserverFileInfo *file) {
 
-#ifdef WEBSERVER_USE_LOCAL_FILE_SYSTEM
-	if (info->RamCached == 0) {
-		if (PlatformOpenDataReadStream(info->FilePath)) {
-			PlatformReadBytes(info->Data, info->DataLenght);
-			PlatformCloseDataStream();
+	if ( doNotRamCacheFile( file ) ){
+		printf("not ram cached %s\n",file->FilePath);
+		return 0;
+	}
+
+	if ( file->NoRamCache == 1 ){
+		printf("not ram cached %s\n",file->FilePath);
+		return 0;
+	}
+
+	if (file->FileType > WEBSERVER_MAX_FILEID_TO_RAM) {
+		printf("not ram cached %s\n",file->FilePath);
+		return 0;
+	}
+
+	file->RamCached = 1;
+	printf("ram cached %s\n",file->FilePath);
+
+	// local filesystem
+	switch ( file->fs_type ){
+		case FS_LOCAL_FILE_SYSTEM :
+			local_file_system_read_content( file );
+			break;
+	}
+
+
+	return 0;
+}
+
+int prepare_file_content(WebserverFileInfo* file) {
+
+	if (file->RamCached == 1) {
+		#ifdef WEBSERVER_DISABLE_FILE_UPDATE
 			return 1;
+		#endif
+
+		switch ( file->fs_type ){
+			case FS_LOCAL_FILE_SYSTEM :
+				if ( 1 == local_file_system_check_file_modified( file ) ){
+					printf("prepare_file_content:  file change %s File System -> FS_LOCAL_FILE_SYSTEM  \n", file->FilePath );
+					#ifndef WEBSERVER_DISABLE_CACHE
+					generateEtag ( file );
+					#endif
+				}
+				break;
 		}
-		return 0;
+
+		return 1;
+
+	}else{
+
+		if ( file->Data != 0 ) {
+			printf("prepare_file_content:  File Data not 0 !!!! %s \n", file->FilePath );
+			WebserverFree(file->Data);
+		}
 	}
+
+	// Datei ist nicht RamCached
+
+	// local filesystem
+	switch ( file->fs_type ){
+		case FS_LOCAL_FILE_SYSTEM :
+			printf("prepare_file_content: prepare content %s  File System -> FS_LOCAL_FILE_SYSTEM \n", file->FilePath );
+			local_file_system_read_content( file );
+			break;
+	}
+
 	return 1;
-#endif
+
 }
 
-#ifdef WEBSERVER_USE_LOCAL_FILE_SYSTEM
+void release_file_content(WebserverFileInfo* file) {
 
-WebserverFileInfo VISIBLE_ATTR * getFileInformation(char *name) {
-	char name_tmp[1000];
-	ws_variable *tmp_var;
-	WebserverFileInfo *file = 0;
-	char found = 0;
-
-	/*  um ein Zeichen weiterspringen wenn name mit / anfängt */
-	if ( name[0] == '/' )
-		name = name + 1;
-
-	tmp_var = getWSVariableArrayFirst(filepath_no_cache);
-	while (tmp_var != 0) {
-		if (0 == strncmp(tmp_var->name, name, tmp_var->name_len)) {
-			getWSVariableString(tmp_var, name_tmp, 1000);
-			if (strlen(name) > tmp_var->name_len) {
-				strcat(name_tmp, name + tmp_var->name_len);
-				if (PlatformOpenDataReadStream(name_tmp)) {
-					found = 2;
-					break;
-				}
-			}
-		}
-		tmp_var = getWSVariableArrayNext(filepath_no_cache);
-	}
-	stopWSVariableArrayIterate(filepath_no_cache);
-
-	if ( found == 0 ) {
-		tmp_var = getWSVariableArrayFirst(filepath);
-
-		if (tmp_var == 0) {
-			printf("Keine Suchpfade fuer Datein registriert\n");
-			return 0;
-		}
-
-		while (tmp_var != 0) {
-			if (0 == strncmp(tmp_var->name, name, tmp_var->name_len)) {
-				getWSVariableString(tmp_var, name_tmp, 1000);
-				if (strlen(name) > tmp_var->name_len) {
-					strcat(name_tmp, name + tmp_var->name_len);
-					if (PlatformOpenDataReadStream(name_tmp)) {
-						found = 1;
-						break;
-					}
-				}
-			}
-			tmp_var = getWSVariableArrayNext(filepath);
-		}
-		stopWSVariableArrayIterate(filepath);
+	if (file->RamCached == 1) {
+		return;
 	}
 
-	if (found == 0) {
-		return 0;
-	}
+	WebserverFree(file->Data);
+	file->Data = 0;
 
-	file = (WebserverFileInfo*) WebserverMalloc ( sizeof ( WebserverFileInfo ) );
-	memset(file, 0, sizeof(WebserverFileInfo));
-
-	if (found == 2) {
-		file->NoRamCache = 1;
-	}
-
-	copyFilePath(file, name_tmp);
-	copyURL(file, name);
-	/* tmp_var ist permanent in der liste der prefixe darum pointer direkt nehmen */
-	file->FilePrefix = tmp_var->name;
-	setFileType(file);
-#ifdef _WEBSERVER_FILESYSTEM_CACHE_DEBUG_
-	LOG (FILESYSTEM_LOG,NOTICE_LEVEL,0, "Add File Info Node","" );
-#endif
-
-	file->DataLenght = PlatformGetFileSize();
-	PlatformCloseDataStream();
-	addFileToCache(file);
-	return file;
 }
-
-
-
-
-char ramCacheFile(WebserverFileInfo *file) {
-	FILE_OFFSET to_read;
-	int ret;
-
-	if ( doNotRamCacheFile( file ) ){
-		return 0;
-	}
-
-
-	if (file->FileType <= WEBSERVER_MAX_FILEID_TO_RAM) {
-		if (PlatformOpenDataReadStream(file->FilePath)) {
-			file->DataLenght = PlatformGetFileSize();
-			file->RamCached = 1;
-			if (file->Data != 0) WebserverFree(file->Data);
-			file->Data = (unsigned char*) WebserverMalloc ( file->DataLenght );
-			to_read = file->DataLenght;
-			while (to_read > 0) {
-				if ( to_read < INT_MAX ){
-					ret = PlatformReadBytes(file->Data, to_read);
-				}else{
-					ret = PlatformReadBytes(file->Data, INT_MAX);
-				}
-				if (ret < 0) break;
-				to_read -= (unsigned int )ret;
-			}
-			PlatformCloseDataStream();
-
-		}
-	}
-	return 0;
-}
-
-static void updateLocalFileSize( WebserverFileInfo *file ){
-	PlatformOpenDataReadStream(file->FilePath);
-	file->DataLenght = PlatformGetFileSize();
-	PlatformCloseDataStream();
-}
-
-static WebserverFileInfo *getFileLocalFileSystem(char *name) {
-	WebserverFileInfo *file = 0;
-
-#ifdef _WEBSERVER_FILESYSTEM_DEBUG_
-	LOG (FILESYSTEM_LOG,NOTICE_LEVEL, 0,"getFileLocalFileSystem : %s",name );
-#endif
-
-	file = getFileFromRBCache(name);
-	if (file == 0) {
-		file = getFileInformation(name);
-		if (file == 0) {
-			return 0;
-		}
-		if ( doNotRamCacheFile( file ) ){
-			return file;
-		}
-
-		PlatformGetFileTime ( file );
-	} else {
-
-		updateLocalFileSize( file );
-
-		if ( doNotRamCacheFile( file ) ){
-			return file;
-		}
-
-#ifdef WEBSERVER_DISABLE_FILE_UPDATE
-		return file;
-#endif
-
-#ifndef WEBSERVER_DISABLE_CACHE
-		if ( PlatformGetFileTime ( file ) == false) {
-#ifdef _WEBSERVER_FILESYSTEM_CACHE_DEBUG_
-			LOG (FILESYSTEM_LOG,NOTICE_LEVEL, 0,"File %s unveraendert",name );
-#endif
-			return file;
-		}
-#endif
-	}
-
-#ifdef _WEBSERVER_FILESYSTEM_CACHE_DEBUG_
-	LOG ( FILESYSTEM_LOG,NOTICE_LEVEL,0,"File %s neu laden ",name);
-#endif
-
-	if ( doNotRamCacheFile( file ) ){
-		return file;
-	}
-
-	ramCacheFile(file);
-
-#ifndef WEBSERVER_DISABLE_CACHE
-	generateEtag ( file );
-#endif
-
-	return file;
-}
-
-#endif
-
-
-
 
 
 
@@ -287,7 +171,7 @@ WebserverFileInfo *getFile(char *name) {
 	if (name == 0)
 		return 0;
 
-	if( name[0] == '/'){
+	while( name[0] == '/'){
 		name++;
 	}
 
@@ -295,39 +179,38 @@ WebserverFileInfo *getFile(char *name) {
 		return 0;
 	}
 
-#ifdef WEBSERVER_USE_LOCAL_FILE_SYSTEM
-	file = getFileLocalFileSystem(name);
-#endif
+	file = getFileFromRBCache( name );
+	if ( file != 0 )
+		return file;
 
-#ifdef WebserverUseNFS
-	return getFileNFS ( name );
-#endif
+	#ifdef WEBSERVER_USE_LOCAL_FILE_SYSTEM
+		file = getFileLocalFileSystem(name);
+		file->fs_type = FS_LOCAL_FILE_SYSTEM;
+	#endif
 
-#ifdef WEBSERVER_USE_BINARY_FORMAT
-	int i;
-	for ( i=0;i<g_files.FileCount;i++ ) {
-#ifdef _WEBSERVER_DEBUG_
-		LOG (FILESYSTEM_LOG,NOTICE_LEVEL, ":%s:", ( char* ) g_files.files[i]->Name );
-		LOG (FILESYSTEM_LOG,NOTICE_LEVEL, "(%d)",g_files.files[i]->NameLengt );
-#endif
-		/*if(strlen(g_files.files[i]->Name)<50)
-		 LOG("\n%s(%d):%s\n",g_files.files[i]->Name,g_files.files[i]->NameLengt, name);
-		 else{
-		 LOG("\nDaten Kaputt %s\n",name);
-		 }*/
-		if ( 0==strncmp ( ( char* ) g_files.files[i]->Name, ( char* ) name,g_files.files[i]->NameLengt ) ) {
-			//	LOG("\n%s(%d):%s\n",g_files.files[i]->Name,g_files.files[i]->NameLengt, name);
-			//	LOG("DataLenght : %d %X\n",g_files.files[i]->DataLenght,g_files.files[i]);
-			return g_files.files[i];
-		}
+	#ifdef WebserverUseNFS
+		file = getFileNFS ( name );
+	#endif
+
+	if ( file == 0 ){
+		return 0;
 	}
+
+#ifndef WEBSERVER_DISABLE_CACHE
+	generateEtag ( file );
 #endif
 
+	ramCacheFile(file);
+
+	// prüfen ob das File ein Template ist
 	if (file != 0) {
 		file->TemplateFile = isTemplateFile(name);
 	}
 	return file;
 }
+
+
+
 
 
 

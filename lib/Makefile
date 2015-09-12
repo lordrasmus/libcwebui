@@ -13,7 +13,7 @@ PY_LINK = -lpython3.4
 PY_FLAGS = -I/usr/include/python2.7
 PY_LINK = -lpython2.7
 
-FLAGS= $(COMP_OPT) -Wall -fPIC -Wextra  -std=c99  -D_POSIX_SOURCE -Wno-unused-parameter \
+FLAGS= $(COMP_OPT) -Wall -fPIC -Wextra  -std=c99  -D_POSIX_SOURCE -Wno-unused-parameter -Werror=implicit-function-declaration \
 	-fdata-sections -ffunction-sections -fvisibility=hidden  \
 	$(SIZE_OPTS) $(PY_FLAGS)
 

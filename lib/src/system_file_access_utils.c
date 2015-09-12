@@ -13,7 +13,7 @@ static ws_variable* blocked_files;
 
 void init_file_access_utils(void) {
 
-	initFileCache();
+
 
 	no_ram_cache_files = newWSArray("no_ram_cache_files");
 	blocked_files = newWSArray("blocked_files");
@@ -108,25 +108,7 @@ void copyURL(WebserverFileInfo* file, const char* url) {
 	file->Url[file->UrlLengt] = '\0';
 }
 
-/*
-WebserverFileInfo *create_empty_file(int pSize) {
-	WebserverFileInfo *result = (WebserverFileInfo *) WebserverMalloc( sizeof(WebserverFileInfo) );
-	if (!result)
-		return 0;
-	result->FileType = FILE_TYPE_HTML;
-	result->Data = (unsigned char *) WebserverMalloc( pSize );
-	if (!result->Data)
-		return 0;
-	result->DataLenght = 0;
-	return result;
-}
 
-void free_file(WebserverFileInfo *file) {
-	if (file->Data)
-		WebserverFree(file->Data);
-	WebserverFree(file);
-}
-* */
 
 
 void setFileType(WebserverFileInfo* file) {
@@ -228,6 +210,9 @@ void generateEtag(WebserverFileInfo* wfi) {
 	if (wfi->RamCached == 1) {
 		WebserverSHA1(wfi->Data, wfi->DataLenght, buf);
 	} else {
+
+		// Datei ist nicht im RAM cache
+		#warning hier noch das fs handling einbauen
 		struct sha_context* sha_context;
 		unsigned int to_read;
 		unsigned long diff;
@@ -268,3 +253,28 @@ void generateEtag(WebserverFileInfo* wfi) {
 #endif
 
 }
+
+
+
+
+/*
+WebserverFileInfo *create_empty_file(int pSize) {
+	WebserverFileInfo *result = (WebserverFileInfo *) WebserverMalloc( sizeof(WebserverFileInfo) );
+	if (!result)
+		return 0;
+	result->FileType = FILE_TYPE_HTML;
+	result->Data = (unsigned char *) WebserverMalloc( pSize );
+	if (!result->Data)
+		return 0;
+	result->DataLenght = 0;
+	return result;
+}
+
+void free_file(WebserverFileInfo *file) {
+	if (file->Data)
+		WebserverFree(file->Data);
+	WebserverFree(file);
+}
+* */
+
+

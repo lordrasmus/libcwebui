@@ -95,7 +95,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 	#include "intern/py_plugin.h"
 #endif
 
-WebserverFileInfo *getFileInformation(char *name);
 
 #include "webserver_api_functions.h"
 

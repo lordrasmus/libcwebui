@@ -23,6 +23,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "stdafx.h"
 
+#include <strings.h>
+
 #ifdef __GNUC__
 #include "webserver.h"
 #endif
@@ -40,7 +42,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 	#error WEBSERVER_MAX_POST_CONTENT_LENGTH muss definiert werden
 #endif
 
-/* 
+/*
  http://tangentsoft.net/wskfaq/articles/bsd-compatibility.html
  http://publib.boulder.ibm.com/infocenter/iseries/v5r3/index.jsp?topic=/rzab6/rzab6xnonblock.htm
  http://www.wangafu.net/~nickm/libevent-book/01_intro.html
@@ -281,7 +283,7 @@ int handleClientHeaderData(socket_info* sock) {
 	int len2;
 	unsigned int buffer_length = MAX_HEADER_LINE_LENGHT * 1;
 	unsigned int parsed;
-	
+
 	unsigned int this_post_read = 0;
 
 
@@ -465,7 +467,7 @@ int handleClient(socket_info* sock) {
 			addEventSocketReadWritePersist ( sock );
 			return 0;
 		}
-		
+
 		/* Websocket Protokol Version wird nicht unterstützt */
 		if ( sock->header->isWebsocket == 2 )
 		{
@@ -502,7 +504,7 @@ int handleClient(socket_info* sock) {
 }
 
 char sendData(socket_info* sock, unsigned char* buffer, FILE_OFFSET length) {
-	int ret; 
+	int ret;
 	int to_send;
 	SOCKET_SEND_STATUS status;
 
@@ -832,7 +834,7 @@ void handleer( int a, short b, void *t ) {
 	int ret;
 	socket_info* sock = (socket_info*) t;
 	CLIENT_WRITE_DATA_STATUS status_ret = UNDEFINED;
-		
+
 
 #if _WEBSERVER_HANDLER_DEBUG_ > 3
 
@@ -847,7 +849,7 @@ void handleer( int a, short b, void *t ) {
 		LOG( MESSAGE_LOG, ERROR_LEVEL, sock->socket,"EV_SIGNAL not handled","%d", b );
 		return;
 	}
-	
+
 	if ( a != sock->socket ){
 		LOG( MESSAGE_LOG, ERROR_LEVEL, sock->socket,"a != sock->socket","%d", b );
 		return;
@@ -879,13 +881,13 @@ void handleer( int a, short b, void *t ) {
 	if (sock->client == 1) {
 		if (b == EVENT_READ) {
 			#ifdef WEBSERVER_USE_SSL
-			sock->ssl_pending = 0;			
+			sock->ssl_pending = 0;
 			if(sock->use_ssl == 1){
-				
-				
-				/* 
-  				 Im SSL read muss die event registrierung blockiert werden bis 
-				 alle pending bytes gelesen wurden 
+
+
+				/*
+  				 Im SSL read muss die event registrierung blockiert werden bis
+				 alle pending bytes gelesen wurden
 				*/
 				sock->ssl_block_event_flags = 1;
 				ret = handleClient(sock);
@@ -903,9 +905,9 @@ void handleer( int a, short b, void *t ) {
 				}
 				sock->ssl_pending = 0;
 				sock->ssl_block_event_flags = 0;
-				
+
 				commitSslEventFlags( sock );
-				
+
 				return;
 			}else{
 			#endif
@@ -914,12 +916,12 @@ void handleer( int a, short b, void *t ) {
 					WebserverConnectionManagerCloseRequest(sock);
 					return;
 				}
-				
+
 				return;
 			#ifdef WEBSERVER_USE_SSL
 			}
 			#endif
-			
+
 		}
 		if (b == EVENT_WRITE) {
 			status_ret = handleClientWriteData(sock);
@@ -947,7 +949,7 @@ void handleer( int a, short b, void *t ) {
 						return;
 					}
 				}
-		
+
 				#ifdef WEBSERVER_USE_WEBSOCKETS
 				if( sock->header->isWebsocket == 2 ){
 					addEventSocketRead(sock);

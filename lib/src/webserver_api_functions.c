@@ -25,6 +25,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "webserver.h"
 
+#include "intern/system_file_access.h"
+
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -392,11 +394,11 @@ void RegisterWebsocketHandler(const char* url,websocket_api_handler f,const char
 
 
 void WebserverAddFileDir(const char* alias,const char* dir){
-	setFileDir(alias,dir);
+	add_local_file_system_dir(alias,dir,1);
 }
 
 void WebserverAddFileDirNoCache(const char* alias,const char* dir){
-	setFileDirNoCache(alias,dir);
+	add_local_file_system_dir(alias,dir,0);
 }
 
 

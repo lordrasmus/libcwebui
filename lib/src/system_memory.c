@@ -278,7 +278,7 @@ void* real_WebserverMalloc(const unsigned long size ) {
 	unsigned long *s;
 	unsigned int add_size = 0, real_alloc;
 	char* ret;
-	char* ret2;
+	//char* ret2;
 #ifdef _WEBSERVER_MEMORY_DEBUG_
 	memory_block* block;
 	add_size += sizeof(memory_block);
@@ -304,7 +304,7 @@ void* real_WebserverMalloc(const unsigned long size ) {
 		printf("Memory malloc Error\n");
 		exit(1);
 	}
-	ret2 = ret;
+	//ret2 = ret;
 #if __BIGGEST_ALIGNMENT__ == 16
 	s = (unsigned long*) __ws_assume_aligned(ret, 8 );
 	*s = real_alloc;
@@ -533,6 +533,7 @@ void WebserverFree(void *mem) {
 #else
 	PlatformFree((void*) p);
 #endif
+
 
 	PlatformUnlockMutex(&mem_mutex);
 

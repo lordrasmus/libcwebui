@@ -104,6 +104,7 @@ int sendFile(http_request* s, WebserverFileInfo *info) {
 		return 0;
 	}
 
+	#warning verhalten bei änderuneg testen
 	if (0 > sendHeader(s, info, info->DataLenght))
 		return -1;
 

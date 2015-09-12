@@ -267,8 +267,8 @@ int getHttpRequest(socket_info* sockp) {
 			file = getFile((char*) "index.html"); /* Eingabe von zB http://192.168.2.80/ */
 		}
 
+		/* durch Eingabe von zB http://192.168.2.80/test.dat?download runterladen durch den Browser erzwingen */
 		download = getParameter(&s, "download");
-
 		if ( file && download ) {
 			file->ForceDownload = 1;
 			if ( download->type == VAR_TYPE_STRING ){
@@ -321,14 +321,14 @@ void *WebserverHTMLChunkFree(const void *restrict free_element) {
 
 int sendHTMLFile(http_request* s, WebserverFileInfo *file) {
 
-	if (file->RamCached == 1) {
-		processHTML(s, file->FilePrefix, file->Url, (char*) file->Data, file->DataLenght);
-	} else {
-		file->Data = (unsigned char*) WebserverMalloc( file->DataLenght );
-		getFileContents(file);
-		processHTML(s, file->FilePrefix, file->Url, (char*) file->Data, file->DataLenght);
-		WebserverFree(file->Data);
+	if ( 0 == prepare_file_content( file ) ){
+		WebServerPrintf("File : %s error loading content \n",file->FilePath);
+		return -1;
 	}
+
+	processHTML(s, file->FilePrefix, file->Url, (char*) file->Data, file->DataLenght);
+
+	release_file_content( file );
 
 	if (0 > sendHeader(s, file, getChunkListSize(&s->socket->html_chunk_list))) {
 		ws_list_attributes_freer(&s->socket->html_chunk_list, WebserverHTMLChunkFree);

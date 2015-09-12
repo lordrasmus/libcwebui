@@ -32,8 +32,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 
-ws_variable* filepath;
-ws_variable* filepath_no_cache;
 ws_variable* template_file_postfix;
 
 inline global_vars* initWebserver(void) {
@@ -42,11 +40,7 @@ inline global_vars* initWebserver(void) {
 
 	init_extension_api();
 
-	filepath = newWSVariable("dirs");
-	setWSVariableArray(filepath);
-	
-	filepath_no_cache = newWSVariable("dirs_no_cache");
-	setWSVariableArray(filepath_no_cache);
+	init_file_access();
 
 	template_file_postfix = newWSVariable("postfix");
 	setWSVariableArray(template_file_postfix);
@@ -62,7 +56,7 @@ inline global_vars* initWebserver(void) {
 
 	initGlobalVariable();
 	initConfig();
-	
+
 #ifdef WEBSERVER_USE_SESSIONS
 	initSessions();
 #endif
@@ -80,7 +74,7 @@ inline global_vars* initWebserver(void) {
 	REGISTER_FUNCTION( server_ssl_port );
 
 	PlatformInitNetwork();
-	
+
 	initEvents();
 
 	if (!WebServerloadData()) {
@@ -91,8 +85,8 @@ inline global_vars* initWebserver(void) {
 }
 
 void startWebServer(void) {
-	
-	
+
+
 
 #ifdef WEBSERVER_USE_IPV6
 	PlatformGetIPv6 ( ( char* ) ip );
@@ -147,9 +141,9 @@ void shutdownWebserverHandler(void) {
 void shutdownWebserver(void) {
 	LOG(CONNECTION_LOG, NOTICE_LEVEL, 0, "Webserver Shutdown", "");
 	freeSocketContainer();
-	freeFileCache();
-	/* filepath erst NACH files freigeben weil der prefix direkt verlinkt wird */
-	freeWSVariable(filepath);
+
+	free_file_access();
+
 	free_extension_api();
 	freeSessions();
 	freeEvents();
@@ -159,31 +153,7 @@ void shutdownWebserver(void) {
 	PlatformEndNetwork();
 }
 
-void setFileDir(const char* alias, const char* dir) {
-	ws_variable *tmp;
-	char buffer[1000];
 
-	tmp = getWSVariableArray(filepath, alias);
-	if (tmp == 0) {
-		tmp = addWSVariableArray(filepath, alias);
-	}
-	strcpy(buffer, dir);
-	if (dir[strlen(dir)] != '/') strcat(buffer, "/");
-	setWSVariableString(tmp, buffer);
-}
-
-void setFileDirNoCache(const char* alias, const char* dir) {
-	ws_variable *tmp;
-	char buffer[1000];
-
-	tmp = getWSVariableArray(filepath_no_cache, alias);
-	if (tmp == 0) {
-		tmp = addWSVariableArray(filepath_no_cache, alias);
-	}
-	strcpy(buffer, dir);
-	if (dir[strlen(dir)] != '/') strcat(buffer, "/");
-	setWSVariableString(tmp, buffer);
-}
 
 void addTemplateFilePostfix(const char* postfix) {
 	ws_variable *tmp;

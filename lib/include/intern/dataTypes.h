@@ -124,6 +124,10 @@ typedef struct {
 	char *value;
 } Cookie;
 
+enum fs_types{
+	FS_LOCAL_FILE_SYSTEM
+};
+
 typedef struct {
 	unsigned char Id;
 
@@ -156,6 +160,8 @@ typedef struct {
 
 	unsigned long int	last_mod_sec;
 	unsigned long int   last_mod_nsec;
+
+	enum fs_types fs_type;
 
 } WebserverFileInfo;
 

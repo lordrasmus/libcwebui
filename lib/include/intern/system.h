@@ -48,13 +48,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 extern "C" {
 #endif
 
-void setFileDir(const char* alias,const char* dir);
-void setFileDirNoCache(const char* alias, const char* dir);
+
+void init_file_access( void );
+void free_file_access( void );
+
+
+int prepare_file_content(WebserverFileInfo* info);
+void release_file_content(WebserverFileInfo* info);
+
 
 void addTemplateFilePostfix(const char* postfix);
 void addTemplateIgnoreFilePostfix(const char* postfix);
-char isTemplateFile(const char* file);
 
+
+char isTemplateFile(const char* file);
 
 
 void	startWebServer( void );

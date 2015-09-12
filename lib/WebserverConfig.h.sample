@@ -29,6 +29,7 @@
 #define SERVER_DOMAIN				"Testserver"
 #define WEBSERVER_GUID_LENGTH		50					// länge der guids für die sessions
 //#define WEBSERVER_DISABLE_CACHE						// deaktiviert die http cache header
+//#define WEBSERVER_DISABLE_FILE_UPDATE					// deaktiviert den file update check
 
 #define WEBSERVER_USE_PYTHON							// Python Support
 

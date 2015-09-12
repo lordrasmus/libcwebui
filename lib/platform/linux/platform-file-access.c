@@ -106,7 +106,7 @@ void PlatformSeekToPosition(long position) {
  };
  */
 
-char PlatformGetFileTime(WebserverFileInfo* file) {
+int PlatformGetFileInfo(WebserverFileInfo* file, int* time_changed, int *new_size) {
 
 	struct stat st;
 	struct tm *ts;
@@ -114,7 +114,9 @@ char PlatformGetFileTime(WebserverFileInfo* file) {
 	char* buffer;
 	__time_t f_sec,f_nsec;
 
-	stat(file->FilePath, &st);
+	if ( 0 > stat(file->FilePath, &st) ){
+		return 0;
+	}
 
 #ifdef __USE_MISC
 	f_sec = st.st_mtim.tv_sec;
@@ -125,36 +127,42 @@ char PlatformGetFileTime(WebserverFileInfo* file) {
 	f_nsec = st.st_atime;
 #endif
 
+	*new_size = st.st_size;
+	*time_changed = 0;
+
 	/* st.st_mtim.tv_nsec; */
-	if ( ( file->last_mod_sec == (unsigned long int)f_sec) && ( file->last_mod_nsec == (unsigned long int)f_nsec) && (file->DataLenght == st.st_size) )
-		return false;
+	if ( ( file->last_mod_sec != (unsigned long int)f_sec) || ( file->last_mod_nsec != (unsigned long int)f_nsec) ){
 
-	file->last_mod_sec = f_sec;
-	file->last_mod_nsec = f_nsec;
+		*time_changed = 1;
 
-	file->DataLenght = st.st_size;
+		file->last_mod_sec = f_sec;
+		file->last_mod_nsec = f_nsec;
 
-	buffer = (char *) WebserverMalloc( 150 );
-	ts = localtime(&st.st_mtime);
-	len = getHTMLDateFormat(buffer, ts->tm_mday, ts->tm_mon, ts->tm_year + 1900, ts->tm_hour, ts->tm_min);
 
-	if (file->lastmodified == 0) {
-		file->lastmodified = (char *) WebserverMalloc( len + 1 );
-		memcpy(file->lastmodified, buffer, len + 1);
-		file->lastmodifiedLength = len;
-		WebserverFree(buffer);
-		return true;
-	} else {
-		if (0 != strcmp(file->lastmodified, buffer)) {
-			WebserverFree(file->lastmodified);
+
+		buffer = (char *) WebserverMalloc( 150 );
+		ts = localtime(&st.st_mtime);
+		len = getHTMLDateFormat(buffer, ts->tm_mday, ts->tm_mon, ts->tm_year + 1900, ts->tm_hour, ts->tm_min);
+
+		if (file->lastmodified == 0) {
 			file->lastmodified = (char *) WebserverMalloc( len + 1 );
 			memcpy(file->lastmodified, buffer, len + 1);
 			file->lastmodifiedLength = len;
 			WebserverFree(buffer);
 			return true;
+		} else {
+			if (0 != strcmp(file->lastmodified, buffer)) {
+				WebserverFree(file->lastmodified);
+				file->lastmodified = (char *) WebserverMalloc( len + 1 );
+				memcpy(file->lastmodified, buffer, len + 1);
+				file->lastmodifiedLength = len;
+				WebserverFree(buffer);
+				return true;
+			}
 		}
+		WebserverFree(buffer);
 	}
-	WebserverFree(buffer);
-	return false;
+
+	return 1;
 }
 

@@ -1,6 +1,44 @@
 
 
 #ifdef WEBSERVER_USE_BINARY_FORMAT
+	int i;
+	for ( i=0;i<g_files.FileCount;i++ ) {
+#ifdef _WEBSERVER_DEBUG_
+		LOG (FILESYSTEM_LOG,NOTICE_LEVEL, ":%s:", ( char* ) g_files.files[i]->Name );
+		LOG (FILESYSTEM_LOG,NOTICE_LEVEL, "(%d)",g_files.files[i]->NameLengt );
+#endif
+		/*if(strlen(g_files.files[i]->Name)<50)
+		 LOG("\n%s(%d):%s\n",g_files.files[i]->Name,g_files.files[i]->NameLengt, name);
+		 else{
+		 LOG("\nDaten Kaputt %s\n",name);
+		 }*/
+		if ( 0==strncmp ( ( char* ) g_files.files[i]->Name, ( char* ) name,g_files.files[i]->NameLengt ) ) {
+			//	LOG("\n%s(%d):%s\n",g_files.files[i]->Name,g_files.files[i]->NameLengt, name);
+			//	LOG("DataLenght : %d %X\n",g_files.files[i]->DataLenght,g_files.files[i]);
+			return g_files.files[i];
+		}
+	}
+#endif
+
+#ifdef WEBSERVER_USE_BINARY_FORMAT
+	if ( info->RamCached == 0 ) {
+#ifdef _WEBSERVER_DEBUG_
+#if __GNUC__ > 3
+		LOG ( FILESYSTEM_LOG,NOTICE_LEVEL,"Flash Position %u ", ( unsigned int ) info->DataStreamPosition );
+#else
+		LOG ( FILESYSTEM_LOG,NOTICE_LEVEL,"Flash Position %u ",info->DataStreamPosition );
+#endif
+#endif
+		PlatformOpenDataReadStream ( "data.bin" );
+		PlatformSeekToPosition ( info->DataStreamPosition );
+		PlatformReadBytes ( info->Data,info->DataLenght );
+		PlatformCloseDataStream();
+		return 1;
+	}
+	return 0;
+#endif
+
+#ifdef WEBSERVER_USE_BINARY_FORMAT
 	int i; //,i2,i3;
 //int sig[4];
 //unsigned long flashposition=0;
