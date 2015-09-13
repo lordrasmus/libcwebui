@@ -175,9 +175,15 @@ int sendWebsocketFrameReal(const char* guid, const unsigned char* in, const WEBS
 
 void sendCloseFrame2(const char* guid) {
 	unsigned char buffer[2];
-	buffer[0] = WSF_CLOSE;
-	buffer[1] = 0;
-	sendWebsocketBinaryFrame(guid, buffer, 2);
+	
+	// status 1000 - normal close
+	
+	buffer[0] = 0x03;
+	buffer[1] = 0xe8;
+	
+	sendWebsocketFrame(WSF_CLOSE, guid,(const  char* ) buffer, 2 );
+	
+	
 }
 
 void sendCloseFrame(socket_info *sock) {

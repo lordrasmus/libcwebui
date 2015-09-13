@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 
+#include <zlib.h>
 
 #include "webserver.h"
 
@@ -70,16 +71,6 @@ static const unsigned char* read_string( const unsigned char* data, uint64_t* of
 }*/
 
 
-enum
-{
-  TINFL_FLAG_PARSE_ZLIB_HEADER = 1,
-  TINFL_FLAG_HAS_MORE_INPUT = 2,
-  TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF = 4,
-  TINFL_FLAG_COMPUTE_ADLER32 = 8
-};
-size_t tinfl_decompress_mem_to_mem(void *pOut_buf, size_t out_buf_len, const void *pSrc_buf, size_t src_buf_len, int flags);
-
-#include <zlib.h>
 
 
 static const unsigned char* read_file( const unsigned char *alias, const unsigned char* data, uint64_t* offset_p, uint32_t* compressed_p ){
@@ -89,6 +80,7 @@ static const unsigned char* read_file( const unsigned char *alias, const unsigne
 	const unsigned char *ret;
 	uint32_t size = 0;
 	uint32_t real_size,compresed_size;
+	uint32_t template;
 	
 	
 	
@@ -102,6 +94,8 @@ static const unsigned char* read_file( const unsigned char *alias, const unsigne
 	name = read_string( data, offset_p, &size );
 	
 	etag = read_string( data, offset_p, &size );
+	
+	template = read_uint32( data, offset_p );
 	
 	// TODO lastmodified noch einbauen
 	//file->lastmodified = etag;
@@ -120,55 +114,96 @@ static const unsigned char* read_file( const unsigned char *alias, const unsigne
 	copyURL(file, name);
 	setFileType(file);
 	
-	if ( *compressed_p == 1 ){
+	if ( *compressed_p > 0 ){
+		
 		real_size = read_uint32( data, offset_p );
 		compresed_size = read_uint32( data, offset_p );
 		
 		ret = &data[*offset_p];
 		
+		file->CompressedData = ret;
+		file->CompressedDataLenght = compresed_size;
+		file->RealDataLenght = real_size;
+		
 		*offset_p += compresed_size;
 		
 		file->DataLenght = compresed_size;
 		
-		
-		//printf("decomp_size : %d\n",decomp_size); 
-		
 		//printf("   Name : %s ( real %" PRIu32 " / comp %" PRIu32 " ) \n",name,real_size,compresed_size);
 		
-		//size_t s = tinfl_decompress_mem_to_mem( a, decomp_size, ret, compresed_size, TINFL_FLAG_PARSE_ZLIB_HEADER );
-		//printf("%d %s\n",s,a);
 		
-		if ( isTemplateFile( file->Url ) ){
+		if ( template ){
 			
 			unsigned long decomp_size = real_size + 32;
 			
-			unsigned char* decomp_buffer = malloc( decomp_size );
+			unsigned char* decomp_buffer = WebserverMalloc( decomp_size );
 			
 			file->TemplateFile = 1;
 		
-			printf("decompressing template: %s\n",name);
-			z_stream strm;  
-			strm.next_in = (unsigned char*)ret;  
-			strm.avail_in = compresed_size; 
-			 
-			strm.next_out = decomp_buffer;
-			strm.avail_out = real_size;
-			strm.total_out = 0;  
+			size_t new_size = 0;
 			
-			strm.zalloc = Z_NULL;  
-			strm.zfree = Z_NULL; 
-			
-			if (inflateInit2(&strm, (16+MAX_WBITS)) != Z_OK) {  
-				printf("e1\n");
+			switch ( *compressed_p ){
+				
+				case 2: 	// deflate compression
+				
+					printf("decompressing template ( deflate ) : %s\n",name);
+				
+					new_size = tinfl_decompress_mem_to_mem( decomp_buffer, decomp_size, ret, compresed_size, 0 );
+					//printf("%d\n%s\n",new_size,decomp_buffer);
+					break;
+		
+			//size_t s = uncompress(decomp_buffer, decomp_size, ret, compresed_size);
+			//printf("%d %s\n",s,decomp_buffer);
+		
+				case 1:{		// gzip compression
+					
+						printf("decompressing template ( gzip ) : %s\n",name);
+						
+						z_stream strm;  
+						strm.next_in = (unsigned char*)ret;  
+						strm.avail_in = compresed_size; 
+						 
+						strm.next_out = decomp_buffer;
+						strm.avail_out = real_size;
+						strm.total_out = 0;  
+						
+						strm.zalloc = Z_NULL;  
+						strm.zfree = Z_NULL; 
+					
+						if (inflateInit2(&strm, (16+MAX_WBITS) ) != Z_OK) {  
+							printf("inflateInit2 Error\n");
+							exit(1);
+						}
+						
+						int err = inflate (&strm, Z_SYNC_FLUSH);  
+						switch(err){
+							case Z_OK: 	break;
+							case Z_STREAM_END: 	break;
+							
+							case Z_NEED_DICT:      printf("Z_NEED_DICT\n"); exit( 1 ); 
+							case Z_STREAM_ERROR:   printf("Z_STREAM_ERROR\n"); exit( 1 ); 
+							case Z_DATA_ERROR:     printf("Z_DATA_ERROR\n"); exit( 1 ); 
+							case Z_MEM_ERROR:      printf("Z_MEM_ERROR\n"); exit( 1 ); 
+							case Z_BUF_ERROR:      printf("Z_BUF_ERROR\n"); exit( 1 ); 
+							case Z_VERSION_ERROR:  printf("Z_VERSION_ERROR\n"); exit( 1 ); 
+							
+							case Z_ERRNO:          printf("Z_ERRNO: %m\n"); exit( 1 ); 
+							
+
+								
+							default: 
+								printf("unknownerror %d \n",err);
+								exit(1);
+						}
+						
+						new_size = strm.total_out;
+					}
+					break;
 			}
 			
-			int err = inflate (&strm, Z_SYNC_FLUSH);  
-			switch(err){
-				case Z_STREAM_END: 
-					//printf("Z_STREAM_END\n"); 
-					break;
-					
-				default: printf("unknown2 %d \n",err);
+			if ( new_size != real_size ){
+				printf("Decomp Size mismatch %d != %d\n",new_size, real_size );
+				exit(1);
 			}
 			
 			ret = decomp_buffer;
@@ -178,10 +213,7 @@ static const unsigned char* read_file( const unsigned char *alias, const unsigne
 		//printf("zlib2 : %s\n",a);
 		
 	}else{
-		
-		if ( isTemplateFile( file->Url ) ){
-			file->TemplateFile = 1;
-		}
+				
 		real_size = read_uint32( data, offset_p );
 				
 		//printf("   Name : %s ( %" PRIu32 " ) \n",name,real_size);

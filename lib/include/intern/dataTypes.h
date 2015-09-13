@@ -148,6 +148,10 @@ typedef struct {
 	FILE_TYPES FileType;
 
 	unsigned char Compressed;
+	const unsigned char *CompressedData;
+	FILE_OFFSET CompressedDataLenght;
+	FILE_OFFSET RealDataLenght;
+	
 	unsigned char TemplateFile;
 	unsigned char RamCached;
 

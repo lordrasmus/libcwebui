@@ -26,6 +26,9 @@ void sig_pipe_hanler(int signum) {
 
 
 
+
+extern unsigned char data__[];
+
 int main(int argc, char **argv) {
 
 
@@ -38,6 +41,8 @@ int main(int argc, char **argv) {
 
 	if (0 == WebserverInit()) {
 
+		WebserverAddBinaryData( data__ );
+		
 		#ifdef WEBSERVER_USE_PYTHON
 
 		WebserverInitPython();

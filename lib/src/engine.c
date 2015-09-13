@@ -328,8 +328,9 @@ void printFoundEngineFunction(FUNCTION_PARAS* func) {
 
 /*int __attribute__((optimize("O0"))) */
 
-int processHTML(http_request* s, const char* prefix, const char *pagename, const char *pagedata,
-		const int datalenght) {
+static const char template_v1_header[] = { "TEMPLATE_V1" };
+
+int processHTML(http_request* s, const char* prefix, const char *pagename, const char *pagedata, int datalenght) {
 	int i, last_chunk_send_pos;
 	int end_pos;
 	int function_start_pos;
@@ -343,9 +344,16 @@ int processHTML(http_request* s, const char* prefix, const char *pagename, const
 	s->engine_current->pagename = (char*) pagename;
 	s->engine_current->pagedata = (char*) pagedata;
 	s->engine_current->datalenght = datalenght;
+	
+	if ( 0 == memcmp( template_v1_header, pagedata, sizeof( template_v1_header ) -1 ) ){
+		pagedata += sizeof( template_v1_header );
+		datalenght -= sizeof( template_v1_header );
+		//printf("Engine Template V1 Header found\n");
+	}
 
 	last_chunk_send_pos = 0;
 	for (i = 0; i < datalenght; i++) {
+		
 		if (pagedata[i] == '{') {
 			function_start_pos = i;
 			end_pos = i;

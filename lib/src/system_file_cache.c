@@ -153,15 +153,17 @@ void dumpLoadedFiles(http_request *s) {
 		else
 			printHTMLChunk(s->socket, "<td>false");
 			
-		if ( wfi->Compressed == 1 )
-			printHTMLChunk(s->socket, "<td>true");
-		else
-			printHTMLChunk(s->socket, "<td>false");
+		switch ( wfi->Compressed  ){
+			case 0 : printHTMLChunk(s->socket, "<td>"); break;
+			case 1 : printHTMLChunk(s->socket, "<td><font color=green>gzip</font>"); break;
+			case 2 : printHTMLChunk(s->socket, "<td><font color=green>deflate</font>"); break;
+		}
 			
 		if ( wfi->TemplateFile == 1 )
-			printHTMLChunk(s->socket, "<td>true");
+			printHTMLChunk(s->socket, "<td><font color=green>true</font>");
 		else
-			printHTMLChunk(s->socket, "<td>false");
+			printHTMLChunk(s->socket, "<td>");
+		
 			
 		
 	}

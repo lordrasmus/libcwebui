@@ -55,7 +55,7 @@ void free_file_access( void ){
 	//free_local_file_system();
 
 }
-
+#include <zlib.h>
 
 bool WebServerloadData(void) {
 
@@ -63,6 +63,8 @@ bool WebServerloadData(void) {
 		LOG(FILESYSTEM_LOG, ERROR_LEVEL, 0, "WebserverInit must be called first","");
 		return false;
 	}
+	
+	printf("using zlib : %s\n",ZLIB_VERSION);
 
 #ifdef WebserverUseNFS
 	LOG (FILESYSTEM_LOG,NOTICE_LEVEL,0, "Webserver Load Data Use NFS","" );
@@ -127,7 +129,14 @@ int prepare_file_content(WebserverFileInfo* file) {
 					#endif
 				}
 				break;
-			case FS_BINARY :	// verändern sich nie
+			case FS_BINARY :	
+				//printf("compressed : %d\n",file->Compressed);
+				if ( file->Compressed == 2 ){
+					printf("warning: decompressing file : %s\n", file->FilePath );
+					file->Data = WebserverMalloc( file->RealDataLenght );
+					tinfl_decompress_mem_to_mem( file->Data, file->RealDataLenght, file->CompressedData, file->CompressedDataLenght, 0 );
+					file->DataLenght = file->RealDataLenght;
+				}
 				return 1;
 		}
 
@@ -161,6 +170,17 @@ int prepare_file_content(WebserverFileInfo* file) {
 void release_file_content(WebserverFileInfo* file) {
 
 	if (file->RamCached == 1) {
+		switch ( file->fs_type ){
+			case FS_BINARY :	// wird für die template engine dekomprimiert
+				if ( file->Compressed == 2 ){
+					WebserverFree( (void*) file->Data );
+					
+					file->Data = file->CompressedData;
+					file->DataLenght = file->CompressedDataLenght;
+				}
+				break;
+		}
+				
 		return;
 	}
 

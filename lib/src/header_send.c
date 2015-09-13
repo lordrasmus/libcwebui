@@ -121,8 +121,9 @@ void sendHeaderError(socket_info* socket, char* ErrorMessage, int p_lenght) {
 
 void addContentTypeLines(http_request *s, WebserverFileInfo *info) {
 	
-	if ( info->Compressed == 1 ){
-		printHeaderChunk(s->socket, "%s", "Content-Encoding: gzip\r\n");
+	switch ( info->Compressed ){
+		case 1 : printHeaderChunk(s->socket, "%s", "Content-Encoding: gzip\r\n"); break;
+		case 2 : printHeaderChunk(s->socket, "%s", "Content-Encoding: deflate\r\n"); break;
 	}
 	
 	/* http://wiki.selfhtml.org/wiki/Referenz:MIME-Typen
@@ -351,7 +352,7 @@ void addSessionCookies(http_request* s,WebserverFileInfo *info){
 		printHeaderChunk(s->socket, "Set-Cookie: session-id-ssl=%s; Version=\"1\"; Path=\"/\"; Discard; Secure; HttpOnly; domain=%s\r\n",s->guid_ssl, s->header->Host);
 		printHeaderChunk(s->socket, "Set-Cookie: session-id-ssl=%s; Path=\"/\"; Discard\r\n",s->guid_ssl, s->header->Host);
 		*/
-		printHeaderChunk(s->socket, "Set-Cookie: session-id-ssl=%s; HttpOnly; Discard\r\n",s->guid_ssl);
+		printHeaderChunk(s->socket, "Set-Cookie: session-id-ssl=%s; HttpOnly; Discard; Secure\r\n",s->guid_ssl);
 
 	}
 

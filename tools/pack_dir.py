@@ -2,7 +2,7 @@
 
 import hashlib
 
-import os, struct, gzip
+import os, struct, gzip, zlib
 
 from pprint import pprint
 
@@ -61,44 +61,152 @@ def bytes_from_file(filename):
             yield(ord(byte))
 
 
+def check_template( f,  path , f_data ):
+	
+	f2 = open( path + f_data["PATH"], "rb")
+	data = f2.read(20)
+	f2.close()
+	
+	#print("check template: " + f_data["PATH"] )
+	
+	
+	template = 0
+	if data.startswith(b"TEMPLATE_V1"):
+		template=1
+		#print(" template")
+		
+	if f_data["PATH"].endswith(".inc"):
+		template=1
+		#print(" template")
+	
+	write_uint32( f, template )
+	
+	return template
+	
 
 def write_uncompressed_file( f, path , f_data ):
 	
 	f2 = open( path + f_data["PATH"], "rb")
+	data = f2.read()
+	f2.close()
 	
 	h = hashlib.md5()
-	h.update( f2.read() )
+	h.update( data )
 	etag = h.hexdigest().upper()
-	f2.close()
+	
 		
 	write_uint32( f, 0 ) # nicht komprimiert
 	write_string( f, f_data["PATH"] )
 	write_string( f, etag )
+	tp = check_template( f, path, f_data )	# auf template prüfen
 	write_uint32( f, f_data["SIZE"] )
+	
+	add = ""
+	if tp == 1:
+		add = "  ( template ) "
+	print("not compressing        : " + f_data["PATH"] + add )
+	
 	
 	for b in bytes_from_file( path + f_data["PATH"]):
 		#pprint(b)
 		f.write( "" + str( b ) + "," )
 	f.write( "'\\0'," )
+
+def compress_data( data ):
 	
+	
+	#f2 = open( "dict" , "rb")
+	#dictator = f2.read()
+	#f2.close()
+	
+	#dictator= None
+	
+	strats = [ 
+		[ zlib.Z_DEFAULT_STRATEGY, 0 , None],
+		[ zlib.Z_FILTERED, 0 , None],
+		[ zlib.Z_HUFFMAN_ONLY, 0, None ],
+#		[ zlib.Z_DEFAULT_STRATEGY, 0 , dictator],
+#		[ zlib.Z_FILTERED, 0 , dictator],
+#		[ zlib.Z_HUFFMAN_ONLY, 0, dictator ]
+	]
+	outs = []
+	
+	for strat in strats:
+		if strat[2] == None:
+			compress = zlib.compressobj( level=9, method=zlib.DEFLATED, wbits=-15 ,memLevel=9, strategy=strat[0] )
+		else:
+			compress = zlib.compressobj( level=9, method=zlib.DEFLATED, wbits=-15 ,memLevel=9, strategy=strat[0] , zdict=strat[2] )
+		deflated = compress.compress(data)
+		deflated += compress.flush()
+		outs.append( [ strat[0], deflated ] )
+		strat[1] = len( deflated )
+	
+	ret = [ 0, len( data ) , None]
+	for strat in strats:
+		if ret[1] > strat[1]:
+			ret = strat
+	
+	#for a in strats:
+	#	print( str( a[0] ) + " : " + str( a[1] ) )
+		
+	#pprint( ret )
+	if ret[0] == zlib.Z_DEFAULT_STRATEGY:
+		t_out = "zlib.Z_DEFAULT "
+		
+	if ret[0] == zlib.Z_FILTERED:
+		t_out = "zlib.Z_FILTERED"
+		
+	if ret[0] == zlib.Z_HUFFMAN_ONLY:
+		t_out = "zlib.Z_HUFFMAN "
+		
+	if not ret[2] == None:
+		t_out += " ( dict ) "
+	
+	s_out = None
+	
+	for out in outs:
+		if out[0] == ret[0]:
+			s_out = out[1]
+	
+	return [ s_out, t_out ]
+	
+
 def write_compressed_file( f, path, f_data ):
 				
 	with open( path + f_data["PATH"], 'rb') as f_in:
 		s_in = f_in.read()
 		
-
+		# etag generieren
 		h = hashlib.md5()
 		h.update( s_in )
 		etag = h.hexdigest().upper()
 		
-		s_out = gzip.compress(s_in)
+		
+		ret = compress_data( s_in )
+		s_out = ret[0]
+		t_out = ret[1]
+		
+		#s_out = gzip.compress(s_in)
+		#print( "l gzip : " + str( len( s_out ) ) )
 		
 		if len (s_out) < f_data["SIZE"]:
 			
-			write_uint32( f, 1 )  # komprimiert
+			
+			
+			write_uint32( f, 2 )  # komprimiert
 			write_string( f, f_data["PATH"] )
 			write_string( f, etag )
+			tp = check_template( f, path, f_data )	# auf template prüfen
 			write_uint32( f, f_data["SIZE"] )
+			
+			text = "compressing ( " 
+			#text += t_out + " "
+			#text += str( f_data["SIZE"]) + " / " + str( len (s_out) ) + " "
+			text += str ( int ( ( len (s_out) / f_data["SIZE"] ) * 100 ) ) + " % " 
+			text += " )  : " + f_data["PATH"] 
+			if  tp == 1 :
+				text += "  ( template )"
+			print( text )
 			
 			write_uint32( f, len (s_out))
 			for b in s_out:
@@ -106,6 +214,7 @@ def write_compressed_file( f, path, f_data ):
 				f.write( "" + str( b ) + "," )	
 				
 		else:
+			
 			write_uncompressed_file( f, path, f_data )
 			
 def gen_c_file( path, alias ):
