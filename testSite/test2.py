@@ -24,14 +24,24 @@ def test4( a ):
 	#print("JO test4")
 	libcwebui.send("b : ")
 	libcwebui.send( b )
-
+	libcwebui.send( "<br>" )
+	
+	
 	libcwebui.send( "  render b : " )
 	ret = libcwebui.getRenderVar( "b" )
 	libcwebui.send( ret )
-
+	libcwebui.send( "<br>" )
+	
 	libcwebui.send( "  session b : " )
 	ret = libcwebui.getSessionVar( "STORE_NORMAL", "b" )
 	libcwebui.send( ret )
+	libcwebui.send( "<br>" )
+	
+	ret = libcwebui.getURLParameter( "a" )
+	if ret == None:
+		ret = "None"
+	libcwebui.send( "Param a : " + ret )
+
 
 libcwebui.set_plugin_name("PyTest2")
 

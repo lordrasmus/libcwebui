@@ -186,6 +186,23 @@ static PyObject* py_getSessionVar( PyObject* obj, PyObject *args ){
 	return py_var;
 }
 
+static PyObject* py_getURLParameter( PyObject* obj, PyObject *args ){
+
+	char *name;
+	
+	PY_CONTEXT_CHECK
+
+	if ( ! PyArg_ParseTuple( args, "s",  &name ) ){ PyErr_SetString(PyExc_TypeError, "first parameter must be string"); 	return NULL;}
+
+	ws_variable *var = getParameter( py_cur_s, name );
+
+	PyObject* py_var = py_ws_var_to_py( var );
+	if ( py_var == NULL ){
+		Py_RETURN_NONE;
+	}
+
+	return py_var;
+}
 
 PyMethodDef py_libcwebui_methods[] =
 {
@@ -200,6 +217,7 @@ PyMethodDef py_libcwebui_methods[] =
 	{"setSessionVar", py_setSessionVar, METH_VARARGS, "A simple example of an embedded function."},
 	{"getSessionVar", py_getSessionVar, METH_VARARGS, "A simple example of an embedded function."},
 
+	{"getURLParameter", py_getURLParameter, METH_VARARGS, "A simple example of an embedded function."},
 	//setGlobalVar
 	//getGlobalVar
 

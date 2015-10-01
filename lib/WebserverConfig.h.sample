@@ -67,7 +67,7 @@
 ************************************************************************************/
 
 #define WEBSERVER_USE_LOCAL_FILE_SYSTEM
-//#define WEBSERVER_USE_BINARY_FORMAT
+#define WEBSERVER_USE_BINARY_FORMAT
 //#define WebserverUseNFS
 #define WEBSERVER_NFS_IP1 127
 #define WEBSERVER_NFS_IP2 0
