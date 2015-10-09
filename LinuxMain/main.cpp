@@ -41,8 +41,8 @@ int main(int argc, char **argv) {
 
 	if (0 == WebserverInit()) {
 
-		WebserverAddBinaryData( data__ );
-		
+		//WebserverAddBinaryData( data__ );
+
 		#ifdef WEBSERVER_USE_PYTHON
 
 		WebserverInitPython();
@@ -51,8 +51,11 @@ int main(int argc, char **argv) {
 
 		#endif
 
+		WebserverConfigSetInt( "use_csp",0);
+
 		WebserverAddFileDir("", "../testSite/www");
 		WebserverAddFileDir("img", "../testSite/img");
+
 
 		WebserverLoadPlugin("TestPlugin", "../testSite/src/test_plugin.so");
 
