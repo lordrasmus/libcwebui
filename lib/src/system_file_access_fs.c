@@ -189,6 +189,19 @@ static WebserverFileInfo* getFileInformation( const unsigned char *name) {
 
 	file->DataLenght = PlatformGetFileSize();
 
+	if ( file->DataLenght > (int)sizeof( template_v1_header ) ) {
+
+		unsigned char template_header[sizeof( template_v1_header ) ];
+		memset(template_header,0,sizeof( template_v1_header ) );
+
+		PlatformReadBytes( template_header, sizeof( template_v1_header ) -1 );
+
+		if ( 0 == memcmp( template_v1_header, template_header, sizeof( template_v1_header ) -1 ) ){
+			//printf("getFileInformation: Engine Template V1 Header found : %s  \n", name_tmp);
+			file->TemplateFile = 1;
+		}
+	}
+
 	PlatformCloseDataStream();
 
 	addFileToCache(file);

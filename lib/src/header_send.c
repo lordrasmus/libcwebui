@@ -78,7 +78,7 @@ void addConnectionStatusLines(socket_info* socket) {
 void addCacheControlLines(http_request* s, WebserverFileInfo *info) {
 	/* Cache-Control: no-cache, no-store, must-revalidate, pre-check=0, post-check=0 */
 #ifndef WEBSERVER_DISABLE_CACHE
-	if ( ( info->FileType != FILE_TYPE_HTML ) && ( ! isTemplateFile( info->Url )  ) ) {
+	if ( ( info->FileType != FILE_TYPE_HTML ) && ( info->TemplateFile == 0   ) ) {
 		printHeaderChunk ( s->socket,"Cache-Control: max-age=%d, public\r\n",MAX_CACHE_AGE ); /* sekunden bis refresh */
 		/* printHeaderChunk ( s->socket,"Expires: Thu, 15 Apr 2060 20:00:00 GMT\r\n"); */
 
@@ -120,12 +120,12 @@ void sendHeaderError(socket_info* socket, char* ErrorMessage, int p_lenght) {
 }
 
 void addContentTypeLines(http_request *s, WebserverFileInfo *info) {
-	
+
 	switch ( info->Compressed ){
 		case 1 : printHeaderChunk(s->socket, "%s", "Content-Encoding: gzip\r\n"); break;
 		case 2 : printHeaderChunk(s->socket, "%s", "Content-Encoding: deflate\r\n"); break;
 	}
-	
+
 	/* http://wiki.selfhtml.org/wiki/Referenz:MIME-Typen
 	 * http://www.sitepoint.com/web-foundations/mime-types-complete-list/
 	 */
@@ -378,7 +378,7 @@ int sendHeader(http_request* s, WebserverFileInfo *info, int p_lenght) {
 
 	printHeaderChunk(s->socket, "Accept-Ranges: bytes\r\n");
 	printHeaderChunk(s->socket, "%s %d\r\n", "Content-Length:", p_lenght);
-	
+
 	addCSPHeaderLines(s);
 
 	addContentTypeLines(s, info);

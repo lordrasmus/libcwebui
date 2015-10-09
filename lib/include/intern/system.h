@@ -66,12 +66,14 @@ enum
 size_t tinfl_decompress_mem_to_mem(void *pOut_buf, size_t out_buf_len, const void *pSrc_buf, size_t src_buf_len, int flags);
 
 
+#ifndef DISABLE_OLD_TEMPLATE_SYSTEM
 
-void addTemplateFilePostfix(const char* postfix);
-void addTemplateIgnoreFilePostfix(const char* postfix);
+	void addTemplateFilePostfix(const char* postfix);
+	void addTemplateIgnoreFilePostfix(const char* postfix);
 
+	char isTemplateFile(const char* file);
 
-char isTemplateFile(const char* file);
+#endif
 
 
 void	startWebServer( void );

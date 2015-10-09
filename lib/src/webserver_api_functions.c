@@ -405,12 +405,21 @@ void WebserverAddBinaryData(const unsigned char* data){
 	read_binary_data( data );
 }
 
+
 void WebserverAddTemplateFilePostfix(const char* postfix){
-	addTemplateFilePostfix(postfix);
+	#ifndef DISABLE_OLD_TEMPLATE_SYSTEM
+		addTemplateFilePostfix(postfix);
+	#else
+		printf("WebserverAddTemplateFilePostfix disabled\n");
+	#endif
 }
 
 void WebserverAddTemplateIgnoreFilePostfix(const char* postfix){
-	addTemplateIgnoreFilePostfix(postfix);
+	#ifndef DISABLE_OLD_TEMPLATE_SYSTEM
+		addTemplateIgnoreFilePostfix(postfix);
+	#else
+		printf("WebserverAddTemplateIgnoreFilePostfix disabled\n");
+	#endif
 }
 
 

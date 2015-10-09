@@ -40,6 +40,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define FORCE_DOWNLOAD_NAME_LENGTH 200
 // TUDU diesen festen buffer entfernen
 
+static const char template_v1_header[] = { "TEMPLATE_V1" };
 
 typedef enum {
 	FILE_TYPE_PLAIN, FILE_TYPE_HTML, FILE_TYPE_HTML_INC, FILE_TYPE_CSS, FILE_TYPE_JS,
@@ -151,7 +152,7 @@ typedef struct {
 	const unsigned char *CompressedData;
 	FILE_OFFSET CompressedDataLenght;
 	FILE_OFFSET RealDataLenght;
-	
+
 	unsigned char TemplateFile;
 	unsigned char RamCached;
 

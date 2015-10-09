@@ -326,6 +326,10 @@ int sendHTMLFile(http_request* s, WebserverFileInfo *file) {
 		return -1;
 	}
 
+	if ( file->TemplateFile == 0){
+		printf("Warning Engine Template Header <%s> not found: %s \n",template_v1_header,file->FilePath);
+	}
+
 	processHTML(s, file->FilePrefix, file->Url, (char*) file->Data, file->DataLenght);
 
 	release_file_content( file );

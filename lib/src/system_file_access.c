@@ -63,7 +63,7 @@ bool WebServerloadData(void) {
 		LOG(FILESYSTEM_LOG, ERROR_LEVEL, 0, "WebserverInit must be called first","");
 		return false;
 	}
-	
+
 	printf("using zlib : %s\n",ZLIB_VERSION);
 
 #ifdef WebserverUseNFS
@@ -98,7 +98,7 @@ static char ramCacheFile(WebserverFileInfo *file) {
 	}
 
 	file->RamCached = 1;
-	printf("ram cached %s\n",file->FilePath);
+	//printf("ram cached %s\n",file->FilePath);
 
 	// local filesystem
 	switch ( file->fs_type ){
@@ -129,12 +129,12 @@ int prepare_file_content(WebserverFileInfo* file) {
 					#endif
 				}
 				break;
-			case FS_BINARY :	
+			case FS_BINARY :
 				//printf("compressed : %d\n",file->Compressed);
 				if ( file->Compressed == 2 ){
 					printf("warning: decompressing file : %s\n", file->FilePath );
 					file->Data = WebserverMalloc( file->RealDataLenght );
-					tinfl_decompress_mem_to_mem( file->Data, file->RealDataLenght, file->CompressedData, file->CompressedDataLenght, 0 );
+					tinfl_decompress_mem_to_mem( (char*)file->Data, file->RealDataLenght, file->CompressedData, file->CompressedDataLenght, 0 );
 					file->DataLenght = file->RealDataLenght;
 				}
 				return 1;
@@ -158,7 +158,7 @@ int prepare_file_content(WebserverFileInfo* file) {
 			printf("prepare_file_content: prepare content %s  File System -> FS_LOCAL_FILE_SYSTEM \n", file->FilePath );
 			local_file_system_read_content( file );
 			break;
-		
+
 		case FS_BINARY :	// sind immer RAM cached
 			break;
 	}
@@ -174,13 +174,17 @@ void release_file_content(WebserverFileInfo* file) {
 			case FS_BINARY :	// wird für die template engine dekomprimiert
 				if ( file->Compressed == 2 ){
 					WebserverFree( (void*) file->Data );
-					
+
 					file->Data = file->CompressedData;
 					file->DataLenght = file->CompressedDataLenght;
 				}
 				break;
+
+			// local Filesystem muss nie dekomprimiert werden
+			case FS_LOCAL_FILE_SYSTEM:
+				break;
 		}
-				
+
 		return;
 	}
 
@@ -201,7 +205,7 @@ WebserverFileInfo *getFile( char *name) {
 	while( name[0] == '/'){
 		name++;
 	}
-	
+
 	//printf("getFile : %s\n", name );
 
 	if ( 1 == check_blocked_urls( name ) ){
@@ -213,22 +217,22 @@ WebserverFileInfo *getFile( char *name) {
 		return file;
 
 	file = getFileLocalFileSystem( ( unsigned char*) name);
-	
+
 	if ( file == 0 ){
 		printf("getFile : Error File %s not found\n", name );
 		return 0;
 	}
-	
+
 #ifndef WEBSERVER_DISABLE_CACHE
 	generateEtag ( file );
 #endif
 
 	ramCacheFile(file);
 
-	// prüfen ob das File ein Template ist
-	if (file != 0) {
+	#ifndef DISABLE_OLD_TEMPLATE_SYSTEM
+		// prüfen ob das File ein Template type ist ( depricated )
 		file->TemplateFile = isTemplateFile(name);
-	}
+	#endif
 	return file;
 }
 

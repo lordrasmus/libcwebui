@@ -9,7 +9,7 @@
 
 #define WEBSERVER_MAX_POST_CONTENT_LENGTH    10000000 // 10 MB
 
-#define WEBSERVER_MAX_FILEID_TO_RAM	 FILE_TYPE_JS   // welche datein im ram gecached werden ( datatypes.h )
+
 #define MAX_CACHE_AGE				15				// zeit in sekunden bis der client daten neu abrufen soll
 
 
@@ -28,8 +28,7 @@
 #define SERVER_NAME                 "libcwebui"
 #define SERVER_DOMAIN				"Testserver"
 #define WEBSERVER_GUID_LENGTH		50					// länge der guids für die sessions
-//#define WEBSERVER_DISABLE_CACHE						// deaktiviert die http cache header
-//#define WEBSERVER_DISABLE_FILE_UPDATE					// deaktiviert den file update check
+
 
 #define WEBSERVER_USE_PYTHON							// Python Support
 
@@ -65,6 +64,14 @@
 *								FILESYSTEM SETTINGS									*
 *                                                                                   *
 ************************************************************************************/
+
+//#define DISABLE_OLD_TEMPLATE_SYSTEM					// altes Template Erkennungssystem deaktivieren
+
+#define WEBSERVER_MAX_FILEID_TO_RAM	 FILE_TYPE_JS   // welche datein im ram gecached werden ( datatypes.h )
+
+//#define WEBSERVER_DISABLE_CACHE						// deaktiviert die http cache header
+//#define WEBSERVER_DISABLE_FILE_UPDATE					// deaktiviert den file update check
+
 
 #define WEBSERVER_USE_LOCAL_FILE_SYSTEM
 #define WEBSERVER_USE_BINARY_FORMAT

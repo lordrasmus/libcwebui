@@ -31,8 +31,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <dmalloc/dmalloc.h>
 #endif
 
-
+#ifndef DISABLE_OLD_TEMPLATE_SYSTEM
 ws_variable* template_file_postfix;
+#endif
 
 inline global_vars* initWebserver(void) {
 	initMemoryManager();
@@ -42,11 +43,12 @@ inline global_vars* initWebserver(void) {
 
 	init_file_access();
 
+	#ifndef DISABLE_OLD_TEMPLATE_SYSTEM
 	template_file_postfix = newWSVariable("postfix");
 	setWSVariableArray(template_file_postfix);
-
 	addTemplateFilePostfix(".html");
 	addTemplateFilePostfix(".inc");
+	#endif
 
 	globals.init_called = 0xAB;
 
@@ -154,6 +156,7 @@ void shutdownWebserver(void) {
 }
 
 
+#ifndef DISABLE_OLD_TEMPLATE_SYSTEM
 
 void addTemplateFilePostfix(const char* postfix) {
 	ws_variable *tmp;
@@ -175,7 +178,10 @@ void addTemplateIgnoreFilePostfix(const char* postfix) {
 	setWSVariableInt(tmp, 0);
 }
 
+
+
 char isTemplateFile(const char* file) {
+
 	ws_variable *tmp;
 	int i, i2;
 	int ret = 0;
@@ -213,5 +219,9 @@ char isTemplateFile(const char* file) {
 	stopWSVariableArrayIterate(template_file_postfix);
 
 	return ret;
+
+
 }
+
+#endif
 

@@ -56,8 +56,13 @@ void engine_includeFile(http_request *s, const char* prefix, FUNCTION_PARAS* fun
 		#ifdef _WEBSERVER_TEMPLATE_DEBUG_
 		WebServerPrintf("File : %s error loading content \n",func->para1);
 		#endif
+
 		printHTMLChunk(s->socket, "<font color=\"#FF0000\" >include %s read error</font>", func->parameter[0].text);
 		return;
+	}
+
+	if ( file->TemplateFile == 0){
+		printf("Warning Engine Template Header <%s> not found: %s \n",template_v1_header,file->FilePath);
 	}
 
 	processHTML(s, prefix, file->Url, (char*) file->Data, file->DataLenght);
