@@ -1,10 +1,11 @@
+TEMPLATE_V1
 <table>
 <tr><td>
 
 	Server:<td>{f:server_name}
-	
+
 <tr><td>
-	
+
 <table>
 
 	<tr><td>Compiler:<td>{f:compiler}

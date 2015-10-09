@@ -1,3 +1,6 @@
+TEMPLATE_V1
+
+
 {f:menustart}
 <table>
 	<tr><td>
