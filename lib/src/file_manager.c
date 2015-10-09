@@ -21,11 +21,10 @@
 
  */
 
-#include "stdafx.h"
 
-#ifdef __GNUC__
 #include "webserver.h"
-#endif
+#include "intern/system_file_access.h"
+
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -42,7 +41,7 @@ int checkCacheHeader(http_request* s, WebserverFileInfo *info) {
 	if ((s == 0) || (s->header == 0) || (info == 0)) {
 		return -1;
 	}
-	
+
 #ifndef WEBSERVER_DISABLE_CACHE
 	if (info->FileType != FILE_TYPE_HTML) {
 		if (likely( s->header->etag != 0 )) {
@@ -95,23 +94,37 @@ int checkCacheHeader(http_request* s, WebserverFileInfo *info) {
 
 }
 
-int sendFile(http_request* s, WebserverFileInfo *info) {
-	if ((s == 0) || (s->socket == 0) || (info == 0)) {
+int sendFile(http_request* s, WebserverFileInfo *file) {
+	if ((s == 0) || (s->socket == 0) || (file == 0)) {
 		return -1;
 	}
 	s->socket->file_infos.file_info = 0;
 
-	if (likely( 1 == checkCacheHeader(s,info) )) {
-		sendHeaderNotModified(s, info);
+	switch ( file->fs_type ){
+		case FS_LOCAL_FILE_SYSTEM :
+			if ( 1 == local_file_system_check_file_modified( file ) ){
+
+				#ifndef WEBSERVER_DISABLE_CACHE
+				generateEtag ( file );
+				#endif
+			}
+
+			break;
+
+		case FS_BINARY :
+			break;
+	}
+
+	if (likely( 1 == checkCacheHeader(s,file) )) {
+		sendHeaderNotModified(s, file);
 		return 0;
 	}
 
-	#warning verhalten bei änderuneg testen
-	if (0 > sendHeader(s, info, info->DataLenght))
+	if (0 > sendHeader(s, file, file->DataLenght))
 		return -1;
 
 	s->socket->file_infos.file_send_pos = 0;
-	s->socket->file_infos.file_info = info;
+	s->socket->file_infos.file_info = file;
 
 	return 0;
 }

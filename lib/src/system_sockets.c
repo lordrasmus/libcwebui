@@ -599,13 +599,15 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendFileSystem_sendfile(socket_inf
 	int fd, diff, send;
 
 	offset = sock->file_infos.file_send_pos;
-	
-	printf("handleClientWriteDataSendFileSystem_sendfile : %s\n",sock->file_infos.file_info->Url);
-	
-	// TODO an fs anpassen
-	
+
+	//printf("handleClientWriteDataSendFileSystem_sendfile : %s\n",sock->file_infos.file_info->Url);
+
+	// TODO : an fs anpassen
+
 	fd = PlatformOpenDataReadStream(sock->file_infos.file_info->FilePath);
 	diff = sock->file_infos.file_info->DataLenght - sock->file_infos.file_send_pos;
+
+	//printf("handleClientWriteDataSendFileSystem_sendfile: Diff %d DataLenght %d\n", diff, sock->file_infos.file_info->DataLenght );
 
 	send = sendfile(sock->socket, fd, &offset, diff);
 
@@ -613,11 +615,11 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendFileSystem_sendfile(socket_inf
 
 	if (send > 0) {
 		sock->file_infos.file_send_pos += send;
-		
+
 		if (sock->file_infos.file_info->DataLenght > sock->file_infos.file_send_pos){
 			 return DATA_PENDING;
 		}
-		
+
 		sock->file_infos.file_send_pos = 0;
 		sock->file_infos.file_info = 0;
 		return NO_MORE_DATA;

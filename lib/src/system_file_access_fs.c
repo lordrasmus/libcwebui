@@ -25,6 +25,8 @@ int local_file_system_check_file_modified( WebserverFileInfo *file ){
 	int time_changed = 0;
 	int new_size = 0;
 
+	// TODO : Problem mit clients die die datei noch laden lösen
+
 	if ( 0 == PlatformGetFileInfo( file, &time_changed, &new_size )){
 		printf("local_file_system_check_file_modified: Error file not found %s\n",file->FilePath);
 		return 0;
@@ -39,11 +41,16 @@ int local_file_system_check_file_modified( WebserverFileInfo *file ){
 		return 0;
 	}
 
+
 	if (file->RamCached == 0) {
 
 		file->DataLenght = new_size;
 
+		printf("local_file_system:  file change %s File System -> FS_LOCAL_FILE_SYSTEM \n", file->FilePath );
+
 	}else{
+
+		printf("local_file_system:  file change %s File System -> FS_LOCAL_FILE_SYSTEM ( RAM cached )\n", file->FilePath );
 
 		// Datei ist im RAM cache
 
