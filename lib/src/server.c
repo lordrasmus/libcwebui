@@ -319,6 +319,7 @@ void *WebserverHTMLChunkFree(const void *restrict free_element) {
 	return 0;
 }
 
+
 int sendHTMLFile(http_request* s, WebserverFileInfo *file) {
 
 	if ( 0 == prepare_file_content( file ) ){
@@ -330,7 +331,7 @@ int sendHTMLFile(http_request* s, WebserverFileInfo *file) {
 		printf("Warning Engine Template Header <%s> not found: %s \n",template_v1_header,file->FilePath);
 	}
 
-	processHTML(s, file->FilePrefix, file->Url, (char*) file->Data, file->DataLenght);
+	processHTML(s, (const char *) file->FilePrefix, file->Url, (const char *) file->Data, file->DataLenght);
 
 	release_file_content( file );
 

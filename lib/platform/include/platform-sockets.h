@@ -57,14 +57,14 @@ void	PlatformInitSelect(void);
 void	PlatformAddSelectSocket(char write,int socket);
 int		PlatformSelectGetActiveSocket(char write,int socket);
 int		PlatformSelect(void);
-#endif 
+#endif
 
 int		PlatformAccept(socket_info* sock,unsigned int *port);
 void	PlatformGetPeerName(socket_info* sock);
 
 
-int   	PlatformSendSocket(int socket, unsigned char *buf, SIZE_TYPE len, int flags);
-int     PlatformSendSocketNonBlocking(int socket, unsigned char *buf, SIZE_TYPE len, int flags) ALL_ATTR;
+int   	PlatformSendSocket(int socket, const unsigned char *buf, SIZE_TYPE len, int flags);
+int     PlatformSendSocketNonBlocking(int socket, const unsigned char *buf, SIZE_TYPE len, int flags) ALL_ATTR;
 int   	PlatformRecvSocket(int socket, unsigned char *buf, SIZE_TYPE len, int flags);
 int     PlatformRecvSocketNonBlocking(int socket, unsigned char *buf, SIZE_TYPE len, int flags) ALL_ATTR;
 int     PlatformCloseSocket(int socket) ALL_ATTR;

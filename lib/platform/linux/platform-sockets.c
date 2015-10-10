@@ -259,7 +259,7 @@ int		PlatformAccept(socket_info* sock, unsigned int *port)
     return ret;
 }
 
-int     PlatformSendSocket ( int socket, unsigned char *buf, SIZE_TYPE len, int flags )
+int     PlatformSendSocket ( int socket, const unsigned char *buf, SIZE_TYPE len, int flags )
 {
     int ret,ret2;
 	SIZE_TYPE send_bytes = 0;
@@ -292,7 +292,7 @@ int     PlatformSendSocket ( int socket, unsigned char *buf, SIZE_TYPE len, int 
     return ret;
 }
 
-int     PlatformSendSocketNonBlocking ( int socket, unsigned char *buf, SIZE_TYPE len, int flags )
+int     PlatformSendSocketNonBlocking ( int socket, const unsigned char *buf, SIZE_TYPE len, int flags )
 {
     int ret,ret2;
     ret = send ( socket,buf,len,flags );

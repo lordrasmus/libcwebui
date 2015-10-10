@@ -52,7 +52,7 @@ static PyObject* py_send( PyObject* obj, PyObject *args )
 
 	if( PyInt_Check( value ) ){
 		char buffer[100];
-		int len = snprintf( buffer, 100 , "%d", PyInt_AsLong( value ) );
+		int len = snprintf( buffer, 100 , "%ld", PyInt_AsLong( value ) );
 		sendHTMLChunk( py_cur_s->socket, buffer, len  );
 		Py_RETURN_NONE;
 	}
@@ -189,7 +189,7 @@ static PyObject* py_getSessionVar( PyObject* obj, PyObject *args ){
 static PyObject* py_getURLParameter( PyObject* obj, PyObject *args ){
 
 	char *name;
-	
+
 	PY_CONTEXT_CHECK
 
 	if ( ! PyArg_ParseTuple( args, "s",  &name ) ){ PyErr_SetString(PyExc_TypeError, "first parameter must be string"); 	return NULL;}

@@ -503,7 +503,8 @@ int handleClient(socket_info* sock) {
 	return 0;
 }
 
-char sendData(socket_info* sock, unsigned char* buffer, FILE_OFFSET length) {
+
+char sendData(socket_info* sock, const unsigned char* buffer, FILE_OFFSET length) {
 	int ret;
 	int to_send;
 	SOCKET_SEND_STATUS status;

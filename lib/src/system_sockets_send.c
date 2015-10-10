@@ -34,7 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 
-SOCKET_SEND_STATUS WebserverSend(socket_info* s, unsigned char *buffer, int len, int flags, int* bytes_send) {
+SOCKET_SEND_STATUS WebserverSend(socket_info* s, const unsigned char *buffer, int len, int flags, int* bytes_send) {
 	int ret;
 
 #ifdef WEBSERVER_USE_SSL
@@ -63,13 +63,13 @@ SOCKET_SEND_STATUS WebserverSend(socket_info* s, unsigned char *buffer, int len,
 	}
 
 	if (likely((ret > 0) && (ret < len))) {
-		if (likely(bytes_send != 0)) 
+		if (likely(bytes_send != 0))
 			*bytes_send = ret;
-		
-		#if _WEBSERVER_CONNECTION_DEBUG_ > 0 
+
+		#if _WEBSERVER_CONNECTION_DEBUG_ > 0
 			LOG(SOCKET_LOG, WARNING_LEVEL, s->socket, "SOCKET_SEND_NO_MORE_DATA    %d of %d send", ret, len);
 		#endif
-		
+
 		return SOCKET_SEND_NO_MORE_DATA;
 	}
 

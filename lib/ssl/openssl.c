@@ -205,23 +205,23 @@ int load_dh_params(SSL_CTX *ctx, char *file) {
 int VISIBLE_ATTR WebserverSSLTestKeyfile( char* keyfile ){
 	SSL_METHOD *meth;
 	SSL_CTX *ctx;
-	
+
 	int error = 0;
 	meth = (SSL_METHOD*) SSLv23_server_method();
 	ctx = SSL_CTX_new(meth);
-	
+
 	if (!(SSL_CTX_use_certificate_chain_file(ctx, keyfile))) {
 		LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "Can't read certificate: file %s", keyfile);
 		error = 1;
 	}
-	
+
 	if (!(SSL_CTX_use_PrivateKey_file(ctx, keyfile, SSL_FILETYPE_PEM))) {
 		LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "Can't read key: file %s", keyfile);
 		error = 1;
 	}
-	
+
 	#warning Memory Leak
-	
+
 	return error;
 }
 
@@ -233,29 +233,29 @@ SSL_CTX *initialize_ctx( char *keyfile, char* keyfile_backup, char* ca, char *pa
 	if (!bio_err) {
 		SSL_library_init();
 		SSL_load_error_strings();
-		
+
 		/* An error write context */
 		bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
 	}
-	
+
 	/* Create our context*/
 	meth = (SSL_METHOD*) SSLv23_server_method();
 	ctx = SSL_CTX_new(meth);
 
-	/* Load our keys and certificates*/	
+	/* Load our keys and certificates*/
 	pass = password; // global char*
 
 	if ( 0 == WebserverSSLTestKeyfile( keyfile ) ) {
 		SSL_CTX_use_certificate_chain_file(ctx, keyfile);
 		SSL_CTX_use_PrivateKey_file(ctx, keyfile, SSL_FILETYPE_PEM);
-		
-	}else{	
+
+	}else{
 		LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "Can't read keyfile file %s trying backup", keyfile);
-		
+
 		if ( 0 == WebserverSSLTestKeyfile( keyfile_backup ) ) {
 			SSL_CTX_use_certificate_chain_file(ctx, keyfile_backup);
 			SSL_CTX_use_PrivateKey_file(ctx, keyfile_backup, SSL_FILETYPE_PEM);
-		}else{		
+		}else{
 			LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "Can't read keyfile backup file %s ", keyfile_backup);
 			return NULL;
 		}
@@ -274,8 +274,8 @@ SSL_CTX *initialize_ctx( char *keyfile, char* keyfile_backup, char* ca, char *pa
 //#define  CIPHER_LIST	"HIGH:!SSLv2:!SSLv3:RC4+HIGH:!aNULL:!eNULL:!3DES:@STRENGTH"
 /*#define  CIPHER_LIST	"AES256-SHA:AES128-SHA:"\
 						"DHE-DSS-AES128-SHA:DHE-DSS-AES256-SHA:"\
-						"DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA"						
-	*/					
+						"DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA"
+	*/
 	// ADH-AES128-SHA <- broken laut nmap
 	// ADH-AES256-SHA <- broken laut nmap
 	// DHE_RSA:NULL-MD5:NULL-SHA"
@@ -318,7 +318,7 @@ int WebserverSSLInit(socket_info* s) {
 	SSL_set_bio(s->ssl_context->ssl, s->ssl_context->sbio, s->ssl_context->sbio);
 
 	SSL_set_read_ahead(s->ssl_context->ssl, 0);
-	
+
 	return 0;
 }
 
@@ -557,7 +557,7 @@ int WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, int len, UNU
 	return SSL_PROTOCOL_ERROR;
 }
 
-SOCKET_SEND_STATUS WebserverSSLSendNonBlocking(socket_info* s, unsigned char *buf, int len, UNUSED_PARA int flags, int* bytes_send) {
+SOCKET_SEND_STATUS WebserverSSLSendNonBlocking(socket_info* s, const unsigned char *buf, int len, UNUSED_PARA int flags, int* bytes_send) {
 	int ret = 0;
 	int l = 0;
 	int r2;

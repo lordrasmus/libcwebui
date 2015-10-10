@@ -56,7 +56,7 @@ void py_print_value ( PyObject* value ){
 #endif
 
 	if( PyDict_Check( value ) ){
-		printf("Dict : %d\n",PyDict_Size( value) );
+		printf("Dict : %zd\n",PyDict_Size( value) );
 		PyObject *key, *value_e;
 		Py_ssize_t pos = 0;
 

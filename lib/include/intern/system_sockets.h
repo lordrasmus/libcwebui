@@ -31,7 +31,7 @@ typedef enum{
 	SOCKET_SEND_SEND_BUFFER_FULL = 3,
 	SOCKET_SEND_SSL_ERROR = 4,
 	SOCKET_SEND_UNKNOWN_ERROR = 5,
-	SSL_PROTOCOL_ERROR = -22	
+	SSL_PROTOCOL_ERROR = -22
 }SOCKET_SEND_STATUS;
 
 #include "webserver.h"
@@ -43,7 +43,7 @@ extern "C" {
 	unsigned long dumpSocketsSize(int *count);
 	void	dumpSockets(http_request* s);
 	unsigned long getSocketInfoSize(socket_info* sock);
-	
+
 	void	handleServer(socket_info* sock);
 
 	int		WebserverStartConnectionManager( void );
@@ -56,10 +56,10 @@ extern "C" {
 	int		WebserverSSLInit(socket_info* s);
 	int 	WebserverSSLAccept(socket_info* s);
 	int   	WebserverRecv(socket_info* s,unsigned char *buf, int len, int flags);
-	SOCKET_SEND_STATUS 	WebserverSend(socket_info* s,unsigned char *buf, int len, int flags,int* bytes_send);
+	SOCKET_SEND_STATUS 	WebserverSend(socket_info* s,const unsigned char *buf, int len, int flags,int* bytes_send);
 	int   	WebserverCloseSocket(socket_info* conno);
 
-	
+
 
 
 #ifdef __cplusplus
