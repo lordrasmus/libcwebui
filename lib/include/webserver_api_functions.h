@@ -117,7 +117,7 @@ void sendHTML(dummy_handler* s, const char* text, const unsigned int length);
 	 https://addons.mozilla.org/de/firefox/addon/firelogger/
 */
 #define FireLoggger( ARGS... ) addFireLogger(s,(char*)__BASE_FILE__, __LINE__, ARGS)
-void addFireLogger(dummy_handler* s, const char* filename, int fileline, const char* fmt, ... ) __attribute__ ((format (printf, 4, 5)));;
+void addFireLogger(dummy_handler* s, const char* filename, int fileline, const char* fmt, ... ) __attribute__ ((format (printf, 4, 5)));
 
 /*
 		Globalen Variablen locken / unlocken
@@ -330,7 +330,7 @@ int WebserverLoadPlugin(const char* name,const char* path);
 
 
 /*
- 
+
 		Regeln um einzustellen was als Template behandelt werden soll
 */
 

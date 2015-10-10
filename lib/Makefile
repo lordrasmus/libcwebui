@@ -13,9 +13,11 @@ PY_LINK = -lpython3.4
 PY_FLAGS = -I/usr/include/python2.7
 PY_LINK = -lpython2.7
 
-FLAGS= $(COMP_OPT) -Wall -fPIC -Wextra  -std=c99  -D_POSIX_SOURCE -Wno-unused-parameter -Werror=implicit-function-declaration \
-	-fdata-sections -ffunction-sections -fvisibility=hidden  \
+FLAGS= $(COMP_OPT) -Wall -fPIC -Wextra   -std=c99  -D_POSIX_SOURCE -Wno-unused-parameter -Werror=implicit-function-declaration \
+	-fdata-sections -ffunction-sections -fvisibility=hidden  -Wno-variadic-macros -Wpointer-arith \
 	$(SIZE_OPTS) $(PY_FLAGS)
+
+#-pedantic
 
 SIZE_OPTS= -finline -fno-inline-functions -finline-functions-called-once \
 	--param max-inline-insns-auto=62 --param inline-unit-growth=0 --param large-unit-insns=0 #--param inline-call-cost=4
