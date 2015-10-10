@@ -12,31 +12,31 @@ print("")
 
 
 
-def test3( a ):
+def test3(  ):
 	"""JO"""
 	global b
 	#print("JO test3")
 	libcwebui.send("b : " + str( b ))
 
-def test4( a ):
+def test4(  ):
 	"""JO"""
 	global b
 	#print("JO test4")
 	libcwebui.send("b : ")
 	libcwebui.send( b )
 	libcwebui.send( "<br>" )
-	
-	
+
+
 	libcwebui.send( "  render b : " )
 	ret = libcwebui.getRenderVar( "b" )
 	libcwebui.send( ret )
 	libcwebui.send( "<br>" )
-	
+
 	libcwebui.send( "  session b : " )
 	ret = libcwebui.getSessionVar( "STORE_NORMAL", "b" )
 	libcwebui.send( ret )
 	libcwebui.send( "<br>" )
-	
+
 	ret = libcwebui.getURLParameter( "a" )
 	if ret == None:
 		ret = "None"

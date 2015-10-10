@@ -39,6 +39,7 @@ void initConfig(void) {
 	setConfigInt( "port",80);
 	setConfigInt( "ssl_port",443);
 	setConfigInt( "use_csp",1);
+	setConfigInt( "reload_py_modules",0);
 	#ifdef WEBSERVER_SESSION_TIMEOUT
 		setConfigInt( "session_timeout" , WEBSERVER_SESSION_TIMEOUT );
 	#else

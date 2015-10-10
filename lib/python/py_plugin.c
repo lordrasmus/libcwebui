@@ -55,6 +55,10 @@ static char* plugin_name_buff = NULL;
 http_request *py_cur_s = NULL;
 
 
+static const char* last_py_plugin_path;
+static struct web_py_plugin *last_py_plugin;
+
+static int reload_py_plugin=-1;
 
 
 PyObject* py_register_function( PyObject* self, PyObject *args )
@@ -109,8 +113,6 @@ PyObject* py_register_function( PyObject* self, PyObject *args )
 	Py_RETURN_NONE;
 }
 
-static const char* last_py_plugin_path;
-static struct web_py_plugin *last_py_plugin;
 
 PyObject* py_set_plugin_name( PyObject* self, PyObject *args )
 {
@@ -137,9 +139,11 @@ PyObject* py_set_plugin_name( PyObject* self, PyObject *args )
 	ws_list_iterator_start(&plugin_liste);
 	while ((plugin_tmp = (plugin_s*) ws_list_iterator_next(&plugin_liste))) {
 		if (0 == strcmp(plugin_tmp->name, plugin_name)) {
-			PyErr_SetString(PyExc_TypeError,"Plugin Name already exists\n");
+			//PyErr_SetString(PyExc_TypeError,"Plugin Name already exists\n");
+			printf("Python Plugin Name exists\n");
 			ws_list_iterator_stop(&plugin_liste);
-			return NULL;
+			current_plugin = plugin_tmp;
+			Py_RETURN_NONE;
 		}
 	}
 	ws_list_iterator_stop(&plugin_liste);
@@ -174,8 +178,6 @@ int py_load_python_plugin( const char* path ){
 	struct web_py_plugin * mod = malloc( sizeof( struct web_py_plugin ) );
 
 	last_py_plugin = mod;
-
-
 
 
 	mod->thread_state = Py_NewInterpreter();
@@ -218,16 +220,54 @@ int py_load_python_plugin( const char* path ){
 
 }
 
-void py_call_engine_function( http_request *s, PyObject *function , FUNCTION_PARAS* paras ){
-	PyObject *arglist;
+
+
+void py_call_engine_function( http_request *s, user_func_s *func , FUNCTION_PARAS* paras ){
 	PyObject *result;
 
+	if ( reload_py_plugin == -1 ){
+		reload_py_plugin = getConfigInt("reload_py_modules");
+	}
 
+	if ( 1 == reload_py_plugin ){
+
+		#warning prüfen ob datei sich verändert hat
+		printf("reload Python Plugin: %s\n",func->plugin->path);
+
+
+		//py_load_python_plugin( func->plugin->path );
+		FILE* fp = fopen(func->plugin->path,"r");
+		if ( fp ){
+
+			context = func->plugin->py_plugin;
+
+			//PyObject* last_namespace = context->global_namespace;
+
+			context->global_namespace = PyModule_GetDict( PyImport_AddModule("__main__") );
+
+			PyRun_File( fp,func->plugin->path , Py_file_input, context->global_namespace,  context->global_namespace );
+
+			//Py_XDECREF(last_namespace);
+			#warning mem leak wegen neuem namspace
+			// alter namspace kann aber nicht einfach gelöscht werden
+			// noch eine verbindung zum interpreter ?
+
+			PyErr_Print();
+
+			context = NULL;
+
+			fclose(fp);
+		}
+	}
+
+
+	PyObject *function = func->py_func;
 	py_cur_s = s;
 
-	arglist = Py_BuildValue("(i)", 1);
-	result = PyObject_CallObject(function, arglist);
-	Py_XDECREF(arglist);
+	result = PyObject_CallObject(function, NULL);
+	if ( result == NULL){
+		printf("py_call_engine_function: Python Error\n");
+	}
 	Py_XDECREF(result);
 	PyErr_Print();
 

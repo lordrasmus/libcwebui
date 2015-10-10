@@ -49,6 +49,8 @@ int main(int argc, char **argv) {
 		WebserverLoadPyPlugin( "../testSite/test.py" );
 		WebserverLoadPyPlugin( "../testSite/test2.py" );
 
+		WebserverConfigSetInt( "reload_py_modules",0);
+
 		#endif
 
 		WebserverConfigSetInt( "use_csp",0);

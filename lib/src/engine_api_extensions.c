@@ -106,10 +106,27 @@ void register_function(const char* name, user_function f, const char* file, int 
 }
 
 #ifdef WEBSERVER_USE_PYTHON
-void register_py_function(const char* name, PyObject * py_func, const char* file, int line) {
+void register_py_function( const char* name, PyObject * py_func, const char* file, int line) {
 	int len = 0;
 
-	user_func_s *tmp = (user_func_s*) WebserverMalloc( sizeof(user_func_s) );
+	user_func_s *tmp ;
+
+	rb_red_blk_node* node = RBExactQuery(user_func_tree, (char*)name);
+	if (node != 0) {
+		tmp = node->info;
+		if ( tmp->type == 1 ) {
+			printf("reregister PyFunc: %s name \n",name);
+			tmp->file = file;
+			tmp->line = line;
+
+			Py_XDECREF(tmp->py_func);
+
+			tmp->py_func = py_func;
+			return;
+		}
+	}
+
+	tmp = (user_func_s*) WebserverMalloc( sizeof(user_func_s) );
 
 	len = strlen(name) + 1;
 	tmp->name = (char*) WebserverMalloc( len );
@@ -173,7 +190,7 @@ void engine_platformFunction(http_request *s, FUNCTION_PARAS* func) {
 
 #ifdef WEBSERVER_USE_PYTHON
 	if ( tmp->type == 1 )
-		py_call_engine_function( s, tmp->py_func, func );
+		py_call_engine_function( s, tmp, func );
 #endif
 
 	if (error_handler != 0) {
@@ -185,6 +202,7 @@ void engine_platformFunction(http_request *s, FUNCTION_PARAS* func) {
 #endif
 
 }
+
 
 void printRegisteredFunctions(http_request* s) {
 	stk_stack* stack;

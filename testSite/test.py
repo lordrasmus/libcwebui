@@ -8,7 +8,7 @@ import libcwebui, traceback, inspect
 from pprint import pprint
 
 
-def test1( a ):
+def test1(  ):
 	"""JO"""
 	global b
 	#print("JO test1")
@@ -17,14 +17,14 @@ def test1( a ):
 
 
 
-def test2( a ):
+def test2(  ):
 	global b
 	#print("JO test2")
 	b += 1
 	libcwebui.send("b : " + str( b ))
 
 	try:
-		libcwebui.setRenderVar( "a",a )
+		libcwebui.setRenderVar( "a", 2 )
 
 		libcwebui.setRenderVar( "b",b )
 

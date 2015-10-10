@@ -24,7 +24,7 @@ int py_init_modules( void );
 
 int py_load_python_plugin( const char* path );
 
-void py_call_engine_function( http_request *s, PyObject *function , FUNCTION_PARAS* paras );
+void py_call_engine_function( http_request *s, user_func_s *func , FUNCTION_PARAS* paras );
 
 PyObject* py_register_function( PyObject* self, PyObject *args );
 PyObject* py_set_plugin_name( PyObject* self, PyObject *args );
