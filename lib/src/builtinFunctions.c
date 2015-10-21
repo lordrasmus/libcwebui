@@ -41,7 +41,7 @@ extern unsigned long allocated;
 extern unsigned long allocated_max;
 
 
-DEFINE_FUNCTION( compiler ) {
+DEFINE_FUNCTION_INT( compiler ) {
 #ifdef __INTEL_COMPILER
     unsigned int t1,patch,sversion,version;
     t1 =  __INTEL_COMPILER;
@@ -57,10 +57,10 @@ DEFINE_FUNCTION( compiler ) {
 
 #ifdef __GNUC__
 #if __GNUC__ > 2
-    printHTML ( s ,"GCC %d.%d.%d",__GNUC__,__GNUC_MINOR__,__GNUC_PATCHLEVEL__ );
+    printHTMLChunk ( s->socket ,"GCC %d.%d.%d",__GNUC__,__GNUC_MINOR__,__GNUC_PATCHLEVEL__ );
     return;
 #else
-     printHTML ( s ,"GCC %d.%d",__GNUC__,__GNUC_MINOR__ );
+     printHTMLChunk ( s->socket ,"GCC %d.%d",__GNUC__,__GNUC_MINOR__ );
      return;
 #endif
 #endif
@@ -97,7 +97,7 @@ DEFINE_FUNCTION( compiler ) {
     printHTMLChunk ( s->socket ,"Microsoft %d",_MSC_VER );
 #endif
 #endif
-    printHTML ( s ,"Unknown Compiler" );
+    printHTMLChunk ( s->socket ,"Unknown Compiler" );
 }
 
 int miniFunctions ( http_request* s,char* buffer ) {
@@ -154,7 +154,7 @@ int sessionFunctions ( http_request* s,char* buffer ) {
         WebServerPrintf ( "builtinFunction: Start Session\r\n" );
 #endif
         restoreSession ( s ,1 );
-		
+
 #else
         WebServerPrintf ( "builtinFunction: Start Session not AVAILABLE\r\n" );
 #endif
@@ -281,13 +281,13 @@ void getServerLinkSSL ( http_request* s ) {
         printHTMLChunk ( s->socket,"%s",getConfigText( "server_ip" )  );
         printHTMLChunk ( s->socket ,":%d",getConfigInt("ssl_port"));
     }
-    
+
 #endif
 }
 
-DEFINE_FUNCTION_INT( ip ){
+/*DEFINE_FUNCTION_INT( ip ){
 	printHTMLChunk(s->socket,"%s",getConfigText( "server_ip") );
-}
+}*/
 
 DEFINE_FUNCTION_INT( server_name ){
 	printHTMLChunk ( s->socket,"%s",SERVER_NAME );
@@ -298,11 +298,11 @@ DEFINE_FUNCTION_INT( session_timeout ){
 }
 
 DEFINE_FUNCTION_INT( host ){
-	 if ( s->header->Host != 0 ) {
-        printHTMLChunk ( s->socket,"%s",s->header->Host );
-    } else {
-        printHTMLChunk ( s->socket,"%s",getConfigText( "server_ip" )  );
-    }
+	printHTMLChunk ( s->socket,"%s",s->header->Host );
+}
+
+DEFINE_FUNCTION_INT( host_name ){
+	printHTMLChunk ( s->socket,"%s",s->header->HostName );
 }
 
 DEFINE_FUNCTION_INT( build_time ){
@@ -317,6 +317,21 @@ DEFINE_FUNCTION_INT( server_ssl_port ){
 	 printHTMLChunk ( s->socket,"%d",getConfigInt("ssl_port") );
 }
 
+void register_internal_funcs( void ) {
+
+	REGISTER_FUNCTION_INT( dump_render_vars );
+	REGISTER_LOCAL_FUNCTION_INT( compiler );
+	REGISTER_LOCAL_FUNCTION_INT( memoryInfos );
+/*	REGISTER_FUNCTION( ip ); */
+	REGISTER_LOCAL_FUNCTION_INT( server_name );
+	REGISTER_LOCAL_FUNCTION_INT( session_timeout );
+	REGISTER_LOCAL_FUNCTION_INT( host );
+	REGISTER_LOCAL_FUNCTION_INT( host_name );
+	REGISTER_LOCAL_FUNCTION_INT( build_time );
+	REGISTER_LOCAL_FUNCTION_INT( server_port );
+	REGISTER_LOCAL_FUNCTION_INT( server_ssl_port );
+
+}
 
 #define CheckFunktion(a) if(0==strncmp((char*)func->parameter[0].text,a,strlen(a))) if(func->parameter[0].text[strlen(a)]=='\0')
 
@@ -336,7 +351,7 @@ int builtinFunction ( http_request* s,FUNCTION_PARAS* func ) {
     }
 #endif
 
-    
+
     CheckFunktion ( "link" ) {
         getServerLink ( s );
         return 0;

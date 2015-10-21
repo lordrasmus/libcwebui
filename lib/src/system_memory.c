@@ -711,6 +711,10 @@ void WebserverResetHttpRequestHeader(HttpRequestHeader *header) {
 		WebserverFree(header->Host);
 		header->Host = 0;
 	}
+	if (header->HostName != 0) {
+		WebserverFree(header->HostName);
+		header->HostName = 0;
+	}
 	if (header->Connection != 0) {
 		WebserverFree(header->Connection);
 		header->Connection = 0;

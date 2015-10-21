@@ -1,4 +1,4 @@
-
+TEMPLATE_V1
 {include:session_test_menu.inc}
 
 <br>

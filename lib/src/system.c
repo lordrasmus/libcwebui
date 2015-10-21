@@ -64,16 +64,7 @@ inline global_vars* initWebserver(void) {
 #endif
 
 
-	REGISTER_FUNCTION( dump_render_vars );
-	REGISTER_FUNCTION( compiler );
-	REGISTER_FUNCTION( memoryInfos );
-	REGISTER_FUNCTION( ip );
-	REGISTER_FUNCTION( server_name );
-	REGISTER_FUNCTION( session_timeout );
-	REGISTER_FUNCTION( host );
-	REGISTER_FUNCTION( build_time );
-	REGISTER_FUNCTION( server_port );
-	REGISTER_FUNCTION( server_ssl_port );
+	register_internal_funcs();
 
 	PlatformInitNetwork();
 

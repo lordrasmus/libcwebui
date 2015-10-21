@@ -191,6 +191,7 @@ typedef struct {
 	char *Upgrade;
 	char *Connection;
 	char *Host;
+	char *HostName;
 	char *Origin;
 	char isHttp1_1;
 
@@ -438,9 +439,21 @@ int checkCGIFunctions(http_request* s);
 
 #if __GNUC__ > 2
 
-	#define DEFINE_FUNCTION_INT( a ) 	const char*			ws_ef_##a##_df = __FILE__; const int			ws_ef_##a##_dl = __LINE__; 	void 				ws_ef_##a ( http_request *s,dummy_handler* func ) VISIBLE_ATTR ; 		void 				ws_ef_##a ( http_request *s,dummy_handler* func )
+	#define DEFINE_FUNCTION_INT( a ) 	const char*			ws_ef_##a##_df = __FILE__; \
+										const int			ws_ef_##a##_dl = __LINE__; \
+										void 				ws_ef_##a ( http_request *s,FUNCTION_PARAS* func )
+
+	#define REGISTER_LOCAL_FUNCTION_INT( a ) 	register_function ( #a,ws_ef_##a,ws_ef_##a##_df,ws_ef_##a##_dl );
+
+	#define REGISTER_FUNCTION_INT( a ){ \
+		extern const char*	ws_ef_##a##_df; \
+		extern const int 	ws_ef_##a##_dl; \
+		extern void 		ws_ef_##a ( http_request *s,FUNCTION_PARAS* func ) ; \
+		register_function ( #a,ws_ef_##a,ws_ef_##a##_df,ws_ef_##a##_dl ); }
+
 #else
-	#define DEFINE_FUNCTION_INT( a ) 	void 				ws_ef_##a ( http_request *s,dummy_handler* func ) VISIBLE_ATTR ; 		void 				ws_ef_##a ( http_request *s,dummy_handler* func )
+	#define DEFINE_FUNCTION_INT( a ) 	void 				ws_ef_##a ( http_request *s,FUNCTION_PARAS* func )
+	#define REGISTER_FUNCTION_INT( a ) 	register_function ( #a,ws_ef_##a,"",0 );
 
 #endif
 

@@ -55,8 +55,8 @@ void setRenderVariable(http_request* s,const char* name,const char* text){
 }
 
 
-DEFINE_FUNCTION( dump_render_vars ){
+DEFINE_FUNCTION_INT( dump_render_vars ){
 
-	dumpStoreText( (http_request*)s, ((http_request*)s)->render_var_store, 0  );
+	dumpStoreText( s, s->render_var_store, 0  );
 
 }

@@ -206,7 +206,7 @@ int analyseFormDataLine(socket_info* sock, char *line, unsigned int length, Http
 		line2++;
 
 	}
-	
+
 #ifdef ENABLE_DEVEL_WARNINGS
 	#warning "Noch genauer Testen"
 #endif
@@ -300,6 +300,8 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 		return -1;
 	}
 
+
+
 	/* noch nicht verarbeitete header lines */
 	if (!strncmp((char*) line, "User-Agent: ", 12)) {
 		return 0;
@@ -337,6 +339,36 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 	}
 
 
+	h_len = strlen("Host: ");
+	if (!strncmp((char*)line,"Host: ",h_len)){
+		len = length - h_len;
+		if ( header->Host != 0)
+			WebserverFree(header->Host);
+
+		if ( header->HostName != 0)
+			WebserverFree(header->HostName);
+
+		header->Host = (char*)WebserverMalloc( len + 1 );
+		Webserver_strncpy((char*)header->Host,len+1,(char*)&line[h_len],len);
+
+		char* doppelpunkt = strstr(line + h_len, ":");
+		if( doppelpunkt ) {
+
+			len = doppelpunkt - ( line + h_len );
+
+			header->HostName = (char*)WebserverMalloc( len + 1 );
+			Webserver_strncpy((char*)header->HostName,len+1,(char*)&line[h_len],len);
+		}else{
+			header->HostName = (char*)WebserverMalloc( len + 1 );
+			Webserver_strncpy((char*)header->HostName,len+1,(char*)&line[h_len],len);
+		}
+
+		//printf("HostName : %s ( %d )  \n",header->HostName);
+
+
+		return 0;
+	}
+
 	CHECK_HEADER_LINE("If-Modified-Since: ", If_Modified_Since) /* Wed, 12 Dec 2007 13:13:08 GMT */
 
 	CHECK_HEADER_LINE("If-None-Match: ", etag)
@@ -345,7 +377,7 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 
 	CHECK_HEADER_LINE("Connection: ", Connection)
 
-	CHECK_HEADER_LINE("Host: ", Host)
+	/*CHECK_HEADER_LINE("Host: ", Host)*/
 
 	CHECK_HEADER_LINE("Origin: ", Origin)
 
@@ -473,7 +505,7 @@ int ParseHeader(socket_info* sock, HttpRequestHeader* header, char* buffer, unsi
 					if( diff == 9) {
 						memcpy(header->WebSocketKey3,&buffer[i+1],8);
 					} else {
-						printf("Fehlt noch \n"); 
+						printf("Fehlt noch \n");
 						/* TODO: Behandlung wenn der Teil nach dem Websocket header nicht vollstaendig ist */
 					}
 				}

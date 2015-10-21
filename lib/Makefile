@@ -17,7 +17,7 @@ FLAGS= $(COMP_OPT) -Wall -fPIC -Wextra   -std=c99  -D_POSIX_SOURCE -Wno-unused-p
 	-fdata-sections -ffunction-sections -fvisibility=hidden  -Wno-variadic-macros -Wpointer-arith \
 	$(SIZE_OPTS) $(PY_FLAGS)
 
-#-pedantic
+#-pedantic  -save-temps
 
 SIZE_OPTS= -finline -fno-inline-functions -finline-functions-called-once \
 	--param max-inline-insns-auto=62 --param inline-unit-growth=0 --param large-unit-insns=0 #--param inline-call-cost=4

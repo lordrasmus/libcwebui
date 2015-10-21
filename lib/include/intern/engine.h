@@ -71,6 +71,8 @@ void register_function_websocket_handler(const char* name,websocket_handler f,co
 int loadPlugin(const char* name,const char* path);
 
 
+void register_internal_funcs( void );
+
 void engine_builtinFunction(http_request *s,FUNCTION_PARAS* func);
 int check_platformFunction_exists(FUNCTION_PARAS* func);
 void engine_platformFunction(http_request *s,FUNCTION_PARAS* func);
