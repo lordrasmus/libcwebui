@@ -300,7 +300,7 @@ static int check_post_header( socket_info* sock ){
 
 int handleClientHeaderData(socket_info* sock) {
 	int len2;
-	unsigned int buffer_length = MAX_HEADER_LINE_LENGHT * 1;
+	unsigned int buffer_length = WEBSERVER_MAX_HEADER_LINE_LENGHT * 1;
 	unsigned int parsed;
 
 	unsigned int this_post_read = 0;
@@ -1031,7 +1031,7 @@ void handleer( int a, short b, void *t ) {
 unsigned long getSocketInfoSize(socket_info* sock) {
 	unsigned long ret = sizeof(socket_info);
 
-	if (sock->header_buffer != 0) ret += MAX_HEADER_LINE_LENGHT + 1; /* header_buffer */
+	if (sock->header_buffer != 0) ret += WEBSERVER_MAX_HEADER_LINE_LENGHT + 1; /* header_buffer */
 	if (sock->header != 0) ret += sizeof(HttpRequestHeader); /* header */
 #ifdef WEBSERVER_USE_WEBSOCKETS
 	if(sock->websocket_buffer != 0)

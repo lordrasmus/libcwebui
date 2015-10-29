@@ -5,6 +5,7 @@
 #define ENGINE_BUFFER_SIZE          2000
 #define WEBSOCKET_INIT_INBUFFER_SIZE  300  // ? was macht der nochmal ??
 #define WEBSOCKET_MAX_INBUFFER_SIZE   65000
+#define WEBSERVER_MAX_HEADER_LINE_LENGHT   1024*2  // max length of one header line
 #define WRITE_DATA_SIZE				20000
 
 #define WEBSERVER_MAX_POST_CONTENT_LENGTH    10000000 // 10 MB
