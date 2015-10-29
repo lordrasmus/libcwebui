@@ -360,15 +360,21 @@ struct web_py_plugin{
 	PyObject* local_namespace;
 	char* path;
 	char plugin_name[60];
+
+	unsigned long int	last_mod_sec;
+	unsigned long int   last_mod_nsec;
+	int size;
 };
 #endif
 
 typedef struct {
 	char* path;
+
 	char* name;
 	char* error;
 
 	int type;
+
 #ifdef WEBSERVER_USE_PYTHON
 	struct web_py_plugin* py_plugin;
 #endif

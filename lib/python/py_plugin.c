@@ -170,8 +170,6 @@ PyObject* py_set_plugin_name( PyObject* self, PyObject *args )
 
 int py_load_python_plugin( const char* path ){
 
-	//plugin_s *plugin, *plugin_tmp;
-
 
 	last_py_plugin_path = path;
 
@@ -189,6 +187,21 @@ int py_load_python_plugin( const char* path ){
 
 	plugin_name = NULL;
 	plugin_name_buff = mod->plugin_name;
+
+	WebserverFileInfo file;
+	memset(&file,0,sizeof( WebserverFileInfo ));
+
+	int time_changed;
+	int new_size;
+
+	file.FilePath = path;
+	PlatformGetFileInfo( &file, &time_changed, &new_size);
+	WebserverFree(file.lastmodified);
+
+
+	mod->last_mod_sec = file.last_mod_sec;
+	mod->last_mod_nsec = file.last_mod_nsec;
+	mod->size = new_size;
 
 	printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 	printf("loading python plugin : %s  start \n",path);
@@ -231,32 +244,51 @@ void py_call_engine_function( http_request *s, user_func_s *func , FUNCTION_PARA
 
 	if ( 1 == reload_py_plugin ){
 
-		#warning prüfen ob datei sich verändert hat
-		printf("reload Python Plugin: %s\n",func->plugin->path);
+		WebserverFileInfo file;
+		int time_changed;
+		int new_size;
+
+		file.lastmodified = 0;
+		file.FilePath = func->plugin->path;
+		file.last_mod_sec = func->plugin->py_plugin->last_mod_sec;
+		file.last_mod_nsec = func->plugin->py_plugin->last_mod_nsec;
+		PlatformGetFileInfo( &file, &time_changed, &new_size);
+		WebserverFree(file.lastmodified);
+
+		if ( ( file.last_mod_sec != func->plugin->py_plugin->last_mod_sec ) ||
+			 ( file.last_mod_nsec != func->plugin->py_plugin->last_mod_nsec ) ||
+			 ( new_size != func->plugin->py_plugin->size) ){
+
+			printf("reload Python Plugin: %s\n",func->plugin->path);
+
+			func->plugin->py_plugin->last_mod_sec = file.last_mod_sec;
+			func->plugin->py_plugin->last_mod_nsec = file.last_mod_nsec;
+			func->plugin->py_plugin->size = new_size;
 
 
-		//py_load_python_plugin( func->plugin->path );
-		FILE* fp = fopen(func->plugin->path,"r");
-		if ( fp ){
+			//py_load_python_plugin( func->plugin->path );
+			FILE* fp = fopen(func->plugin->path,"r");
+			if ( fp ){
 
-			context = func->plugin->py_plugin;
+				context = func->plugin->py_plugin;
 
-			//PyObject* last_namespace = context->global_namespace;
+				//PyObject* last_namespace = context->global_namespace;
 
-			context->global_namespace = PyModule_GetDict( PyImport_AddModule("__main__") );
+				context->global_namespace = PyModule_GetDict( PyImport_AddModule("__main__") );
 
-			PyRun_File( fp,func->plugin->path , Py_file_input, context->global_namespace,  context->global_namespace );
+				PyRun_File( fp,func->plugin->path , Py_file_input, context->global_namespace,  context->global_namespace );
 
-			//Py_XDECREF(last_namespace);
-			#warning mem leak wegen neuem namspace
-			// alter namspace kann aber nicht einfach gelöscht werden
-			// noch eine verbindung zum interpreter ?
+				//Py_XDECREF(last_namespace);
+				#warning mem leak wegen neuem namspace
+				// alter namspace kann aber nicht einfach gelöscht werden
+				// noch eine verbindung zum interpreter ?
 
-			PyErr_Print();
+				PyErr_Print();
 
-			context = NULL;
+				context = NULL;
 
-			fclose(fp);
+				fclose(fp);
+			}
 		}
 	}
 
