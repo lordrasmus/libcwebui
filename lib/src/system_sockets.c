@@ -21,13 +21,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
 
-#include "stdafx.h"
 
 #include <strings.h>
 
-#ifdef __GNUC__
 #include "webserver.h"
-#endif
 
 #ifdef LINUX
 #include <sys/sendfile.h>
@@ -49,7 +46,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #ifdef WEBSERVER_USE_WNFS
-
 	/* socket für den nfs zugriff */
 	int wnfs_socket = 0;
 #endif
@@ -721,6 +717,7 @@ void handleServer(socket_info* sock) {
 		c = PlatformAccept(sock, &port);
 		if (c == -1) return;
 
+#ifdef WEBSERVER_USE_WNFS
 		if (sock->server == 2) {
 			wnfs_socket = c;
 
@@ -731,6 +728,7 @@ void handleServer(socket_info* sock) {
 			client_sock->port = port;*/
 			continue;
 		}
+#endif
 
 		if (sock->use_ssl == 1) {
 #ifdef WEBSERVER_USE_SSL
