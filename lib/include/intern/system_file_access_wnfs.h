@@ -23,24 +23,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
 
-#ifndef _WEBSERVER_SYSTEM_FILE_ACCESS_H_
-#define _WEBSERVER_SYSTEM_FILE_ACCESS_H_
+#ifndef _WEBSERVER_SYSTEM_FILE_ACCESS_WNFS_H_
+#define _WEBSERVER_SYSTEM_FILE_ACCESS_WNFS_H_
 
-#include "webserver.h"
+WebserverFileInfo* wnfs_get_file( unsigned char* name);
 
-#ifdef WEBSERVER_USE_WNFS
+void wnfs_store_file( WebserverFileInfo* file );
 
-	extern int wnfs_socket;
-#endif
-
-
-#include "intern/system_file_access_utils.h"
-
-#include "intern/system_file_access_fs.h"
-#include "intern/system_file_access_binary.h"
-#include "intern/system_file_access_wnfs.h"
-
-
+void wnfs_free_file( WebserverFileInfo* file );
 
 
 #endif

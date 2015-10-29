@@ -73,14 +73,9 @@
 //#define WEBSERVER_DISABLE_FILE_UPDATE					// deaktiviert den file update check
 
 
-#define WEBSERVER_USE_LOCAL_FILE_SYSTEM
-#define WEBSERVER_USE_BINARY_FORMAT
-//#define WebserverUseNFS
-#define WEBSERVER_NFS_IP1 127
-#define WEBSERVER_NFS_IP2 0
-#define WEBSERVER_NFS_IP3 0
-#define WEBSERVER_NFS_IP4 1
-
+#define WEBSERVER_USE_LOCAL_FILE_SYSTEM				// Das Normale File System aktivieren
+#define WEBSERVER_USE_BINARY_FORMAT					// Das Binary File System aktivieren
+#define WEBSERVER_USE_WNFS							// Das Webserver Network File System aktivieren
 
 
 

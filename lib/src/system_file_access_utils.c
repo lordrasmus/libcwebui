@@ -99,10 +99,10 @@ void copyFilePath(WebserverFileInfo* file, const unsigned char* name) {
 }
 
 void copyURL(WebserverFileInfo* file, const unsigned char* url) {
-	
+
 	while( url[0] == '/' )
 		url++;
-	
+
 	file->UrlLengt = strlen((char*) url);
 	if (file->Url != 0) {
 		WebserverFree( (void*) file->Url);
@@ -143,7 +143,7 @@ void setFileType(WebserverFileInfo* file) {
 	}else{
 		ext[0] = '\0';
 	}
-	
+
 	/* http://wiki.selfhtml.org/wiki/Referenz:MIME-Typen
 	 * http://www.sitepoint.com/web-foundations/mime-types-complete-list/
 	 */
@@ -265,7 +265,45 @@ void generateEtag(WebserverFileInfo* wfi) {
 }
 
 
+WebserverFileInfo *create_empty_file(int pSize)
+{
 
+	WebserverFileInfo *file = (WebserverFileInfo *) WebserverMalloc(sizeof(WebserverFileInfo));
+	memset(file, 0, sizeof(WebserverFileInfo));
+
+
+	if( !file )
+		return 0;
+
+	file->RamCached = 1;
+
+	file->FileType = FILE_TYPE_PLAIN;
+
+	file->Data = (unsigned char *) WebserverMalloc(pSize);
+
+	if( !file->Data )
+		return 0;
+
+	file->DataLenght = pSize;
+
+	return file;
+}
+
+void free_empty_file(WebserverFileInfo *file)
+{
+	if(file->Data)
+		WebserverFree(file->Data);
+
+	if(file->FilePath)
+		WebserverFree(file->FilePath);
+
+
+	if(file->Url)
+		WebserverFree(file->Url);
+
+
+	WebserverFree(file);
+}
 
 /*
 WebserverFileInfo *create_empty_file(int pSize) {

@@ -48,6 +48,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  http://www.wangafu.net/~nickm/libevent-book/01_intro.html
 */
 
+#ifdef WEBSERVER_USE_WNFS
+
+	/* socket für den nfs zugriff */
+	int wnfs_socket = 0;
+#endif
 
 CLIENT_WRITE_DATA_STATUS handleClientWriteData(socket_info* sock);
 CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* sock);
@@ -74,6 +79,7 @@ int WebserverStartConnectionManager(void) {
 	PlatformSetNonBlocking(socket);
 	addSocketContainer(info);
 	addEventSocketReadPersist(info);
+
 
 
 	/* AB hier wird der SSL Socket initialisiert */
@@ -106,19 +112,32 @@ int WebserverStartConnectionManager(void) {
 			getConfigText( "server_ip"), getConfigInt("port"), getpid());
 #endif
 
+#ifdef WEBSERVER_USE_WNFS
+
+	socket = PlatformGetSocket(4444, 1 );
+	if (socket < 0) {
+		LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "Error : Server SSL Socket %d konnte nicht erzeugt werden werden", getConfigInt("ssl_port"));
+		return -1;
+	}
+
+	info = WebserverMallocSocketInfo();
+	PlatformCreateMutex(&info->socket_mutex);
+	info->active = 1;
+	info->use_ssl = 0;
+	info->port = 4444;
+	info->socket = socket;
+	info->server = 2;
+	PlatformSetNonBlocking(socket);
+	addSocketContainer(info);
+	addEventSocketReadPersist(info);
+
+	LOG( CONNECTION_LOG, NOTICE_LEVEL, 0, "Webserver NFS Online auf Port %d ",info->port);
+
+#endif
+
 	return 0;
 }
 
-/*
- my_socket_info* getActiveSocket(void){
- for(int i=0;i<sock_pos;i++){
- if(FD_ISSET(socks[i].socket,&fds)){
- return &socks[i];
- }
- }
-
- return 0;
- }*/
 
 socket_info* addClientSocket(int s, char ssl) {
 	socket_info* info;
@@ -691,6 +710,8 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteData(socket_info* sock) {
 	return NO_MORE_DATA;
 }
 
+
+
 void handleServer(socket_info* sock) {
 	int c;
 	unsigned int port;
@@ -699,6 +720,17 @@ void handleServer(socket_info* sock) {
 	while (1) {
 		c = PlatformAccept(sock, &port);
 		if (c == -1) return;
+
+		if (sock->server == 2) {
+			wnfs_socket = c;
+
+			LOG ( CONNECTION_LOG,NOTICE_LEVEL,c,"WNFS Connection from %s",sock->client_ip_str );
+
+			/*client_sock = addClientSocket(c, 0);
+			strncpy(client_sock->client_ip_str, sock->client_ip_str, INET_ADDRSTRLEN);
+			client_sock->port = port;*/
+			continue;
+		}
 
 		if (sock->use_ssl == 1) {
 #ifdef WEBSERVER_USE_SSL
@@ -890,6 +922,12 @@ void handleer( int a, short b, void *t ) {
 		handleServer(sock);
 		return;
 	}
+
+	if (sock->server == 2) {
+		handleServer(sock);
+		return;
+	}
+
 	if (sock->client == 1) {
 		if (b == EVENT_READ) {
 			#ifdef WEBSERVER_USE_SSL

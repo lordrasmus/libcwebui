@@ -212,22 +212,42 @@ WebserverFileInfo *getFile( char *name) {
 		return 0;
 	}
 
-	file = getFileFromRBCache( name );
+
+#ifdef WEBSERVER_USE_WNFS
+
+	file = wnfs_get_file( name );
 	if ( file != 0 )
 		return file;
 
-	file = getFileLocalFileSystem( ( unsigned char*) name);
+#endif
 
+	file = getFileFromRBCache( name );
+	if ( file != 0 ){
+		#ifdef WEBSERVER_USE_WNFS
+		wnfs_store_file( file );
+		#endif
+		return file;
+	}
+
+
+	file = getFileLocalFileSystem( ( unsigned char*) name);
 	if ( file == 0 ){
 		printf("getFile : Error File %s not found\n", name );
 		return 0;
 	}
+
+
 
 #ifndef WEBSERVER_DISABLE_CACHE
 	generateEtag ( file );
 #endif
 
 	ramCacheFile(file);
+
+
+	#ifdef WEBSERVER_USE_WNFS
+	wnfs_store_file( file );
+	#endif
 
 	#ifndef DISABLE_OLD_TEMPLATE_SYSTEM
 		// prüfen ob das File ein Template type ist ( depricated )

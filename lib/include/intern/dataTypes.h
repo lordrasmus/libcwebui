@@ -129,7 +129,8 @@ typedef struct {
 
 enum fs_types{
 	FS_LOCAL_FILE_SYSTEM,
-	FS_BINARY
+	FS_BINARY,
+	FS_WNFS
 };
 
 typedef struct {

@@ -23,38 +23,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "stdafx.h"
 
-#ifdef __GNUC__	
+#ifdef __GNUC__
 	#include "webserver.h"
 #endif
 
 extern unsigned char testvar[];
 
 
-WebserverFileInfo *create_empty_file(int pSize)
-{
-WebserverFileInfo *result = (WebserverFileInfo *) WebserverMalloc(sizeof(WebserverFileInfo));
 
-	if( !result )
-		return 0;
 
-	result->FileType = 2;
-	result->Data = (unsigned char *) WebserverMalloc(pSize);
 
-	if( !result->Data )
-		return 0;
-
-	result->DataLenght = 0;
-
-	return result;
-}
-
-void free_file(WebserverFileInfo *file)
-{
-	if(file->Data)
-		WebserverFree(file->Data);
-
-	WebserverFree(file);
-}
 
 // CGI functions ------------------------------------------------------------------
 

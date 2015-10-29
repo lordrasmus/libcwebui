@@ -27,9 +27,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "webserver.h"
 #endif
 
+#include "intern/system_file_access.h"
+
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
 #endif
+
+
 
 
 unsigned char *g_lastmodified;
@@ -304,7 +308,17 @@ int getHttpRequest(socket_info* sockp) {
 		}
 	}
 
+
 	endHTTPRequest(&s);
+
+#ifdef WEBSERVER_USE_WNFS
+
+	if ( file->FileType == FS_WNFS ){
+		wnfs_free_file( file );
+	}
+
+#endif
+
 
 	if ( unlockGlobals() == -1 ){
 		LOG ( CONNECTION_LOG,ERROR_LEVEL,s.socket->socket, "Fatal Error locking Globals exiting", "" );

@@ -39,5 +39,8 @@ void copyURL(WebserverFileInfo* file, const unsigned char* url);
 void setFileType(WebserverFileInfo* file);
 void generateEtag( WebserverFileInfo *file );
 
+WebserverFileInfo *create_empty_file(int pSize);
+void free_empty_file(WebserverFileInfo *file);
+
 
 #endif

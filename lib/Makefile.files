@@ -31,6 +31,7 @@ SOURCES := 	src/builtinFunctions.c \
 			src/system_file_access_utils.c \
 			src/system_file_access_fs.c \
 			src/system_file_access_binary.c \
+			src/system_file_access_wnfs.c \
 			src/system_file_cache.c \
 			src/webserver_api_functions.c \
 			src/utils.c \
