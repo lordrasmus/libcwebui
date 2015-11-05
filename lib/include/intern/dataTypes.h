@@ -438,11 +438,7 @@ void dumpStoreText(http_request* s, ws_variable_store* store, int tabs);
 
 int checkCGIFunctions(http_request* s);
 
-#if __GNUC__ > 2
-        #define VISIBLE_ATTR __attribute__ ((visibility("default")))
-#else
-       	#define VISIBLE_ATTR
-#endif
+
 
 #if __GNUC__ > 2
 

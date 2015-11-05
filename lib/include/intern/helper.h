@@ -12,6 +12,11 @@
         #define NEED_RESUL_CHECK
 #endif
 
+#if __GNUC__ > 2
+        #define VISIBLE_ATTR __attribute__ ((visibility("default")))
+#else
+       	#define VISIBLE_ATTR
+#endif
 
 
 #define likely(x)       __builtin_expect((x),1)

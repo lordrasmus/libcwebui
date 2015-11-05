@@ -196,7 +196,7 @@ void release_file_content(WebserverFileInfo* file) {
 
 
 
-WebserverFileInfo *getFile( char *name) {
+WebserverFileInfo VISIBLE_ATTR *getFile( char *name)  {
 	WebserverFileInfo *file = 0;
 
 	if (name == 0)

@@ -27,53 +27,5 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 	#include "webserver.h"
 #endif
 
-extern unsigned char testvar[];
 
 
-
-
-
-
-// CGI functions ------------------------------------------------------------------
-
-/*
-int buildin_testfkt(socket_info* sock, unsigned char *retbuffer, HttpRequestHeader *pHeader)
-{
-	WebserverFileInfo *file = create_empty_file(2000);
-
-	file->DataLenght = sprintf( file->Data, "<html><head>HUHU</head><body>na sie??</body></html>" );
-
-	sendHTML(sock,file,retbuffer,pHeader);
-
-	free_file(file);
-
-	return 0;
-}
-
-int buildin_basesettings(socket_info* sock, unsigned char *retbuffer, HttpRequestHeader *pHeader)
-{
-	WebserverFileInfo *file = getFile("empty.html");
-
-	sendHTML(sock,file,retbuffer,pHeader);
-
-	return 0;
-}
-
-// Fillins ------------------------------------------------------------------------
-
-int fillin_testfkt( unsigned char *pBuffer, HttpRequestHeader *pHeader)
-{
-        return sprintf((char*)pBuffer,"Testfunktion : %s",testvar);
-}
-
-int fillin_mac( unsigned char *pBuffer, HttpRequestHeader *pHeader )
-{
-        return sprintf((char*)pBuffer,"%s","00:01:07:17:EE:FF");
-}
-
-int fillin_infotext( unsigned char *pBuffer, HttpRequestHeader *pHeader )
-{
-	return sprintf( (char *) pBuffer, "<H1>Settings have being saved.</H1>" );
-}
-
-*/
