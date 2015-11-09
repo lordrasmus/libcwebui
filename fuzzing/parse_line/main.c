@@ -23,31 +23,30 @@ int main( int argc, char** argv){
 			return 0;
 			#endif
 
+		char* start = buf;
+
+		socket_info sock;
+		HttpRequestHeader header;
+
+		memset(&sock , 0, sizeof( socket_info ));
+		memset(&header , 0, sizeof( HttpRequestHeader ));
+
+		sock.header = &header;
+
 		for ( int i = 2 ; i < len ; i++ ){
 
 			if (( buf[i-2] == '\r') && ( buf[i-1] == '\n') ){
 
-				len = i;
-				buf[len] = '\0';
-				//printf("%s\n",buf);
+				char bak = buf[i];
+				buf[i] = '\0';
+				//printf("   parsing %s\n",start);
 
-				//char* tmp = strtok( buf, "\r\n");
-				//printf("%p %c\n",tmp);
+				analyseHeaderLine( &sock, start, i, &header );
 
-				printf("   parsing\n");
+				buf[i] = bak;
 
-				socket_info sock;
-				HttpRequestHeader header;
+				start = &buf[i];
 
-				memset(&sock , 0, sizeof( socket_info ));
-				memset(&header , 0, sizeof( HttpRequestHeader ));
-
-				sock.header = &header;
-
-
-				analyseHeaderLine( &sock, buf, len, &header );
-
-				break;
 			}
 		}
 
