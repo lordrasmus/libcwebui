@@ -13,7 +13,10 @@ int main( int argc, char** argv){
 		memset(buf, 0, 10000);
 		int len = read(0, buf, 10000);
 
-		url_decode( buf );
+		char* tmp = malloc( len );
+		memcpy( tmp, buf, len );
+
+		url_decode( tmp );
 
 	#ifdef AFL_PER
 	}

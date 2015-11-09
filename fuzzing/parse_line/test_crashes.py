@@ -4,7 +4,9 @@ import os, sys, subprocess
 
 from pprint import pprint
 
-ret = subprocess.getstatusoutput( "find output1/ | grep crashes | grep id")
+os.system("make main")
+
+ret = subprocess.getstatusoutput( "find output*/ | grep crashes | grep id")
 liste1 = ret[1].split("\n")
 
 ret = subprocess.getstatusoutput( "find input ")
@@ -17,12 +19,28 @@ liste = liste2 + liste1
 
 for crash in liste:
 
+	if crash == "":
+		continue
+
 	print("testing : " + crash)
-	ret = subprocess.getstatusoutput( "./main.afl.gcc < " + crash )
+	ret = subprocess.getstatusoutput( "./main < " + crash )
 	#pprint ( ret )
 
-	if not ret[0] == 0:
+	if ret[0] == 0:
+		if len( ret[1] ) > 0 :
+			print( ret[1] )
+		#pass
+	else:
 		#./main.afl.gcc < " + crash )
+
+		pprint( ret )
+
+		print("\n---------- Input ------------\n")
+		f = open( crash , "rb")
+		tmp = f.read()
+		pprint( tmp )
+		f.close()
+		print("\n----------------------\n")
 
 		f = open(".gdbinit","w")
 		f.write("file ./main\n")
@@ -30,7 +48,7 @@ for crash in liste:
 
 		f.close()
 
-		os.system("gdb ")
+		os.system("ddd ")
 
 		sys.exit(1)
 

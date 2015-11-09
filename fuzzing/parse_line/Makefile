@@ -1,5 +1,5 @@
 
-OPTS= -DLINUX
+OPTS= -DLINUX -std=c99
 #-O2
 
 FLAGS=-I../../lib/ -I../../lib/include/ -I../../lib/include/intern/ -I../../lib/third_party/src/simclist/ -I../../lib/third_party/src/rb_tree/ \
@@ -23,6 +23,7 @@ all:
 	../../afl-1.94b/afl-clang-fast ${FLAGS} -O2 -DAFL_PER main.c ${FILES} -o main.afl.gcc -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
 #	../../afl-1.94b/afl-gcc ${FLAGS} main.c ${FILES} -o main.afl.gcc -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
 
+main: ${FILES} main.c
 	gcc -ggdb3 ${FLAGS} main.c ${FILES} -o main -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
 
 
