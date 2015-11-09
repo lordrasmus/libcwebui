@@ -55,7 +55,7 @@ void url_decode(char *line) {
 
 	lenght = strlen((char*) line);
 	for (i = 0; i < lenght; i++) {
-		if (unlikely(line[i]=='%')) {
+		if ( (unlikely(line[i]=='%')) && ( ( lenght - i ) > 2 ) )  {
 			hex = (unsigned char)(toHex(line[i + 1]) << 4);
 			hex =  (unsigned char)( hex + toHex(line[i + 2]) );
 			line[i] = hex; /*  hexcode des zeichens als char speichern und 2 zeichen loeschen */
@@ -85,9 +85,11 @@ void createParameter(HttpRequestHeader *header, char* name, unsigned int name_le
 	name[name_length] = back;
 }
 
-void recieveParameterFromGet(char *line, HttpRequestHeader *header) {
-	int http_pos, pos, pos2, i;
+void recieveParameterFromGet(char *line, HttpRequestHeader *header, int len) {
+	int  pos, pos2, i;
 	char in_para_value;
+
+	if ( len < 1 ) return;
 
 	url_decode(line);
 
@@ -95,17 +97,12 @@ void recieveParameterFromGet(char *line, HttpRequestHeader *header) {
 	WebServerPrintf("recieveParameterFromGet : %s\n", line);
 #endif
 
-	http_pos = stringfind(line, "HTTP/");
-	if (http_pos < 3) {
-		return;
-	}
-
 	in_para_value = 0;
 
 	pos = 0;
 	pos2 = 0;
 
-	for (i = 0; i < http_pos; i++) {
+	for (i = 0; i < len; i++) {
 		if (line[i] == '&') {
 			if (in_para_value == 0) {
 				createParameter(header, &line[pos], i - pos, 0, 0);
@@ -123,9 +120,9 @@ void recieveParameterFromGet(char *line, HttpRequestHeader *header) {
 	}
 
 	if (in_para_value == 0) {
-		createParameter(header, &line[pos], http_pos - 5 - pos, 0, 0);
+		createParameter(header, &line[pos], len - pos, 0, 0);
 	} else {
-		createParameter(header, &line[pos], pos2 - pos - 1, &line[pos2], http_pos - 5 - pos2);
+		createParameter(header, &line[pos], pos2 - pos - 1, &line[pos2], len - pos2);
 	}
 
 	/* WebServerPrintf("Anzahl Parameter : %d\n",header->paramtercount);
@@ -223,19 +220,52 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 #ifdef _WEBSERVER_HEADER_DEBUG_
 	LOG(HEADER_PARSER_LOG,NOTICE_LEVEL,0,"Header Line : %s",line);
 #endif
-	if (!strncmp((char*) line, "GET ", 4)) {
+
+	if ( header->method == 0 ){
+		c_pos = strstr(line, " HTTP/1.1\r\n");
+		if(c_pos != 0){
+			sock->header->isHttp1_1 = 1;
+		}else{
+			c_pos = strstr(line, " HTTP/1.0\r\n");
+			if ( c_pos == 0 ){
+				header->error = 1;
+				return -1;
+			}
+		}
+		int diff = ( line + length - c_pos );
+		if ( diff != 11 ){
+			printf("analyseHeaderLine: invalid line %d\n",diff);
+			fflush(stdout);
+			header->error = 1;
+			return -1;
+		}
+
+		//printf("%p %p  %d  %d\n",line,c_pos, ( line + length - c_pos ),  length);fflush(stdout);
+	}
+
+	if ( ( header->method == 0 ) && (!strncmp((char*) line, "GET ", 4)) ) {
 		header->method = HTTP_GET;
+
 		pos = stringfind(&line[5], "?");
 		if (pos == 0) /* keine parameter */
-				{
+		{
 			pos = stringfind(&line[5], " ");
 			header->url = (char *) WebserverMalloc( pos + 1 );
 			Webserver_strncpy((char*) header->url, pos + 1, (char*) &line[5], pos); /* -4 wegen dem GET am anfang */
 		} else /* mit parametern */
 		{
+			*c_pos = '\0';
+			printf("%s\n",c_pos);
+			fflush( stdout );
+
 			header->url = (char *) WebserverMalloc( pos + 1 );
 			Webserver_strncpy((char*) header->url, pos + 1, (char*) &line[5], pos); /* -4 wegen dem GET am anfang */
-			recieveParameterFromGet(&line[5] + pos + 1, header);
+
+			char* start = ( &line[5] ) + pos + 1;
+			int l = c_pos - start;
+			recieveParameterFromGet(start , header, l);
+
+			*c_pos = ' ';
 		}
 
 		url_sanity_check( header );
@@ -244,10 +274,7 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 			return -1;
 		}
 
-		c_pos = strstr(line, "HTTP/1.1");
-		if(c_pos != 0){
-			sock->header->isHttp1_1 = 1;
-		}
+
 #if _WEBSERVER_CONNECTION_DEBUG_ > 3
 		LOG(CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"%s",line);
 #endif
@@ -255,7 +282,7 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 		return 0;
 	}
 
-	if(!strncmp(line,"POST ",5)){
+	if ( ( header->method == 0 ) && (!strncmp(line,"POST ",5)) ){
 
 
 #if _WEBSERVER_CONNECTION_DEBUG_ > 3
@@ -272,9 +299,17 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 			Webserver_strncpy((char*) header->url, pos + 1, (char*) &line[6], pos); /* -4 wegen dem GET am anfang */
 		} else /* mit parametern */
 		{
+			*c_pos = '\0';
+
 			header->url = (char *) WebserverMalloc( pos + 1 );
 			Webserver_strncpy((char*) header->url, pos + 1, (char*) &line[6], pos); /* -4 wegen dem GET am anfang */
-			recieveParameterFromGet(&line[6] + pos + 1, header);
+
+			char* start = ( &line[6] ) + pos + 1;
+			int l = c_pos - start;
+
+			recieveParameterFromGet(start , header, l);
+
+			*c_pos = ' ';
 		}
 
 		url_sanity_check( header );
