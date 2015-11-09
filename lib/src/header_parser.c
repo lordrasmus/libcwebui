@@ -59,7 +59,10 @@ void url_decode(char *line) {
 			hex = (unsigned char)(toHex(line[i + 1]) << 4);
 			hex =  (unsigned char)( hex + toHex(line[i + 2]) );
 			line[i] = hex; /*  hexcode des zeichens als char speichern und 2 zeichen loeschen */
-			memcpy(&line[i + 1], &line[i + 3], lenght - i );
+			//memcpy(&line[i + 1], &line[i + 3], lenght - i );
+			for( int i2 = 0 ; i2 < lenght - i; i2++ ){
+				line[i + 1 + i2 ] = line[i + 3 + i2];
+			}
 			lenght -= 2;
 		}
 		if (line[i] == '+'){ /* + durch whitespace ersetzen */
@@ -221,24 +224,24 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 	LOG(HEADER_PARSER_LOG,NOTICE_LEVEL,0,"Header Line : %s",line);
 #endif
 
+
 	if ( header->method == 0 ){
-		c_pos = strstr(line, " HTTP/1.1\r\n");
-		if(c_pos != 0){
+
+		if ( length < 12 ){
+			header->error = 1;
+			return -1;
+		}
+
+		if(0 == strcmp ( &line[length - 9 ], " HTTP/1.1" ) ){
 			sock->header->isHttp1_1 = 1;
 		}else{
-			c_pos = strstr(line, " HTTP/1.0\r\n");
-			if ( c_pos == 0 ){
+			if ( 0 != strcmp ( &line[length - 9 ], " HTTP/1.0" )){
 				header->error = 1;
 				return -1;
 			}
 		}
-		int diff = ( line + length - c_pos );
-		if ( diff != 11 ){
-			printf("analyseHeaderLine: invalid line %d\n",diff);
-			fflush(stdout);
-			header->error = 1;
-			return -1;
-		}
+
+		c_pos = &line[length - 9 ];
 
 		//printf("%p %p  %d  %d\n",line,c_pos, ( line + length - c_pos ),  length);fflush(stdout);
 	}
@@ -318,11 +321,6 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 			return -1;
 		}
 
-		c_pos = strstr(line, "HTTP/1.1");
-
-		if(c_pos != 0){
-			sock->header->isHttp1_1 = 1;
-		}
 #ifdef ENABLE_DEVEL_WARNINGS
 		#warning "Noch genauer Testen"
 #endif

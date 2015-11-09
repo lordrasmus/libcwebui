@@ -63,13 +63,18 @@ int checkCookie(char *name,char *value,HttpRequestHeader *header){
 }
 
 void copyCookieValue(char *line,HttpRequestHeader *header,int pos,int pos2){
-	int pos3=0,i,length;
+	int pos3=-1,i,length;
 	Cookie* cookie;
 	for(i=pos;i<pos2;i++){
 		if(line[i]=='='){
 			pos3=i;
 			break;
 		}
+	}
+
+	if ( pos3 == -1 ){
+		printf("invalid Cookie\n");
+		return;
 	}
 
 	cookie = WebserverMallocCookie();
@@ -118,6 +123,6 @@ void parseCookies(char *line,int length,HttpRequestHeader *header){
 		if(pos2==pos) break;
 		pos=pos2+2;
 	}
-	
+
 }
 
