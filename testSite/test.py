@@ -16,17 +16,17 @@ def test1(  ):
 
 
 
-
 def test2(  ):
 	global b
 	#print("JO test2")
+	#pprint( b )
 	b += 1
 	libcwebui.send("b : " + str( b ))
 
 	try:
 		libcwebui.setRenderVar( "a", 2 )
 
-		libcwebui.setRenderVar( "b",b )
+		libcwebui.setRenderVar( "b", b )
 
 		libcwebui.setRenderVar( "c","c" )
 
