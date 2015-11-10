@@ -186,14 +186,13 @@ int memoryInfosDetail ( http_request* s ) {
 
     size+=all_file_size + all_session_store_size + sockets_size;
 
-    printHTMLChunk ( s->socket,"<table><th>Typ<th>Count<th>Bytes" );
     printHTMLChunk ( s->socket,"<tr><td>Files<td>%d<td>%d",count,all_file_size );
     printHTMLChunk ( s->socket,"<tr><td>SessionStores<td>%d<td>%ld",session_store_count,all_session_store_size );
 	printHTMLChunk ( s->socket,"<tr><td>Sockets<td>%d<td>%ld",sockets,sockets_size);
     printHTMLChunk ( s->socket,"<tr><td>MemorySize<td>%d",size );
     printHTMLChunk ( s->socket,"<tr><td>AllocatedMemory<td>%ld",allocated );
     printHTMLChunk ( s->socket,"<tr><td>AllocatedMemory MAX<td>%ld",allocated_max );
-    printHTMLChunk ( s->socket,"</table>" );
+    printHTMLChunk ( s->socket,"" );
 #ifdef _WEBSERVER_MEMORY_DEBUG_
     print_blocks_now = 1;
 #endif

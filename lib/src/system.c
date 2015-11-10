@@ -70,7 +70,7 @@ inline global_vars* initWebserver(void) {
 
 	initEvents();
 
-	if (!WebServerloadData()) {
+	if (!initFilesystem()) {
 		return 0;
 	}
 
@@ -87,7 +87,10 @@ void startWebServer(void) {
 #endif
 
 #ifdef WEBSERVER_USE_SSL
-	if (initOpenSSL() < 0) {
+
+	int ssl_port = getConfigInt("ssl_port");
+
+	if ( ( ssl_port > 0 ) && (initOpenSSL() < 0) ) {
 		LOG( CONNECTION_LOG, ERROR_LEVEL, 0, "Error : SSL konnte nicht gestartet werden", "");
 		return;
 	}

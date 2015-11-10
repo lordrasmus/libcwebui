@@ -81,30 +81,38 @@ int WebserverStartConnectionManager(void) {
 	/* AB hier wird der SSL Socket initialisiert */
 
 #ifdef WEBSERVER_USE_SSL
-	socket = PlatformGetSocket(getConfigInt("ssl_port"), globals.config.connections);
-	if (socket < 0) {
-		LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "Error : Server SSL Socket %d konnte nicht erzeugt werden werden", getConfigInt("ssl_port"));
-		return -1;
-	}
+	int ssl_port = getConfigInt("ssl_port");
+	if ( ssl_port > 0 ){
+		socket = PlatformGetSocket(getConfigInt("ssl_port"), globals.config.connections);
+		if (socket < 0) {
+			LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "Error : Server SSL Socket %d konnte nicht erzeugt werden werden", getConfigInt("ssl_port"));
+			return -1;
+		}
 
-	info = WebserverMallocSocketInfo();
-	PlatformCreateMutex(&info->socket_mutex);
-	info->active = 1;
-	info->use_ssl = 1;
-	info->port = getConfigInt("ssl_port");
-	info->socket = socket;
-	info->server = 1;
-	PlatformSetNonBlocking(socket);
-	addSocketContainer(info);
-	addEventSocketReadPersist(info);
+		info = WebserverMallocSocketInfo();
+		PlatformCreateMutex(&info->socket_mutex);
+		info->active = 1;
+		info->use_ssl = 1;
+		info->port = ssl_port;
+		info->socket = socket;
+		info->server = 1;
+		PlatformSetNonBlocking(socket);
+		addSocketContainer(info);
+		addEventSocketReadPersist(info);
+	}
 
 #endif
 
 #ifdef WEBSERVER_USE_SSL
-	LOG(CONNECTION_LOG, NOTICE_LEVEL, 0, "Webserver Online auf %s Port %d & Port %d (SSL)",
-			getConfigText( "server_ip"), getConfigInt("port"), getConfigInt("ssl_port"));
+	if ( ssl_port > 0 ){
+		LOG(CONNECTION_LOG, NOTICE_LEVEL, 0, "webserver listening on port %d & port %d (SSL) ( PID %d )",
+			getConfigInt("port"), getConfigInt("ssl_port"), getpid());
+	}else{
+		LOG( CONNECTION_LOG, NOTICE_LEVEL, 0, "webserver listening on port %d ( PID %d )",
+			getConfigInt("port"), getpid());
+	}
 #else
-	LOG( CONNECTION_LOG, NOTICE_LEVEL, 0, "Webserver Online auf %s Port %d ( PID ; %d )",
+	LOG( CONNECTION_LOG, NOTICE_LEVEL, 0, "webserver listening on port %d ( PID %d )",
 			getConfigText( "server_ip"), getConfigInt("port"), getpid());
 #endif
 

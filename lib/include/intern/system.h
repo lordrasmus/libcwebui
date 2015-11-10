@@ -91,7 +91,7 @@ void  	printParameterInfo(HttpRequestHeader *header);
 *																	*
 ********************************************************************/
 
-bool	WebServerloadData( void );
+bool	initFilesystem( void );
 
 global_vars* initWebserver(void);
 

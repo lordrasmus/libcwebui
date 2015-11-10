@@ -177,12 +177,7 @@ void dumpSockets(http_request* s) {
 
 	ws_list_iterator_start(&sock_list);
 
-	printHTMLChunk(s->socket, "<table border=1>");
-	printHTMLChunk(s->socket, "<tr><th>Typ<th>Port<th>Size<th>SSL");
-#ifdef WEBSERVER_USE_WEBSOCKETS
-	printHTMLChunk(s->socket, "<th>Websocket");
-#endif
-	printHTMLChunk(s->socket, "<th>Status");
+
 
 	while ((sock = (socket_info*) ws_list_iterator_next(&sock_list))) {
 		printHTMLChunk(s->socket, "<tr><td>");
@@ -200,6 +195,12 @@ void dumpSockets(http_request* s) {
 			printHTMLChunk(s->socket, "active ");
 		}
 
+
+		printHTMLChunk(s->socket, "<td>");
+		if (sock->closeSocket == 1) {
+			printHTMLChunk(s->socket, "close ");
+		}
+
 #ifdef WEBSERVER_USE_WEBSOCKETS
 		printHTMLChunk(s->socket, "<td>");
 		if (sock->isWebsocket == 1) {
@@ -207,12 +208,10 @@ void dumpSockets(http_request* s) {
 		}
 #endif
 
-		printHTMLChunk(s->socket, "<td>");
-		if (sock->closeSocket == 1) {
-			printHTMLChunk(s->socket, "close ");
-		}
-
 	}
+
+
+
 	ws_list_iterator_stop(&sock_list);
 	PlatformUnlockMutex(&socks_mutex);
 

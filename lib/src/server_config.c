@@ -37,15 +37,15 @@ static ws_variable_store *config_v_store;
 void initConfig(void) {
 	config_v_store = createVariableStore();
 	setConfigInt( "port",80);
-	setConfigInt( "ssl_port",443);
-	setConfigInt( "use_csp",1);
+	setConfigInt( "ssl_port",-1);
+	setConfigInt( "use_csp",0);
 	setConfigInt( "reload_py_modules",0);
 	#ifdef WEBSERVER_SESSION_TIMEOUT
 		setConfigInt( "session_timeout" , WEBSERVER_SESSION_TIMEOUT );
 	#else
 		setConfigInt( "session_timeout" , 300 );
 	#endif
-	setConfigText( "server_ip","127.0.0.1");
+	//setConfigText( "server_ip","127.0.0.1");
 }
 
 void freeConfig(void){

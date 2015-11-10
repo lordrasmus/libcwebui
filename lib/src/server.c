@@ -313,8 +313,10 @@ int getHttpRequest(socket_info* sockp) {
 
 #ifdef WEBSERVER_USE_WNFS
 
-	if ( file->FileType == FS_WNFS ){
-		wnfs_free_file( file );
+	if (file != 0) {
+		if ( file->FileType == FS_WNFS ){
+			wnfs_free_file( file );
+		}
 	}
 
 #endif

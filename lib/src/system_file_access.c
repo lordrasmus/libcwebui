@@ -57,22 +57,28 @@ void free_file_access( void ){
 }
 #include <zlib.h>
 
-bool WebServerloadData(void) {
+bool initFilesystem(void) {
 
 	if (globals.init_called != 0xAB) {
 		LOG(FILESYSTEM_LOG, ERROR_LEVEL, 0, "WebserverInit must be called first","");
 		return false;
 	}
 
-	printf("using zlib : %s\n",ZLIB_VERSION);
+	LOG(FILESYSTEM_LOG,NOTICE_LEVEL,0,"using zlib : %s",ZLIB_VERSION);
 
-#ifdef WebserverUseNFS
-	LOG (FILESYSTEM_LOG,NOTICE_LEVEL,0, "Webserver Load Data Use NFS","" );
+#ifdef WEBSERVER_USE_BINARY_FORMAT
+	LOG( FILESYSTEM_LOG, NOTICE_LEVEL, 0, "using binary filesystem", "");
 #endif
+
 
 #ifdef WEBSERVER_USE_LOCAL_FILE_SYSTEM
-	LOG( FILESYSTEM_LOG, NOTICE_LEVEL, 0, "Webserver Load Data Use Local Filesystem", "");
+	LOG( FILESYSTEM_LOG, NOTICE_LEVEL, 0, "using local filesystem", "");
 #endif
+
+#ifdef WEBSERVER_USE_WNFS
+	LOG (FILESYSTEM_LOG,NOTICE_LEVEL,0, "using network filesystem","" );
+#endif
+
 
 	return true;
 
