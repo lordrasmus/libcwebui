@@ -1,3 +1,3 @@
-POST /index.html?b=c&c=d HTTP/1.1
+POST /index.html?para1=value1&para2=+value2 HTTP/1.1
 User-Agent: HTTPTool/1.0
-Cookie: dskjfh=aadf; sa=dffg
+Cookie: CookieName=CokkieValue

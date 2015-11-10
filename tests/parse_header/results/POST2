@@ -1,0 +1,27 @@
+-----------  Header Info Start  ----------------------------
+Header Valid
+   Method: HTTP_POST
+   Version: HTTP/1.1
+   URL : index.html
+   Content-Length: 0
+   Host: (null)
+   If-Modified-Since: (null)
+   If-None-Match: (null)
+   Upgrade: (null)
+   Connection: (null)
+   Origin: (null)
+   Sec-WebSocket-Key1: (null)
+   Sec-WebSocket-Key2: (null)
+   Sec-WebSocket-Key: (null)
+   Sec-WebSocket-Origin: (null)
+   Sec-WebSocket-Protocol: (null)
+   Sec-WebSocket-Version: 0
+Parameter :
+  Name  : para1
+  Value : value1
+  Name  : para2
+  Value :  value2
+Cookies : 
+  Name  : CookieName
+  Value : CokkieValue
+-----------  Header Info End  ----------------------------
