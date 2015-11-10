@@ -62,6 +62,5 @@ libcwebui.register_function( func1 )
 ```
 TEMPLATE_V1
 Call Function   : {f:func1}
-Global Variable : {get:global;"global1"}
 Render Variable : {get:render;"render1"}
 ```
