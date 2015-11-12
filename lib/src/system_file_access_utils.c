@@ -313,14 +313,14 @@ WebserverFileInfo *create_empty_file(int pSize)
 void free_empty_file(WebserverFileInfo *file)
 {
 	if(file->Data)
-		WebserverFree(file->Data);
+		WebserverFree((char*)file->Data);
 
 	if(file->FilePath)
-		WebserverFree(file->FilePath);
+		WebserverFree((char*)file->FilePath);
 
 
 	if(file->Url)
-		WebserverFree(file->Url);
+		WebserverFree((char*)file->Url);
 
 
 	WebserverFree(file);

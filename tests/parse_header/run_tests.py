@@ -60,11 +60,11 @@ def run_tests():
 
 		if not os.path.exists( result_file ):
 			print("Error: keine Result Datei -> %s\n" % result_file)
-			print("< Input >")
+			print("<---------- Input ---------->")
 			os.system("cat " + test )
-			print("< Ret Text >")
+			print("<---------- Ret Text ------->")
 			print(ret[1])
-			print("<")
+			print("<--------------------------->")
 
 			ans = question_yes_no("Result File erzeugen ?","j")
 			if ans == "True":

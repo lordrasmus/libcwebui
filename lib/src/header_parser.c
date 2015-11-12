@@ -73,59 +73,123 @@ void url_decode(char *line) {
 
 void createParameter(HttpRequestHeader *header, char* name, unsigned int name_length, char* value, unsigned int value_length) {
 	ws_variable *var;
-	char back = name[name_length]; /* Buffer muss im original Zustand belassen werden */
 
-	name[name_length] = '\0';
+
+	url_decode(name);
 	var = newVariable(header->parameter_store, name);
 
 	if (value != 0) {
-		char back2 = value[value_length];
-		value[value_length] = '\0';
+		url_decode(value);
 		setWSVariableString(var, value);
-		value[value_length] = back2;
 	}
 
-	name[name_length] = back;
+
 }
 
+enum ParameterParseStates{
+	PARSE_NAME,
+	PARSE_VALUE
+};
+
 void recieveParameterFromGet(char *line, HttpRequestHeader *header, int len) {
-	int  pos, pos2, i;
-	char in_para_value;
+	int  i;
+
+	enum ParameterParseStates state = PARSE_NAME;
+
+	char* name_start = line;
+	char* name_end = line;
+
+	char* value_start = 0;
+	char* value_end = 0;
+
+	char bak1,bak2;
 
 	if ( len < 1 ) return;
-
-	url_decode(line);
 
 #ifdef _WEBSERVER_DEBUG_
 	WebServerPrintf("recieveParameterFromGet : %s\n", line);
 #endif
 
-	in_para_value = 0;
-
-	pos = 0;
-	pos2 = 0;
 
 	for (i = 0; i < len; i++) {
-		if (line[i] == '&') {
-			if (in_para_value == 0) {
-				createParameter(header, &line[pos], i - pos, 0, 0);
-			} else {
-				createParameter(header, &line[pos], pos2 - pos - 1, &line[pos2], i - pos2);
+
+		if ( ( state == PARSE_NAME ) && ( line[i] == '&' ) ){
+			name_end = &line[i];
+
+			if ( ( name_end - name_start ) > 0 ){
+
+				bak1 = *name_end;
+				*name_end = '\0';
+
+				createParameter(header, name_start, name_end - name_start, 0, 0 );
+
+				*name_end = bak1;
 			}
 
-			pos = i + 1;
-			in_para_value = 0;
+			name_start = &line[i+1];
+
+			continue;
 		}
-		if (line[i] == '=') {
-			pos2 = i + 1;
-			in_para_value = 1;
+
+		if ( ( state == PARSE_NAME ) && ( line[i] == '=' ) ){
+			name_end = &line[i];
+			value_start= &line[i+1];
+			state = PARSE_VALUE;
+			continue;
 		}
+
+		if ( ( state == PARSE_VALUE ) && ( line[i] == '&' ) ){
+			value_end = &line[i];
+
+			bak1 = *name_end;
+			*name_end = '\0';
+
+			bak2 = *value_end;
+			*value_end = '\0';
+
+			createParameter(header, name_start, name_end - name_start, value_start, value_end - value_start);
+
+			*name_end = bak1;
+			*value_end = bak2;
+
+			value_start = 0;
+			value_end = 0;
+
+			name_start = &line[i+1];
+			name_end = name_start;
+
+			state = PARSE_NAME;
+			continue;
+		}
+
 	}
 
-	if (in_para_value == 0) {
-		createParameter(header, &line[pos], len - pos, 0, 0);
-	} else {
-		createParameter(header, &line[pos], pos2 - pos - 1, &line[pos2], len - pos2);
+
+	if ( state == PARSE_NAME ) {
+		name_end = &line[i];
+
+		bak1 = *name_end;
+		*name_end = '\0';
+
+		createParameter(header, name_start, name_end - name_start, 0, 0 );
+
+		*name_end = bak1;
+	}
+
+	if ( state == PARSE_VALUE ) {
+		value_end = &line[i];
+
+		bak1 = *name_end;
+		*name_end = '\0';
+
+		bak2 = *value_end;
+		*value_end = '\0';
+
+		createParameter(header, name_start, name_end - name_start, value_start, value_end - value_start);
+
+		*name_end = bak1;
+		*value_end = bak2;
+
 	}
 
 	/* WebServerPrintf("Anzahl Parameter : %d\n",header->paramtercount);

@@ -1,0 +1,3 @@
+GET /index.html?get=a=&get2==a&get3&get4  HTTP/1.0
+
+
