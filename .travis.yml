@@ -16,5 +16,7 @@ compiler:
 
 addons:
   coverity_scan:
-     notification_email: scan_notifications@example.com
+     notification_email: 
+         - lordrasmus@gmail.com
+
      build_command: make -C lib
