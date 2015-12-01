@@ -1,8 +1,8 @@
 language: c
 
 notifications:
-	email: 
-		- lordrasmus@gmail.com
+   email: 
+      - lordrasmus@gmail.com
 
 script:  make
 
