@@ -24,3 +24,4 @@ addons:
          - lordrasmus@gmail.com
 
      build_command: make -C lib
+     branch_pattern: master
