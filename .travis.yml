@@ -16,6 +16,10 @@ compiler:
 
 addons:
   coverity_scan:
+
+     project:
+         name: spring/spring
+
      notification_email: 
          - lordrasmus@gmail.com
 
