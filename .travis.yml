@@ -18,7 +18,7 @@ addons:
   coverity_scan:
 
      project:
-         name: spring/spring
+         name: lordrasmus/libcwebui
 
      notification_email: 
          - lordrasmus@gmail.com
