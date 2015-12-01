@@ -19,8 +19,9 @@ FLAGS= $(COMP_OPT) -Wall -fPIC -Wextra   -std=c99  -D_POSIX_SOURCE -Wno-unused-p
 
 #-pedantic  -save-temps
 
-SIZE_OPTS= -finline -fno-inline-functions -finline-functions-called-once \
-	--param max-inline-insns-auto=62 --param inline-unit-growth=0 --param large-unit-insns=0 #--param inline-call-cost=4
+SIZE_OPTS= -finline -fno-inline-functions
+#	--param max-inline-insns-auto=62 --param inline-unit-growth=0 --param large-unit-insns=0
+#--param inline-call-cost=4  -finline-functions-called-once
 
 #	-finline-functions -fno-inline-functions-called-once
 
