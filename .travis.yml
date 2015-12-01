@@ -1,5 +1,9 @@
 language: c
 
+env:
+  global:
+    - secure: "n9k-QcE9YVc69rhfAkR1uw"
+
 notifications:
    email: 
       - lordrasmus@gmail.com
@@ -9,3 +13,8 @@ script:  make -C lib
 compiler:
   - clang
   - gcc
+
+addons:
+  coverity_scan:
+     notification_email: scan_notifications@example.com
+     build_command: make -C lib
