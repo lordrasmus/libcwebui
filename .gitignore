@@ -30,3 +30,4 @@ fuzzing/url_decode/main.afl.gcc
 fuzzing/url_decode/output/
 
 tools/__pycache__/
+tools/data/
