@@ -1,0 +1,33 @@
+
+AFL=../../afl-2.10b
+
+all: main.gcc main.afl.clang
+
+clean:
+	rm -f main.gcc main.afl.clang
+
+CLANG_FLAGS= -fno-omit-frame-pointer ${FLAGS}
+
+
+
+main.gcc: ${FILES} main.c
+	gcc -ggdb3 ${FLAGS} main.c ${FILES} -o main.gcc -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
+
+main.afl.clang: ${FILES} main.c
+	$(AFL)/afl-clang-fast ${CLANG_FLAGS}  -O2 -DAFL_PER main.c ${FILES} -o main.afl.clang -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
+#	../../afl-1.94b/afl-gcc ${FLAGS} main.c ${FILES} -o main.afl.gcc -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
+
+
+
+
+run:
+	$(AFL)/afl-fuzz -M fuzzer01 -i input -o output -- $$(pwd)/main.afl.clang
+
+run_slave1:
+	$(AFL)/afl-fuzz -S fuzzer02 -i input -o output -- $$(pwd)/main.afl.clang
+
+run_slave2:
+	$(AFL)/afl-fuzz -S fuzzer03 -i input -o output -- $$(pwd)/main.afl.clang
+
+run_slave3:
+	$(AFL)/afl-fuzz -S fuzzer04 -i input -o output -- $$(pwd)/main.afl.clang

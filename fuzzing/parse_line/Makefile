@@ -19,22 +19,7 @@ FILES=../../lib/src/variable_store.c ../../lib/src/header_parser.c ../../lib/src
 	../../lib/src/builtinFunctions.c ../../lib/third_party/src/miniz/tinfl.c ../../lib/src/engine.c ../../lib/src/file_manager.c \
 	../../lib/src/engine_functions.c ../../lib/src/engine_if.c ../../lib/src/engine_tags.c
 
-all:
-	../../afl-1.94b/afl-clang-fast ${FLAGS} -O2 -DAFL_PER main.c ${FILES} -o main.afl.gcc -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
-#	../../afl-1.94b/afl-gcc ${FLAGS} main.c ${FILES} -o main.afl.gcc -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
 
-main: ${FILES} main.c
-	gcc -ggdb3 ${FLAGS} main.c ${FILES} -o main -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
+include ../Makefile.afl_inc
 
-
-run:
-	../../afl-1.94b/afl-fuzz -M fuzzer01 -i input -o output -- /home/ramin/src/libcwebui/fuzzing/parse_line/main.afl.gcc
-
-run_slave1:
-	../../afl-1.94b/afl-fuzz -S fuzzer02 -i input -o output -- /home/ramin/src/libcwebui/fuzzing/parse_line/main.afl.gcc
-
-run_slave2:
-	../../afl-1.94b/afl-fuzz -S fuzzer03 -i input -o output -- /home/ramin/src/libcwebui/fuzzing/parse_line/main.afl.gcc
-
-run_slave3:
-	../../afl-1.94b/afl-fuzz -S fuzzer04 -i input -o output -- /home/ramin/src/libcwebui/fuzzing/parse_line/main.afl.gcc
+	
