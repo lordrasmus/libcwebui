@@ -1,4 +1,3 @@
-invalid Cookie
 -----------  Header Info Start  ----------------------------
 Header Valid
    Method: HTTP_POST
@@ -19,4 +18,6 @@ Header Valid
    Sec-WebSocket-Version: 12
 Parameter :
 Cookies : 
+  Name  : dskjfh
+  Value : 
 -----------  Header Info End  ----------------------------
