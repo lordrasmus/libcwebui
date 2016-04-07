@@ -21,6 +21,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
 
+/**
+ *  @file	webserver_api_functions.c
+ *  @brief	external API
+ *  @details 	external API Functions<br>
+ * 				<br>
+ * 				dummy_handler is an internel pointer, the underlaying struct should !! NEVER !! be use directly<br>
+ *              the pointer is passed to user funtions in the DEFINE_FUNCTION macro as s
+ */
+
 #include "stdafx.h"
 
 #include "webserver.h"
@@ -37,9 +46,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 
-void WebserverGenerateGUID(char* buf, int length){
-	generateGUID(buf,length);
-}
+
 
 void register_engine_function(const char* name, user_api_function f, const char* file, int line) {
 	/* void register_function(const char* name,user_function f,const char* file,int line) */
@@ -139,7 +146,17 @@ dummy_var* getSessionVar(dummy_handler* s, int store, const char* name,UNUSED_PA
 	return (dummy_var*) ret;
 }
 
-dummy_var* getRenderVar(dummy_handler* s, const char* name,WS_VAR_FLAGS flags) {
+/**
+* @brief gets a render variable
+*
+* @param dummy_handler [in] internal context handler
+* @param name [in] name of the variable
+* @param 	flags [in] if set to DO_NOT_CREATE, NULL is returned if variable does not exists<br>
+* 			otherwise the variable is created
+* @return pointer to the variable
+* @details 	this function gets a render variable from the current http request context
+*/
+dummy_var* ws_get_render_var(dummy_handler* s, const char* name,WS_VAR_FLAGS flags) {
 	ws_variable* ret = getVariable(((http_request*)s)->render_var_store,name);
 	if ( (  flags & DO_NOT_CREATE ) == 0 ){
 		if (ret == 0){
@@ -149,7 +166,15 @@ dummy_var* getRenderVar(dummy_handler* s, const char* name,WS_VAR_FLAGS flags) {
 	return (dummy_var*) ret;
 }
 
-void setRenderVar(dummy_handler* s, char* name, char* text) {
+/**
+* @brief sets a render variable
+*
+* @param dummy_handler [in] internal context handler
+* @param name [in] name of the variable
+* @param text [in] value of the variable
+* @details 	this function sets a render variable in the current http request context
+*/
+void ws_set_render_var(dummy_handler* s, char* name, char* text) {
 	setRenderVariable((http_request*) s, name, text);
 }
 
@@ -476,6 +501,16 @@ void WebserverSetPostHandler( post_handler handler ){
 }
 
 /*
+ *
+ *		Utils
+ *
+ */
+
+ void ws_generate_guid(char* buf, int length){
+	generateGUID(buf,length);
+}
+
+/*
  *		Python API
  *
  */
@@ -492,6 +527,22 @@ int WebserverLoadPyPlugin( const char* path ){
 }
 
 #endif
+
+/**
+* @brief just a sample.
+*
+* @param port [in] Port number on which bind should be done.
+* @param outSocket [out] Pointer to socket handle.
+* @param listen_count [in] Length of pending connection queue
+* @return Negative value indicating error code.
+* @return SUCCESS and valid socket in outSocket
+* @details This function creates blocking socket, one can use fnSetSocketNonBlocking to change this default.
+* @note In this function port number will converted to network byte order before its use.
+* @todo nothing.
+*/
+
+#include "webserver_api_functions_depricated.c"
+
 
 #if __GNUC__ > 2
 	#pragma GCC visibility pop

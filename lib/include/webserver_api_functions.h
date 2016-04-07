@@ -160,17 +160,12 @@ char setSessionVar(dummy_handler* s,int store,const char* name,const char* value
 dummy_var* getSessionVar(dummy_handler* s,int store,const char* name,WS_VAR_FLAGS flags);
 
 
-/*
-		Render Variable setzen
-*/
-void setRenderVar   (dummy_handler* s,char* name,char* text);
-void setRenderVar_v (dummy_handler* s, char* name, char* format,...) __attribute__ ((format (printf, 3, 4)));
+dummy_var* 	ws_get_render_var(dummy_handler* s,const char* name,WS_VAR_FLAGS flags);
+
+void 		ws_set_render_var(dummy_handler* s,char* name,char* text);
+void 		setRenderVar_v (dummy_handler* s, char* name, char* format,...) __attribute__ ((format (printf, 3, 4)));
 
 
-/*
-		Render Variable holen
-*/
-dummy_var* getRenderVar(dummy_handler* s,const char* name,WS_VAR_FLAGS flags);
 
 
 /*
@@ -366,6 +361,8 @@ void WebserverInjectExternFD(int fd, extern_handler handle );
 void WebserverSetPostHandler( post_handler handler );
 
 
+void ws_generate_guid(char* buf, int length);
+
 /*
  *		Python API
  *
@@ -376,6 +373,7 @@ void WebserverInitPython( void );
 int WebserverLoadPyPlugin( const char* path );
 
 
+#include "webserver_api_functions_depricated.h"
 
 
 #ifdef __cplusplus
