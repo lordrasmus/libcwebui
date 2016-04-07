@@ -21,7 +21,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
 
-
 #ifdef __GNUC__
 #include <stdarg.h>
 #include "webserver.h"
@@ -48,6 +47,7 @@ unsigned char toHex(unsigned char in) {
 	return 0;
 }
 
+
 void url_decode(char *line) {
 	unsigned char hex;
 	size_t i;
@@ -60,7 +60,7 @@ void url_decode(char *line) {
 			hex =  (unsigned char)( hex + toHex(line[i + 2]) );
 			line[i] = hex; /*  hexcode des zeichens als char speichern und 2 zeichen loeschen */
 			//memcpy(&line[i + 1], &line[i + 3], lenght - i );
-			for( int i2 = 0 ; i2 < lenght - i; i2++ ){
+			for( size_t i2 = 0 ; i2 < lenght - i; i2++ ){
 				line[i + 1 + i2 ] = line[i + 3 + i2];
 			}
 			lenght -= 2;

@@ -30,7 +30,7 @@ extern "C" {
 #endif
 
 unsigned int getInt(unsigned char *buffer);
-//void getIPByteFromString(unsigned char *ipbytes,unsigned char *string);
+void url_decode(char *line);
 
 #ifdef __cplusplus
 }

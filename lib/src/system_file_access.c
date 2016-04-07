@@ -34,7 +34,6 @@
 
 
 
-
 void init_file_access( void ){
 
 	initFileCache();
@@ -113,6 +112,9 @@ static char ramCacheFile(WebserverFileInfo *file) {
 			break;
 		case FS_BINARY :	// sind immer RAM cached
 			break;
+		case FS_WNFS:		// werden nie im RAM gecached
+			printf("ERROR: ramCacheFile called for WNFS file\n");
+			break;
 	}
 
 
@@ -127,6 +129,9 @@ int prepare_file_content(WebserverFileInfo* file) {
 		#endif
 
 		switch ( file->fs_type ){
+			case FS_WNFS:		// werden nie im RAM gecached
+				printf("ERROR: prepare_file_content RamCached WNFS file\n");
+				break;
 			case FS_LOCAL_FILE_SYSTEM :
 				if ( 1 == local_file_system_check_file_modified( file ) ){
 					printf("prepare_file_content:  file change %s File System -> FS_LOCAL_FILE_SYSTEM  \n", file->FilePath );
@@ -160,6 +165,8 @@ int prepare_file_content(WebserverFileInfo* file) {
 
 	// local filesystem
 	switch ( file->fs_type ){
+		case FS_WNFS:		// WNFS wird vorher abgefragt
+			break;
 		case FS_LOCAL_FILE_SYSTEM :
 			printf("prepare_file_content: prepare content %s  File System -> FS_LOCAL_FILE_SYSTEM \n", file->FilePath );
 			local_file_system_read_content( file );
@@ -188,6 +195,10 @@ void release_file_content(WebserverFileInfo* file) {
 
 			// local Filesystem muss nie dekomprimiert werden
 			case FS_LOCAL_FILE_SYSTEM:
+				break;
+			
+			case FS_WNFS:		// werden nie im RAM gecached
+				printf("ERROR: release_file_content for RamCached WNFS file\n");
 				break;
 		}
 
@@ -221,7 +232,7 @@ WebserverFileInfo VISIBLE_ATTR *getFile( char *name)  {
 
 #ifdef WEBSERVER_USE_WNFS
 
-	file = wnfs_get_file( name );
+	file = wnfs_get_file( (unsigned char*)name );
 	if ( file != 0 )
 		return file;
 

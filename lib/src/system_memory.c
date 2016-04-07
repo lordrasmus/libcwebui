@@ -32,6 +32,7 @@ Webserver: WebserverSLLSendNonBlocking : ssl/openssl.c 478             ERROR   :
 
 */
 
+
 #include "stdafx.h"
 
 #ifdef __GNUC__
@@ -345,7 +346,8 @@ void* real_WebserverMalloc(const unsigned long size ) {
 void* WebserverRealloc(void *mem, const unsigned long size ) {
 	unsigned long* s;
 	char* p;
-	void* ptr = realloc(mem - MEM_OFFSET,  size  + __BIGGEST_ALIGNMENT__ + sizeof(unsigned long) );
+	char* p2 = mem;
+	void* ptr = realloc(p2 - MEM_OFFSET,  size  + __BIGGEST_ALIGNMENT__ + sizeof(unsigned long) );
 	if ( ptr == 0 ){
 		printf("Memory realloc Error\n");
 		exit(1);
@@ -361,10 +363,11 @@ void* WebserverRealloc(void *mem, const unsigned long size ) {
 
 	*s = size + __BIGGEST_ALIGNMENT__ + sizeof(unsigned long);
 
+	p2 = ptr;
 #if __BIGGEST_ALIGNMENT__ == 16
-	return __ws_assume_aligned(ptr + MEM_OFFSET, 8 );
+	return __ws_assume_aligned( p2 + MEM_OFFSET, 8 );
 #else
-	return __ws_assume_aligned(ptr + MEM_OFFSET, __BIGGEST_ALIGNMENT__ );
+	return __ws_assume_aligned( p2 + MEM_OFFSET, __BIGGEST_ALIGNMENT__ );
 #endif
 
 	#warning "an Memory Debug anpassen"

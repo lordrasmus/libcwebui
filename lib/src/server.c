@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
 
+
 #include "stdafx.h"
 
 #ifdef __GNUC__
@@ -314,7 +315,7 @@ int getHttpRequest(socket_info* sockp) {
 #ifdef WEBSERVER_USE_WNFS
 
 	if (file != 0) {
-		if ( file->FileType == FS_WNFS ){
+		if ( file->fs_type == FS_WNFS ){
 			wnfs_free_file( file );
 		}
 	}

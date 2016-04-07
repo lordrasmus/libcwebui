@@ -76,6 +76,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "intern/system_sockets.h"
 #include "intern/system_sockets_events.h"
 #include "intern/header.h"
+#include "intern/convert.h"
 
 #ifdef WEBSERVER_USE_SSL
 #include "intern/webserver_ssl.h"
