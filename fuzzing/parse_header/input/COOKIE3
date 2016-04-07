@@ -1,0 +1,2 @@
+GET /index.html HTTP/1.1
+Cookie: nam%20e1=va+lue1
