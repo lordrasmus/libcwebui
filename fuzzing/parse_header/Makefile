@@ -5,7 +5,7 @@ OPTS= -DLINUX -std=c99
 FLAGS=-I../../lib/ -I../../lib/include/ -I../../lib/include/intern/ -I../../lib/third_party/src/simclist/ -I../../lib/third_party/src/rb_tree/ \
 	-I../../lib/platform/include/ ${OPTS}
 
-FILES=../../lib/src/variable_store.c ../../lib/src/header_parser.c ../../lib/src/system_memory.c ../../lib/platform/linux/system-unix.c \
+FILES=../../lib/src/convert.c ../../lib/src/variable_store.c ../../lib/src/header_parser.c ../../lib/src/system_memory.c ../../lib/platform/linux/system-unix.c \
 	../../lib/third_party/src/simclist/simclist.c ../../lib/src/utils.c ../../lib/src/server_chunk_functions.c ../../lib/src/variable.c \
 	../../lib/src/cookie.c ../../lib/src/websockets.c ../../lib/src/engine_api_extensions.c ../../lib/third_party/src/rb_tree/red_black_tree.c \
 	../../lib/third_party/src/rb_tree/stack.c ../../lib/third_party/src/rb_tree/misc.c ../../lib/src/message_queue.c ../../lib/src/header_send.c \

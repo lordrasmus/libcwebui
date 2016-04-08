@@ -8,7 +8,6 @@ int main( int argc, char** argv){
 
 	char buf[10000];
 
-
 	#ifdef AFL_PER
 	while (__AFL_LOOP(10000)) {
 	#endif

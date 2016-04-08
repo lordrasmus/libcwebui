@@ -6,17 +6,15 @@ all: main.gcc main.afl.clang
 clean:
 	rm -f main.gcc main.afl.clang
 
-CLANG_FLAGS= -fno-omit-frame-pointer ${FLAGS}
+CLANG_FLAGS= -fno-omit-frame-pointer  ${FLAGS}
 
-
+LIBS=-lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
 
 main.gcc: ${FILES} main.c
-	gcc -ggdb3 ${FLAGS} main.c ${FILES} -o main.gcc -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
+	gcc ${FLAGS} main.c ${FILES} -o main.gcc ${LIBS}
 
 main.afl.clang: ${FILES} main.c
-	$(AFL)/afl-clang-fast ${CLANG_FLAGS}  -O2 -DAFL_PER main.c ${FILES} -o main.afl.clang -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
-#	../../afl-1.94b/afl-gcc ${FLAGS} main.c ${FILES} -o main.afl.gcc -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
-
+	$(AFL)/afl-clang-fast -DAFL_PER -O2 ${CLANG_FLAGS}  main.c ${FILES} -o main.afl.clang -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
 
 
 
@@ -31,3 +29,17 @@ run_slave2:
 
 run_slave3:
 	$(AFL)/afl-fuzz -S fuzzer04 -i input -o output -- $$(pwd)/main.afl.clang
+
+
+
+
+# scan-build make static_analyse
+static_analyse: 
+	clang ${CLANG_FLAGS} -Os main.c ${FILES}  -o main.clang ${LIBS}
+
+lto:
+	clang ${CLANG_FLAGS} -flto -O3 main.c ${FILES}  -o main.clang.lto ${LIBS}
+	gcc ${FLAGS} -flto -Os main.c ${FILES}  -o main.gcc.lto ${LIBS}
+	
+	clang ${CLANG_FLAGS} -Os main.c ${FILES}  -o main.clang ${LIBS}
+	gcc ${FLAGS} -Os main.c ${FILES}  -o main.gcc ${LIBS}

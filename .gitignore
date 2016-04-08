@@ -21,15 +21,23 @@ old_afl-1.94b/
 afl-2.10b/
 afl-latest.tgz
 
+tools/__pycache__/
+tools/data/
+
 fuzzing/__pycache__/
 fuzzing/parse_header/main.afl.clang
 fuzzing/parse_header/main.gcc
 fuzzing/parse_line/main.afl.clang
 fuzzing/parse_line/main.gcc
 fuzzing/url_decode/main.afl.gcc
-
-tools/__pycache__/
-tools/data/
+fuzzing/parse_header/main.clang
+fuzzing/parse_header/main.clang.lto
+fuzzing/parse_header/main.gcc.lto
+fuzzing/url_decode/main.afl.clang
+fuzzing/url_decode/main.clang
+fuzzing/url_decode/main.clang.lto
+fuzzing/url_decode/main.gcc
+fuzzing/url_decode/main.gcc.lto
 
 tests/parse_header/main.gcc
 tests/url_decode/main.gcc
