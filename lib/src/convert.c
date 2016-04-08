@@ -66,7 +66,7 @@ void url_decode(char *line) {
 	size_t lenght;
 
 	lenght = strlen((char*) line);
-	for (i_in = 0; i_in < lenght; i_in++) {
+	for (i_in = 0; i_in <= lenght; i_in++) {
 		if ( (unlikely(line[i_in]=='%')) && ( ( lenght - i_in ) > 2 ) )  {
 			hex = (unsigned char)(toHex(line[i_in + 1]) << 4);
 			hex =  (unsigned char)( hex + toHex(line[i_in + 2]) );
@@ -74,7 +74,6 @@ void url_decode(char *line) {
 			line[i_out] = hex; 
 			i_out++;
 			i_in+=2;
-			lenght-=2;
 			continue;
 		}
 		if ( unlikely(line[i_in] == '+') ){ /* + durch whitespace ersetzen */
@@ -85,6 +84,7 @@ void url_decode(char *line) {
 		line[i_out] = line[i_in];
 		i_out++;
 	}
+	
 }
 
 
