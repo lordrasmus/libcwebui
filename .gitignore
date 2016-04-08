@@ -27,7 +27,9 @@ fuzzing/parse_header/main.gcc
 fuzzing/parse_line/main.afl.clang
 fuzzing/parse_line/main.gcc
 fuzzing/url_decode/main.afl.gcc
-fuzzing/url_decode/output/
 
 tools/__pycache__/
 tools/data/
+
+tests/parse_header/main.gcc
+tests/url_decode/main.gcc
