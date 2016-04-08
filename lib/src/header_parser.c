@@ -31,45 +31,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 
-unsigned char toHex(unsigned char in) {
-	if ((in <= '9') && (in >= '0')) {
-		return (unsigned char)(in - '0');
-	}
-
-	if ((in >= 'a') && (in <= 'f')) {
-		return (unsigned char)(in - 87);
-	}
-
-	if ((in >= 'A') && (in <= 'F')) {
-		return (unsigned char)(in - 55 );
-	}
-
-	return 0;
-}
-
-
-void url_decode(char *line) {
-	unsigned char hex;
-	size_t i;
-	size_t lenght;
-
-	lenght = strlen((char*) line);
-	for (i = 0; i < lenght; i++) {
-		if ( (unlikely(line[i]=='%')) && ( ( lenght - i ) > 2 ) )  {
-			hex = (unsigned char)(toHex(line[i + 1]) << 4);
-			hex =  (unsigned char)( hex + toHex(line[i + 2]) );
-			line[i] = hex; /*  hexcode des zeichens als char speichern und 2 zeichen loeschen */
-			//memcpy(&line[i + 1], &line[i + 3], lenght - i );
-			for( size_t i2 = 0 ; i2 < lenght - i; i2++ ){
-				line[i + 1 + i2 ] = line[i + 3 + i2];
-			}
-			lenght -= 2;
-		}
-		if (line[i] == '+'){ /* + durch whitespace ersetzen */
-			line[i] = ' ';
-		}
-	}
-}
 
 void createParameter(HttpRequestHeader *header, char* name, unsigned int name_length, char* value, unsigned int value_length) {
 	ws_variable *var;

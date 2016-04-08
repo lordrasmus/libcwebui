@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "stdafx.h"
-
+#include "webserver.h"
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -43,30 +43,48 @@ unsigned int getInt(unsigned char *buffer)
     return tmp;
 }
 
-
-/*void getIPByteFromString(unsigned char *ipbytes,unsigned char *string){
-   int i2,dez;
-   unsigned char tmp;
-   size_t length = strlen((char*)string);
-   size_t i;
-
-   dez=1;
-   i2=3;
-   tmp=0;
-
-   for( i = length - 1 ; i > 0 ; i--){
-	if(string[i]=='.'){
-		ipbytes[i2--]=tmp;
-		dez=1;
-		tmp=0;
- 		continue;
+unsigned char toHex(unsigned char in) {
+	if ((in <= '9') && (in >= '0')) {
+		return (unsigned char)(in - '0');
 	}
- 	tmp += (unsigned char) ( ( string[i] - '0' ) * dez );
- 	dez*=10;
 
-     // iprintf("Z : %d (%c) %d\n",string[i]-'0',string[i],tmp);      
-   }
+	if ((in >= 'a') && (in <= 'f')) {
+		return (unsigned char)(in - 87);
+	}
 
-   ipbytes[0]=tmp;
+	if ((in >= 'A') && (in <= 'F')) {
+		return (unsigned char)(in - 55 );
+	}
 
-}*/
+	return 0;
+}
+
+
+void url_decode(char *line) {
+	unsigned char hex;
+	size_t i_in=0,i_out=0;
+	size_t lenght;
+
+	lenght = strlen((char*) line);
+	for (i_in = 0; i_in < lenght; i_in++) {
+		if ( (unlikely(line[i_in]=='%')) && ( ( lenght - i_in ) > 2 ) )  {
+			hex = (unsigned char)(toHex(line[i_in + 1]) << 4);
+			hex =  (unsigned char)( hex + toHex(line[i_in + 2]) );
+			/*  hexcode des zeichens als char speichern und 2 zeichen loeschen */
+			line[i_out] = hex; 
+			i_out++;
+			i_in+=2;
+			lenght-=2;
+			continue;
+		}
+		if ( unlikely(line[i_in] == '+') ){ /* + durch whitespace ersetzen */
+			line[i_out] = ' ';
+			i_out++;
+			continue;
+		}
+		line[i_out] = line[i_in];
+		i_out++;
+	}
+}
+
+
