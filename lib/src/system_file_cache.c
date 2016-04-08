@@ -22,7 +22,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "stdafx.h"
-
 #include "webserver.h"
 
 #include "red_black_tree.h"
@@ -146,6 +145,7 @@ void dumpLoadedFiles(http_request *s) {
 		switch ( wfi->fs_type ){
 			case FS_BINARY: printHTMLChunk(s->socket, "<td>binary"); break;
 			case FS_LOCAL_FILE_SYSTEM: printHTMLChunk(s->socket, "<td>fs"); break;
+			case FS_WNFS: printHTMLChunk(s->socket, "<td>wnfs"); break;
 		}
 		
 		if ( wfi->RamCached == 1 )

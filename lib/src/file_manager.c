@@ -21,7 +21,6 @@
 
  */
 
-
 #include "webserver.h"
 #include "intern/system_file_access.h"
 
@@ -110,7 +109,8 @@ int sendFile(http_request* s, WebserverFileInfo *file) {
 			}
 
 			break;
-
+		case FS_WNFS:	// Inhalt von WNFS Datein kann direkt versendet werden
+			break;
 		case FS_BINARY :
 			break;
 	}
