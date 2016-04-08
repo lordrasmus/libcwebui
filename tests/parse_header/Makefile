@@ -21,8 +21,9 @@ FILES=../../lib/src/variable_store.c ../../lib/src/header_parser.c ../../lib/src
 
 all: main.gcc #main.clang
 
+#-fsanitize=address
 main.gcc: ${FILES} main.c
-	gcc ${FLAGS} -fsanitize=address -fno-omit-frame-pointer main.c ${FILES} -o main.gcc -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
+	gcc ${FLAGS}  -fno-omit-frame-pointer main.c ${FILES} -o main.gcc -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
 
 main.clang: ${FILES} main.c
 	clang ${FLAGS} -fsanitize=address -fno-omit-frame-pointer main.c ${FILES} -o main.clang -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
