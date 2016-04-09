@@ -241,7 +241,7 @@ def gen_c_file( path, alias ):
 	
 		f.write("\n")
 		
-		f.write("char data_" + alias.replace("/","_") + "[] = {" )
+		f.write("unsigned char data_" + alias.replace("/","_") + "[] = {" )
 		
 		write_string( f, info["ALIAS"] )
 		write_uint64( f, info["TIME"] )
