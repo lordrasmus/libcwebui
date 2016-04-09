@@ -283,8 +283,8 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 		} else /* mit parametern */
 		{
 			*c_pos = '\0';
-			printf("%s\n",c_pos);
-			fflush( stdout );
+			//printf("%s\n",c_pos);
+			//fflush( stdout );
 
 			header->url = (char *) WebserverMalloc( pos + 1 );
 			Webserver_strncpy((char*) header->url, pos + 1, (char*) &line[5], pos); /* -4 wegen dem GET am anfang */

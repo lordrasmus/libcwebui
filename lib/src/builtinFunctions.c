@@ -237,7 +237,7 @@ void getServerLink ( http_request* s ) {
 
 void getServerLinkStd ( http_request* s ) {
 #ifdef WEBSERVER_USE_IPV6
-    char mybuf[INET6_ADDRSTRLEN];
+    //char mybuf[INET6_ADDRSTRLEN];
     if ( s->sock->v6_client == 1 ) {
         PlatformGetIPv6 ( mybuf );
         printHTMLChunk ( s->socket , "http://[%s]:%d",mybuf,globals.config.port );
@@ -247,14 +247,28 @@ void getServerLinkStd ( http_request* s ) {
     }
 #else
     printHTMLChunk ( s->socket , "http://" );
-    printHTMLChunk ( s->socket,"%s",getConfigText( "server_ip")  );
-	printHTMLChunk ( s->socket ,":%d",getConfigInt("port") );
+    if ( s->header->Host != 0 ) {
+		char *tmp = strchr( s->header->Host, ':' );
+		if( tmp ){
+			char host_tmp[1000];
+			strcpy( host_tmp, s->header->Host );
+			tmp =strchr( host_tmp, ':' );
+			*tmp = '\0';
+			printHTMLChunk ( s->socket,"%s",host_tmp );
+		}else{
+			printHTMLChunk ( s->socket,"%s",s->header->Host );
+		}
+		printHTMLChunk ( s->socket ,":%d",getConfigInt("port"));
+    } else {
+        printHTMLChunk ( s->socket,"%s",getConfigText( "server_ip" )  );
+        printHTMLChunk ( s->socket ,":%d",getConfigInt("port"));
+    }
 #endif
 }
 
 void getServerLinkSSL ( http_request* s ) {
 #ifdef WEBSERVER_USE_IPV6
-    static char mybuf[INET6_ADDRSTRLEN];
+    //static char mybuf[INET6_ADDRSTRLEN];
     if ( s->socket->v6_client == 1 ) {
         PlatformGetIPv6 ( mybuf );
         printHTMLChunk ( s->socket , "https://[%s]:%d",mybuf,globals.config.ssl_port );
