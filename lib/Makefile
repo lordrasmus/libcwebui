@@ -28,7 +28,7 @@ SIZE_OPTS= -finline -fno-inline-functions
 #-fvisibility-inlines-hidden
 #FLAGS+= -Wpedantic
 
-INCLUDES= -I. -Iinclude -Iplatform/include -Ithird_party/src/simclist/ -Ithird_party/src/rb_tree/
+INCLUDES= -I. -Iinclude -Iplatform/include -Ithird_party/src/simclist/ -Ithird_party/src/rb_tree/ -Ithird_party/src/is_utf8/
 LIBS=
 
 COMPILER=$(CC)
@@ -60,12 +60,13 @@ all:
 	@mkdir -p obj/third_party/src/simclist/
 	@mkdir -p obj/third_party/src/rb_tree/
 	@mkdir -p obj/third_party/src/miniz/
+	@mkdir -p obj/third_party/src/is_utf8
 
 	( if [ ! -e WebserverConfig.h ] ; then cp WebserverConfig.h.sample WebserverConfig.h ; fi )
 
 	@$(MAKE) build
 
-OBJ_LIST = obj/src/*.o obj/platform/linux/*.o obj/ssl/*.o obj/python/*.o obj/third_party/src/rb_tree/*.o obj/third_party/src/simclist/*.o obj/third_party/src/miniz/*.o
+OBJ_LIST = obj/src/*.o obj/platform/linux/*.o obj/ssl/*.o obj/python/*.o obj/third_party/src/rb_tree/*.o obj/third_party/src/simclist/*.o obj/third_party/src/miniz/*.o obj/third_party/src/is_utf8/*.o
 OBJ_LIST_LTO = obj/src/*.o.lto obj/platform/linux/*.o.lto obj/ssl/*.o.lto obj/third_party/src/rb_tree/*.o.lto obj/third_party/src/simclist/*.o.lto
 
 LINK_OPTS =  -shared -Wl,-O2 -Wl,--gc-sections $(PY_LINK) #-Wl,--strip-all

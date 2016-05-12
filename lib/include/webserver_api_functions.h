@@ -300,11 +300,19 @@ dummy_var* getURLParameter(dummy_handler* s,const char* name);
 char* getEngineParameter(dummy_handler* s,int index);
 void  dumpEngineParameter(dummy_handler* s);
 
+
+/*
+	String auf UTF-8 testen
+*/
+int ws_check_utf8( unsigned char *str, size_t len, char **message);
+
 /*
       Text Frame über einen Websocket senden
 */
 int WebsocketSendTextFrame(const char* guid, const char* in, const int length);
 int WebsocketSendBinaryFrame(const char* guid, const char* in, const int length);
+
+
 /*
       Close Frame über einen Websocket senden
 */

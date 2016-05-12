@@ -79,6 +79,11 @@ typedef struct {
 int sendWebsocketFrame(const Opcodes op_code, const char* guid,const  char* in, const WEBSOCK_LEN_T length);
 
 int sendWebsocketTextFrame(const char* guid,const  char* in, const WEBSOCK_LEN_T length) {
+	char* msg;
+	if ( 0 != is_utf8( (unsigned char*) in, length, &msg) ){
+		printf("invalid UTF-8 sting\n");
+		return -1;
+	}
 	return sendWebsocketFrame(WSF_TEXT, guid, in, length );
 }
 

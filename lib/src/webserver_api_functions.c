@@ -380,6 +380,10 @@ void  dumpEngineParameter(dummy_handler* s){
 	}
 }
 
+int ws_check_utf8( unsigned char *str, size_t len, char **message){
+	return  is_utf8( str, len, message);
+}
+
 int WebsocketSendTextFrame(const char* guid, const char* in, const int length) {
 #ifdef WEBSERVER_USE_WEBSOCKETS
 	return sendWebsocketTextFrame(guid, in, length);
