@@ -29,7 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifdef WEBSERVER_USE_WEBSOCKETS
 
 #include <limits.h>
-
+#include "is_utf8.h"
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -81,7 +81,7 @@ int sendWebsocketFrame(const Opcodes op_code, const char* guid,const  char* in, 
 int sendWebsocketTextFrame(const char* guid,const  char* in, const WEBSOCK_LEN_T length) {
 	char* msg;
 	if ( 0 != is_utf8( (unsigned char*) in, length, &msg) ){
-		printf("invalid UTF-8 sting\n");
+		printf("sendWebsocketTextFrame: invalid UTF-8 sting : %s\n",in);
 		return -1;
 	}
 	return sendWebsocketFrame(WSF_TEXT, guid, in, length );

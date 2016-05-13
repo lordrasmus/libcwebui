@@ -35,6 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "webserver.h"
 
 #include "intern/system_file_access.h"
+#include "is_utf8.h"
 
 
 #ifdef DMALLOC
@@ -380,7 +381,7 @@ void  dumpEngineParameter(dummy_handler* s){
 	}
 }
 
-int ws_check_utf8( unsigned char *str, size_t len, char **message){
+int ws_check_utf8( unsigned char *str, uint32_t len, char **message){
 	return  is_utf8( str, len, message);
 }
 
