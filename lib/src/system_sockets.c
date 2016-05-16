@@ -727,6 +727,8 @@ void handleServer(socket_info* sock) {
 
 #ifdef WEBSERVER_USE_WNFS
 		if (sock->server == 2) {
+			if ( wnfs_socket != 0 )
+				close( wnfs_socket );
 			wnfs_socket = c;
 
 			LOG ( CONNECTION_LOG,NOTICE_LEVEL,c,"WNFS Connection from %s",sock->client_ip_str );

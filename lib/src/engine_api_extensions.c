@@ -472,6 +472,7 @@ int loadPlugin(const char* name, const char* path) {
 		}
 		COPY_ERROR("API Version inkompatibel")
 		LOG( TEMPLATE_LOG, ERROR_LEVEL, 0, "Plugin API Version inkompatibel %s %s", path, error_text);
+		dlclose( dl );
 		return -4;
 	}
 

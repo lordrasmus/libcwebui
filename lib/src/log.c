@@ -86,7 +86,7 @@ void writeToLog ( char* buffer ) {
 int last_log_length=0;
 
 void addLog ( LogChannels channel,LogLevels level,char* filename,int fileline,const char* function,int socket,char* text,... ) {
-	static char buff[450];/* viel laenger darf eine logzeile nicht sein */
+	static char buff[451];/* viel laenger darf eine logzeile nicht sein */
 	int len=0,i;
 	va_list ap;
 
