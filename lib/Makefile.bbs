@@ -2,7 +2,7 @@ SHELL=/bin/bash
 
 STD_FLAGS= -Wno-conversion # -fsanitize=address
 
-EXTRA_INCLUDE= -I. -Iinclude -Iplatform/include -Ithird_party/src/rb_tree -Ithird_party/src/simclist
+EXTRA_INCLUDE= -I. -Iinclude -Iplatform/include -Ithird_party/src/rb_tree -Ithird_party/src/simclist -Ithird_party/src/is_utf8
 EXTRA_INCLUDE+=-fvisibility=hidden
 EXTRA_INCLUDE+=-DLINUX -D__USE_POSIX
 
@@ -10,7 +10,7 @@ STD_LIBS= -levent -levent_pthreads -lssl -pthread -lcrypto -lUtils -lz
 LIB_NAME= libWebserver.so
 
 include Makefile.files
-HEADER := 	include/webserver_api_functions.h include/webserver_api_functions_macros.h WebserverConfig.h third_party/src/simclist/simclist.h
+HEADER := 	include/webserver_api_functions.h include/webserver_api_functions_depricated.h include/webserver_api_functions_macros.h WebserverConfig.h third_party/src/simclist/simclist.h
 
 header_install:
 	$(call COPY_HEADER,"Webserver")

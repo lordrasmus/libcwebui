@@ -30,6 +30,9 @@
 int is_utf8(unsigned char *str, size_t len, char **message)
 {
     size_t i = 0;
+    char * dummy;
+    if ( message == 0 )
+		message = &dummy;
 
     while (i < len)
     {

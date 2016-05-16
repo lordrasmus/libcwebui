@@ -304,7 +304,7 @@ void  dumpEngineParameter(dummy_handler* s);
 /*
 	String auf UTF-8 testen
 */
-int ws_check_utf8( unsigned char *str, size_t len, char **message);
+int ws_check_utf8( unsigned char *str, uint32_t len, char **message);
 
 /*
       Text Frame über einen Websocket senden
