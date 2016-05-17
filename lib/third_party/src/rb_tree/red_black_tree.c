@@ -661,8 +661,9 @@ void RBDelete(rb_red_blk_tree* tree, rb_red_blk_node* z){
   }
 
 #ifdef DEBUG_ASSERT
-  Assert(!tree->nil->red,"nil not black in RBDelete");
+  Assert(!tree->nil->red,"nil not black in RBDelete");  //FIXME  clang  Memory Error	Use-after-free
 #endif
+
 }
 
 
