@@ -209,6 +209,7 @@ int recFrameV8(socket_info *sock) {
 	websocket_frame wsf;
 	unsigned char *tmp;
 
+	memset( &wsf, 0 , sizeof( websocket_frame ) );
 
 	while (1) {
 		max_read = WebserverMallocedSize(sock->websocket_buffer) - sock->websocket_buffer_offset;
