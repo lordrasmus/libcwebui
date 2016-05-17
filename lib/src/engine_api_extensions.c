@@ -461,6 +461,7 @@ int loadPlugin(const char* name, const char* path) {
 		}
 		COPY_ERROR("No get_webserver_api_version Function")
 		printf("Error loading %s. No Init Function char* get_webserver_api_version(void) %s\n", path, error_text);
+		dlclose( dl );
 		return -3;
 	}
 

@@ -248,12 +248,16 @@ void generateEtag(WebserverFileInfo* wfi) {
 		unsigned int to_read;
 		unsigned long diff;
 		FILE_OFFSET pos;
-		unsigned char *data = (unsigned char*) WebserverMalloc ( WRITE_DATA_SIZE );
+		unsigned char *data;
+
+
+		if (!PlatformOpenDataReadStream(wfi->FilePath))
+			return;
 
 		pos = 0;
 		sha_context = WebserverSHA1Init();
+		data = (unsigned char*) WebserverMalloc ( WRITE_DATA_SIZE );
 
-		if (!PlatformOpenDataReadStream(wfi->FilePath)) return;
 		PlatformSeekToPosition(0);
 
 		while (1) {

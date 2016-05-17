@@ -108,6 +108,7 @@ int		PlatformGetSocket ( unsigned short port,int connections )
     if ( s == -1 )
     {
         LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"socket() failed","" );
+        free( addr );
         return -1;
     }
 
@@ -134,6 +135,7 @@ int		PlatformGetSocket ( unsigned short port,int connections )
     {
         LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"bind() failed","" );
         free(addr);
+        close( s );
         return -2;
     }
 
@@ -141,6 +143,7 @@ int		PlatformGetSocket ( unsigned short port,int connections )
     {
         LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"listen() failed","" );
         free(addr);
+        close( s );
         return -3;
     }
     free(addr);
