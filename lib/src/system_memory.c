@@ -453,16 +453,6 @@ unsigned long WebserverMallocedRealSize(void* mem){
 	char* p;
 
 	if (mem == 0) return 0;
-	p = (char*) mem;
-
-#ifdef _WEBSERVER_MEMORY_DEBUG_
-
-	p -= __BIGGEST_ALIGNMENT__ * 2;
-	p -= sizeof(memory_block);
-
-#endif
-
-	p -= MEM_OFFSET;
 
 	p = get_real_pointer( mem );
 #if __BIGGEST_ALIGNMENT__ == 16

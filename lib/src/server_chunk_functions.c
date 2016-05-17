@@ -247,7 +247,7 @@ void generateOutputBuffer(socket_info* sock) {
 	LOG (HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket, "-------- sending Header --------\r\n %s -------- Header end --------",buffer );
 #endif
 
-	offset += writeChunksToBuffer(&sock->html_chunk_list, &buffer[offset]);
+	writeChunksToBuffer(&sock->html_chunk_list, &buffer[offset]);
 
 #ifdef _WEBSERVER_BODY_DEBUG_
 	WebServerPrintf ( "%s",buffer );

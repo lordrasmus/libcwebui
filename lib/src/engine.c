@@ -222,7 +222,7 @@ void parseFunction(engine_infos* engine, const char* buffer, int length) {
 		return;
 	} else {
 		para_start = 0;
-		para_ende = 0;
+		//para_ende = 0;  // clang Dead store
 		func->function = tmp;
 	}
 

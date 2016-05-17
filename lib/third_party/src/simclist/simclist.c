@@ -706,6 +706,7 @@ int ws_list_contains(const list_t *restrict l, const void *data) {
     return (ws_list_locate(l, data) >= 0);
 }
 
+#if 0 // clang analyser error
 int ws_list_concat(const list_t *l1, const list_t *l2, list_t *restrict dest) {
     struct list_entry_s *el, *srcel;
     unsigned int cnt;
@@ -758,6 +759,7 @@ int ws_list_concat(const list_t *l1, const list_t *l2, list_t *restrict dest) {
 
     return 0;
 }
+#endif
 
 int ws_list_sort(list_t *restrict l, int versus) {
     if (l->iter_active || l->attrs.comparator == NULL) /* cannot modify list in the middle of an iteration */

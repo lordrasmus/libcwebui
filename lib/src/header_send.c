@@ -244,7 +244,7 @@ void addFirePHPHeaderLines(http_request* s) {
 		ws_list_iterator_stop(&s->socket->firephplogs);
 		ws_list_clear(&s->socket->firephplogs);
 		input_offset--;
-		input_offset += sprintf(&buffer2[input_offset], "]}");
+		sprintf(&buffer2[input_offset], "]}");
 
 		WebserverBase64Encode((const unsigned char *) buffer2, strlen(buffer2), (unsigned char *) buffer, 10000);
 
@@ -302,14 +302,14 @@ void addCSPHeaderLines(http_request* s){
 	/*offset += snprintf(&buff[offset],1000-offset,"script-src 'self' 'unsafe-eval' http://%s https://%s; ",s->header->Host ,s->header->Host);*/
 	offset += snprintf(&buff[offset],1000-offset,"script-src http://%s https://%s; ",s->header->Host ,s->header->Host);
 	offset += snprintf(&buff[offset],1000-offset,"style-src http://%s https://%s; ",s->header->Host ,s->header->Host);
-	offset += snprintf(&buff[offset],1000-offset,"connect-src ws://%s http://%s wss://%s https://%s ; ",s->header->Host ,s->header->Host,s->header->Host ,s->header->Host );
+	          snprintf(&buff[offset],1000-offset,"connect-src ws://%s http://%s wss://%s https://%s ; ",s->header->Host ,s->header->Host,s->header->Host ,s->header->Host );
 
 #else
 
 	offset += snprintf(&buff[offset],1000-offset,"default-src http://%s; ",s->header->Host );
 	offset += snprintf(&buff[offset],1000-offset,"script-src http://%s; ",s->header->Host );
 	offset += snprintf(&buff[offset],1000-offset,"style-src http://%s; ",s->header->Host );
-	offset += snprintf(&buff[offset],1000-offset,"connect-src ws://%s http://%s; ",s->header->Host ,s->header->Host );
+	          snprintf(&buff[offset],1000-offset,"connect-src ws://%s http://%s; ",s->header->Host ,s->header->Host );
 
 #endif
 
