@@ -457,7 +457,7 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 	h_len = strlen("Sec-WebSocket-Version: ");
 	if (!strncmp((char*)line,"Sec-WebSocket-Version: ",h_len))
 	{
-		len = length - h_len;
+		//len = length - h_len; // // clang Dead store
 		sscanf(&line[h_len],"%d",&header->SecWebSocketVersion);
 		return 0;
 	}

@@ -101,7 +101,7 @@ void parsePostData(http_request *s){
 		pos = &s->socket->header->post_buffer[ offset ];
 
 		if ( 0 == strncmp(  pos , bound_end , bound_len + 2) ){
-			end = 1;
+			//end = 1; // clang Dead store
 			break;
 		}
 

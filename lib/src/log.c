@@ -93,7 +93,7 @@ void addLog ( LogChannels channel,LogLevels level,char* filename,int fileline,co
 	len = snprintf (buff, 450,"%s :  ",function);
 	if(len < last_log_length){
 		for(i=len;i<last_log_length;i++){
-			strncat(buff," ",450);
+			buff[i] = ' ';
 		}
 		len = last_log_length;
 	}
@@ -126,10 +126,10 @@ void addLog ( LogChannels channel,LogLevels level,char* filename,int fileline,co
 		case INFO_LEVEL:
 		case WARNING_LEVEL:
 		case ERROR_LEVEL:
-			len+= snprintf (&buff[len], 450,"\n   ->   File: %s, Line :%d",filename,fileline);
+			len+= snprintf (&buff[len], 450-len,"\n   ->   File: %s, Line :%d",filename,fileline);
 			break;
 	}
 
-	len+= snprintf ( &buff[len], 450-len,"\n" );
+	snprintf ( &buff[len], 450-len,"\n" );
 	writeToLog ( buff );
 }

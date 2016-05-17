@@ -269,7 +269,8 @@ unsigned long calckey(char* buffer) {
 			spaces++;
 		}
 	}
-	key /= spaces;
+	if ( spaces > 0 )
+		key /= spaces;
 	return key;
 }
 

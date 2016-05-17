@@ -418,8 +418,7 @@ unsigned long WebserverMallocedSize(void* mem){
 
 #ifdef _WEBSERVER_MEMORY_DEBUG_
 
-	memory_block* block = (memory_block*) __ws_assume_aligned(get_block_pointer(mem), __BIGGEST_ALIGNMENT__ );
-	block = get_block_pointer( mem );
+	memory_block* block = get_block_pointer( mem );
 
 #endif
 

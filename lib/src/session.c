@@ -159,11 +159,11 @@ int checkUserRegistered(http_request* s) {
 	ws_variable* guid_var_ssl;
 #endif
 
-	got_normal = false;
-	true_normal = false;
+	//got_normal = false;    // clang Dead store
+	//true_normal = false;   // clang Dead store
 	true_ssl = false;
 	true_both = false;
-	got_giud = false;
+	//got_giud = false;      // clang Dead store
 	got_guid_ssl = false;
 	guid_match = false;
 
