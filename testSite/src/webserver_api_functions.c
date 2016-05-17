@@ -230,8 +230,11 @@ DEFINE_FUNCTION( js_func ){
 	printHTML(s,"Hallo C");
 }
 
-WEBSERVER_API_HOOK{
-
+#ifdef SINGLE_MAIN
+void init_testsite( void ){
+#else
+WEBSERVER_API_HOOK{	
+#endif
 
     REGISTER_LOCAL_FUNCTION ( checkregister );
 	REGISTER_LOCAL_FUNCTION  ( register );
@@ -261,8 +264,12 @@ WEBSERVER_API_HOOK{
 
     startApiThreads();
 
+#ifndef SINGLE_MAIN
     return "test_site";
+#endif
 }
+
+
 
 
 

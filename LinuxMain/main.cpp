@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
 
 	if (0 == WebserverInit()) {
 
-		//WebserverAddBinaryData( data__ );
+		WebserverAddBinaryData( data__ );
 
 		#ifdef WEBSERVER_USE_PYTHON
 

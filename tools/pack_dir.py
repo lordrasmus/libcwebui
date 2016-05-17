@@ -268,5 +268,6 @@ def gen_c_file( path, alias ):
 	
        
 gen_c_file( "../testSite/www/" , "/" )
+gen_c_file( "../testSite/img/" , "img" )
 
 #gen_c_file( "." , "/tools" )

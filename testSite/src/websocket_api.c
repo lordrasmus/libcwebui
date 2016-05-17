@@ -115,6 +115,12 @@ void handleCommandSocket(char *guid, const char *msg) {
 		}
 	}
 	if (0 == strncmp(msg, "echo:", 5)) {
+		
+		if ( 0 == strcmp( msg, "echo:error" ) ){
+			char *msg2 = msg;
+			msg2[3] = 0x88;
+		}
+		
 		WebsocketSendTextFrame(guid, msg, strlen(msg));
 	}
 	
@@ -164,6 +170,7 @@ void simpleThread(void* p) {
 		}
 		mysleep(1000);
 	}
+	
 
 	printf("Websocket API Close      : %s simple\n", guid);
 	WebsocketSendCloseFrame(guid);

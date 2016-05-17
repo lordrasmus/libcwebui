@@ -39,7 +39,7 @@ static_analyse:
 
 lto:
 	clang ${CLANG_FLAGS} -flto -O3 main.c ${FILES}  -o main.clang.lto ${LIBS}
-	gcc ${FLAGS} -flto -Os main.c ${FILES}  -o main.gcc.lto ${LIBS}
+	-gcc ${FLAGS} -flto -Os main.c ${FILES}  -o main.gcc.lto ${LIBS}
 	
-	clang ${CLANG_FLAGS} -Os main.c ${FILES}  -o main.clang ${LIBS}
-	gcc ${FLAGS} -Os main.c ${FILES}  -o main.gcc ${LIBS}
+	-clang ${CLANG_FLAGS} -Os main.c ${FILES}  -o main.clang ${LIBS}
+	-gcc ${FLAGS} -Os main.c ${FILES}  -o main.gcc ${LIBS}
