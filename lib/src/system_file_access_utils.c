@@ -277,8 +277,10 @@ void generateEtag(WebserverFileInfo* wfi) {
 
 		}
 		WebserverSHA1Final(sha_context, buf);
+		WebserverSHA1Free(sha_context);
 		PlatformCloseDataStream();
 		WebserverFree(data);
+
 	}
 
 	convertBinToHexString(buf, SSL_SHA_DIG_LEN, (char*)wfi->etag, SSL_SHA_DIG_LEN * 2 + 1);

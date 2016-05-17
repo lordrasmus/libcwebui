@@ -61,6 +61,7 @@ int                 WebserverSHA1(const unsigned char* data,size_t len,unsigned 
 struct sha_context* WebserverSHA1Init(void);
 int                 WebserverSHA1Update(struct sha_context* ssl_context,const void* data,size_t len);
 int                 WebserverSHA1Final(struct sha_context* sha_ctx,unsigned char* data);
+void                WebserverSHA1Free(struct sha_context* sha_ctx );
 
 int                 WebserverMD5(const unsigned char* data,size_t len,unsigned char* md);
 int                 WebserverRANDBytes(unsigned char *buf, int num);

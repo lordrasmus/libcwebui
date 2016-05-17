@@ -654,6 +654,11 @@ int WebserverSHA1Final(struct sha_context* sha_ctx, unsigned char* data) {
 	return SHA1_Final(data, sha_ctx->sha_ctx);
 }
 
+void WebserverSHA1Free(struct sha_context* sha_ctx ){
+	WebserverFree( sha_ctx->sha_ctx );
+	WebserverFree( sha_ctx );
+}
+
 int WebserverMD5(const unsigned char* data, size_t len, unsigned char* md) {
 	MD5(data, len, md);
 	return 1;
