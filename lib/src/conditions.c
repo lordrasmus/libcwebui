@@ -67,13 +67,15 @@ CONDITION_RETURN equal_condition(http_request* s, FUNCTION_PARAS* func) {
 
 	if ((op1 == 0) || (op2 == 0)) {
 
-		if (op1 != 0)
-			if (0 == strcmp(op1->name, "op")) /* erzeugte Variable */
+		//if (op1 != 0)
+			//if (0 == strcmp(op1->name, "op")) /* erzeugte Variable */
 				freeWSVariable(op1);
 
-		if (op2 != 0)
-			if (0 == strcmp(op2->name, "op")) /* erzeugte Variable */
+		//if (op2 != 0)
+			//if (0 == strcmp(op2->name, "op")) /* erzeugte Variable */
 				freeWSVariable(op2);
+
+		#warning prüfen ob die checks eine bedeutung hatten
 
 		return CONDITION_FALSE;
 	}
