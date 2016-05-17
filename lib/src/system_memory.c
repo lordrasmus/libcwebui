@@ -46,11 +46,11 @@ Webserver: WebserverSLLSendNonBlocking : ssl/openssl.c 478             ERROR   :
 #endif
 
 
-unsigned long allocated = 0;
+unsigned long VISIBLE_ATTR allocated = 0 ;
 unsigned long allocated_max = 0;
 
 #ifdef _WEBSERVER_MEMORY_DEBUG_
-    int print_blocks_now = 0;
+    int VISIBLE_ATTR print_blocks_now = 0;
 #endif
 
 
@@ -279,8 +279,9 @@ void* real_WebserverMalloc(const unsigned long size ) {
 	unsigned long *s;
 	unsigned int add_size = 0, real_alloc;
 	char* ret;
-	//char* ret2;
+
 #ifdef _WEBSERVER_MEMORY_DEBUG_
+	char* ret2;
 	memory_block* block;
 	add_size += sizeof(memory_block);
 	add_size += __BIGGEST_ALIGNMENT__ * 4;
@@ -305,7 +306,10 @@ void* real_WebserverMalloc(const unsigned long size ) {
 		printf("Memory malloc Error\n");
 		exit(1);
 	}
-	//ret2 = ret;
+#ifdef _WEBSERVER_MEMORY_DEBUG_
+	ret2 = ret;
+#endif
+
 #if __BIGGEST_ALIGNMENT__ == 16
 	s = (unsigned long*) __ws_assume_aligned(ret, 8 );
 	*s = real_alloc;
