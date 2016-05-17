@@ -179,7 +179,7 @@ int checkIskWebsocketConnection(socket_info* sock,HttpRequestHeader* header) {
 }
 
 int startWebsocketConnection(socket_info* sock) {
-	char buffer[100];
+	char buffer[170];
 	char buffer2[21];
 	http_request *s;
 	sock->active = 0;
@@ -190,7 +190,7 @@ int startWebsocketConnection(socket_info* sock) {
 		}
 	} else {
 		if (sock->header->SecWebSocketKey != 0) {
-			strcpy(buffer, sock->header->SecWebSocketKey);
+			strncpy( buffer, sock->header->SecWebSocketKey, 100 );
 			strcat(buffer, "258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
 			WebserverSHA1((unsigned char*) buffer, strlen(buffer), (unsigned char*) buffer2);
 			WebserverBase64Encode((unsigned char*) buffer2, 20, sock->header->WebSocketOutHash, 40);

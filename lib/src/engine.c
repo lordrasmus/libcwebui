@@ -72,6 +72,7 @@ void engine_loop_array(http_request *s, const char* prefix, const char *pagename
 	}
 	if (tmp->type != VAR_TYPE_REF) {
 		sendHTMLChunkVariable(s->socket, tmp);
+		freeWSVariable( tmp );
 		return;
 	}
 

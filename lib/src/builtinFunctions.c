@@ -250,8 +250,8 @@ void getServerLinkStd ( http_request* s ) {
     if ( s->header->Host != 0 ) {
 		char *tmp = strchr( s->header->Host, ':' );
 		if( tmp ){
-			char host_tmp[1000];
-			strcpy( host_tmp, s->header->Host );
+			char host_tmp[1001];
+			strncpy( host_tmp, s->header->Host , 1000 );
 			tmp =strchr( host_tmp, ':' );
 			*tmp = '\0';
 			printHTMLChunk ( s->socket,"%s",host_tmp );
@@ -282,7 +282,7 @@ void getServerLinkSSL ( http_request* s ) {
 		char *tmp = strchr( s->header->Host, ':' );
 		if( tmp ){
 			char host_tmp[1000];
-			strcpy( host_tmp, s->header->Host );
+			strncpy( host_tmp, s->header->Host , 999 );
 			tmp =strchr( host_tmp, ':' );
 			*tmp = '\0';
 			printHTMLChunk ( s->socket,"%s",host_tmp );

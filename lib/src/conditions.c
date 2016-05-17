@@ -66,10 +66,14 @@ CONDITION_RETURN equal_condition(http_request* s, FUNCTION_PARAS* func) {
 	op2 = parseVariable(s, func->parameter[2].text);
 
 	if ((op1 == 0) || (op2 == 0)) {
-		if (op1 != 0) if (0 == strcmp(op1->name, "op")) /* erzeugte Variable */
-			freeWSVariable(op1);
-		if (op2 != 0) if (0 == strcmp(op2->name, "op")) /* erzeugte Variable */
-			freeWSVariable(op2);
+
+		if (op1 != 0)
+			if (0 == strcmp(op1->name, "op")) /* erzeugte Variable */
+				freeWSVariable(op1);
+
+		if (op2 != 0)
+			if (0 == strcmp(op2->name, "op")) /* erzeugte Variable */
+				freeWSVariable(op2);
 
 		return CONDITION_FALSE;
 	}

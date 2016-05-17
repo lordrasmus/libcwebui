@@ -127,8 +127,9 @@ void add_local_file_system_dir(const char* alias, const char* dir, const int use
 		}
 	}
 
-	strcpy(buffer, dir);
-	if (dir[strlen(dir)] != '/') strcat(buffer, "/");
+	strncpy(buffer, dir, 990);
+	if (buffer[strlen(buffer)] != '/')
+		strcat(buffer, "/");
 	setWSVariableString(tmp, buffer);
 }
 
