@@ -108,9 +108,9 @@ void addFireLogger(dummy_handler* s, const char* filename, int fileline, const c
 char* WebsocketGetStoreGUID(char* guid){
 	#ifdef WEBSERVER_USE_WEBSOCKETS
 	return getWebsocketStoreGUID(guid);
-	#endif
-
+	#else
 	return "";
+	#endif
 }
 
 
