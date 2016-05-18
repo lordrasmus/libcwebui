@@ -109,8 +109,8 @@ int		PlatformGetSocket ( unsigned short port,int connections )
 
     if ( s == -1 )
     {
-        LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"socket() failed","" );
-        free( addr );
+        LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"socket() failed : %m","" );
+        WebserverFree( addr );
         return -1;
     }
 
@@ -126,8 +126,12 @@ int		PlatformGetSocket ( unsigned short port,int connections )
 #endif
     on = 1;
 
-   /* setsockopt ( s, SOL_SOCKET, SO_REUSEPORT, ( char* ) &on, sizeof ( on ) ); */
-    setsockopt ( s, SOL_SOCKET, SO_REUSEADDR, ( char* ) &on, sizeof ( on ) );
+    if ( 0 != setsockopt ( s, SOL_SOCKET, SO_REUSEADDR, ( char* ) &on, sizeof ( on ) ) ){
+		LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"setsockopt() failed : %m","" );
+        WebserverFree( addr );
+        close( s );
+		return -2;
+	}
 
 
 #ifdef WEBSERVER_USE_IPV6
@@ -136,7 +140,7 @@ int		PlatformGetSocket ( unsigned short port,int connections )
     if ( bind ( s, ( struct sockaddr* ) addr, sizeof ( struct sockaddr_in ) ) == -1 )
 #endif
     {
-        LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"bind() failed","" );
+        LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"bind() failed : %m","" );
         WebserverFree(addr);
         close( s );
         return -2;
@@ -144,7 +148,7 @@ int		PlatformGetSocket ( unsigned short port,int connections )
 
     if ( listen ( s, connections ) == -1 )
     {
-        LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"listen() failed","" );
+        LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"listen() failed : %m","" );
         WebserverFree(addr);
         close( s );
         return -3;
