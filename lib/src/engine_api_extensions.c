@@ -509,6 +509,8 @@ int loadPlugin(const char* name, const char* path) {
 
 	COPY_ERROR("loaded")
 
+	dlclose( dl );
+
 	return 0;
 #else
 #error "loadPlugin not implemented in system"
