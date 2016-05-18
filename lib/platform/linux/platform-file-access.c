@@ -70,7 +70,11 @@ int PlatformOpenDataReadStream( const unsigned char* name ) {
 
 int PlatformGetFileSize(void) {
 	struct stat st;
-	fstat(fileno(g_fp), &st);
+	if ( 0 != fstat(fileno(g_fp), &st) ){
+		printf("fstat error : %m\n");
+		return 0;
+	}
+
 	return st.st_size;
 }
 
