@@ -8,7 +8,7 @@ notifications:
    email: 
       - lordrasmus@gmail.com
 
-script:  make -C lib
+script:  make -C lib rebuild
 
 compiler:
   - clang
@@ -23,5 +23,5 @@ addons:
      notification_email: 
          - lordrasmus@gmail.com
 
-     build_command: make -C lib
+     build_command: make -C lib rebuild
      branch_pattern: master
