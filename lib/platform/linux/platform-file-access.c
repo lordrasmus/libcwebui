@@ -83,11 +83,13 @@ int PlatformReadBytes(unsigned char *data, FILE_OFFSET lenght) {
 }
 
 void PlatformSeek(long offset) {
-	fseek(g_fp, offset, SEEK_CUR);
+	if ( 0 != fseek(g_fp, offset, SEEK_CUR) )
+		printf("fseek error : %m\n");
 }
 
 void PlatformSeekToPosition(long position) {
-	fseek(g_fp, position, SEEK_SET);
+	if ( 0 != fseek(g_fp, position, SEEK_SET) )
+		printf("fseek error : %m\n");
 }
 
 /*long WebserverGetDataStreamPosition(void) {
