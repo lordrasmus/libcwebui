@@ -98,10 +98,12 @@ int		PlatformGetSocket ( unsigned short port,int connections )
     int on;
 
 #ifdef WEBSERVER_USE_IPV6
-    struct sockaddr_in6 *addr = ( struct sockaddr_in6 * ) malloc ( sizeof ( struct sockaddr_in6 ) );
+    struct sockaddr_in6 *addr = ( struct sockaddr_in6 * ) WebserverMalloc ( sizeof ( struct sockaddr_in6 ) );
+    memset( addr, 0 , sizeof( struct sockaddr_in6 ) );
     int s = socket ( PF_INET6, SOCK_STREAM, 0 );
 #else
-    struct sockaddr_in *addr = ( struct sockaddr_in * ) malloc ( sizeof ( struct sockaddr_in ) );
+    struct sockaddr_in *addr = ( struct sockaddr_in * ) WebserverMalloc ( sizeof ( struct sockaddr_in ) );
+    memset( addr, 0 , sizeof( struct sockaddr_in ) );
     int s = socket ( PF_INET, SOCK_STREAM, 0 );
 #endif
 
@@ -123,6 +125,7 @@ int		PlatformGetSocket ( unsigned short port,int connections )
     addr->sin_family = AF_INET;
 #endif
     on = 1;
+
    /* setsockopt ( s, SOL_SOCKET, SO_REUSEPORT, ( char* ) &on, sizeof ( on ) ); */
     setsockopt ( s, SOL_SOCKET, SO_REUSEADDR, ( char* ) &on, sizeof ( on ) );
 
@@ -134,7 +137,7 @@ int		PlatformGetSocket ( unsigned short port,int connections )
 #endif
     {
         LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"bind() failed","" );
-        free(addr);
+        WebserverFree(addr);
         close( s );
         return -2;
     }
@@ -142,11 +145,11 @@ int		PlatformGetSocket ( unsigned short port,int connections )
     if ( listen ( s, connections ) == -1 )
     {
         LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"listen() failed","" );
-        free(addr);
+        WebserverFree(addr);
         close( s );
         return -3;
     }
-    free(addr);
+    WebserverFree(addr);
     return s;
 }
 
