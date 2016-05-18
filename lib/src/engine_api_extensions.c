@@ -509,7 +509,7 @@ int loadPlugin(const char* name, const char* path) {
 
 	COPY_ERROR("loaded")
 
-	dlclose( dl );
+	plugin->dl = dl;
 
 	return 0;
 #else
