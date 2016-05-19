@@ -231,8 +231,15 @@ int		PlatformAccept(socket_info* sock, unsigned int *port)
     ret = accept ( sock->socket, NULL, 0 );
     if ( ret > 0 )
     {
-        getpeername ( ret, ( struct sockaddr * ) &clientaddr, &addrlen );
-		*port = ntohl(clientaddr.sin_port);
+
+		if ( 0 == getpeername ( ret, ( struct sockaddr * ) &clientaddr, &addrlen ) ){
+			*port = ntohl(clientaddr.sin_port);
+		}else{
+			*port = 0;
+			printf("Error: getpeername %m\n");
+		}
+
+
 #ifdef WEBSERVER_USE_IPV6
         if ( inet_ntop ( AF_INET6, &clientaddr.sin6_addr, sock->ip_str, sizeof ( sock->ip_str ) ) )
         {
