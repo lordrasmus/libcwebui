@@ -818,7 +818,12 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* so
 		else
 			to_read = diff;
 
-		PlatformReadBytes(buffer, to_read);
+
+		FILE_OFFSET ret2 = PlatformReadBytes(buffer, to_read);
+		if ( ret2 != to_read ){
+			printf("Error: read mismatch %jd != %d\n",ret2,to_read);
+		}
+
 		status = WebserverSend(sock, buffer, to_read, 0, &ret);
 
 		switch (status) {
