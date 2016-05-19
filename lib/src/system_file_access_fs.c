@@ -82,7 +82,11 @@ int local_file_system_check_file_modified( WebserverFileInfo *file ){
 
 		WebserverFree( ( void* )file->Data );
 		file->Data = (unsigned char*) WebserverMalloc( file->DataLenght );
-		PlatformReadBytes( ( unsigned char*) file->Data, file->DataLenght);
+
+		FILE_OFFSET ret = PlatformReadBytes( ( unsigned char*) file->Data, file->DataLenght);
+		if ( ret != file->DataLenght ){
+			printf("Error: file size mismatch %jd != %jd\n",ret,file->DataLenght);
+		}
 
 		PlatformCloseDataStream();
 	}
@@ -97,7 +101,12 @@ int local_file_system_read_content( WebserverFileInfo *file ){
 
 		file->DataLenght = PlatformGetFileSize();
 		file->Data = (unsigned char*) WebserverMalloc( file->DataLenght );
-		PlatformReadBytes( ( unsigned char*) file->Data, file->DataLenght);
+
+		FILE_OFFSET ret = PlatformReadBytes( ( unsigned char*) file->Data, file->DataLenght);
+		if ( ret != file->DataLenght ){
+			printf("Error: file size mismatch %jd != %jd\n",ret,file->DataLenght);
+		}
+
 		PlatformCloseDataStream();
 
 		return 1;
@@ -216,7 +225,10 @@ static WebserverFileInfo* getFileInformation( const unsigned char *name) {
 		unsigned char template_header[sizeof( template_v1_header ) ];
 		memset(template_header,0,sizeof( template_v1_header ) );
 
-		PlatformReadBytes( template_header, sizeof( template_v1_header ) -1 );
+		FILE_OFFSET ret = PlatformReadBytes( template_header,  sizeof( template_v1_header ) -1 );
+		if ( ret !=  sizeof( template_v1_header ) ){
+			printf("Error: file size mismatch %jd != %jd\n",ret, sizeof( template_v1_header ) -1 );
+		}
 
 		if ( 0 == memcmp( template_v1_header, template_header, sizeof( template_v1_header ) -1 ) ){
 			//printf("getFileInformation: Engine Template V1 Header found : %s  \n", name_tmp);
