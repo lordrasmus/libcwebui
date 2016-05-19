@@ -80,7 +80,11 @@ void deleteSocket(socket_info* sock) {
 #ifdef WEBSERVER_USE_WEBSOCKETS
 	if (sock->isWebsocket == 1) {
 		node = RBExactQuery(sock_tree, sock->websocket_guid);
-		RBDelete(sock_tree, node);
+		if ( node != 0 ){
+			RBDelete(sock_tree, node);
+		}else{
+			printf("Error: websocket giud %s nicht gefunden\n",sock->websocket_guid);
+		}
 	}
 #endif
 
