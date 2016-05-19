@@ -269,7 +269,11 @@ void generateEtag(WebserverFileInfo* wfi) {
 				to_read = diff;
 			}
 
-			PlatformReadBytes(data, to_read);
+			FILE_OFFSET ret2 = PlatformReadBytes(data, to_read);
+			if ( ret2 != to_read ){
+				printf("Error: read mismatch %jd != %d\n",ret2,to_read);
+			}
+
 			WebserverSHA1Update(sha_context, data, to_read);
 			pos += to_read;
 
