@@ -66,7 +66,11 @@ rb_red_blk_tree* initStringRBTree(void) {
 unsigned int readInt(void) {
 	unsigned char intbuffer[4];
 	unsigned int tmp;
-	PlatformReadBytes(intbuffer, 4);
+	int ret = PlatformReadBytes(intbuffer, 4);
+	if ( ret != 4 ){
+		printf("readInt: Error Reading Bytes %m\n");
+		return 0;
+	}
 	tmp  = ((unsigned int)intbuffer[0]) << 0;
 	tmp += ((unsigned int)intbuffer[1]) << 8;
 	tmp += ((unsigned int)intbuffer[2]) << 16;

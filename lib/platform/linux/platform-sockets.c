@@ -98,17 +98,19 @@ int		PlatformGetSocket ( unsigned short port,int connections )
     int on;
 
 #ifdef WEBSERVER_USE_IPV6
-    struct sockaddr_in6 *addr = ( struct sockaddr_in6 * ) malloc ( sizeof ( struct sockaddr_in6 ) );
+    struct sockaddr_in6 *addr = ( struct sockaddr_in6 * ) WebserverMalloc ( sizeof ( struct sockaddr_in6 ) );
+    memset( addr, 0 , sizeof( struct sockaddr_in6 ) );
     int s = socket ( PF_INET6, SOCK_STREAM, 0 );
 #else
-    struct sockaddr_in *addr = ( struct sockaddr_in * ) malloc ( sizeof ( struct sockaddr_in ) );
+    struct sockaddr_in *addr = ( struct sockaddr_in * ) WebserverMalloc ( sizeof ( struct sockaddr_in ) );
+    memset( addr, 0 , sizeof( struct sockaddr_in ) );
     int s = socket ( PF_INET, SOCK_STREAM, 0 );
 #endif
 
     if ( s == -1 )
     {
-        LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"socket() failed","" );
-        free( addr );
+        LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"socket() failed : %m","" );
+        WebserverFree( addr );
         return -1;
     }
 
@@ -123,8 +125,13 @@ int		PlatformGetSocket ( unsigned short port,int connections )
     addr->sin_family = AF_INET;
 #endif
     on = 1;
-   /* setsockopt ( s, SOL_SOCKET, SO_REUSEPORT, ( char* ) &on, sizeof ( on ) ); */
-    setsockopt ( s, SOL_SOCKET, SO_REUSEADDR, ( char* ) &on, sizeof ( on ) );
+
+    if ( 0 != setsockopt ( s, SOL_SOCKET, SO_REUSEADDR, ( char* ) &on, sizeof ( on ) ) ){
+		LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"setsockopt() failed : %m","" );
+        WebserverFree( addr );
+        close( s );
+		return -2;
+	}
 
 
 #ifdef WEBSERVER_USE_IPV6
@@ -133,20 +140,20 @@ int		PlatformGetSocket ( unsigned short port,int connections )
     if ( bind ( s, ( struct sockaddr* ) addr, sizeof ( struct sockaddr_in ) ) == -1 )
 #endif
     {
-        LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"bind() failed","" );
-        free(addr);
+        LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"bind() failed : %m","" );
+        WebserverFree(addr);
         close( s );
         return -2;
     }
 
     if ( listen ( s, connections ) == -1 )
     {
-        LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"listen() failed","" );
-        free(addr);
+        LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"listen() failed : %m","" );
+        WebserverFree(addr);
         close( s );
         return -3;
     }
-    free(addr);
+    WebserverFree(addr);
     return s;
 }
 
@@ -224,8 +231,15 @@ int		PlatformAccept(socket_info* sock, unsigned int *port)
     ret = accept ( sock->socket, NULL, 0 );
     if ( ret > 0 )
     {
-        getpeername ( ret, ( struct sockaddr * ) &clientaddr, &addrlen );
-		*port = ntohl(clientaddr.sin_port);
+
+		if ( 0 == getpeername ( ret, ( struct sockaddr * ) &clientaddr, &addrlen ) ){
+			*port = ntohl(clientaddr.sin_port);
+		}else{
+			*port = 0;
+			printf("Error: getpeername %m\n");
+		}
+
+
 #ifdef WEBSERVER_USE_IPV6
         if ( inet_ntop ( AF_INET6, &clientaddr.sin6_addr, sock->ip_str, sizeof ( sock->ip_str ) ) )
         {

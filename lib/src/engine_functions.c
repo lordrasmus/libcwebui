@@ -107,8 +107,13 @@ void engine_setVariable(http_request *s, FUNCTION_PARAS* func) {
 	ws_variable* set_value_var;
 
 	if ( var == 0 ) return;
+
 	set_value_var = parseVariable(s, func->parameter[1].text);
-	if ( set_value_var == 0) return;
+
+	if ( set_value_var == 0){
+		freeWSVariable( var );
+		return;
+	}
 
 	if (var->type != VAR_TYPE_REF) {
 		var2 = getRenderVariable(s, var->name);

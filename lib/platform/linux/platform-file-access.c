@@ -56,8 +56,13 @@ int PlatformOpenDataReadStream( const unsigned char* name ) {
 	if (g_fp == NULL) return false;
 
 	/* Auf normale Datei Prüfen */
-	fstat(fileno(g_fp), &st);
-	if (!S_ISREG(st.st_mode)) return false;
+	if ( 0 != fstat(fileno(g_fp), &st) ){
+		printf("fstat error : %m\n");
+		return false;
+	}
+
+	if (!S_ISREG(st.st_mode)) 
+		return false;
 
 	return fileno(g_fp);
 }
@@ -65,7 +70,11 @@ int PlatformOpenDataReadStream( const unsigned char* name ) {
 
 int PlatformGetFileSize(void) {
 	struct stat st;
-	fstat(fileno(g_fp), &st);
+	if ( 0 != fstat(fileno(g_fp), &st) ){
+		printf("fstat error : %m\n");
+		return 0;
+	}
+
 	return st.st_size;
 }
 
@@ -83,11 +92,13 @@ int PlatformReadBytes(unsigned char *data, FILE_OFFSET lenght) {
 }
 
 void PlatformSeek(long offset) {
-	fseek(g_fp, offset, SEEK_CUR);
+	if ( 0 != fseek(g_fp, offset, SEEK_CUR) )
+		printf("fseek error : %m\n");
 }
 
 void PlatformSeekToPosition(long position) {
-	fseek(g_fp, position, SEEK_SET);
+	if ( 0 != fseek(g_fp, position, SEEK_SET) )
+		printf("fseek error : %m\n");
 }
 
 /*long WebserverGetDataStreamPosition(void) {

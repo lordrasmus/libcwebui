@@ -487,6 +487,7 @@ int loadPlugin(const char* name, const char* path) {
 		}
 		COPY_ERROR("No init_webserver_plugin Function")
 		printf("Error loading %s. No Init Function char* init_webserver_plugin(void) %s \n", path, error_text);
+		dlclose( dl );
 		return -5;
 	}
 
@@ -508,6 +509,8 @@ int loadPlugin(const char* name, const char* path) {
 	}
 
 	COPY_ERROR("loaded")
+
+	plugin->dl = dl;
 
 	return 0;
 #else

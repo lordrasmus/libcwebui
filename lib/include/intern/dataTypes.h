@@ -375,6 +375,8 @@ typedef struct {
 
 	int type;
 
+	void *dl;
+
 #ifdef WEBSERVER_USE_PYTHON
 	struct web_py_plugin* py_plugin;
 #endif

@@ -71,6 +71,10 @@ OBJ_LIST_LTO = obj/src/*.o.lto obj/platform/linux/*.o.lto obj/ssl/*.o.lto obj/th
 
 LINK_OPTS =  -shared -Wl,-O2 -Wl,--gc-sections $(PY_LINK) #-Wl,--strip-all
 
+rebuild:
+	@$(MAKE) clean
+	@$(MAKE) all
+
 build: $(OBJ)
 	@echo 'Building Lib : libWebserver.so'
 
