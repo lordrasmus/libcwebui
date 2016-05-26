@@ -554,8 +554,11 @@ char sendData(socket_info* sock, const unsigned char* buffer, FILE_OFFSET length
 		case SOCKET_SEND_SSL_ERROR:
 			return CLIENT_DICONNECTED;
 
+		case SSL_PROTOCOL_ERROR:
+			return CLIENT_DICONNECTED;
+
 		default:
-			LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "send error not handled %d", sock->socket, status);
+			LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "send error not handled %d ( %d )", sock->socket, status);
 			return CLIENT_DICONNECTED;
 		}
 	}
