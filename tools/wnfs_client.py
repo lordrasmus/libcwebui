@@ -38,7 +38,7 @@ def main_loop( ip ):
 
 			else:
 				size = os.path.getsize( file_path )
-				print("get_file : " + file_name  + " " + str(size) + " Bytes ")
+				print("get_file       : " + file_name  + " " + str(size) + " Bytes ")
 				sock.send( struct.pack('I', size ) )
 
 				f = open( file_path , "rb" )
@@ -48,7 +48,7 @@ def main_loop( ip ):
 				l = sock.send(f_data)
 				while True:
 					if not ( l == len( f_data ) ):
-						print("l1 : " + str( l ) + " l2: " + str( size ) )
+						#print("l1 : " + str( l ) + " l2: " + str( size ) )
 						l += sock.send(f_data[l:])
 						continue
 				
@@ -68,12 +68,12 @@ def main_loop( ip ):
 
 			lb = sock.recv( 4 )
 			l = struct.unpack('I', lb )[0]
-			print(" len : " + str( l ) )
+			#print(" len : " + str( l ) )
 
 			data = sock.recv( l )
 			#pprint( data )
 			while not ( l == len( data ) ):
-				print("l1 : " + str( l ) + " l2: " + str( len( data ) ) )
+				#print("l1 : " + str( l ) + " l2: " + str( len( data ) ) )
 				data += sock.recv( l - len( data ) )
 				
 				#exit(1)
@@ -108,6 +108,9 @@ def main_start(ip ):
 		except:
 			traceback.print_exc()
 
+if len( sys.argv ) < 2:
+	print("usage : wnfs_client.py <ip>")
+	exit(0)
 
-main_start( "192.168.100.1" )
+main_start( sys.argv[1] )
 
