@@ -54,7 +54,7 @@ WebserverFileInfo* wnfs_get_file( unsigned char* name){
 		
 	
 	ret = PlatformRecvSocket( wnfs_socket, (unsigned char *)&len, 4, 0 );
-	if ( ( ret <= 0 ) || ( len != (uint32_t)ret) )
+	if ( ret < 0 )
 		goto  error_out;
 
 	if ( len == 0 ){
@@ -64,7 +64,7 @@ WebserverFileInfo* wnfs_get_file( unsigned char* name){
 	WebserverFileInfo *file = create_empty_file( len );
 	uint32_t recv_bytes = 0;
 	while(1){
-		int ret = recv( wnfs_socket, (char*)&file->Data[recv_bytes], len -recv_bytes , 0 );
+		ret = recv( wnfs_socket, (char*)&file->Data[recv_bytes], len -recv_bytes , 0 );
 		if ( ret <= 0 ){
 			goto  error_out2;
 		}
@@ -86,6 +86,9 @@ WebserverFileInfo* wnfs_get_file( unsigned char* name){
 	file->FilePrefix = (unsigned char*)"/";
 	setFileType(file);
 
+	file->TemplateFile = 1;
+	#warning Das hier besser lösen
+	
 	if ( file->DataLenght > (int)sizeof( template_v1_header ) ) {
 
 		if ( 0 == memcmp( template_v1_header, file->Data, sizeof( template_v1_header ) -1 ) ){
@@ -120,7 +123,7 @@ void wnfs_store_file( WebserverFileInfo* file ){
 	uint32_t len = sprintf(buffer,"{\"op\":\"put_file\",\"file\":\"%s\"}",file->Url);
 	int ret;
 	ret = PlatformSendSocket( wnfs_socket, (const unsigned char *)&len, 4,0 );
-	if ( ( ret <= 0 ) || ( len != (uint32_t)ret) )
+	if ( 4 != ret )
 		goto  error_out;
 
 	ret = PlatformSendSocket( wnfs_socket, (const unsigned char *)buffer, len , 0 );
@@ -130,7 +133,7 @@ void wnfs_store_file( WebserverFileInfo* file ){
 	len = file->DataLenght;
 	
 	ret = PlatformSendSocket( wnfs_socket, (const unsigned char *)&len , 4,0 );
-	if ( ( ret <= 0 ) || ( len != (uint32_t)ret) )
+	if ( 4 != ret )
 		goto  error_out;
 
 	ret = send ( wnfs_socket,file->Data,len,0 );

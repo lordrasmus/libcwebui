@@ -23,6 +23,8 @@ def main_loop( ip ):
 		lb = sock.recv( 4 )
 		l = struct.unpack('I', lb )[0]
 		data = sock.recv( l )
+		
+		#pprint( data )
 		j_data = json.loads( data.decode("utf-8")  )
 
 
@@ -36,11 +38,12 @@ def main_loop( ip ):
 
 			else:
 				size = os.path.getsize( file_path )
-				#print("get_file : " + file_name  + " " + str(size) + " Bytes ")
+				print("get_file : " + file_name  + " " + str(size) + " Bytes ")
 				sock.send( struct.pack('I', size ) )
 
 				f = open( file_path , "rb" )
 				f_data = f.read(size)
+				#print( len ( f_data ) )
 
 				l = sock.send(f_data)
 				while True:
@@ -48,7 +51,7 @@ def main_loop( ip ):
 						print("l1 : " + str( l ) + " l2: " + str( size ) )
 						l += sock.send(f_data[l:])
 						continue
-
+				
 					break
 
 				f.close()
@@ -65,11 +68,15 @@ def main_loop( ip ):
 
 			lb = sock.recv( 4 )
 			l = struct.unpack('I', lb )[0]
+			print(" len : " + str( l ) )
 
 			data = sock.recv( l )
+			#pprint( data )
 			while not ( l == len( data ) ):
 				print("l1 : " + str( l ) + " l2: " + str( len( data ) ) )
 				data += sock.recv( l - len( data ) )
+				
+				#exit(1)
 
 			if not os.path.exists( os.path.dirname ( file_path ) ):
 				os.system("mkdir -p " + os.path.dirname ( file_path ))
