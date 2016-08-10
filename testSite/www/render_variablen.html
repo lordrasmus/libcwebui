@@ -7,7 +7,12 @@ TEMPLATE_V1
 
 {b:startSession}
 
-{echo_funcs_on:<tr><td>:<td>}
+<h4>
+Auf Dieser Seite werden erst die Template Befehle Ausgegeben und dannach das Ergebniss des Befehls
+</h4>
+
+
+{echo_funcs_on:<tr><td>:<td>} <!-- Der erste Parameter wird vor dem Template Befehl ausgegeben der zweite dannach -->
 
 <table border=1>
 <tr><th>Befehl<th>Ausgabe
@@ -72,23 +77,30 @@ TEMPLATE_V1
 
 <tr><td colspan=2><h3><h3>Loops</h3>
 
-{echo_funcs_off}
-
 {echo_funcs_on:<td>}
 
-
+<tr style=" border: 0"><td> Variablen Namen für den Loop Index wurde nicht gesetzt </td></tr>
 <tr>{loop:render;"testarray1":"tmp"}
 <tr>{get:render;"key"}{get:render;"tmp"}
 {endloop}
+<tr><td>&#123;endloop&#125;</td></tr>
 
+<tr style="height: 10px ; border: 0"><td> </td></tr>
 
+<tr style=" border: 0"><td> Variablen Namen für den Loop Index wurde auf key gesetzt </td></tr>
 <tr>{loop:render;"testarray1":"tmp":"key"}
 <tr>{get:render;"key"}{get:render;"tmp"}
 {endloop}
+<tr><td>&#123;endloop&#125;</td></tr>
 
+<tr style="height: 10px ; border: 0"><td> </td></tr>
+
+<tr style=" border: 0"><td> Variablen Namen für den Loop Index wurde nicht gesetzt<br>
+aber die Render Variable key existiert noch </td></tr>
 <tr>{loop:render;"testarray1":"tmp"}
 <tr>{get:render;"key"}{get:render;"tmp"}
 {endloop}
+<tr><td>&#123;endloop&#125;</td></tr>
 
 {echo_funcs_off}
 

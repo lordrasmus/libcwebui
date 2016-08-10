@@ -113,6 +113,16 @@ void engine_loop_array(http_request *s, const char* prefix, const char *pagename
 	freeWSVariable(var_key_name);
 	freeWSVariable(var_value_name);
 
+	#if 0
+	if ((s->socket->enable_print_funcs == 1) && (s->engine_current->func.function != TEMPLATE_ECHO_FUNCS_OFF)) {
+		sendHTMLChunk(s->socket, s->socket->print_func_prefix, strlen(s->socket->print_func_prefix));
+		int pos1 = stringnfind ( ( char* ) pagedata ,"{endloop}",datalenght );
+		pos1 -= 8;
+		sendHTMLChunk(s->socket, &pagedata[pos1], 9);	/* {} mit ausgeben */
+		sendHTMLChunk(s->socket, s->socket->print_func_postfix, strlen(s->socket->print_func_postfix));
+	}
+	#endif
+
 }
 
 #define FUNC_CMP(a,c) { int b = strlen(a); if ( ( 0 == strncmp((char*)&buffer2[1],a,b) ) && ( buffer2[b+1] == '}' ) ){ 	return c; } }
@@ -153,8 +163,8 @@ ENGINE_FUNCTIONS getEngineFunctionCode(const char *buffer2, int length) {
 	FUNC_CMP( "echo_off", TEMPLATE_ECHO_OFF)
 	FUNC_CMP( "echo_on", TEMPLATE_ECHO_ON)
 
-	FUNC_CMP( "echo_funcs_off", TEMPLATE_ECHO_FUNCS_OFF)
-	FUNC_CMP( "echo_funcs_on", TEMPLATE_ECHO_FUNCS_ON)
+	FUNC_CMP_OPTS( "echo_funcs_off", TEMPLATE_ECHO_FUNCS_OFF)
+	FUNC_CMP_OPTS( "echo_funcs_on", TEMPLATE_ECHO_FUNCS_ON)
 
 	FUNC_CMP( "return", TEMPLATE_RETURN)
 
@@ -197,6 +207,10 @@ int checkParameterString(parameter_info* para) {
 		if (para->text[i] == ']')
 			continue;
 		if (para->text[i] == '/')
+			continue;
+		if (para->text[i] == '<')
+			continue;
+		if (para->text[i] == '>')
 			continue;
 		if (para->text[i] < '0')
 			return 1;
@@ -381,9 +395,9 @@ int processHTML(http_request* s, const char* prefix, const char *pagename, const
 				}
 			}
 
-			if ((s->socket->enable_print_funcs == 1) && (s->engine_current->func.function != TEMPLATE_ECHO_FUNCS_OFF)) {
+			if ((s->socket->enable_print_funcs == 1) && ( ! ( (s->engine_current->func.function == TEMPLATE_ECHO_FUNCS_ON) || (s->engine_current->func.function == TEMPLATE_ECHO_FUNCS_OFF ) ) ) ) {
 				sendHTMLChunk(s->socket, s->socket->print_func_prefix, strlen(s->socket->print_func_prefix));
-				sendHTMLChunk(s->socket, &pagedata[function_start_pos], function_length);	/* {} mit ausgeben */
+				sendHTMLChunk(s->socket, &pagedata[function_start_pos], function_length +1);	/* {} mit ausgeben */
 				sendHTMLChunk(s->socket, s->socket->print_func_postfix, strlen(s->socket->print_func_postfix));
 			}
 
@@ -445,14 +459,17 @@ int processHTML(http_request* s, const char* prefix, const char *pagename, const
 				break;
 			case TEMPLATE_ECHO_FUNCS_ON:
 				s->socket->enable_print_funcs = 1;
+
 				if (s->engine_current->func.parameter[0].text != 0)
 					strncpy(s->socket->print_func_prefix, s->engine_current->func.parameter[0].text, 50);
 				else
 					strncpy(s->socket->print_func_prefix, "", 50);
+
 				if (s->engine_current->func.parameter[1].text != 0)
 					strncpy(s->socket->print_func_postfix, s->engine_current->func.parameter[1].text, 50);
 				else
 					strncpy(s->socket->print_func_postfix, "", 50);
+
 				last_chunk_send_pos = i + 1;
 				break;
 
