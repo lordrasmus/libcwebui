@@ -50,3 +50,13 @@ Docker/main
 Docker/testSite/
 
 tests/__pycache__/
+
+
+SingleMain/main
+SingleMain/main.o
+SingleMain/www_data.o
+
+fuzzing/adg/
+fuzzing/parse_header/size.txt
+
+testSite/www_data__.c

@@ -24,7 +24,7 @@ LIBS=-lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads -lz -lstdc++
 
 all: www_data.o #img_data.o
 	g++ $(FLAGS) -c main.cpp  -o main.o
-	gcc $(FLAGS) $(FILES) main.o  www_data.o -o main $(LIBS) #img_data.o
+	gcc $(FLAGS) $(FILES) main.o  www_data.o -o main $(LIBS) # -static #img_data.o
 
 ../testSite/www_data__.c:
 	( cd ../tools ; ./pack_dir.py )
@@ -35,3 +35,6 @@ www_data.o: ../testSite/www_data__.c
 #img_data.o: ../testSite/img_data_img.c
 #	gcc -O0 -c ../testSite/img_data_img.c -o img_data.o
 
+clean:
+	rm -f *.o main	
+	

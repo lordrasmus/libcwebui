@@ -8,5 +8,7 @@ all:
 clean:
 	make -C lib clean
 	make -C LinuxMain clean
+	make -C SingleMain clean
 	make -C testSite clean
 	make -C Docker clean
+	
