@@ -41,3 +41,8 @@ fuzzing/url_decode/main.gcc.lto
 
 tests/parse_header/main.gcc
 tests/url_decode/main.gcc
+
+Docker/*.pem
+Docker/libWebserver.so
+Docker/main
+Docker/testSite/
