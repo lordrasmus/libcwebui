@@ -9,3 +9,4 @@ clean:
 	make -C lib clean
 	make -C LinuxMain clean
 	make -C testSite clean
+	make -C Docker clean
