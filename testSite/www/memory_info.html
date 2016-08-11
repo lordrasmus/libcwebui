@@ -18,7 +18,10 @@ TEMPLATE_V1
 
 {if:eq:parameter;"menu":0}
 	<div style="margin:0 10px 10px 0">
+	<table>
+	<tr><th>Type<th>Count<th>Size
 	{b:memoryInfosDetail}
+	</table>
 	</div><br>
 {endif}
 
@@ -30,7 +33,10 @@ TEMPLATE_V1
 
 {if:eq:parameter;"menu":2}
 	<div style="margin:0 10px 10px 0">
+	<table>
+	<tr><th>Type<th>Port<th>Size<th>SSL<th>closed<th>Websocket</th>
 	{b:dumpSockets}
+	</table>
 	</div><br>
 {endif}
 
