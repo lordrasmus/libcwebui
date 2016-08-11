@@ -48,3 +48,5 @@ Docker/*.pem
 Docker/libWebserver.so
 Docker/main
 Docker/testSite/
+
+tests/__pycache__/
