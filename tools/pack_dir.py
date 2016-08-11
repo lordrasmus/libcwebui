@@ -249,8 +249,10 @@ def gen_c_file( path, alias ):
 		
 		write_uint32( f, len( info["FILES"] ) )
 		for f_data in info["FILES"]:
-			
-			#write_uncompressed_file( f, info["PATH"],  f_data )
+			#pprint( f_data )
+			if f_data["PATH"].lower().endswith(".jpg"): 
+				write_uncompressed_file( f, info["PATH"],  f_data )
+				continue
 			write_compressed_file( f, info["PATH"],  f_data )
 			
 			
@@ -261,13 +263,13 @@ def gen_c_file( path, alias ):
 	st = os.stat(f_name)
 	print("  c code size   : " + str( int ( st.st_size / 1024 ) ) + " kB" )
 	
-	os.system("gcc -c " + f_name + " -o /tmp/comp_test ")
+	os.system("gcc -O0 -c " + f_name + " -o /tmp/comp_test ")
 	st = os.stat("/tmp/comp_test")
 	print("  c object size : " + str( int ( st.st_size / 1024 ) ) + " kB" )
 	
 	
        
 gen_c_file( "../testSite/www/" , "/" )
-gen_c_file( "../testSite/img/" , "img" )
+#gen_c_file( "../testSite/img/" , "img" )
 
 #gen_c_file( "." , "/tools" )

@@ -16,6 +16,8 @@ testSite/src/testfunktions.o
 testSite/src/var_test.o
 testSite/src/webserver_api_functions.o
 testSite/src/websocket_api.o
+testSite/img_data__img.c
+testSite/img_data_img.c
 
 old_afl-1.94b/
 afl-2.10b/
