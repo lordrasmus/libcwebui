@@ -14,26 +14,36 @@ FILES=../lib/src/convert.c ../lib/src/variable_store.c ../lib/src/header_parser.
 	../lib/src/builtinFunctions.c ../lib/third_party/src/miniz/tinfl.c ../lib/src/engine.c ../lib/src/file_manager.c \
 	../lib/src/engine_functions.c ../lib/src/engine_if.c ../lib/src/engine_tags.c ../lib/src/webserver_api_functions.c \
 	../lib/src/system_file_access_binary.c ../lib/third_party/src/is_utf8/is_utf8.c \
-	../testSite/src/testfunktions.c  ../testSite/src/var_test.c  ../testSite/src/webserver_api_functions.c  ../testSite/src/websocket_api.c
+	../lib/python/py_api_functions.c  ../lib/python/py_plugin.c  ../lib/python/py_utils.c \
+	../testSite/src/testfunktions.c  ../testSite/src/var_test.c  ../testSite/src/webserver_api_functions.c  ../testSite/src/websocket_api.c \
+
+PY_FLAGS = -I/usr/include/python3.4
+PY_LINK = -lpython3.4
+
+PY_FLAGS = -I/usr/include/python2.7
+PY_LINK = -lpython2.7
 
 FLAGS=-I../lib/ -I../lib/include -I../lib/third_party/src/simclist/ -I../lib/third_party/src/rb_tree/ \
 	-I../lib/platform/include/ -I../lib/third_party/src/is_utf8/ \
-	-DLINUX -DSINGLE_MAIN -Os -flto=6
+	-D_POSIX_SOURCE  -std=gnu99 -DLINUX -DSINGLE_MAIN -O0 -ggdb3 -flto=6 ${PY_FLAGS}
 
 LIBS=-lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads -lz -lstdc++
 
-all: www_data.o #img_data.o
+all: www_data.o img_data.o
 	g++ $(FLAGS) -c main.cpp  -o main.o
-	gcc $(FLAGS) $(FILES) main.o  www_data.o -o main $(LIBS) # -static #img_data.o
+	gcc $(FLAGS) $(FILES) main.o  www_data.o img_data.o -o main $(LIBS) ${PY_LINK} # -static #
 
 ../testSite/www_data__.c:
+	( cd ../tools ; ./pack_dir.py )
+
+../testSite/img_data_img.c:
 	( cd ../tools ; ./pack_dir.py )
 	
 www_data.o: ../testSite/www_data__.c 
 	gcc -O0 -c ../testSite/www_data__.c  -o www_data.o
 	
-#img_data.o: ../testSite/img_data_img.c
-#	gcc -O0 -c ../testSite/img_data_img.c -o img_data.o
+img_data.o: ../testSite/img_data_img.c
+	gcc -O0 -c ../testSite/img_data_img.c -o img_data.o
 
 clean:
 	rm -f *.o main	

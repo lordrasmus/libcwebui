@@ -43,9 +43,12 @@ int main(int argc, char **argv) {
 
 	if (0 == WebserverInit()) {
 
-		WebserverAddBinaryData( data__ );
+		//WebserverAddBinaryData( data__ );
 		//WebserverAddBinaryData( data_img );
-
+		
+		WebserverAddFileDir("", "../testSite/www");
+		ws_add_dir("img", "../testSite/img",0,1);
+		
 		#ifdef WEBSERVER_USE_PYTHON
 
 		WebserverInitPython();

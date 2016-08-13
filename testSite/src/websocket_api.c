@@ -1,9 +1,13 @@
+
+#undef _POSIX_SOURCE
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "webserver_api_functions.h"
 

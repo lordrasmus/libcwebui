@@ -55,6 +55,7 @@ tests/__pycache__/
 SingleMain/main
 SingleMain/main.o
 SingleMain/www_data.o
+SingleMain/img_data.o
 
 fuzzing/adg/
 fuzzing/parse_header/size.txt
