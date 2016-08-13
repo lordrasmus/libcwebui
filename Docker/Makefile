@@ -9,6 +9,8 @@ all: main
 	cp -u ../LinuxMain/*.pem .
 	rm -f testSite/*.c
 	sudo docker build -t lordrasmus/libcwebui .
+
+run: all
 	sudo docker run --rm=true -p 8080:8080 -p 4443:4443 -p 4444:4444 --net=bridge lordrasmus/libcwebui
 
 
