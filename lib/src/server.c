@@ -21,20 +21,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
 
-
-#include "stdafx.h"
-
-#ifdef __GNUC__
 #include "webserver.h"
-#endif
 
 #include "intern/system_file_access.h"
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
 #endif
-
-
 
 
 unsigned char *g_lastmodified;
@@ -271,7 +264,8 @@ int getHttpRequest(socket_info* sockp) {
 		}else{
 			file = getFile((char*) "index.html"); /* Eingabe von zB http://192.168.2.80/ */
 		}
-
+		
+		
 		/* durch Eingabe von zB http://192.168.2.80/test.dat?download runterladen durch den Browser erzwingen */
 		download = getParameter(&s, "download");
 		if ( file && download ) {
@@ -291,20 +285,40 @@ int getHttpRequest(socket_info* sockp) {
 #endif
 #endif
 		if (file != 0) {
-
-			if ( file->TemplateFile == 1){
-				sendHTMLFile(&s, file); /* Schickt die HTML Seite durch die Template Engine */
-			}else{
-				sendFile(&s, file); 	/* Sendet die Daten direkt an den Socket ohne den Pagebuffer zu benutzen */
+			
+			int access_denied = 0;
+			
+			if ( file->auth_only == 1 ) {
+				
+				restoreSession( &s, 1 , 0 );
+				
+				if ( NOT_REGISTERED == checkUserRegistered( &s ) ){
+					access_denied = 1;
+				}
 			}
-
+				
+			if ( access_denied == 1 ){
+				sendAccessDenied(&s); /* nichts gefunden Fehlermeldung senden */
 #ifdef _WEBSERVER_DEBUG_
-			WebServerPrintf ( " ... OK\n" );
+				WebServerPrintf ( " ... file auth Error !!\n" );
 #endif
+				
+			}else{
+
+				if ( file->TemplateFile == 1){
+					sendHTMLFile(&s, file); /* Schickt die HTML Seite durch die Template Engine */
+				}else{
+					sendFile(&s, file); 	/* Sendet die Daten direkt an den Socket ohne den Pagebuffer zu benutzen */
+				}
+
+	#ifdef _WEBSERVER_DEBUG_
+				WebServerPrintf ( " ... OK\n" );
+	#endif
+			}
 		} else {
 			sendFileNotFound(&s); /* nichts gefunden Fehlermeldung senden */
 #ifdef _WEBSERVER_DEBUG_
-					WebServerPrintf ( " ... file not found !!\n" );
+			WebServerPrintf ( " ... file not found !!\n" );
 #endif
 		}
 	}

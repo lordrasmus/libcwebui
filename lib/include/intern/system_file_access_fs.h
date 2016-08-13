@@ -29,7 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 void init_local_file_system( void );
 void free_local_file_system( void );
 
-void add_local_file_system_dir(const char* alias,const char* dir, const int use_cache);
+void add_local_file_system_dir(const char* alias,const char* dir, const int use_cache, const int auth_only );
 
 int local_file_system_read_content( WebserverFileInfo *file );
 int local_file_system_check_file_modified( WebserverFileInfo *file );

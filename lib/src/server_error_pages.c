@@ -1,7 +1,7 @@
 /*
 
 libCWebUI
-Copyright (C) 2012  Ramin Seyed-Moussavi
+Copyright (C) 2016  Ramin Seyed-Moussavi
 
 Projekt URL : http://code.google.com/p/libcwebui/
 
@@ -21,11 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
 
-#include "stdafx.h"
-
-#ifdef __GNUC__
-	#include "webserver.h"
-#endif
+#include "webserver.h"
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -51,6 +47,15 @@ int sendFileNotFound(http_request *s){
 	return 0;
 }
 
+int sendAccessDenied(http_request* s){
+	int length = 0;
+	length += printHTMLChunk( s->socket,"<html><title>403 Forbidden</title><body>");
+	length += printHTMLChunk( s->socket,"<h1>403 Forbidden</h1>");
+	length += printHTMLChunk( s->socket,"<p>Your client does not have permission to access file.</p><hr />");
+	length += printAddressInfo( s->socket);
+	sendHeaderError( s->socket,(char*)"403 Forbidden",length);
+	return 0;
+}
 
 int sendMethodNotAllowed(socket_info *socket){
 	int length = 0;

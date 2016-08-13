@@ -1,7 +1,7 @@
 /*
 
  libCWebUI
- Copyright (C) 2012  Ramin Seyed-Moussavi
+ Copyright (C) 2016  Ramin Seyed-Moussavi
 
  Projekt URL : http://code.google.com/p/libcwebui/
 
@@ -23,21 +23,26 @@
 
 #include "intern/system_file_access.h"
 
-static ws_variable* filepath;				/* suchpfade im localen filesystem */
-static ws_variable* filepath_no_cache;		/* suchpfade im localen filesystem die nicht gecahed werden sollen */
+static ws_variable* file_dirs;
 
+struct dir_info{
+	char* alias;
+	char* dir;
+	
+	int use_ram_cache;
+	int auth_only;
+};
 
 void init_local_file_system( void ){
 
-	filepath = newWSArray("dirs");
-	filepath_no_cache = newWSArray("dirs_no_cache");
+	file_dirs = newWSArray("dirs");
 
 }
 
 void free_local_file_system( void ){
 
-	freeWSVariable(filepath);
-	freeWSVariable(filepath_no_cache);
+	freeWSVariable(file_dirs);
+	#warning free handler noch überarbeiten
 
 }
 
@@ -74,7 +79,6 @@ int local_file_system_check_file_modified( WebserverFileInfo *file ){
 		printf("local_file_system:  file change %s File System -> FS_LOCAL_FILE_SYSTEM ( RAM cached )\n", file->FilePath );
 
 		// Datei ist im RAM cache
-
 		PlatformOpenDataReadStream(file->FilePath);
 
 		// zur sicherheit die länge mit geöffnetem filehandel nochmal lesen
@@ -85,7 +89,6 @@ int local_file_system_check_file_modified( WebserverFileInfo *file ){
 
 		FILE_OFFSET ret = PlatformReadBytes( ( unsigned char*) file->Data, file->DataLenght);
 		if ( ret != file->DataLenght ){
-			//printf("Error: file size mismatch %jd != %jd\n",ret,file->DataLenght);
 			printf("Error: file size mismatch1 %lu != %lu\n",ret,file->DataLenght);
 		}
 
@@ -106,7 +109,6 @@ int local_file_system_read_content( WebserverFileInfo *file ){
 
 		FILE_OFFSET ret = PlatformReadBytes( ( unsigned char*) file->Data, file->DataLenght);
 		if ( ret != file->DataLenght ){
-			//printf("Error: file size mismatch %jd != %jd\n",ret,file->DataLenght);
 			printf("Error: file size mismatch2 %lu != %lu\n",ret,file->DataLenght);
 		}
 
@@ -119,102 +121,110 @@ int local_file_system_read_content( WebserverFileInfo *file ){
 	}
 }
 
-void add_local_file_system_dir(const char* alias, const char* dir, const int use_cache){
+void add_local_file_system_dir(const char* alias, const char* dir, const int use_cache, const int auth_only ){
 
 	ws_variable *tmp;
 	char buffer[1000];
+	
+	struct dir_info* info = WebserverMalloc( sizeof( struct dir_info ) ) ;
 
 	if ( use_cache == 1 ){
-
-		tmp = getWSVariableArray(filepath, alias);
-		if (tmp == 0) {
-			tmp = addWSVariableArray(filepath, alias);
-		}
-
-	}else{
-
-		tmp = getWSVariableArray(filepath_no_cache, alias);
-		if (tmp == 0) {
-			tmp = addWSVariableArray(filepath_no_cache, alias);
-		}
+		info->use_ram_cache = 1;
 	}
-
+	
+	info->auth_only = auth_only;
+	
+	tmp = getWSVariableArray( file_dirs , alias);
+	if (tmp != 0) {
+		LOG( FILESYSTEM_LOG, ERROR_LEVEL, 0, "Error: dir alias %s exists",alias);
+		exit(0);
+	}
+	
+	LOG( FILESYSTEM_LOG, NOTICE_LEVEL, 0, "New dir alias /%s -> %s",alias,dir);
+	
+	tmp = addWSVariableArray( file_dirs , alias);
+	
 	strncpy(buffer, dir, 990);
 	if (buffer[strlen(buffer)] != '/')
 		strcat(buffer, "/");
-	setWSVariableString(tmp, buffer);
+
+	info->dir = WebserverMalloc( strlen( buffer ) + 1 );
+	strcpy( info->dir, buffer);
+	
+	info->alias = WebserverMalloc( strlen( alias ) + 1 );
+	strcpy( info->alias, alias);
+	
+	setWSVariableCustomData(tmp, 0, info);
+	
 }
 
 
-
-static WebserverFileInfo* getFileInformation( const unsigned char *name) {
-	unsigned char name_tmp[1000];
-	ws_variable *tmp_var;
-	WebserverFileInfo *file = 0;
-	char found = 0;
-
-	/*  um ein Zeichen weiterspringen wenn name mit / anfängt */
-	while( name[0] == '/' )
-		name++;
-
-	/* Pfade für Datein die nicht gecached werden sollen */
-	tmp_var = getWSVariableArrayFirst(filepath_no_cache);
+static struct dir_info *search_file_dir ( const unsigned char* name, unsigned char* real_path, int real_path_length ){
+	
+	struct dir_info *dir_tmp = 0;
+	ws_variable*tmp_var = getWSVariableArrayFirst( file_dirs );
+	
+	int found = 0;
+	
 	while (tmp_var != 0) {
+		dir_tmp = tmp_var->val.value_p;
+		
+		real_path[0] = '\0';
+		
 		if (0 == strncmp(tmp_var->name, (char*) name, tmp_var->name_len)) {
-			getWSVariableString(tmp_var, (char*) name_tmp, 1000);
-			if (strlen( (char*) name) > tmp_var->name_len) {
-				strcat( (char*)name_tmp, (char*)(name + tmp_var->name_len));
-				if (PlatformOpenDataReadStream(name_tmp)) {
-					found = 2;
+			
+			if (strlen( (char*) name ) > tmp_var->name_len ) {
+				strncpy( (char*) real_path, dir_tmp->dir, real_path_length );
+				
+				int l = real_path_length - strlen( (char*)real_path );
+			
+				strncat( (char*) real_path, (char*)(name + tmp_var->name_len), l);
+				if (PlatformOpenDataReadStream(real_path)) {
+					found = 1;
 					break;
 				}
 			}
 		}
-		tmp_var = getWSVariableArrayNext(filepath_no_cache);
+		tmp_var = getWSVariableArrayNext( file_dirs );
 	}
-	stopWSVariableArrayIterate(filepath_no_cache);
+	stopWSVariableArrayIterate( file_dirs );
+	
+	if ( found == 1 )
+		return dir_tmp;
+	
+	return 0;
+}
 
-	if ( found == 0 ) {
-		/* Pfade für Datein die gecached werden dürfen */
-		tmp_var = getWSVariableArrayFirst(filepath);
 
-		if (tmp_var == 0) {
-			printf("Keine Suchpfade fuer Datein registriert\n");
-			return 0;
-		}
-
-		while (tmp_var != 0) {
-			if (0 == strncmp(tmp_var->name, (char*) name, tmp_var->name_len)) {
-				getWSVariableString(tmp_var, (char*)name_tmp, 1000);
-				if (strlen( (char*) name) > tmp_var->name_len) {
-					strcat( (char*) name_tmp, (char*)(name + tmp_var->name_len));
-					if (PlatformOpenDataReadStream(name_tmp)) {
-						found = 1;
-						break;
-					}
-				}
-			}
-			tmp_var = getWSVariableArrayNext(filepath);
-		}
-		stopWSVariableArrayIterate(filepath);
-	}
-
-	if (found == 0) {
+static WebserverFileInfo* getFileInformation( const unsigned char *name) {
+	unsigned char name_tmp[1000];
+	struct dir_info* dir = 0;
+	WebserverFileInfo *file = 0;
+	
+	/*  um ein Zeichen weiterspringen wenn name mit / anfängt */
+	while( name[0] == '/' )
+		name++;
+		
+	
+	dir = search_file_dir( name, name_tmp, 1000 );
+	if (dir == 0) {
 		return 0;
 	}
 
 	file = (WebserverFileInfo*) WebserverMalloc ( sizeof ( WebserverFileInfo ) );
 	memset(file, 0, sizeof(WebserverFileInfo));
 
-	if (found == 2) {
+	if ( dir->use_ram_cache == 0 ){
 		file->NoRamCache = 1;
 	}
+	
+	file->auth_only = dir->auth_only;
 
 	copyFilePath(file, (unsigned char*) name_tmp);
 	copyURL(file, name);
 
 	/* tmp_var ist permanent in der liste der prefixe darum pointer direkt nehmen */
-	file->FilePrefix = (unsigned char*) tmp_var->name;
+	file->FilePrefix = (unsigned char*) dir->alias;
 	setFileType(file);
 
 #ifdef _WEBSERVER_FILESYSTEM_CACHE_DEBUG_
@@ -230,8 +240,7 @@ static WebserverFileInfo* getFileInformation( const unsigned char *name) {
 
 		FILE_OFFSET ret = PlatformReadBytes( template_header,  sizeof( template_v1_header ) -1 );
 		if ( ret !=  sizeof( template_v1_header ) -1 ){
-			//printf("Error: file size mismatch %jd != %jd\n",ret, sizeof( template_v1_header ) -1 );
-			printf("Error: file size mismatch3 %lu != %d\n",ret, sizeof( template_v1_header ) -1 );
+			printf("Error: file size mismatch3 %lu != %ld\n",ret, sizeof( template_v1_header ) -1 );
 		}
 
 		if ( 0 == memcmp( template_v1_header, template_header, sizeof( template_v1_header ) -1 ) ){

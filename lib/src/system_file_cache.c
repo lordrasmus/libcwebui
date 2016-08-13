@@ -1,7 +1,7 @@
 /*
 
 libCWebUI
-Copyright (C) 2012  Ramin Seyed-Moussavi
+Copyright (C) 2016  Ramin Seyed-Moussavi
 
 Projekt URL : http://code.google.com/p/libcwebui/
 
@@ -21,7 +21,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
 
-#include "stdafx.h"
 #include "webserver.h"
 
 #include "red_black_tree.h"
@@ -149,6 +148,11 @@ void dumpLoadedFiles(http_request *s) {
 		}
 		
 		if ( wfi->RamCached == 1 )
+			printHTMLChunk(s->socket, "<td>true");
+		else
+			printHTMLChunk(s->socket, "<td>false");
+		
+		if ( wfi->auth_only == 1 )
 			printHTMLChunk(s->socket, "<td>true");
 		else
 			printHTMLChunk(s->socket, "<td>false");

@@ -161,6 +161,8 @@ typedef struct {
 	unsigned char ForceDownload;
 	unsigned char ForceDownloadName[FORCE_DOWNLOAD_NAME_LENGTH];
 
+	unsigned char auth_only;
+
 	unsigned char Modified;
 
 	char* lastmodified;

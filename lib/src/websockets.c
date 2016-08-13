@@ -1,7 +1,7 @@
 /*
 
 libCWebUI
-Copyright (C) 2012  Ramin Seyed-Moussavi
+Copyright (C) 2016  Ramin Seyed-Moussavi
 
 Projekt URL : http://code.google.com/p/libcwebui/
 
@@ -22,7 +22,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "webserver.h"
-
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -211,7 +210,7 @@ int startWebsocketConnection(socket_info* sock) {
 	addSocketByGUID(sock);
 
 	checkSessionCookie(s);
-	restoreSession(s,0);
+	restoreSession(s,0, 1 );
 
 	if (handleWebsocketConnection(WEBSOCKET_SIGNAL_CONNECT, sock->websocket_guid, sock->header->url, 0 ,0 , 0) < 0) {
 		printf("\nConnect fehler\n\n");

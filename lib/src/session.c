@@ -1,7 +1,7 @@
 /*
 
 libCWebUI
-Copyright (C) 2012  Ramin Seyed-Moussavi
+Copyright (C) 2016  Ramin Seyed-Moussavi
 
 Projekt URL : http://code.google.com/p/libcwebui/
 
@@ -21,11 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
 
-#include "stdafx.h"
-
-#ifdef __GNUC__
 #include "webserver.h"
-#endif
 
 #include "stack.h"
 #include "red_black_tree.h"
@@ -328,18 +324,23 @@ char findSessionStore(http_request* s, unsigned char ssl_store) {
 	return false;
 }
 
-void restoreSession(http_request* s,int lock_stores) {
+void restoreSession(http_request* s,int lock_stores, int create_session ) {
 	checkSessionTimeout();
 	if (s->store == 0){	
 		if (s->create_cookie == 0) {
 			if (false == findSessionStore(s, 0)) {
-				createSession(s, 0);
+				if ( create_session == 1){
+					createSession(s, 0);
+				}
 			}
 		} else {
-			createSession(s, 0);
+			if ( create_session == 1){
+				createSession(s, 0);
+			}
 		}
-		if ( lock_stores ) 
+		if ( ( lock_stores ) &&  ( s->store != 0 ) ){
 			lockStore(s->store->vars);
+		}
 	}
 
 #ifdef WEBSERVER_USE_SSL
@@ -347,13 +348,18 @@ void restoreSession(http_request* s,int lock_stores) {
 		if (s->socket->use_ssl == 1) {
 			if (s->create_cookie_ssl == 0) {
 				if (false == findSessionStore(s, 1)) {
-					createSession(s, 1);
+					if ( create_session == 1){
+						createSession(s, 1);
+					}
 				}
 			} else {
-				createSession(s, 1);
+				if ( create_session == 1){
+					createSession(s, 1);
+				}
 			}
-			if ( lock_stores ) 
+			if ( ( lock_stores ) &&  ( s->store_ssl != 0 ) ){
 				lockStore(s->store_ssl->vars);
+			}
 		}
 	}
 #endif	

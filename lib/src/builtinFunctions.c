@@ -1,7 +1,7 @@
 /*
 
 libCWebUI
-Copyright (C) 2012  Ramin Seyed-Moussavi
+Copyright (C) 2016 Ramin Seyed-Moussavi
 
 Projekt URL : http://code.google.com/p/libcwebui/
 
@@ -21,11 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
 
-#include "stdafx.h"
-
-#ifdef __GNUC__
-	#include "webserver.h"
-#endif
+#include "webserver.h"
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -153,7 +149,7 @@ int sessionFunctions ( http_request* s,char* buffer ) {
 #ifdef _WEBSERVER_SESSION_DEBUG_
         WebServerPrintf ( "builtinFunction: Start Session\r\n" );
 #endif
-        restoreSession ( s ,1 );
+        restoreSession ( s ,1, 1 );
 
 #else
         WebServerPrintf ( "builtinFunction: Start Session not AVAILABLE\r\n" );

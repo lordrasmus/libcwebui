@@ -64,6 +64,7 @@ void generateOutputBuffer(socket_info* sock);
 int sendFile(http_request* s, WebserverFileInfo *info);
 
 int sendFileNotFound(http_request* s);
+int sendAccessDenied(http_request* s);
 int sendMethodNotAllowed(socket_info *s);
 int sendMethodBadRequest(socket_info *s);
 int sendMethodBadRequestLineToLong(socket_info *s);

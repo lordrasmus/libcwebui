@@ -38,4 +38,7 @@ void WebserverGenerateGUID(char* buf, int length);
 void setRenderVar   (dummy_handler* s,char* name,char* text) FUNC_DEPRICATED( "use ws_set_render_var" ) ;
 dummy_var* getRenderVar(dummy_handler* s, const char* name,WS_VAR_FLAGS flags)  FUNC_DEPRICATED( "use ws_get_render_var" ) ;
 
+void WebserverAddFileDir(const char* alias,const char* dir) FUNC_DEPRICATED( "use ws_add_dir" );
+void WebserverAddFileDirNoCache(const char* alias,const char* dir) FUNC_DEPRICATED( "use ws_add_dir" );
+
 #endif

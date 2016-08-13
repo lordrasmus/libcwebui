@@ -1,7 +1,7 @@
 /*
 
 libCWebUI
-Copyright (C) 2012  Ramin Seyed-Moussavi
+Copyright (C) 2016  Ramin Seyed-Moussavi
 
 Projekt URL : http://code.google.com/p/libcwebui/
 
@@ -30,7 +30,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *              the pointer is passed to user funtions in the DEFINE_FUNCTION macro as s
  */
 
-#include "stdafx.h"
 
 #include "webserver.h"
 
@@ -422,14 +421,11 @@ void RegisterWebsocketHandler(const char* url,websocket_api_handler f,const char
 	register_websocket_handler(url,f,file,line);
 }
 
-
-void WebserverAddFileDir(const char* alias,const char* dir){
-	add_local_file_system_dir(alias,dir,1);
+void ws_add_dir(const char* alias,const char* dir, const int use_cache, const int use_auth ){
+	add_local_file_system_dir(alias,dir,use_cache,use_auth);
 }
 
-void WebserverAddFileDirNoCache(const char* alias,const char* dir){
-	add_local_file_system_dir(alias,dir,0);
-}
+
 
 void WebserverAddBinaryData(const unsigned char* data){
 	read_binary_data( data );
@@ -511,7 +507,7 @@ void WebserverSetPostHandler( post_handler handler ){
  *
  */
 
- void ws_generate_guid(char* buf, int length){
+void ws_generate_guid(char* buf, int length){
 	generateGUID(buf,length);
 }
 

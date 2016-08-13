@@ -51,7 +51,7 @@ void 		initSessions(void);
 void 		freeSessions(void);
 
 void 		checkSessionCookie(http_request* s);
-void        restoreSession(http_request* s,int lock_stores);
+void        restoreSession(http_request* s,int lock_stores, int create_session );
 
 
 

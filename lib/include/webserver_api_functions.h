@@ -320,9 +320,13 @@ int WebsocketSendCloseFrame(const char* guid);
 
 /*
       Dir als /<alias>/ im Webserver einblenden
+      
+      use_cache = files im ram cachen
+      use_auth  = nur mit authentifizierung sichtbar
 */
-void WebserverAddFileDir(const char* alias,const char* dir);
-void WebserverAddFileDirNoCache(const char* alias,const char* dir);
+void ws_add_dir(const char* alias,const char* dir, const int use_cache, const int use_auth );
+
+
 
 void WebserverAddBinaryData(const unsigned char* data);
 
@@ -343,6 +347,7 @@ void WebserverAddTemplateIgnoreFilePostfix(const char* postfix);
 
 /* Urls die nicht im RAM gecached werden soll */
 void WebserverAddNoRamCacheFile( const char* url );
+
 
 /* Urls die nicht sichtbar sein sellen */
 void WebserverAddBlockedFile( const char* url );
