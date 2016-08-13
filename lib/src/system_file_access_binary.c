@@ -131,8 +131,14 @@ static const unsigned char* read_file( const unsigned char *alias, const unsigne
 	file->RamCached = 1;
 	file->FilePrefix = alias;
 
+	
 	copyFilePath(file, name);
-	copyURL(file, name);
+	
+	char tmp[200];
+	snprintf(tmp,200,"%s%s",alias,name);
+	tmp[199] = '\0';
+	copyURL(file, tmp);
+
 	setFileType(file);
 
 	if ( *compressed_p > 0 ){
