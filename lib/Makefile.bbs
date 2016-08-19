@@ -1,6 +1,6 @@
 SHELL=/bin/bash
 
-STD_FLAGS= -Wno-conversion # -fsanitize=address
+STD_FLAGS= -Wno-conversion -Wno-date-time # -fsanitize=address
 
 EXTRA_INCLUDE= -I. -Iinclude -Iplatform/include -Ithird_party/src/rb_tree -Ithird_party/src/simclist -Ithird_party/src/is_utf8
 EXTRA_INCLUDE+=-fvisibility=hidden

@@ -8,3 +8,19 @@ allerdings kan der status da eigentlich nicht rauskommen
 2015-09-07_12:44:14.50307    ->   File: /mnt/entwicklung/entwicklung/Default/IP67/TRUNK/BBS_plugins/Webserver_TRUNK/libcwebui/lib/src/system_sockets.c, Line :527
 2015-09-07_12:44:14.52267 Webserver: sendData :                          ERROR   : ( 34 ) : send error not handled 34
 2015-09-07_12:44:14.52286    ->   File: /mnt/entwicklung/entwicklung/Default/IP67/TRUNK/BBS_plugins/Webserver_TRUNK/libcwebui/lib/src/system_sockets.c, Line :527
+
+
+
+/*
+
+	Hat was mit nem sig pipe zu tun
+
+Webserver: handleWebsocket : src/websocket_handler.c 90                ERROR   : ( 19 ) : Darf hier niemals ankommen  status: 4  send_bytes: 0  to_send: 336
+Webserver: WebserverSLLSendNonBlocking : ssl/openssl.c 478             ERROR   : ( 19 ) : Unhandled SSL Error ( 5 ) error:00000000:lib(0):func(0):reason(0)
+Webserver: handleWebsocket : src/websocket_handler.c 90                ERROR   : ( 19 ) : Darf hier niemals ankommen  status: 4  send_bytes: 0  to_send: 336
+Webserver: WebserverSLLSendNonBlocking : ssl/openssl.c 478             ERROR   : ( 19 ) : Unhandled SSL Error ( 5 ) error:00000000:lib(0):func(0):reason(0)
+Webserver: handleWebsocket : src/websocket_handler.c 90                ERROR   : ( 19 ) : Darf hier niemals ankommen  status: 4  send_bytes: 0  to_send: 336
+Webserver: WebserverSLLSendNonBlocking : ssl/openssl.c 478             ERROR   : ( 19 ) : Unhandled SSL Error ( 5 ) error:00000000:lib(0):func(0):reason(0)
+
+
+*/
