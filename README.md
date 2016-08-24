@@ -1,6 +1,7 @@
 # libcwebui
 
 [![Build Status](https://travis-ci.org/lordrasmus/libcwebui.svg?branch=master)](https://travis-ci.org/lordrasmus/libcwebui)
+[![Scan Status](https://scan.coverity.com/projects/7148/badge.svg)](https://scan.coverity.com/projects/lordrasmus-libcwebui)
 
 compact webserver library for WebUIs
 
