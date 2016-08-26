@@ -8,7 +8,8 @@ notifications:
    email: 
       - lordrasmus@gmail.com
 
-script:  make -C lib rebuild
+script:  
+  - ./tools/travis-sonarqube.sh make -C lib rebuild
 
 compiler:
   - clang
@@ -25,3 +26,4 @@ addons:
 
      build_command: make -C lib rebuild
      branch_pattern: master
+
