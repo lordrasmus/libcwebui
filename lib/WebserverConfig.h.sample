@@ -89,20 +89,20 @@
 #define WEBSERVER_USE_SESSIONS
 #define WEBSERVER_SESSION_TIMEOUT	300
 
-//#define _WEBSERVER_DEBUG_                         // Debugausgaben f��r den Webserver aktivieren
-//#define _WEBSERVER_MEMORY_DEBUG_                  // Debugausgaben f��r den Webserver Speichermanager aktivieren
-//#define _WEBSERVER_PARAMETER_DEBUG_               // Debugausgaben f��r den Webseiten Parameter aktivieren
-//#define _WEBSERVER_TEMPLATE_DEBUG_                // Debugausgaben f��r die Webserver Template Engine aktivieren
-//#define _WEBSERVER_FILESYSTEM_DEBUG_              // Debugausgaben f��r die Webserver Filesystem aktivieren
-//#define _WEBSERVER_FILESYSTEM_CACHE_DEBUG_        // Debugausgaben f��r die Webserver Filesystem Cache aktivieren
-//#define _WEBSERVER_HEADER_DEBUG_                	// Debugausgaben f��r die HTTP Header aktivieren
-//#define _WEBSERVER_BODY_DEBUG_                	// Debugausgaben f��r die HTTP Bodys aktivieren
-//#define _WEBSERVER_COOKIE_DEBUG_                	// Debugausgaben f��r die HTTP Cookies aktivieren
-//#define _WEBSERVER_SESSION_DEBUG_                	// Debugausgaben f��r die HTTP Session aktivieren
+//#define _WEBSERVER_DEBUG_                         // Debugausgaben für den Webserver aktivieren
+//#define _WEBSERVER_MEMORY_DEBUG_                  // Debugausgaben für den Webserver Speichermanager aktivieren
+//#define _WEBSERVER_PARAMETER_DEBUG_               // Debugausgaben für den Webseiten Parameter aktivieren
+//#define _WEBSERVER_TEMPLATE_DEBUG_                // Debugausgaben für die Webserver Template Engine aktivieren
+//#define _WEBSERVER_FILESYSTEM_DEBUG_              // Debugausgaben für die Webserver Filesystem aktivieren
+//#define _WEBSERVER_FILESYSTEM_CACHE_DEBUG_        // Debugausgaben für die Webserver Filesystem Cache aktivieren
+//#define _WEBSERVER_HEADER_DEBUG_                	// Debugausgaben für die HTTP Header aktivieren
+//#define _WEBSERVER_BODY_DEBUG_                	// Debugausgaben für die HTTP Bodys aktivieren
+//#define _WEBSERVER_COOKIE_DEBUG_                	// Debugausgaben für die HTTP Cookies aktivieren
+//#define _WEBSERVER_SESSION_DEBUG_                	// Debugausgaben für die HTTP Session aktivieren
 //#define _WEBSERVER_SOCKET_DEBUG_		5
-//#define _WEBSERVER_CONNECTION_DEBUG_              // Debugausgaben f��r die HTTP Connections aktivieren
-//#define _WEBSERVER_CONNECTION_SEND_DEBUG_         // Debugausgaben f��r die HTTP Connection Sende Routinen aktivieren
-//#define _WEBSERVER_CACHE_DEBUG_					// Debugausgaben f��r die HTTP Cache Mechanismus aktivieren
+//#define _WEBSERVER_CONNECTION_DEBUG_              // Debugausgaben für die HTTP Connections aktivieren
+//#define _WEBSERVER_CONNECTION_SEND_DEBUG_         // Debugausgaben für die HTTP Connection Sende Routinen aktivieren
+//#define _WEBSERVER_CACHE_DEBUG_					// Debugausgaben für die HTTP Cache Mechanismus aktivieren
 //#define _WEBSERVER_HANDLER_DEBUG_					// Debugausgaben fuer die Socket Handler
 
 

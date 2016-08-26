@@ -24,9 +24,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 /******************************************************************************************
 * buildinFunctions
-* \brief Definiert Abfragefunktionen für Eigenschaften des Webservers für den Präprozessor.
+* \brief Definiert Abfragefunktionen fÃ¼r Eigenschaften des Webservers fÃ¼r den PrÃ¤prozessor.
 *
-* Mithilfe der Präprozessordirektive {b:<Funktionsname>} können die folgenden Eigenschaften
+* Mithilfe der PrÃ¤prozessordirektive {b:<Funktionsname>} kÃ¶nnen die folgenden Eigenschaften
 * des Webservers abgefragt werden
 *	compiler: Compiler und dessen Versionsnummer, mit dem der Webserver kompiliert wurde
 *	memoryInfos: Gibt die Anzahl der geladenen Dateien und den von Webserver belegten RAM
@@ -39,14 +39,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 *	server_port: Der Standardport des Webservers
 *	server_ssl_port: Der SSL Port des Webservers
 *	dumpSessionStore: Gibt eine Tabelle mit allen SessionStore Informationen aus
-* Zusätzlich sind folgende Konditionen für die if-Abfrage vorhanden:
+* ZusÃ¤tzlich sind folgende Konditionen fÃ¼r die if-Abfrage vorhanden:
 *	is_user_registered: Ist der Benutzer angemeldet (normal oder SSL)
-*	is_user_registered_ssl: Ist der Benutzer über SSL angemeldet
-*	is_ssl_active: Wird die Verbindung über SSL verschlüsselt
+*	is_user_registered_ssl: Ist der Benutzer Ã¼ber SSL angemeldet
+*	is_ssl_active: Wird die Verbindung Ã¼ber SSL verschlÃ¼sselt
 *	is_ssl_available: Ist SSL auf dem Webserver vorhanden
-*	is_false: Liefert immer false zurück
-*	is_true: Liefert immer true zurück
-* Für den Rückgabewert alle Konditionen gilt: true = 1, false = -1, Kondition gibts es nicht = -2
+*	is_false: Liefert immer false zurÃ¼ck
+*	is_true: Liefert immer true zurÃ¼ck
+* FÃ¼r den RÃ¼ckgabewert alle Konditionen gilt: true = 1, false = -1, Kondition gibts es nicht = -2
 ******************************************************************************************/
 
 #ifndef _BUILTIN_FUNCTION_

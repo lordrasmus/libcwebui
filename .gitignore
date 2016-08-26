@@ -61,3 +61,8 @@ fuzzing/adg/
 fuzzing/parse_header/size.txt
 
 testSite/www_data__.c
+
+.sonar/
+build-wrapper-linux-x86.zip
+build-wrapper-linux-x86/
+bw-outputs/

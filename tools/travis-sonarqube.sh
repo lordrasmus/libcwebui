@@ -5,7 +5,7 @@
 # Use it as a wrapper to your build command, eg: ./travis-sonarqube.sh make VERBOSE=1
 
 # On Mac OSX or with pull requests, you don't want to run SonarQube but to exec the build command directly.
-if [ ${TRAVIS_OS_NAME} != 'linux' ] || [ ${TRAVIS_PULL_REQUEST} != 'false' ] 
+if [ "${TRAVIS_OS_NAME}" != 'linux' ] || [ "${TRAVIS_PULL_REQUEST}" != 'false' ] 
 then
   exec "$@"
 fi
@@ -39,4 +39,4 @@ installBuildWrapper
 
 # and finally execute the actual SonarQube analysis (the SONAR_TOKEN is set from the travis web interface, to not expose it)
 # See https://docs.travis-ci.com/user/sonarqube/ for more info on tokens
-sonar-scanner -Dsonar.host.url=https://sonarqube.com -Dsonar.login=$SONAR_TOKEN
+sonar-scanner -e -Dsonar.host.url=https://sonarqube.com -Dsonar.login=$SONAR_TOKEN 
