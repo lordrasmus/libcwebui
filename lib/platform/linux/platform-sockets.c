@@ -52,15 +52,19 @@ int select_listen_max;
 *                                                             *
 **************************************************************/
 
-void	PlatformInitNetwork ( void ) {}
+void	PlatformInitNetwork ( void ) {
+	// Intentionally unimplemented... function needed for winsock
+}
 
-void	PlatformEndNetwork ( void ) {}
+void	PlatformEndNetwork ( void ) {
+	// Intentionally unimplemented... function needed for winsock
+}
 
 int		PlatformSetNonBlocking ( int socket )
 {
-    long arg;
+    long arg = fcntl ( socket, F_GETFL, NULL )  ;
     /* Set non-blocking */
-    if ( ( arg = fcntl ( socket, F_GETFL, NULL ) ) < 0 )
+    if ( arg < 0 )
     {
         LOG ( CONNECTION_LOG,ERROR_LEVEL,socket, "Error fcntl(..., F_GETFL) (%s)", strerror ( errno ) );
         exit ( 0 );
@@ -76,9 +80,9 @@ int		PlatformSetNonBlocking ( int socket )
 
 int		PlatformSetBlocking ( int socket )
 {
-    long arg;
+    long arg = fcntl ( socket, F_GETFL, NULL );
     /* Set blocking */
-    if ( ( arg = fcntl ( socket, F_GETFL, NULL ) ) < 0 )
+    if ( arg < 0 )
     {
         LOG ( CONNECTION_LOG,ERROR_LEVEL,socket, "Error fcntl(..., F_GETFL) (%s)", strerror ( errno ) );
         exit ( 0 );
@@ -189,22 +193,13 @@ int		PlatformSelect ( void )
 {
     int ret;
 
-    /*
-	printf("Warte auf select .. ");
-    fflush(stdout);
-	*/
-
     ret = select ( select_listen_max + 1, &read_fds, &write_fds, NULL, NULL );
 
     if ( ret == -1 )
     {
         LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"select error %d",ret );
     }
-    else
-    {
-        /*printf("OK\n"); */
-    }
-
+    
     return ret;
 }
 
@@ -242,10 +237,6 @@ int		PlatformAccept(socket_info* sock, unsigned int *port)
 #ifdef WEBSERVER_USE_IPV6
         if ( inet_ntop ( AF_INET6, &clientaddr.sin6_addr, sock->ip_str, sizeof ( sock->ip_str ) ) )
         {
-            /*
-		if(0==IN6_IS_ADDR_V4MAPPED(&clientaddr))	ipv6 = 0;
-            	if(0==IN6_IS_ADDR_V4COMPAT(&clientaddr))	ipv6 = 0;
-	    */
             if ( clientaddr.sin6_addr.__in6_u.__u6_addr32[0] == 0 )
             {
                 if ( clientaddr.sin6_addr.__in6_u.__u6_addr32[1] == 0 )
@@ -256,11 +247,7 @@ int		PlatformAccept(socket_info* sock, unsigned int *port)
                     }
                 }
             }
-            /*if(sock->v6_client == 0){
-            	printf("IPv4 CLient ");
-            }else{
-            	printf("IPv6 CLient ");
-            }*/
+         
 #else
 		*port = clientaddr.sin_port;
 		ret2 = (char*)inet_ntop ( AF_INET, &clientaddr.sin_addr, sock->client_ip_str, sizeof ( sock->client_ip_str ) );
@@ -277,7 +264,8 @@ int		PlatformAccept(socket_info* sock, unsigned int *port)
 
 int     PlatformSendSocket ( int socket, const unsigned char *buf, SIZE_TYPE len, int flags )
 {
-    int ret,ret2;
+    int ret;
+    int ret2;
 	SIZE_TYPE send_bytes = 0;
 
 	if ( len > INT_MAX ){
@@ -293,7 +281,6 @@ int     PlatformSendSocket ( int socket, const unsigned char *buf, SIZE_TYPE len
             ret2 = errno;
             if ( ( ret2 == EWOULDBLOCK ) || ( ret2 == EAGAIN ) )
             {
-                /*tx_thread_sleep(100); */
                 continue;
             }
             else
@@ -310,14 +297,14 @@ int     PlatformSendSocket ( int socket, const unsigned char *buf, SIZE_TYPE len
 
 int     PlatformSendSocketNonBlocking ( int socket, const unsigned char *buf, SIZE_TYPE len, int flags )
 {
-    int ret,ret2;
+    int ret;
+    int ret2;
     ret = send ( socket,buf,len,flags );
     if ( ret == -1 )
     {
         ret2 = errno;
         if ( ( ret2 == EWOULDBLOCK ) || ( ret2 == EAGAIN ) )
         {
-            /*LOG ( CONNECTION_LOG,ERROR_LEVEL,socket,"EWOULDBLOCK | EAGAIN","" );*/
             return CLIENT_SEND_BUFFER_FULL;
         }
         if ( errno == ECONNRESET )

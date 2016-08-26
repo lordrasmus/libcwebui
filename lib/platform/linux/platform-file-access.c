@@ -53,7 +53,8 @@ int PlatformOpenDataReadStream( const unsigned char* name ) {
 	struct stat st;
 
 	g_fp = fopen( ( char* ) name, "rb");
-	if (g_fp == NULL) return false;
+	if (g_fp == NULL) 
+		return false;
 
 	/* Auf normale Datei Prüfen */
 	if ( 0 != fstat(fileno(g_fp), &st) ){
@@ -101,29 +102,25 @@ void PlatformSeekToPosition(long position) {
 		printf("fseek error : %m\n");
 }
 
-/*long WebserverGetDataStreamPosition(void) {
-	long ret = ftell(g_fp);
-	if ( ret < 0 ){
-		printf("WebserverGetDataStreamPosition: ret ( %d ) < 0 \n",ret );
-	}
-	return ret;
-}*/
 
-/*	 struct stat {
+#if 0
+struct stat {
  off_t     st_size;    // total size, in bytes
  time_t    st_atime;   // time of last access
  time_t    st_mtime;   // time of last modification
  time_t    st_ctime;   // time of last status change
  };
- */
+#endif
 
 int PlatformGetFileInfo(WebserverFileInfo* file, int* time_changed, int *new_size) {
 
 	struct stat st;
+	struct tm ts_var;
 	struct tm *ts;
 	unsigned int len;
 	char* buffer;
-	__time_t f_sec,f_nsec;
+	__time_t f_sec;
+	__time_t f_nsec;
 
 	if ( 0 > stat( (char*) file->FilePath, &st) ){
 		return 0;
@@ -133,15 +130,13 @@ int PlatformGetFileInfo(WebserverFileInfo* file, int* time_changed, int *new_siz
 	f_sec = st.st_mtim.tv_sec;
 	f_nsec = st.st_mtim.tv_nsec;
 #else
-	f_sec = st.st_mtime;
-/*	f_nsec = st.st_atimensec;*/
-	f_nsec = st.st_atime;
+	f_sec  = st.st_mtime;
+	f_nsec = st.st_mtimensec;
 #endif
 
 	*new_size = st.st_size;
 	*time_changed = 0;
 
-	/* st.st_mtim.tv_nsec; */
 	if ( ( file->last_mod_sec != (unsigned long int)f_sec) || ( file->last_mod_nsec != (unsigned long int)f_nsec) ){
 
 		*time_changed = 1;
@@ -152,7 +147,7 @@ int PlatformGetFileInfo(WebserverFileInfo* file, int* time_changed, int *new_siz
 
 
 		buffer = (char *) WebserverMalloc( 150 );
-		ts = localtime(&st.st_mtime);
+		ts = gmtime_r( &st.st_mtime, &ts_var);
 		len = getHTMLDateFormat(buffer, ts->tm_mday, ts->tm_mon, ts->tm_year + 1900, ts->tm_hour, ts->tm_min);
 
 		if (file->lastmodified == 0) {
