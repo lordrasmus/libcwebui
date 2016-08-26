@@ -71,7 +71,7 @@ void	PlatformFree( void *mem )
     free(mem);
 //    #warning "Noch nicht implementiert"
 }
-void	WebserverPrintMemInfo( void ){}			// gibt auf dem DSTni verfügbaren Arbeitspeicher aus
+void	WebserverPrintMemInfo( void ){}			// gibt auf dem DSTni verfÃ¼gbaren Arbeitspeicher aus
 
 
 

@@ -47,7 +47,7 @@ extern "C" {
 
 /************************************************************************************************
 *                                                                                               *
-* 			Macro f��r die initialisierung eines Plugins                                         *
+* 			Macro für die initialisierung eines Plugins                                         *
 *                                                                                               *
 *			die erzeugten Funtionen werden direkt mit dlsym geladen und kollidieren             *
 *			daher nicht wenn mehrer Plugins geladen werden                                      *
@@ -71,7 +71,7 @@ extern "C" {
 
 /***********************************************************************************************
 *                                                                                              *
-*           Macros f��r die Definition und Registrierung von Plugin Funktionen                  *
+*           Macros für die Definition und Registrierung von Plugin Funktionen                  *
 *                                                                                              *
 ************************************************************************************************/
 
@@ -104,7 +104,7 @@ extern "C" {
 
 /***********************************************************************************************
 *                                                                                              *
-*           Macros f��r die Definition und Registrierung von Plugin Conditions                  *
+*           Macros für die Definition und Registrierung von Plugin Conditions                  *
 *                                                                                              *
 ************************************************************************************************/
 
@@ -129,7 +129,7 @@ extern "C" {
 
 /***********************************************************************************************
 *                                                                                              *
-*           Macros f��r die Definition und Registrierung von Plugin Websocket Handlern          *
+*           Macros für die Definition und Registrierung von Plugin Websocket Handlern          *
 *                                                                                              *
 ************************************************************************************************/
 
@@ -154,7 +154,7 @@ extern "C" {
 
 /***********************************************************************************************
 *                                                                                              *
-*           Typedefinitionen und Prototypen f��r Plugin Funktionens                             *
+*           Typedefinitionen und Prototypen für Plugin Funktionens                             *
 *                                                                                              *
 ************************************************************************************************/
 
