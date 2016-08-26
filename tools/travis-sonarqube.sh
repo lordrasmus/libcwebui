@@ -27,7 +27,7 @@ installSonarQubeScanner() {
   export SONAR_SCANNER_OPTS="-server"
 }
 installBuildWrapper() {
-  rm build-wrapper-linux-x86.zip
+  rm -rf build-wrapper-linux-x86.zip build-wrapper-linux-x86
   wget -q http://sonarqube.com/static/cpp/build-wrapper-linux-x86.zip
   unzip build-wrapper-linux-x86.zip
 }
