@@ -9,7 +9,8 @@ notifications:
       - lordrasmus@gmail.com
 
 script:  
-  - ./tools/travis-sonarqube.sh make -C lib rebuild
+#  - ./tools/travis-sonarqube.sh make -C lib rebuild
+  - make -C lib rebuild
 
 compiler:
   - clang
