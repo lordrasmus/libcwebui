@@ -1,32 +1,48 @@
 
-AFL=../../afl-2.10b
+AFL=afl-*
 
 all: main.gcc main.afl.clang
 
 clean:
 	rm -f main.gcc main.afl.clang
 
+afl-*/afl-showmap: afl-*/afl-analyze.c
+	( cd afl-*; make )
+
+afl-*/llvm_mode/afl-clang-fast: afl-*/afl-showmap
+	( cd afl-*/llvm_mode; make )
+
+afl-*/afl-analyze.c: afl-latest.tgz
+	tar -xaf afl-latest.tgz
+
+afl-latest.tgz: 
+	wget http://lcamtuf.coredump.cx/afl/releases/afl-latest.tgz
+	
+
 CLANG_FLAGS= -fno-omit-frame-pointer  ${FLAGS}
 
 LIBS=-lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
 
-main.gcc: ${FILES} main.c
+main.gcc: ${FILES} main.c afl-*/llvm_mode/afl-clang-fast
 	gcc ${FLAGS} main.c ${FILES} -o main.gcc ${LIBS}
 
-main.afl.clang: ${FILES} main.c
+main.afl.clang: ${FILES} main.c 
 	$(AFL)/afl-clang-fast -DAFL_PER -O2 ${CLANG_FLAGS}  main.c ${FILES} -o main.afl.clang -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
 
 
-
+run: export AFL_SKIP_CPUFREQ=1
 run:
 	$(AFL)/afl-fuzz -M fuzzer01 -i input -o output -- $$(pwd)/main.afl.clang
 
+run_slave1: export AFL_SKIP_CPUFREQ=1
 run_slave1:
 	$(AFL)/afl-fuzz -S fuzzer02 -i input -o output -- $$(pwd)/main.afl.clang
 
+run_slave2: export AFL_SKIP_CPUFREQ=1
 run_slave2:
 	$(AFL)/afl-fuzz -S fuzzer03 -i input -o output -- $$(pwd)/main.afl.clang
 
+run_slave3: export AFL_SKIP_CPUFREQ=1
 run_slave3:
 	$(AFL)/afl-fuzz -S fuzzer04 -i input -o output -- $$(pwd)/main.afl.clang
 

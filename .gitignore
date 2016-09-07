@@ -66,3 +66,6 @@ testSite/www_data__.c
 build-wrapper-linux-x86.zip
 build-wrapper-linux-x86/
 bw-outputs/
+
+fuzzing/parse_header/afl-*
+logs

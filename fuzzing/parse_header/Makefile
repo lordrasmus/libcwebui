@@ -2,8 +2,9 @@
 OPTS= -DLINUX -std=c99
 #-O2
 
-FLAGS=-I../../lib/ -I../../lib/include/ -I../../lib/include/intern/ -I../../lib/third_party/src/simclist/ -I../../lib/third_party/src/rb_tree/ \
-	-I../../lib/platform/include/ ${OPTS}
+FLAGS=-I../../lib/ -I../../lib/include/ -I../../lib/include/intern/ -I../../lib/third_party/src/simclist/ \
+	-I../../lib/third_party/src/rb_tree/ -I../../lib/platform/include/ -I../../lib/third_party/src/is_utf8/ \
+	${OPTS} $$(python2.7-config --cflags)  $$(python2.7-config --ldflags)
 
 FILES=../../lib/src/convert.c ../../lib/src/variable_store.c ../../lib/src/header_parser.c ../../lib/src/system_memory.c ../../lib/platform/linux/system-unix.c \
 	../../lib/third_party/src/simclist/simclist.c ../../lib/src/utils.c ../../lib/src/server_chunk_functions.c ../../lib/src/variable.c \
@@ -17,7 +18,9 @@ FILES=../../lib/src/convert.c ../../lib/src/variable_store.c ../../lib/src/heade
 	../../lib/src/system.c ../../lib/src/websocket_handler.c ../../lib/src/server.c ../../lib/src/system_file_access.c ../../lib/src/system_file_access_fs.c \
 	../../lib/src/system_file_access_wnfs.c ../../lib/src/system_file_cache.c ../../lib/src/system_file_access_utils.c \
 	../../lib/src/builtinFunctions.c ../../lib/third_party/src/miniz/tinfl.c ../../lib/src/engine.c ../../lib/src/file_manager.c \
-	../../lib/src/engine_functions.c ../../lib/src/engine_if.c ../../lib/src/engine_tags.c
+	../../lib/src/engine_functions.c ../../lib/src/engine_if.c ../../lib/src/engine_tags.c \
+	../../lib/third_party/src/is_utf8/is_utf8.c \
+	../../lib/python/py_api_functions.c ../../lib/python/py_plugin.c ../../lib/python/py_utils.c
 
 include ../Makefile.afl_inc
 
