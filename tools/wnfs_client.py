@@ -79,7 +79,8 @@ def main_loop( ip ):
 				#exit(1)
 
 			if not os.path.exists( os.path.dirname ( file_path ) ):
-				os.system("mkdir -p " + os.path.dirname ( file_path ))
+				#os.system("mkdir -p " + os.path.dirname ( file_path ))
+				os.makedirs( os.path.dirname ( file_path ) )
 
 			if not ( l == len( data ) ):
 				 raise NameError('File incomplete')
