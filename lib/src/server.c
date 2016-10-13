@@ -208,6 +208,12 @@ int getHttpRequest(socket_info* sockp) {
 		return 0;
 	}
 
+	if (s.header->method == HTTP_OPTIONS) {
+		sendPreflightAllowed(sockp);
+		endHTTPRequest(&s);
+		return 0;
+	}
+
 	if (s.header->error != 0) {
 		sendMethodBadRequest(sockp);
 		endHTTPRequest(&s);

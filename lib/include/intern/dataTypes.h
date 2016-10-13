@@ -196,6 +196,8 @@ typedef struct {
 	char *Host;
 	char *HostName;
 	char *Origin;
+	char *Access_Control_Request_Method;
+	char *Access_Control_Request_Headers;
 	char isHttp1_1;
 
 #ifdef WEBSERVER_USE_WEBSOCKETS

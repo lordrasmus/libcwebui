@@ -69,6 +69,10 @@ void addConnectionStatusLines(socket_info* socket) {
 	} else {
 		printHeaderChunk(socket, "Connection: close\r\n");
 	}
+
+	if ( socket->header->Origin != 0 )
+		printHeaderChunk(socket, "Access-Control-Allow-Origin: %s\r\n",socket->header->Origin);
+
 }
 
 void addCacheControlLines(http_request* s, WebserverFileInfo *info) {
@@ -360,6 +364,24 @@ void addSessionCookies(http_request* s,WebserverFileInfo *info){
 
 	#endif
 #endif
+}
+
+
+
+int sendPreflightAllowed(socket_info *sock) {
+
+	printHeaderChunk( sock, "HTTP/1.1 204 No Content\r\n");
+	printHeaderChunk( sock, "Server: %s\r\n", "libCWebUI");
+	if ( sock->header->Origin != 0 )
+		printHeaderChunk( sock, "Access-Control-Allow-Origin: %s\r\n",sock->header->Origin);
+	if ( sock->header->Access_Control_Request_Method != 0 )
+		printHeaderChunk( sock, "Access-Control-Allow-Methods: %s\r\n",sock->header->Access_Control_Request_Method);
+	if ( sock->header->Access_Control_Request_Headers != 0 )
+		printHeaderChunk( sock, "Access-Control-Allow-Headers: %s\r\n",sock->header->Access_Control_Request_Headers);
+
+	printHeaderChunk( sock, "\r\n"); /* HTTP Header beenden */
+
+	return 1;
 }
 
 /*

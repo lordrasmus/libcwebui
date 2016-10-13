@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define HTTP_UNKNOWN_METHOD 0
 #define HTTP_POST 1
 #define HTTP_GET 2
+#define HTTP_OPTIONS 3
 
 #define MULTIPART_FORM_DATA						1
 #define APPLICATION_X_WWW_FORM_URLENCODED		2

@@ -729,6 +729,16 @@ void WebserverResetHttpRequestHeader(HttpRequestHeader *header) {
 		header->Content_Type = 0;
 	}
 
+	if (header->Access_Control_Request_Method != 0) {
+		WebserverFree(header->Access_Control_Request_Method);
+		header->Access_Control_Request_Method = 0;
+	}
+
+	if (header->Access_Control_Request_Headers != 0) {
+		WebserverFree(header->Access_Control_Request_Headers);
+		header->Access_Control_Request_Headers = 0;
+	}
+
 
 #ifdef WEBSERVER_USE_WEBSOCKETS
 	if (header->SecWebSocketKey1 != 0) {

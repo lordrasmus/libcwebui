@@ -351,6 +351,46 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 		return 0;
 	}
 
+	if ( ( header->method == 0 ) && (!strncmp((char*) line, "OPTIONS ", 8)) ) {
+		header->method = HTTP_OPTIONS;
+
+		pos = stringfind(&line[9], "?");
+		if (pos == 0) /* keine parameter */
+		{
+			pos = stringfind(&line[9], " ");
+			header->url = (char *) WebserverMalloc( pos + 1 );
+			Webserver_strncpy((char*) header->url, pos + 1, (char*) &line[9], pos); /* -4 wegen dem GET am anfang */
+		} else /* mit parametern */
+		{
+			*c_pos = '\0';
+			//printf("%s\n",c_pos);
+			//fflush( stdout );
+
+			header->url = (char *) WebserverMalloc( pos + 1 );
+			Webserver_strncpy((char*) header->url, pos + 1, (char*) &line[9], pos); /* -4 wegen dem GET am anfang */
+
+			char* start = ( &line[9] ) + pos + 1;
+			int l = c_pos - start;
+			recieveParameterFromGet(start , header, l);
+
+			*c_pos = ' ';
+		}
+		printf("%s\n",header->url);
+
+		url_sanity_check( header );
+
+		if ( header->error == 1 ){
+			return -1;
+		}
+
+
+#if _WEBSERVER_CONNECTION_DEBUG_ > 3
+		LOG(CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"%s",line);
+#endif
+
+		return 0;
+	}
+
 	if ( header->method == 0 ){
 		header->error = 1;
 		return -1;
@@ -424,6 +464,9 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 
 		return 0;
 	}
+
+	CHECK_HEADER_LINE("Access-Control-Request-Method: ",Access_Control_Request_Method )
+	CHECK_HEADER_LINE("Access-Control-Request-Headers: ",Access_Control_Request_Headers )
 
 	CHECK_HEADER_LINE("If-Modified-Since: ", If_Modified_Since) /* Wed, 12 Dec 2007 13:13:08 GMT */
 
