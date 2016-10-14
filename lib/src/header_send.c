@@ -73,6 +73,8 @@ void addConnectionStatusLines(socket_info* socket) {
 	if ( socket->header->Origin != 0 )
 		printHeaderChunk(socket, "Access-Control-Allow-Origin: %s\r\n",socket->header->Origin);
 
+	printHeaderChunk( socket, "Access-Control-Allow-Credentials: true\r\n");
+
 }
 
 void addCacheControlLines(http_request* s, WebserverFileInfo *info) {
@@ -378,6 +380,8 @@ int sendPreflightAllowed(socket_info *sock) {
 		printHeaderChunk( sock, "Access-Control-Allow-Methods: %s\r\n",sock->header->Access_Control_Request_Method);
 	if ( sock->header->Access_Control_Request_Headers != 0 )
 		printHeaderChunk( sock, "Access-Control-Allow-Headers: %s\r\n",sock->header->Access_Control_Request_Headers);
+
+	printHeaderChunk( sock, "Access-Control-Allow-Credentials: true\r\n");
 
 	printHeaderChunk( sock, "\r\n"); /* HTTP Header beenden */
 
