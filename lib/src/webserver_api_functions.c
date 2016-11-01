@@ -529,6 +529,18 @@ int WebserverLoadPyPlugin( const char* path ){
 
 #endif
 
+/*
+ *		CORS API
+ */
+
+void ws_set_cors_handler( cors_handler handler ){
+	setCORS_Handler( handler );
+}
+
+char* ws_get_cors_type_name( CORS_HEADER_TYPES type ){
+	return get_cors_type_name( type );
+}
+
 /**
 * @brief just a sample.
 *

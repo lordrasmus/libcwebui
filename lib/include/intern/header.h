@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define _HEADER_H_
 
 #include "webserver.h"
+#include "webserver_api_functions.h"
 
 
 #define CONTENTTYP_TEXT 1
@@ -69,6 +70,9 @@ void printHeaderInfo(HttpRequestHeader *header);
 ws_variable* getParameter(http_request* s,const char* name);
 
 bool checkHeaderComplete(HttpRequestHeader* header);
+
+void setCORS_Handler( cors_handler handler );
+char* get_cors_type_name( CORS_HEADER_TYPES type );
 
 #ifdef __cplusplus
 }

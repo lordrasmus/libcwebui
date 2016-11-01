@@ -29,6 +29,53 @@
 #endif
 
 
+// https://www.html5rocks.com/static/images/cors_server_flowchart.png
+
+static cors_handler cors_handle_func = 0;
+
+void setCORS_Handler( cors_handler handler ){
+	cors_handle_func = handler;
+	LOG(HEADER_PARSER_LOG,NOTICE_LEVEL,0,"CORS Handler set","");
+}
+
+
+int checkCORS( CORS_HEADER_TYPES type, socket_info* socket ){
+
+	if ( cors_handle_func == 0 ) return COND_FALSE;
+
+	cors_infos info;
+	info.type = type;
+
+	if ( socket->header->Origin != 0 )
+		info.origin = socket->header->Origin;
+	else
+		info.origin = "";
+
+	if ( socket->header->method == HTTP_OPTIONS )
+		info.method = "OPTIONS";
+
+	if ( socket->header->method == HTTP_GET )
+		info.method = "GET";
+
+	if ( socket->header->method == HTTP_POST )
+		info.method = "POST";
+
+	return cors_handle_func( &info );
+
+}
+
+char* get_cors_type_name( CORS_HEADER_TYPES type ){
+
+	switch( type){
+		case CORS_ALLOW_ORIGIN: return "CORS_ALLOW_ORIGIN";
+		case CORS_ALLOW_CREDENTIALS: return "CORS_ALLOW_CREDENTIALS";
+		case CORS_ALLOW_METHODS: return "CORS_ALLOW_METHODS";
+		case CORS_ALLOW_HEADERS: return "CORS_ALLOW_HEADERS";
+	}
+	return "UNKNOWN";
+}
+
+
 #ifdef WEBSERVER_USE_WEBSOCKETS
 
 int sendHeaderWebsocket(socket_info* sock) {
@@ -58,6 +105,7 @@ int sendHeaderWebsocket(socket_info* sock) {
 
 #endif
 
+
 void addConnectionStatusLines(socket_info* socket) {
 
 	if (socket->header->Connection != 0) {
@@ -70,11 +118,46 @@ void addConnectionStatusLines(socket_info* socket) {
 		printHeaderChunk(socket, "Connection: close\r\n");
 	}
 
-	if ( socket->header->Origin != 0 )
+
+	// Access-Control-Expose-Headers
+
+	if ( ( socket->header->Origin != 0 ) && ( COND_TRUE == checkCORS( CORS_ALLOW_ORIGIN, socket ) ) ){
 		printHeaderChunk(socket, "Access-Control-Allow-Origin: %s\r\n",socket->header->Origin);
+	}
 
-	printHeaderChunk( socket, "Access-Control-Allow-Credentials: true\r\n");
+	if ( COND_TRUE == checkCORS( CORS_ALLOW_CREDENTIALS, socket ) ){
+		printHeaderChunk( socket, "Access-Control-Allow-Credentials: true\r\n");
+	}
 
+}
+
+int sendPreflightAllowed(socket_info *socket) {
+
+	printHeaderChunk( socket, "HTTP/1.1 204 No Content\r\n");
+	printHeaderChunk( socket, "Server: %s\r\n", "libCWebUI");
+
+
+	if ( ( socket->header->Access_Control_Request_Method != 0 ) && ( COND_TRUE == checkCORS( CORS_ALLOW_METHODS, socket ) ) ){
+		printHeaderChunk( socket, "Access-Control-Allow-Methods: %s\r\n",socket->header->Access_Control_Request_Method);
+	}
+
+	if ( ( socket->header->Access_Control_Request_Headers != 0 ) && ( COND_TRUE == checkCORS( CORS_ALLOW_HEADERS, socket ) ) ){
+		printHeaderChunk( socket, "Access-Control-Allow-Headers: %s\r\n",socket->header->Access_Control_Request_Headers);
+	}
+
+	// Access-Control-Max-Age
+
+	if ( ( socket->header->Origin != 0 ) && ( COND_TRUE == checkCORS( CORS_ALLOW_ORIGIN, socket ) ) ){
+		printHeaderChunk( socket, "Access-Control-Allow-Origin: %s\r\n",socket->header->Origin);
+	}
+
+	if ( COND_TRUE == checkCORS( CORS_ALLOW_CREDENTIALS, socket ) ){
+		printHeaderChunk( socket, "Access-Control-Allow-Credentials: true\r\n");
+	}
+
+	printHeaderChunk( socket, "\r\n"); /* HTTP Header beenden */
+
+	return 1;
 }
 
 void addCacheControlLines(http_request* s, WebserverFileInfo *info) {
@@ -370,23 +453,7 @@ void addSessionCookies(http_request* s,WebserverFileInfo *info){
 
 
 
-int sendPreflightAllowed(socket_info *sock) {
 
-	printHeaderChunk( sock, "HTTP/1.1 204 No Content\r\n");
-	printHeaderChunk( sock, "Server: %s\r\n", "libCWebUI");
-	if ( sock->header->Origin != 0 )
-		printHeaderChunk( sock, "Access-Control-Allow-Origin: %s\r\n",sock->header->Origin);
-	if ( sock->header->Access_Control_Request_Method != 0 )
-		printHeaderChunk( sock, "Access-Control-Allow-Methods: %s\r\n",sock->header->Access_Control_Request_Method);
-	if ( sock->header->Access_Control_Request_Headers != 0 )
-		printHeaderChunk( sock, "Access-Control-Allow-Headers: %s\r\n",sock->header->Access_Control_Request_Headers);
-
-	printHeaderChunk( sock, "Access-Control-Allow-Credentials: true\r\n");
-
-	printHeaderChunk( sock, "\r\n"); /* HTTP Header beenden */
-
-	return 1;
-}
 
 /*
  * 	p_lenght ist wichtig für die Template Engine

@@ -154,7 +154,7 @@ extern "C" {
 
 /***********************************************************************************************
 *                                                                                              *
-*           Typedefinitionen und Prototypen für Plugin Funktionens                             *
+*           Typedefinitionen und Prototypen für Plugin Funktionen                             *
 *                                                                                              *
 ************************************************************************************************/
 
@@ -186,6 +186,28 @@ typedef enum {
 
 typedef int ( *plugin_error_handler ) ( PLUGIN_ERROR_TYPES error,const char* plugin,const char* function,const char* text );
 
+
+
+/***********************************************************************************************
+*                                                                                              *
+*           Typedefinitionen und Prototypen für CORS Handler                             *
+*                                                                                              *
+************************************************************************************************/
+
+typedef enum {
+	CORS_ALLOW_ORIGIN,
+	CORS_ALLOW_CREDENTIALS,
+	CORS_ALLOW_METHODS,
+	CORS_ALLOW_HEADERS
+}CORS_HEADER_TYPES;
+
+typedef struct{
+	CORS_HEADER_TYPES type;
+	char* method;
+	char* origin;
+}cors_infos;
+
+typedef int ( *cors_handler ) ( cors_infos* infos );
 
 
 #ifdef __cplusplus

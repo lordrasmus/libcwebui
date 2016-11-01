@@ -386,6 +386,13 @@ void WebserverInitPython( void );
 int WebserverLoadPyPlugin( const char* path );
 
 
+/*
+ *		CORS API
+ */
+
+void  ws_set_cors_handler( cors_handler handler );
+char* ws_get_cors_type_name( CORS_HEADER_TYPES type );
+
 #include "webserver_api_functions_depricated.h"
 
 
