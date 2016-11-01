@@ -1,5 +1,5 @@
 
-FLAGS=-I../lib/ -I../lib/include
+FLAGS=-I../lib/ -I../lib/include -Wswitch-enum
 
 all: ../testSite/src/test_plugin.so
 	$(CXX) $(FLAGS) -c main.cpp  -O0 -ggdb3
