@@ -145,6 +145,8 @@ void insert_websocket_output_chunk(socket_info *sock, const unsigned char* in, c
 
 	sendWebsocketChunk(sock, in, length);
 
+	PlatformUnlockMutex(&sock->socket_mutex);
+
 	/* Write Event nur hinzufuegen wenn noch keine frames in der liste waren */
 	if (ret == 1) {
 		delEventSocketAll(sock);
@@ -170,9 +172,8 @@ int sendWebsocketFrameReal(const char* guid, const unsigned char* in, const WEBS
 		insert_websocket_output_chunk(sock,in,length);
 	}else{
 		printf("Error : Websocket Version %d < 6 \n",sock->header->SecWebSocketVersion);
+		PlatformUnlockMutex(&sock->socket_mutex);
 	}
-
-	PlatformUnlockMutex(&sock->socket_mutex);
 
 	return 0;
 
