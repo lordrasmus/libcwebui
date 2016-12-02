@@ -324,23 +324,17 @@ unsigned long getWebsocketStoreTimeout ( char* guid ){
 		return -1;
 	}
 
-
-	//printf("sock->s : %p\n",sock->s);
 	http_request *s = sock->s;
-	//printf("sock->s->store : %p\n",s->store);
+	if ( s == 0 ) return ULONG_MAX;
 
 	sessionStore *ss = (sessionStore*)s->store;
-	unsigned long last_use = ss->last_use;
-
-	//printf("sock->s->store->last_use : %lu\n",last_use);
+	if ( ss == 0 ) return ULONG_MAX;
 
 	unsigned long diff = PlatformGetTick() - ss->last_use;
-	printf("diff : %lu\n",diff);
 
 	PlatformUnlockMutex(&sock->socket_mutex);
 
 	unsigned long timeout = getConfigInt("session_timeout") - diff;
-	printf("timeout : %lu\n",timeout);
 
 	return timeout;
 }
