@@ -33,7 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define SHORT_WS_FRAMES_T 1
 
 #ifdef SHORT_WS_FRAMES_T
-	/* 
+	/*
           64 Bit Laenge muss auf arm auf 8 byte aligned sein
 	  darum websocket frames auf 32 bit begrenzen
 	*/
@@ -79,6 +79,7 @@ int startWebsocketConnection(socket_info* sock);
 void calcWebsocketSecKeys(socket_info* request);
 
 char* getWebsocketStoreGUID(char* guid);
+unsigned long getWebsocketStoreTimeout( char* guid );
 
 int sendWebsocketFrameReal(const char* guid, const unsigned char* in, const WEBSOCK_LEN_T length);
 int recFrame(socket_info *sock);

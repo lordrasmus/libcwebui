@@ -138,6 +138,7 @@ typedef enum {
 }WS_VAR_FLAGS;
 
 char* WebsocketGetStoreGUID(char* guid);
+unsigned long ws_get_websocket_store_timeout( char* guid );
 
 char setSessionVarGUID(char* store_guid, int store, const char* name, const char* value);
 
@@ -320,7 +321,7 @@ int WebsocketSendCloseFrame(const char* guid);
 
 /*
       Dir als /<alias>/ im Webserver einblenden
-      
+
       use_cache = files im ram cachen
       use_auth  = nur mit authentifizierung sichtbar
 */

@@ -14,7 +14,7 @@
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  Lesser General Public License for more details.
- 
+
  You should have received a copy of the GNU Lesser General Public
  License along with this library; if not, write to the Free Software
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
@@ -300,7 +300,7 @@ char* getWebsocketStoreGUID(char* guid) {
 	if (sock->closeSocket == 1){
 		PlatformUnlockMutex(&sock->socket_mutex);
 		return 0;
-#ifdef ENABLE_DEVEL_WARNINGS		
+#ifdef ENABLE_DEVEL_WARNINGS
 		#warning mal tracen ( unlock ist neu )
 #endif
 	}
@@ -313,6 +313,36 @@ char* getWebsocketStoreGUID(char* guid) {
 	PlatformUnlockMutex(&sock->socket_mutex);
 
 	return ret;
+}
+
+unsigned long getWebsocketStoreTimeout ( char* guid ){
+	socket_info *sock = getSocketByGUID(guid);
+	if (sock == 0) return -1;
+
+	if (sock->closeSocket == 1) {
+		PlatformUnlockMutex(&sock->socket_mutex);
+		return -1;
+	}
+
+
+	//printf("sock->s : %p\n",sock->s);
+	http_request *s = sock->s;
+	//printf("sock->s->store : %p\n",s->store);
+
+	sessionStore *ss = (sessionStore*)s->store;
+	unsigned long last_use = ss->last_use;
+
+	//printf("sock->s->store->last_use : %lu\n",last_use);
+
+	unsigned long diff = PlatformGetTick() - ss->last_use;
+	printf("diff : %lu\n",diff);
+
+	PlatformUnlockMutex(&sock->socket_mutex);
+
+	unsigned long timeout = getConfigInt("session_timeout") - diff;
+	printf("timeout : %lu\n",timeout);
+
+	return timeout;
 }
 
 int closeWebsocket(char* guid) {

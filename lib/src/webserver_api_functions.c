@@ -14,7 +14,7 @@
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  Lesser General Public License for more details.
- 
+
  You should have received a copy of the GNU Lesser General Public
  License along with this library; if not, write to the Free Software
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
@@ -112,7 +112,9 @@ char* WebsocketGetStoreGUID(char* guid){
 	#endif
 }
 
-
+unsigned long ws_get_websocket_store_timeout( char* guid ){
+	return getWebsocketStoreTimeout( guid );
+}
 
 
 char setSessionVarGUID(char* store_guid, int store, const char* name, const char* value){
