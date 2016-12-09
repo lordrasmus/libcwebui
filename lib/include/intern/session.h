@@ -54,7 +54,7 @@ void 		checkSessionCookie(http_request* s);
 void        restoreSession(http_request* s,int lock_stores, int create_session );
 
 
-
+long 		getSessionTimeoutByGUID(char* store_guid, STORE_TYPES store );
 char 		setSessionValueByGUID(char* store_guid,STORE_TYPES store,const char* name,const char* value);
 char 		setSessionValue(http_request* s,STORE_TYPES store,const char* name,const char* value);
 ws_variable*  	getSessionValueByGUID(char* store_guid,STORE_TYPES store,const char* name);

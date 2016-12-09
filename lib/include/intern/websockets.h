@@ -79,7 +79,7 @@ int startWebsocketConnection(socket_info* sock);
 void calcWebsocketSecKeys(socket_info* request);
 
 char* getWebsocketStoreGUID(char* guid);
-unsigned long getWebsocketStoreTimeout( char* guid );
+long getWebsocketStoreTimeout( char* guid );
 
 int sendWebsocketFrameReal(const char* guid, const unsigned char* in, const WEBSOCK_LEN_T length);
 int recFrame(socket_info *sock);

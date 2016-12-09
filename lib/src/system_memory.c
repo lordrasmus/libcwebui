@@ -14,7 +14,7 @@
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  Lesser General Public License for more details.
- 
+
  You should have received a copy of the GNU Lesser General Public
  License along with this library; if not, write to the Free Software
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
@@ -593,6 +593,7 @@ void WebserverFreeSocketInfo(socket_info* sock) {
 	freeChunkList(&sock->websocket_chunk_list);
 	WebserverFree(sock->websocket_buffer);
 	WebserverFree(sock->websocket_guid);
+	WebserverFree(sock->websocket_store_guid);
 #endif
 
 	freeChunkList(&sock->header_chunk_list);

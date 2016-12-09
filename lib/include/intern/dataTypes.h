@@ -309,6 +309,7 @@ typedef struct {
 	unsigned char *websocket_buffer;
 	unsigned int websocket_buffer_offset;
 	char *websocket_guid;
+	char *websocket_store_guid;
 #endif
 
 	socket_file_infos file_infos;
@@ -351,6 +352,7 @@ typedef struct {
 	engine_infos *engine_current;
 	unsigned char create_cookie;
 	unsigned char create_cookie_ssl;
+
 
 
 	list_t upload_files;

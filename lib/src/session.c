@@ -14,7 +14,7 @@
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  Lesser General Public License for more details.
- 
+
  You should have received a copy of the GNU Lesser General Public
  License along with this library; if not, write to the Free Software
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
@@ -51,6 +51,7 @@
 */
 
 static rb_red_blk_tree* session_store_tree;
+static WS_MUTEX session_mutex;
 static unsigned long last_timeout_check = 0;
 
 
@@ -69,6 +70,8 @@ static ws_variable* int_addSessionValue(http_request* s, STORE_TYPES store, cons
 
 void initSessions(void) {
 	session_store_tree = RBTreeCreate(StrKeyComp, DummyFunc, SessionFreerFunc, DummyFuncConst, DummyFunc);
+
+	PlatformCreateMutex( &session_mutex );
 }
 
 void freeSessions(void){
@@ -94,6 +97,8 @@ void checkSessionTimeout(void) {
 
 	last_timeout_check = PlatformGetTick();
 
+	PlatformLockMutex( &session_mutex );
+
 	ws_list_init(&del_list);
 	stack = RBEnumerate(session_store_tree, (void*)"0", (void*)"z");
 
@@ -103,9 +108,9 @@ void checkSessionTimeout(void) {
 		node = (rb_red_blk_node*) StackPop(stack);
 		ss = (sessionStore*) node->info;
 		diff = PlatformGetTick() - ss->last_use;
-		
+
 		timeout = getConfigInt("session_timeout");
-		
+
 		if ( ( timeout != 0 ) && ( diff > timeout * PlatformGetTicksPerSeconde() ) ) {
 #ifdef _WEBSERVER_SESSION_DEBUG_
 			WebServerPrintf("Delete SessionStore GUID : %s\r\n",ss->guid);
@@ -120,14 +125,16 @@ void checkSessionTimeout(void) {
 		ws_list_iterator_start(&del_list);
 		while ((node = (rb_red_blk_node*) ws_list_iterator_next(&del_list))) {
 
-			/* 
+			/*
 			 Freigeben der Elemente ist in der RBTree Freer Function eingetragen ( SessionFreerFunc )
 			*/
-			RBDelete(session_store_tree, node);			
+			RBDelete(session_store_tree, node);
 		}
 		ws_list_iterator_stop(&del_list);
 	}
 	ws_list_destroy(&del_list);
+
+	PlatformUnlockMutex( &session_mutex );
 
 #ifdef _WEBSERVER_SESSION_DEBUG_
 	if (deleted > 0)
@@ -163,6 +170,8 @@ int checkUserRegistered(http_request* s) {
 	got_guid_ssl = false;
 	guid_match = false;
 
+	PlatformLockMutex( &session_mutex );
+
 	var = int_getSessionValue(s, SESSION_STORE, (char*) "registered");
 	if (var != 0) {
 		got_normal = true;
@@ -170,12 +179,15 @@ int checkUserRegistered(http_request* s) {
 			if (0 == strcmp(var->val.value_string, "true")) {
 				true_normal = true;
 			} else {
+				PlatformUnlockMutex( &session_mutex );
 				return NOT_REGISTERED;
 			}
 		} else {
+			PlatformUnlockMutex( &session_mutex );
 			return NOT_REGISTERED;
 		}
 	} else {
+		PlatformUnlockMutex( &session_mutex );
 		return NOT_REGISTERED;
 	}
 
@@ -197,6 +209,7 @@ int checkUserRegistered(http_request* s) {
 	if (guid_var != 0) {
 		got_giud = true;
 	} else {
+		PlatformUnlockMutex( &session_mutex );
 		return NOT_REGISTERED;
 	}
 
@@ -207,10 +220,15 @@ int checkUserRegistered(http_request* s) {
 			got_guid_ssl = true;
 			if (guid_cmp(guid_var->val.value_string, guid_var_ssl->val.value_string)) {
 				guid_match = true;
-				if (guid_match && true_both) return SSL_CHECK_OK;
+				if (guid_match && true_both){
+					PlatformUnlockMutex( &session_mutex );
+					return SSL_CHECK_OK;
+				}
 			}
 		}
 	}
+
+	PlatformUnlockMutex( &session_mutex );
 
 	if (s->socket->use_ssl == 1) {
 		if (got_guid_ssl != got_giud) return SESSION_MISMATCH_ERROR;
@@ -218,6 +236,8 @@ int checkUserRegistered(http_request* s) {
 		if (got_guid_ssl && got_normal && (true_normal != true_ssl)) return SESSION_MISMATCH_ERROR;
 	}
 #endif
+
+
 
 	if (got_giud && true_normal) return NORMAL_CHECK_OK;
 
@@ -228,7 +248,9 @@ char setUserRegistered(http_request* s, char status) {
 	ws_variable* var;
 	static char buf1[WEBSERVER_GUID_LENGTH + 1];
 
-if(	status==false) {
+	PlatformLockMutex( &session_mutex );
+
+	if(	status==false) {
 		if (NOT_REGISTERED!=checkUserRegistered(s)) {
 			memset(buf1,0,WEBSERVER_GUID_LENGTH);
 			int_setSessionValue(s,SESSION_STORE,(char*)"session-id",buf1);
@@ -236,11 +258,13 @@ if(	status==false) {
 			int_setSessionValue(s,SESSION_STORE,(char*)"registered",(char*)"false");
 			int_setSessionValue(s,SESSION_STORE_SSL,(char*)"registered",(char*)"false");
 		}
+		PlatformUnlockMutex( &session_mutex );
 		return true;
 	}
 
 	if (status == true) {
 		if (SSL_CHECK_OK == checkUserRegistered(s)) {
+			PlatformUnlockMutex( &session_mutex );
 			return true;
 		} else {
 			generateGUID(buf1, WEBSERVER_GUID_LENGTH);
@@ -255,13 +279,18 @@ if(	status==false) {
 				if (guid_cmp(var->val.value_string, buf1)) {
 					var = int_getSessionValue(s, SESSION_STORE_SSL, (char*) "session-id-ssl");
 					if (var != 0) {
-						if (guid_cmp(var->val.value_string, buf1)) return true;
+						if (guid_cmp(var->val.value_string, buf1)){
+							PlatformUnlockMutex( &session_mutex );
+							return true;
+						}
 					}
+					PlatformUnlockMutex( &session_mutex );
 					return false;
 				}
 			}
 		}
 	}
+	PlatformUnlockMutex( &session_mutex );
 	return false;
 }
 
@@ -289,7 +318,12 @@ void createSession(http_request* s, unsigned char ssl_store) {
 	}
 
 	ss->last_use = PlatformGetTick();
+
+	PlatformLockMutex( &session_mutex );
+
 	RBTreeInsert(session_store_tree, ss->guid, ss);
+
+	PlatformUnlockMutex( &session_mutex );
 
 }
 
@@ -299,6 +333,8 @@ char findSessionStore(http_request* s, unsigned char ssl_store) {
 
 	checkSessionTimeout();
 
+	PlatformLockMutex( &session_mutex );
+
 	if (ssl_store == 0) {
 		node = RBExactQuery(session_store_tree, s->guid);
 		if (node != 0) {
@@ -306,6 +342,7 @@ char findSessionStore(http_request* s, unsigned char ssl_store) {
 			if (store->ssl == 0) {
 				s->store = store;
 				store->last_use = PlatformGetTick();
+				PlatformUnlockMutex( &session_mutex );
 				return true;
 			}
 		}
@@ -316,17 +353,19 @@ char findSessionStore(http_request* s, unsigned char ssl_store) {
 			if (store->ssl == 1) {
 				s->store_ssl = store;
 				store->last_use = PlatformGetTick();
+				PlatformUnlockMutex( &session_mutex );
 				return true;
 			}
 		}
 	}
 
+	PlatformUnlockMutex( &session_mutex );
 	return false;
 }
 
 void restoreSession(http_request* s,int lock_stores, int create_session ) {
 	checkSessionTimeout();
-	if (s->store == 0){	
+	if (s->store == 0){
 		if (s->create_cookie == 0) {
 			if (false == findSessionStore(s, 0)) {
 				if ( create_session == 1){
@@ -344,7 +383,7 @@ void restoreSession(http_request* s,int lock_stores, int create_session ) {
 	}
 
 #ifdef WEBSERVER_USE_SSL
-	if (s->store_ssl == 0){	
+	if (s->store_ssl == 0){
 		if (s->socket->use_ssl == 1) {
 			if (s->create_cookie_ssl == 0) {
 				if (false == findSessionStore(s, 1)) {
@@ -362,7 +401,7 @@ void restoreSession(http_request* s,int lock_stores, int create_session ) {
 			}
 		}
 	}
-#endif	
+#endif
 
 }
 
@@ -375,20 +414,26 @@ char setSessionValueByGUID(char* store_guid, STORE_TYPES store, const char* name
 	ws_variable* var = 0;
 	rb_red_blk_node* node;
 
+	PlatformLockMutex( &session_mutex );
+
 	node = RBExactQuery(session_store_tree, store_guid);
 	if (node != 0) {
 		ss = (sessionStore*) node->info;
 		if ((store == SESSION_STORE) && (ss->ssl == 0)) {
 			var = newVariable(ss->vars, name);
 			setWSVariableString(var, value);
+			PlatformUnlockMutex( &session_mutex );
 			return 1;
 		}
 		if ((store == SESSION_STORE_SSL) && (ss->ssl == 1)) {
 			var = newVariable(ss->vars, name);
 			setWSVariableString(var, value);
+			PlatformUnlockMutex( &session_mutex );
 			return 1;
 		}
 	}
+
+	PlatformUnlockMutex( &session_mutex );
 
 	return 0;
 }
@@ -396,19 +441,49 @@ char setSessionValueByGUID(char* store_guid, STORE_TYPES store, const char* name
 ws_variable* getSessionValueByGUID(char* store_guid, STORE_TYPES store, const char* name) {
 	sessionStore* ss;
 	rb_red_blk_node* node;
+	ws_variable* ret = 0;
+
+	PlatformLockMutex( &session_mutex );
 
 	node = RBExactQuery(session_store_tree, store_guid);
 	if (node != 0) {
 		ss = (sessionStore*) node->info;
 		if ((store == SESSION_STORE) && (ss->ssl == 0)) {
-			return newVariable(ss->vars, name);
+			ret = newVariable(ss->vars, name);
 
 		}
 		if ((store == SESSION_STORE_SSL) && (ss->ssl == 1)) {
-			return newVariable(ss->vars, name);
+			ret = newVariable(ss->vars, name);
 		}
 	}
-	return 0;
+
+	PlatformUnlockMutex( &session_mutex );
+
+	return ret;
+}
+
+long getSessionTimeoutByGUID(char* store_guid, STORE_TYPES store ) {
+	sessionStore* ss;
+	rb_red_blk_node* node;
+
+	PlatformLockMutex( &session_mutex );
+
+	node = RBExactQuery(session_store_tree, store_guid);
+	printf("Session %p\n",node);
+	if (node != 0) {
+		ss = (sessionStore*) node->info;
+		if ((store == SESSION_STORE) && (ss->ssl == 0)) {
+			PlatformUnlockMutex( &session_mutex );
+			return PlatformGetTick() - ss->last_use;
+
+		}
+		if ((store == SESSION_STORE_SSL) && (ss->ssl == 1)) {
+			PlatformUnlockMutex( &session_mutex );
+			return PlatformGetTick() - ss->last_use;
+		}
+	}
+	PlatformUnlockMutex( &session_mutex );
+	return -1;
 }
 
 
@@ -418,7 +493,13 @@ char setSessionValue(http_request* s, STORE_TYPES store, const char* name, const
 	if (0 == strcmp("session-id", name)) return false;
 	if (0 == strcmp("session-id-ssl", name)) return false;
 
-	return int_setSessionValue(s, store, name, value);
+	PlatformLockMutex( &session_mutex );
+
+	char ret = int_setSessionValue(s, store, name, value);
+
+	PlatformUnlockMutex( &session_mutex );
+
+	return ret;
 }
 
 static char int_setSessionValue(http_request* s, STORE_TYPES store, const char* name, const char* value) {
@@ -446,7 +527,13 @@ ws_variable* addSessionValue(http_request* s, STORE_TYPES store, const char* nam
 	if (0 == strcmp("session-id", name)) return 0;
 	if (0 == strcmp("session-id-ssl", name)) return 0;
 
-	return int_addSessionValue(s, store, name);
+	PlatformLockMutex( &session_mutex );
+
+	ws_variable* ret = int_addSessionValue(s, store, name);
+
+	PlatformUnlockMutex( &session_mutex );
+
+	return ret;
 }
 
 static ws_variable* int_addSessionValue(http_request* s, STORE_TYPES store, const char* name ) {
@@ -500,7 +587,13 @@ ws_variable* getSessionValue(http_request* s, STORE_TYPES store, const char* nam
 	if (0 == strcmp("session-id", name)) return 0;
 	if (0 == strcmp("session-id-ssl", (char*) name)) return 0;
 
-	return int_getSessionValue(s, store, name);
+	PlatformLockMutex( &session_mutex );
+
+	ws_variable* ret =  int_getSessionValue(s, store, name);
+
+	PlatformUnlockMutex( &session_mutex );
+
+	return ret;
 }
 
 void printSessionValue(http_request* s, STORE_TYPES store, char* name) {
@@ -512,9 +605,14 @@ char removeSessionValue(http_request* s, STORE_TYPES store, char* name) {
 
 	ws_variable_store* var_store = 0;
 
+
+
 	if (store == SESSION_STORE ) {
 		if (s->store == 0) return false;
 		if (s->store->vars == 0) return false;
+
+		PlatformLockMutex( &session_mutex );
+
 		var_store = s->store->vars;
 	}
 #ifdef WEBSERVER_USE_SSL
@@ -522,13 +620,18 @@ char removeSessionValue(http_request* s, STORE_TYPES store, char* name) {
 		if (s->socket->use_ssl==0) return false;
 		if (s->store_ssl == 0) return false;
 		if (s->store_ssl->vars == 0) return false;
+
+		PlatformLockMutex( &session_mutex );
+
 		var_store = s->store_ssl->vars;
 	}
 #endif
 
 	delVariable(var_store,name);
-	
-#ifdef ENABLE_DEVEL_WARNINGS	
+
+	PlatformUnlockMutex( &session_mutex );
+
+#ifdef ENABLE_DEVEL_WARNINGS
 	#warning ("noch testen")
 #endif
 	return true;

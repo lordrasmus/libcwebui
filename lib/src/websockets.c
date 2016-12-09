@@ -212,6 +212,13 @@ int startWebsocketConnection(socket_info* sock) {
 	checkSessionCookie(s);
 	restoreSession(s,0, 1 );
 
+	if ( s->store != 0 ){
+		sock->websocket_store_guid = WebserverMalloc( WEBSERVER_GUID_LENGTH + 1 );
+		memset(sock->websocket_store_guid, 0, WEBSERVER_GUID_LENGTH + 1 );
+		memcpy( sock->websocket_store_guid, s->store->guid, WEBSERVER_GUID_LENGTH );
+		printf("copy Store GUID : %s\n", sock->websocket_store_guid);
+	}
+
 	if (handleWebsocketConnection(WEBSOCKET_SIGNAL_CONNECT, sock->websocket_guid, sock->header->url, 0 ,0 , 0) < 0) {
 		printf("\nConnect fehler\n\n");
 		sendCloseFrame(sock);
@@ -315,7 +322,7 @@ char* getWebsocketStoreGUID(char* guid) {
 	return ret;
 }
 
-unsigned long getWebsocketStoreTimeout ( char* guid ){
+long getWebsocketStoreTimeout ( char* guid ){
 	socket_info *sock = getSocketByGUID(guid);
 	if (sock == 0) return -1;
 
@@ -324,7 +331,22 @@ unsigned long getWebsocketStoreTimeout ( char* guid ){
 		return -1;
 	}
 
-	http_request *s = sock->s;
+	char store_guid[ WEBSERVER_GUID_LENGTH + 1 ];
+	strcpy( store_guid , sock->websocket_store_guid );
+
+	printf("Store GUID : %s WS : %s\n", store_guid, guid );
+
+	PlatformUnlockMutex(&sock->socket_mutex);
+
+	long tmp = getSessionTimeoutByGUID( store_guid , SESSION_STORE );
+	if ( tmp < 0 )
+		return -1;
+
+	long timeout = getConfigInt("session_timeout") - tmp;
+	if ( timeout < 0 )
+		return -1;
+
+	/*http_request *s = sock->s;
 	if ( s == 0 ) return ULONG_MAX;
 
 	sessionStore *ss = (sessionStore*)s->store;
@@ -332,9 +354,11 @@ unsigned long getWebsocketStoreTimeout ( char* guid ){
 
 	unsigned long diff = PlatformGetTick() - ss->last_use;
 
-	PlatformUnlockMutex(&sock->socket_mutex);
 
-	unsigned long timeout = getConfigInt("session_timeout") - diff;
+
+	unsigned long timeout = getConfigInt("session_timeout") - diff;*/
+
+
 
 	return timeout;
 }

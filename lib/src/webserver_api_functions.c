@@ -112,7 +112,7 @@ char* WebsocketGetStoreGUID(char* guid){
 	#endif
 }
 
-unsigned long ws_get_websocket_store_timeout( char* guid ){
+long ws_get_websocket_store_timeout( char* guid ){
 	return getWebsocketStoreTimeout( guid );
 }
 

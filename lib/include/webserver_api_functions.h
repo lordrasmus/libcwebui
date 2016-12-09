@@ -137,8 +137,8 @@ typedef enum {
 	DO_NOT_CREATE = 0x01
 }WS_VAR_FLAGS;
 
-char* WebsocketGetStoreGUID(char* guid);
-unsigned long ws_get_websocket_store_timeout( char* guid );
+char* 	WebsocketGetStoreGUID(char* guid);
+long 	ws_get_websocket_store_timeout( char* guid );
 
 char setSessionVarGUID(char* store_guid, int store, const char* name, const char* value);
 
