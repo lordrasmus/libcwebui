@@ -248,26 +248,28 @@ char setUserRegistered(http_request* s, char status) {
 	ws_variable* var;
 	static char buf1[WEBSERVER_GUID_LENGTH + 1];
 
-	PlatformLockMutex( &session_mutex );
+
 
 	if(	status==false) {
 		if (NOT_REGISTERED!=checkUserRegistered(s)) {
+			PlatformLockMutex( &session_mutex );
 			memset(buf1,0,WEBSERVER_GUID_LENGTH);
 			int_setSessionValue(s,SESSION_STORE,(char*)"session-id",buf1);
 			int_setSessionValue(s,SESSION_STORE_SSL,(char*)"session-id-ssl",buf1);
 			int_setSessionValue(s,SESSION_STORE,(char*)"registered",(char*)"false");
 			int_setSessionValue(s,SESSION_STORE_SSL,(char*)"registered",(char*)"false");
+			PlatformUnlockMutex( &session_mutex );
 		}
-		PlatformUnlockMutex( &session_mutex );
+
 		return true;
 	}
 
 	if (status == true) {
 		if (SSL_CHECK_OK == checkUserRegistered(s)) {
-			PlatformUnlockMutex( &session_mutex );
 			return true;
 		} else {
 			generateGUID(buf1, WEBSERVER_GUID_LENGTH);
+			PlatformLockMutex( &session_mutex );
 			int_setSessionValue(s, SESSION_STORE, (char*) "session-id", buf1);
 			int_setSessionValue(s, SESSION_STORE_SSL, (char*) "session-id-ssl", buf1);
 			int_setSessionValue(s, SESSION_STORE, (char*) "registered", (char*) "true");
@@ -288,9 +290,11 @@ char setUserRegistered(http_request* s, char status) {
 					return false;
 				}
 			}
+
+			PlatformUnlockMutex( &session_mutex );
 		}
 	}
-	PlatformUnlockMutex( &session_mutex );
+
 	return false;
 }
 
