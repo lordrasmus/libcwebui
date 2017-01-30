@@ -14,7 +14,7 @@
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  Lesser General Public License for more details.
- 
+
  You should have received a copy of the GNU Lesser General Public
  License along with this library; if not, write to the Free Software
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
@@ -80,11 +80,11 @@ ws_variable* newWSVariable(const char* name) {
 }
 
 ws_variable* newWSArray(const char* name) {
-	
+
 	ws_variable* ret = newWSVariable( name );
-	
+
 	setWSVariableArray( ret );
-	
+
 	return ret;
 }
 
@@ -231,7 +231,7 @@ void setWSVariableULong(ws_variable* var, uint64_t value) {
 		return;
 	}
 	freeWSVariableValue(var);
-	var->type = VAR_TYPE_INT;
+	var->type = VAR_TYPE_ULONG;
 	var->val.value_uint64_t = value;
 }
 
@@ -309,7 +309,7 @@ ws_variable* getWSVariableArray(ws_variable* var, const char* name) {
 	}
 	if (var->type == VAR_TYPE_ARRAY)
 		return getVariable(var->val.value_array, name);
-		
+
 	if ((var->type == VAR_TYPE_REF) && (var->val.value_ref->type == VAR_TYPE_ARRAY))
 		return getVariable(var->val.value_ref->val.value_array, name);
 	return 0;
