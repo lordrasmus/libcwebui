@@ -47,6 +47,7 @@ inline global_vars* initWebserver(void) {
 	addTemplateFilePostfix(".inc");
 	#endif
 
+	globals.config.connections = 128;
 	globals.init_called = 0xAB;
 
 #ifdef __GUNC__
