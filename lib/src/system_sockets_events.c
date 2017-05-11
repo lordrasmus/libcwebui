@@ -105,7 +105,7 @@ void eventHandler(int a, short b, void *t) {
 }
 
 void addEventSocketRead(socket_info* sock) {
-
+#ifdef WEBSERVER_USE_SSL
 	if(sock->ssl_block_event_flags == 1){
 #if _WEBSERVER_HANDLER_DEBUG_ > 4
 		LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Add Event Read  ( SSL Blocked )","");
@@ -113,6 +113,7 @@ void addEventSocketRead(socket_info* sock) {
 		sock->ssl_event_flags = EV_READ;
 		return;
 	}
+#endif
 
 #if _WEBSERVER_HANDLER_DEBUG_ > 4
 	LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Add Event Read ","");
@@ -127,7 +128,7 @@ void addEventSocketRead(socket_info* sock) {
 }
 
 void addEventSocketReadPersist(socket_info* sock) {
-	
+#ifdef WEBSERVER_USE_SSL
 	if(sock->ssl_block_event_flags == 1){
 #if _WEBSERVER_HANDLER_DEBUG_ > 4
 		LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Add Event Read Persist ( SSL Blocked )","");
@@ -135,7 +136,8 @@ void addEventSocketReadPersist(socket_info* sock) {
 		sock->ssl_event_flags = EV_READ | EV_PERSIST;
 		return;
 	}
-	
+#endif
+
 #if _WEBSERVER_HANDLER_DEBUG_ > 4
 	LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Add Event Read Persist","");
 #endif
@@ -150,6 +152,7 @@ void addEventSocketReadPersist(socket_info* sock) {
 
 void addEventSocketWrite(socket_info* sock) {
 
+#ifdef WEBSERVER_USE_SSL
 	if(sock->ssl_block_event_flags == 1){
 #if _WEBSERVER_HANDLER_DEBUG_ > 4
 		LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Add Event Write ( SSL Blocked )","");
@@ -157,6 +160,7 @@ void addEventSocketWrite(socket_info* sock) {
 		sock->ssl_event_flags = EV_WRITE;
 		return;
 	}
+#endif
 	
 #if _WEBSERVER_HANDLER_DEBUG_ > 4
 	LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Add Event Write","");
@@ -172,6 +176,7 @@ void addEventSocketWrite(socket_info* sock) {
 
 void addEventSocketWritePersist(socket_info* sock) {
 
+#ifdef WEBSERVER_USE_SSL
 	if(sock->ssl_block_event_flags == 1){
 #if _WEBSERVER_HANDLER_DEBUG_ > 4
 		LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Add Event Write Persist ( SSL Blocked )","");
@@ -180,6 +185,7 @@ void addEventSocketWritePersist(socket_info* sock) {
 		sock->ssl_event_flags = EV_WRITE | EV_PERSIST;
 		return;
 	}
+#endif
 
 #if _WEBSERVER_HANDLER_DEBUG_ > 4
 	LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Add Event Write Persist","");
@@ -195,7 +201,8 @@ void addEventSocketWritePersist(socket_info* sock) {
 }
 
 void addEventSocketReadWritePersist(socket_info* sock) {
-	
+
+#ifdef WEBSERVER_USE_SSL
 	if(sock->ssl_block_event_flags == 1){
 #if _WEBSERVER_HANDLER_DEBUG_ > 4
 		LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Add Event Read/Write Persist ( SSL Blocked )","");
@@ -203,6 +210,7 @@ void addEventSocketReadWritePersist(socket_info* sock) {
 		sock->ssl_event_flags = EV_READ | EV_WRITE | EV_PERSIST;
 		return;
 	}
+#endif
 	
 #if _WEBSERVER_HANDLER_DEBUG_ > 4
 	LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Add Event Read/Write Persist","");
@@ -216,8 +224,10 @@ void addEventSocketReadWritePersist(socket_info* sock) {
 
 }
 
+#ifdef WEBSERVER_USE_SSL
+
 void commitSslEventFlags( socket_info* sock ) {
-	
+
 	sock->ssl_block_event_flags = 0;
 	
 	if (sock->my_ev == 0)
@@ -229,6 +239,8 @@ void commitSslEventFlags( socket_info* sock ) {
 	LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"commit SSL Event Flags Persist","");
 #endif
 }
+
+#endif
 
 void delEventSocketWritePersist(socket_info* sock) {
 	
