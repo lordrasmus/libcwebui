@@ -22,7 +22,7 @@ FILES=main.c ../lib/src/convert.c ../lib/src/variable_store.c ../lib/src/header_
 	
 all: 
 	
-	$(CC) $(FILES) $(FLAGS) -o main -ldl -pthread -levent -levent_pthreads  -L../lib/lib/ -Wl,-rpath=. -lFuzzingEngine 
+	$(CXX) $(CXXFLAGS) -std=c++11 $(FILES) $(FLAGS) -o $(OUT)/header_fuzzer -ldl -pthread -levent -levent_pthreads -lFuzzingEngine 
 #	/usr/lib/libFuzzingEngine.a
 #-lFuzzingEngine
 	

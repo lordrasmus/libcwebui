@@ -5,17 +5,17 @@
 
 int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 
-		socket_info sock;
-		HttpRequestHeader *header = WebserverMallocHttpRequestHeader();
+	socket_info sock;
+	HttpRequestHeader *header = WebserverMallocHttpRequestHeader();
 
-		memset(&sock , 0, sizeof( socket_info ));
+	memset(&sock , 0, sizeof( socket_info ));
 
-		sock.header = header;
+	sock.header = header;
 
-		unsigned int bytes_parsed;
-		ParseHeader( &sock, header, Data, Size , &bytes_parsed );
+	unsigned int bytes_parsed;
+	ParseHeader( &sock, header, Data, Size , &bytes_parsed );
 
-		WebserverFreeHttpRequestHeader( header );
+	WebserverFreeHttpRequestHeader( header );
 
 
 	return 0;
