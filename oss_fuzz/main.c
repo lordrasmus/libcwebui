@@ -3,17 +3,7 @@
 
 #include <webserver.h>
 
-
-int main( int argc, char** argv){
-
-	char buf[10000];
-
-	#ifdef AFL_PER
-	while (__AFL_LOOP(10000)) {
-	#endif
-		memset(buf, 0, 10000);
-		int len = read(0, buf, 10000);
-
+int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 
 		socket_info sock;
 		HttpRequestHeader *header = WebserverMallocHttpRequestHeader();
@@ -23,13 +13,9 @@ int main( int argc, char** argv){
 		sock.header = header;
 
 		unsigned int bytes_parsed;
-		ParseHeader( &sock, header, buf, len , &bytes_parsed );
+		ParseHeader( &sock, header, Data, Size , &bytes_parsed );
 
 		WebserverFreeHttpRequestHeader( header );
-
-	#ifdef AFL_PER
-	}
-	#endif
 
 
 	return 0;
