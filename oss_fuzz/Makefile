@@ -4,7 +4,7 @@ FLAGS=-DLINUX -I. -I../lib/include/ -I../lib/include/intern/ -I../lib/third_part
 	-I../lib/third_party/src/rb_tree/ -I../lib/platform/include/ -I../lib/third_party/src/is_utf8/ \
 	
 
-FILES=main.c ../lib/src/convert.c ../lib/src/variable_store.c ../lib/src/header_parser.c ../lib/src/system_memory.c ../lib/platform/linux/system-unix.c \
+FILES= ../lib/src/convert.c ../lib/src/variable_store.c ../lib/src/header_parser.c ../lib/src/system_memory.c ../lib/platform/linux/system-unix.c \
 	../lib/third_party/src/simclist/simclist.c ../lib/src/utils.c ../lib/src/server_chunk_functions.c ../lib/src/variable.c \
 	../lib/src/cookie.c ../lib/src/websockets.c ../lib/src/engine_api_extensions.c ../lib/third_party/src/rb_tree/red_black_tree.c \
 	../lib/third_party/src/rb_tree/stack.c ../lib/third_party/src/rb_tree/misc.c ../lib/src/message_queue.c ../lib/src/header_send.c \
@@ -21,8 +21,8 @@ FILES=main.c ../lib/src/convert.c ../lib/src/variable_store.c ../lib/src/header_
 	../lib/python/py_api_functions.c ../lib/python/py_plugin.c ../lib/python/py_utils.c
 	
 all: 
-	
-	$(CXX) $(CXXFLAGS) -std=c++11 $(FILES) $(FLAGS) -o $(OUT)/header_fuzzer -ldl -pthread -levent -levent_pthreads -lFuzzingEngine 
+	$(CC)  $(CFLAGS) $(FILES) $(FLAGS)  -c
+	$(CXX) $(CXXFLAGS) -std=c++11 *.o main.c $(FLAGS) -o $(OUT)/header_fuzzer -ldl -pthread -levent -levent_pthreads -lFuzzingEngine 
 #	/usr/lib/libFuzzingEngine.a
 #-lFuzzingEngine
 	

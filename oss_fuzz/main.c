@@ -3,7 +3,7 @@
 
 #include <webserver.h>
 
-int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 
 	socket_info sock;
 	HttpRequestHeader *header = WebserverMallocHttpRequestHeader();
