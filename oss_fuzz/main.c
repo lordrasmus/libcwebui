@@ -13,7 +13,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 	sock.header = header;
 
 	unsigned int bytes_parsed;
-	ParseHeader( &sock, header, Data, Size , &bytes_parsed );
+	ParseHeader( &sock, header, (char*)Data, Size , &bytes_parsed );
 
 	WebserverFreeHttpRequestHeader( header );
 
