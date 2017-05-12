@@ -429,7 +429,7 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 		return 0;
 	}
 
-	if ( (!strncmp((char*) line, "Content-Length: ", 15)) && ( strlen( &line[15]  ) > 1  ) ) {
+	if ( (!strncmp((char*) line, "Content-Length: ", 16)) && ( strlen( &line[15]  ) > 1  ) ) {
 		header->contentlenght = atol((char*) &line[16]);
 		return 0;
 	}
