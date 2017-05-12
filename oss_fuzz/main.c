@@ -3,11 +3,6 @@
 
 #include <webserver.h>
 
-extern "C" void deleteEvent(socket_info* sock){}
-extern "C" unsigned long dumpSocketsSize(int *count) { return *count; }
-extern "C" void dumpSockets(http_request* s) { }
-extern "C" char isTemplateFile(const char* file) { return 0; }
-
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 

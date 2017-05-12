@@ -1,1 +1,3 @@
 *.o
+header_fuzzer_tester
+.gdbinit

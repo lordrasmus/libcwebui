@@ -1,10 +1,10 @@
 
 
-FLAGS=-DLINUX -I. -I../lib/include/ -I../lib/include/intern/ -I../lib/third_party/src/simclist/ \
+FLAGS= -DLINUX -I. -I../lib/include/ -I../lib/include/intern/ -I../lib/third_party/src/simclist/ \
 	-I../lib/third_party/src/rb_tree/ -I../lib/platform/include/ -I../lib/third_party/src/is_utf8/ \
 	
 
-FILES= ../lib/src/convert.c ../lib/src/variable_store.c ../lib/src/header_parser.c ../lib/src/system_memory.c ../lib/platform/linux/system-unix.c \
+FILES= stubs.c ../lib/src/convert.c ../lib/src/variable_store.c ../lib/src/header_parser.c ../lib/src/system_memory.c ../lib/platform/linux/system-unix.c \
 	../lib/third_party/src/simclist/simclist.c ../lib/src/utils.c ../lib/src/server_chunk_functions.c ../lib/src/variable.c \
 	../lib/src/cookie.c ../lib/src/websockets.c ../lib/src/engine_api_extensions.c ../lib/third_party/src/rb_tree/red_black_tree.c \
 	../lib/third_party/src/rb_tree/stack.c ../lib/third_party/src/rb_tree/misc.c ../lib/src/message_queue.c ../lib/src/header_send.c \
@@ -23,11 +23,13 @@ FILES= ../lib/src/convert.c ../lib/src/variable_store.c ../lib/src/header_parser
 #../lib/src/system.c  ../lib/src/system_sockets_container.c ../lib/src/system_sockets.c ../lib/src/system_sockets_events.c
 	
 
-all: 
+all:
 	$(CC)  $(CFLAGS) $(FILES) $(FLAGS)  -c
 	$(CXX) $(CXXFLAGS) -std=c++11 *.o main.c $(FLAGS) -o $(OUT)/header_fuzzer -pthread -lFuzzingEngine 
-#	/usr/lib/libFuzzingEngine.a
-#-lFuzzingEngine
+
+test: 
+	$(CC)  $(CFLAGS) $(FILES) $(FLAGS)  -c -O0 -ggdb3
+	$(CXX) $(CXXFLAGS) -O0 -ggdb3 -std=c++11 *.o main_tester.c $(FLAGS) -o header_fuzzer_tester -pthread -ldl
 	
 clean:
-	rm -f main.o main
+	rm -f *.o
