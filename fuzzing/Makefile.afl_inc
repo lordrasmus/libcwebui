@@ -14,6 +14,7 @@ afl-*/llvm_mode/afl-clang-fast: afl-*/afl-showmap
 
 afl-*/afl-analyze.c: afl-latest.tgz
 	tar -xaf afl-latest.tgz
+	rm afl-latest.tgz
 
 afl-latest.tgz: 
 	wget http://lcamtuf.coredump.cx/afl/releases/afl-latest.tgz
