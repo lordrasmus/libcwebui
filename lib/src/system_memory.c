@@ -676,7 +676,7 @@ HttpRequestHeader* WebserverMallocHttpRequestHeader(void) {
 void WebserverResetHttpRequestHeader(HttpRequestHeader *header) {
 
 	clearVariables(header->parameter_store);
-	ws_list_clear(&header->cookie_list);
+	ws_list_destroy(&header->cookie_list);
 
 
 	header->post_buffer_pos = 0;
