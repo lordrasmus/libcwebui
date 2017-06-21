@@ -618,6 +618,13 @@ Cookie* WebserverMallocCookie(void) {
 }
 
 void WebserverFreeCookie(Cookie* cookie) {
+	#ifdef _WEBSERVER_COOKIE_DEBUG_
+	if ( cookie == 0 ){
+		WebServerPrintf("Free Cookie ( %p )\n",cookie);
+	}else{
+		WebServerPrintf("Free Cookie ( %p ) Name <%s>  Value <%s> \n",cookie,cookie->name,cookie->value);
+	}
+	#endif
 	if ( cookie == 0){
 		return;
 	}
