@@ -28,8 +28,8 @@ all:
 	$(CXX) $(CXXFLAGS) -std=c++11 *.o main.c $(FLAGS) -o $(OUT)/header_fuzzer -pthread -lFuzzingEngine 
 
 test: 
-	$(CC)  $(CFLAGS) $(FILES) $(FLAGS)  -c -O0 -ggdb3  -fno-omit-frame-pointer
-	$(CXX) $(CXXFLAGS) -O0 -ggdb3 -std=c++11 *.o main_tester.c $(FLAGS) -o header_fuzzer_tester -pthread -ldl -fno-omit-frame-pointer
+	$(CC)  $(CFLAGS) $(FILES) $(FLAGS)  -c -O0 -ggdb3  -fno-omit-frame-pointer -fsanitize=address
+	$(CXX) $(CXXFLAGS) -O0 -ggdb3 -std=c++11 *.o main_tester.c $(FLAGS) -o header_fuzzer_tester -pthread -ldl -fno-omit-frame-pointer -fsanitize=address
 	
 test_clang: 
 	clang  $(CFLAGS) $(FILES) $(FLAGS)  -c -O0 -ggdb3  -fno-omit-frame-pointer
