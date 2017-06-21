@@ -5,7 +5,7 @@ FLAGS= -DLINUX -I. -I../lib/include/ -I../lib/include/intern/ -I../lib/third_par
 	
 
 FILES= stubs.c ../lib/src/convert.c ../lib/src/variable_store.c ../lib/src/header_parser.c ../lib/src/system_memory.c ../lib/platform/linux/system-unix.c \
-	../lib/third_party/src/simclist/simclist.c ../lib/src/utils.c ../lib/src/server_chunk_functions.c ../lib/src/variable.c \
+	../lib/src/utils.c ../lib/src/linked_list.c ../lib/src/server_chunk_functions.c ../lib/src/variable.c \
 	../lib/src/cookie.c ../lib/src/websockets.c ../lib/src/engine_api_extensions.c ../lib/third_party/src/rb_tree/red_black_tree.c \
 	../lib/third_party/src/rb_tree/stack.c ../lib/third_party/src/rb_tree/misc.c ../lib/src/message_queue.c ../lib/src/header_send.c \
 	../lib/platform/linux/platform-file-access.c \
@@ -28,8 +28,12 @@ all:
 	$(CXX) $(CXXFLAGS) -std=c++11 *.o main.c $(FLAGS) -o $(OUT)/header_fuzzer -pthread -lFuzzingEngine 
 
 test: 
-	$(CC)  $(CFLAGS) $(FILES) $(FLAGS)  -c -O0 -ggdb3
-	$(CXX) $(CXXFLAGS) -O0 -ggdb3 -std=c++11 *.o main_tester.c $(FLAGS) -o header_fuzzer_tester -pthread -ldl
+	$(CC)  $(CFLAGS) $(FILES) $(FLAGS)  -c -O0 -ggdb3  -fno-omit-frame-pointer
+	$(CXX) $(CXXFLAGS) -O0 -ggdb3 -std=c++11 *.o main_tester.c $(FLAGS) -o header_fuzzer_tester -pthread -ldl -fno-omit-frame-pointer
+	
+test_clang: 
+	clang  $(CFLAGS) $(FILES) $(FLAGS)  -c -O0 -ggdb3  -fno-omit-frame-pointer
+	clang++ $(CXXFLAGS) -O0 -ggdb3 -std=c++11 *.o main_tester.c $(FLAGS) -o header_fuzzer_tester -pthread -ldl -fno-omit-frame-pointer
 	
 clean:
 	rm -f *.o

@@ -97,7 +97,7 @@
 //#define _WEBSERVER_FILESYSTEM_CACHE_DEBUG_        // Debugausgaben für die Webserver Filesystem Cache aktivieren
 //#define _WEBSERVER_HEADER_DEBUG_                	// Debugausgaben für die HTTP Header aktivieren
 //#define _WEBSERVER_BODY_DEBUG_                	// Debugausgaben für die HTTP Bodys aktivieren
-//#define _WEBSERVER_COOKIE_DEBUG_                	// Debugausgaben für die HTTP Cookies aktivieren
+#define _WEBSERVER_COOKIE_DEBUG_                	// Debugausgaben für die HTTP Cookies aktivieren
 //#define _WEBSERVER_SESSION_DEBUG_                	// Debugausgaben für die HTTP Session aktivieren
 //#define _WEBSERVER_SOCKET_DEBUG_		5
 //#define _WEBSERVER_CONNECTION_DEBUG_              // Debugausgaben für die HTTP Connections aktivieren
