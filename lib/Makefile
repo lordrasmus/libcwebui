@@ -15,7 +15,7 @@ PY_LINK = -lpython2.7
 
 FLAGS= $(COMP_OPT) -Wall -fPIC -Wextra   -std=c99  -D_POSIX_SOURCE -Wno-unused-parameter -Werror=implicit-function-declaration \
 	-fdata-sections -ffunction-sections -fvisibility=hidden  -Wno-variadic-macros -Wpointer-arith \
-	$(SIZE_OPTS) $(PY_FLAGS)
+	$(SIZE_OPTS) $(PY_FLAGS) -DUSE_NEW_LIST -fsanitize=address
 
 #-pedantic  -save-temps
 
