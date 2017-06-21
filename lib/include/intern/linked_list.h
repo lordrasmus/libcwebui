@@ -2,7 +2,6 @@
 #ifndef _WS_LINKED_LIST_H_
 #define _WS_LINKED_LIST_H_
 
-#ifdef USE_NEW_LIST
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,7 +54,7 @@ int ws_list_delete(list_t *l, void *data);
 void *ws_list_extract_at(list_t *l, unsigned int pos);
 void *ws_list_get_at(const list_t *l, unsigned int pos);
 
-void *ws_list_seek(list_t *l, void *indicator);
+void *ws_list_seek(list_t *l, const void *indicator);
 int ws_list_attributes_seeker(list_t *l, element_seeker seeker_fun);
 
 unsigned int ws_list_size(const list_t *l);
@@ -64,8 +63,6 @@ int ws_list_empty(const list_t *l);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif
 
 #endif

@@ -1,8 +1,5 @@
 
 
-
-#ifdef USE_NEW_LIST
-
 #include "intern/linked_list.h"
 
 int ws_list_init(list_t *l){
@@ -231,7 +228,7 @@ void *ws_list_get_at(const list_t *l, unsigned int pos){
 }
 
 
-void *ws_list_seek(list_t *l, void *indicator){
+void *ws_list_seek(list_t *l, const void *indicator){
     struct list_entry* cur = l->first;
     
     if ( cur == 0 ) return 0;
@@ -260,4 +257,3 @@ int ws_list_empty(const list_t *l) {
     return (l->element_count == 0);
 }
 
-#endif
