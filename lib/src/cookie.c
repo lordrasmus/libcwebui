@@ -79,7 +79,7 @@ void createCookie(HttpRequestHeader *header, char* name, unsigned int name_lengt
 	}
 
 	#ifdef _WEBSERVER_COOKIE_DEBUG_
-	WebServerPrintf("Parsed Cookie Name <%s>  Value <%s> \n",cookie->name,cookie->value);
+	WebServerPrintf("Parsed Cookie ( %p ) Name <%s>  Value <%s> \n",cookie,cookie->name,cookie->value);
 	#endif
 
 	ws_list_append(&header->cookie_list,cookie);
