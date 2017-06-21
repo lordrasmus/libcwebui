@@ -793,7 +793,7 @@ void WebserverFreeFunctionParas(FUNCTION_PARAS *func) {
 
 html_chunk* WebserverMallocHtml_chunk(void) {
 	html_chunk* ret;
-	if (chunk_cache.numels == 0) {
+	if ( ws_list_size( &chunk_cache ) == 0 ) {
 		ret = (html_chunk*) WebserverMalloc( sizeof(html_chunk) );
 		ret->text = (char*) WebserverMalloc( 2000 );
 	} else {
