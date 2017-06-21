@@ -1,8 +1,8 @@
 
-FLAGS=-I../../lib/third_party/src/simclist/ -I../../lib/include
+FLAGS=-I../../lib/third_party/src/simclist/ -I../../lib/include -I.
 
 all:
-	gcc -O0 -ggdb3 -o test_list_old  $(FLAGS) main.c ../../lib/third_party/src/simclist/simclist.c
+	gcc -O0 -ggdb3 -o test_list_old  $(FLAGS) main.c simclist.c
 	gcc -O0 -ggdb3 -o test_list_new -DUSE_NEW_LIST $(FLAGS) main.c ../../lib/src/linked_list.c
 
 

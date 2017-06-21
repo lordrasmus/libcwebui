@@ -23,15 +23,6 @@
 #define SIMCLIST_H
 
 
-#ifdef USE_NEW_LIST
-
-    #include "intern/linked_list.c"
-
-
-#else
-
-
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -985,4 +976,3 @@ list_hash_t ws_list_hashcomputer_string(const void *el);
 
 #endif
 
-#endif
