@@ -12,7 +12,7 @@ SOURCES := 	src/builtinFunctions.c \
 			src/header.c \
 			src/header_parser.c \
 			src/header_send.c \
-			src/list.c \
+			src/linked_list.c \
 			src/message_queue.c \
 			src/server.c \
 			src/server_chunk_functions.c \
@@ -36,7 +36,6 @@ SOURCES := 	src/builtinFunctions.c \
 			src/webserver_api_functions.c \
 			src/utils.c \
 			src/log.c \
-			src/list.c  \
 			src/variable.c \
 			src/variable_global.c \
 			src/variable_store.c \
