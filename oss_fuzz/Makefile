@@ -24,7 +24,7 @@ FILES= stubs.c ../lib/src/convert.c ../lib/src/variable_store.c ../lib/src/heade
 	
 
 all:
-	$(CC)  $(CFLAGS) $(FILES) $(FLAGS)  -c
+	$(CC)  $(CFLAGS) $(FILES) $(FLAGS)  -c -O0 -ggdb3  -fno-omit-frame-pointer
 	$(CXX) $(CXXFLAGS) -std=c++11 *.o main.c $(FLAGS) -o $(OUT)/header_fuzzer -pthread -lFuzzingEngine 
 
 test: 
@@ -32,8 +32,8 @@ test:
 	$(CXX) $(CXXFLAGS) -O0 -ggdb3 -std=c++11 *.o main_tester.c $(FLAGS) -o header_fuzzer_tester -pthread -ldl -fno-omit-frame-pointer -fsanitize=address
 	
 test_clang: 
-	clang  $(CFLAGS) $(FILES) $(FLAGS)  -c -O0 -ggdb3  -fno-omit-frame-pointer
-	clang++ $(CXXFLAGS) -O0 -ggdb3 -std=c++11 *.o main_tester.c $(FLAGS) -o header_fuzzer_tester -pthread -ldl -fno-omit-frame-pointer
+	clang  $(CFLAGS) $(FILES) $(FLAGS)  -c -O0 -ggdb3  -fno-omit-frame-pointer -fsanitize=address
+	clang++ $(CXXFLAGS) -O0 -ggdb3 -std=c++11 *.o main_tester.c $(FLAGS) -o header_fuzzer_tester -pthread -ldl -fno-omit-frame-pointer -fsanitize=address
 	
 clean:
 	rm -f *.o
