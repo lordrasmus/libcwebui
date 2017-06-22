@@ -375,7 +375,7 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 
 			*c_pos = ' ';
 		}
-		printf("%s\n",header->url);
+		//printf("%s\n",header->url);
 
 		url_sanity_check( header );
 
