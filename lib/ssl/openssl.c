@@ -96,7 +96,11 @@ int initOpenSSL(void) {
 
 	int file_error = 0;
 
+	char* vers = SSLeay_version(SSLEAY_VERSION);
+
 	bio_err = 0;
+
+	LOG( SSL_LOG, NOTICE_LEVEL, 0, "using openssl : %s ", vers);
 
 	if (0 == getConfigText("ssl_key_file")) {
 		LOG( SSL_LOG, ERROR_LEVEL, 0, "SSL fehler kein ssl_key_file gesetzt", "");
@@ -106,7 +110,7 @@ int initOpenSSL(void) {
 	}
 
 	if (0 == getConfigText("ssl_key_file_backup")) {
-		LOG( SSL_LOG, WARNING_LEVEL, 0, "SSL fehler kein ssl_key_file_backup gesetzt", "");
+		//LOG( SSL_LOG, WARNING_LEVEL, 0, "SSL fehler kein ssl_key_file_backup gesetzt", "");
 	}else{
 		LOG( SSL_LOG, NOTICE_LEVEL, 0, "SSL ssl_key_file_backup %s", getConfigText("ssl_key_file_backup") );
 	}
