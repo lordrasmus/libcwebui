@@ -51,7 +51,7 @@ int					WebserverSSLAccept(socket_info* s);
 
 int 				WebserverSSLPending(socket_info* s);
 SOCKET_SEND_STATUS	WebserverSSLSendNonBlocking(socket_info* s, const unsigned char *buf, int len, int flags,int* bytes_send);
-int					WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, int len, int flags);
+int					WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, unsigned len, int flags);
 int					WebserverSSLCloseSockets(socket_info *s);
 
 
