@@ -26,7 +26,7 @@ void sig_pipe_hanler(int signum) {
 }
 
 int my_cors_handler( cors_infos* infos){
-	printf("CORS Handler: %s\n",ws_get_cors_type_name( infos->type ));
+	//printf("CORS Handler: %s\n",ws_get_cors_type_name( infos->type ));
 	switch( infos->type){
 		case CORS_ALLOW_ORIGIN:
 			printf("  Origin: %s\n",infos->origin);
@@ -50,7 +50,7 @@ int my_cors_handler( cors_infos* infos){
 		
 		case CORS_ALLOW_CREDENTIALS:
 			//return COND_FALSE;
-			printf("  Allow Credential\n");
+			//printf("  Allow Credential\n");
 			return COND_TRUE;
 		
 		case CORS_ALLOW_HEADERS:
