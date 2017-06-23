@@ -23,6 +23,13 @@ matrix:
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
+          packages: ['g++-4.6']
+      env: COMPILER=g++-4.6
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-4.7']
       env: COMPILER=g++-4.7
       
