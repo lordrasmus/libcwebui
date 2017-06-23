@@ -190,7 +190,7 @@ void parsePostData(http_request *s){
 
 int getHttpRequest(socket_info* sockp) {
 	http_request s;
-	WebserverFileInfo *file;
+	WebserverFileInfo *file = 0;
 
 	memset(&s, 0, sizeof(http_request));
 
