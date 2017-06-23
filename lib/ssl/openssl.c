@@ -96,7 +96,7 @@ int initOpenSSL(void) {
 
 	int file_error = 0;
 
-	char* vers = SSLeay_version(SSLEAY_VERSION);
+	const char* vers = SSLeay_version(SSLEAY_VERSION);
 
 	bio_err = 0;
 
@@ -452,7 +452,7 @@ int WebserverSSLAccept(socket_info* s) {
 	return NO_SSL_CONNECTION_ERROR;
 }
 
-int WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, int len, UNUSED_PARA int flags) {
+int WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, unsigned int len, UNUSED_PARA int flags) {
 	int ret = 0;
 	int l = 0;
 	int r2;
@@ -550,7 +550,7 @@ int WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, int len, UNU
 //#endif
 			return SSL_PROTOCOL_ERROR;
 		}
-		if (l == len) {
+		if ((unsigned int)l == len) {
 			return l;
 		}
 		//}while(SSL_pending(s->ssl)>0);
