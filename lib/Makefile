@@ -18,10 +18,14 @@ MBEDTLS_FLAGS := -D__USE_MISC=1 # -DMBEDTLS_DEBUG_C #-D__linux__ -D__GLIBC__
 
 FLAGS= $(COMP_OPT) -Wall -fPIC -Wextra   -std=c99  -D_POSIX_SOURCE \
 	-fdata-sections -ffunction-sections -fvisibility=hidden -Wpointer-arith \
-	$(SIZE_OPTS) $(PY_FLAGS) -DUSE_NEW_LIST -fsanitize=address \
+	$(SIZE_OPTS) $(PY_FLAGS) -DUSE_NEW_LIST \
 	-DMINIZ_NO_ZLIB_APIS $(MBEDTLS_FLAGS) \
 	-Wno-return-type -Wno-pointer-sign -Wno-variadic-macros  -Wno-unused-parameter \
 	-Werror=implicit-function-declaration
+
+ifneq ($(TRAVIS_BUILD),true)
+	FLAGS += -fsanitize=address	
+endif
 	
 #-Wno-cpp
 #-pedantic  -save-temps
