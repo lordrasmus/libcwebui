@@ -23,6 +23,7 @@
 
 
 #include "webserver.h"
+#include "miniz.h"
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -67,6 +68,7 @@ inline global_vars* initWebserver(void) {
 	PlatformInitNetwork();
 
 	initEvents();
+	LOG(MESSAGE_LOG, NOTICE_LEVEL, 0, "miniz: %s ", mz_version() );
 
 	if (!initFilesystem()) {
 		return 0;
