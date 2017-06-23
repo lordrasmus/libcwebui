@@ -20,9 +20,10 @@ FLAGS= $(COMP_OPT) -Wall -fPIC -Wextra   -std=c99  -D_POSIX_SOURCE \
 	-fdata-sections -ffunction-sections -fvisibility=hidden -Wpointer-arith \
 	$(SIZE_OPTS) $(PY_FLAGS) -DUSE_NEW_LIST -fsanitize=address \
 	-DMINIZ_NO_ZLIB_APIS $(MBEDTLS_FLAGS) \
-	-Wno-return-type -Wno-cpp -Wno-pointer-sign -Wno-variadic-macros  -Wno-unused-parameter \
+	-Wno-return-type -Wno-pointer-sign -Wno-variadic-macros  -Wno-unused-parameter \
 	-Werror=implicit-function-declaration
-
+	
+#-Wno-cpp
 #-pedantic  -save-temps
 
 SIZE_OPTS= -finline -fno-inline-functions
