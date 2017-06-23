@@ -233,6 +233,9 @@ enum
 #define MZ_VER_REVISION 0
 #define MZ_VER_SUBREVISION 0
 
+/* Returns the version string of miniz.c. */
+const char *mz_version(void);
+
 #ifndef MINIZ_NO_ZLIB_APIS
 
 /* Flush values. For typical usage you only need MZ_NO_FLUSH and MZ_FINISH. The other values are for advanced use (refer to the zlib docs). */
@@ -291,8 +294,7 @@ typedef struct mz_stream_s
 
 typedef mz_stream *mz_streamp;
 
-/* Returns the version string of miniz.c. */
-const char *mz_version(void);
+
 
 /* mz_deflateInit() initializes a compressor with default options: */
 /* Parameters: */
