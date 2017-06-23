@@ -15,7 +15,7 @@
 #ifdef WEBSERVER_USE_WEBSOCKETS
 
 
-#include "simclist.h"
+#include <linked_list.h>
 
 #define OUT_BUFFER_SIZE 10000
 
@@ -209,7 +209,7 @@ DEFINE_WEBSOCKET_HANDLER( "CommandSocket" , CommandSocket_handler) {
 	switch (signal) {
 		
 		case WEBSOCKET_MSG:
-			printf("CommandSocket Handler 1 %s\n", msg);
+			//printf("CommandSocket Handler 1 %s\n", msg);
 			handleCommandSocket(tmp, msg);
 		break;
 		
