@@ -22,6 +22,7 @@
 */
 
 #include "webserver.h"
+#include "miniz_tinfl.h"
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>

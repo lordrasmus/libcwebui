@@ -28,6 +28,7 @@
 #include <zlib.h>
 
 #include "webserver.h"
+#include "miniz_tinfl.h"
 
 #include "intern/system_file_access.h"
 
