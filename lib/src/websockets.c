@@ -216,7 +216,7 @@ int startWebsocketConnection(socket_info* sock) {
 		sock->websocket_store_guid = WebserverMalloc( WEBSERVER_GUID_LENGTH + 1 );
 		memset(sock->websocket_store_guid, 0, WEBSERVER_GUID_LENGTH + 1 );
 		memcpy( sock->websocket_store_guid, s->store->guid, WEBSERVER_GUID_LENGTH );
-		printf("copy Store GUID : %s\n", sock->websocket_store_guid);
+		//printf("copy Store GUID : %s\n", sock->websocket_store_guid);
 	}
 
 	if (handleWebsocketConnection(WEBSOCKET_SIGNAL_CONNECT, sock->websocket_guid, sock->header->url, 0 ,0 , 0) < 0) {
