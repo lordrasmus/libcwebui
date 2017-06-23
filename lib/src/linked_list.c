@@ -1,13 +1,14 @@
 
 
 #include "intern/linked_list.h"
+#include "intern/helper.h"
 
-int ws_list_init(list_t *l){
+int VISIBLE_ATTR ws_list_init(list_t *l){
     memset( l, 0 , sizeof( list_t ));
     return 1;
 }
 
-void ws_list_destroy(list_t *l){
+void VISIBLE_ATTR ws_list_destroy(list_t *l){
     struct list_entry* cur = l->first;
     struct list_entry* del;
     
@@ -33,7 +34,7 @@ void ws_list_destroy(list_t *l){
     l->first = 0;
 }
 
-int ws_list_clear(list_t *l){
+int VISIBLE_ATTR ws_list_clear(list_t *l){
     struct list_entry* cur = l->first;
     struct list_entry* del;
     
@@ -57,7 +58,7 @@ int ws_list_clear(list_t *l){
     return 1;
 }
 
-int ws_list_delete(list_t *l, void *data){
+int VISIBLE_ATTR ws_list_delete(list_t *l, void *data){
     struct list_entry* cur = l->first;
     
     struct list_entry* del = 0;
@@ -107,19 +108,19 @@ int ws_list_delete(list_t *l, void *data){
 
 
 
-int ws_list_attributes_freer(list_t *l, element_freer freer_fun){
+int VISIBLE_ATTR ws_list_attributes_freer(list_t *l, element_freer freer_fun){
     l->freer = freer_fun;
     return 1;
 }
 
-int ws_list_attributes_seeker(list_t *l, element_seeker seeker_fun){
+int VISIBLE_ATTR ws_list_attributes_seeker(list_t *l, element_seeker seeker_fun){
     l->seeker = seeker_fun;
     return 1;
 }
 
 
 
-int ws_list_append(list_t *l, void *data){
+int VISIBLE_ATTR ws_list_append(list_t *l, void *data){
     
     l->element_count++;
     
@@ -148,17 +149,17 @@ int ws_list_append(list_t *l, void *data){
 }
 
 
-int ws_list_iterator_start(list_t *l){
+int VISIBLE_ATTR ws_list_iterator_start(list_t *l){
     l->cur_iter = l->first;
     return 1;
 }
 
-int ws_list_iterator_hasnext(const list_t *l){
+int VISIBLE_ATTR ws_list_iterator_hasnext(const list_t *l){
     if ( l->cur_iter == 0 ) return 0;
     return 1;
 }
 
-void *ws_list_iterator_next(list_t *l){
+void VISIBLE_ATTR *ws_list_iterator_next(list_t *l){
     struct list_entry* ret =  l->cur_iter;
     if ( ret == 0 ) return 0;
     
@@ -166,7 +167,7 @@ void *ws_list_iterator_next(list_t *l){
     return ret->data;
 }
 
-int ws_list_iterator_stop(list_t *l){
+int VISIBLE_ATTR ws_list_iterator_stop(list_t *l){
     l->cur_iter = 0;
     return 1;
 }
@@ -190,7 +191,7 @@ static struct list_entry *ws_list_get_entry_at(const list_t *l, unsigned int pos
     return 0;
 }
 
-void *ws_list_extract_at(list_t *l, unsigned int pos){
+void VISIBLE_ATTR *ws_list_extract_at(list_t *l, unsigned int pos){
     struct list_entry* cur = ws_list_get_entry_at( l, pos );
     if ( cur == 0 )
         return 0;
@@ -218,7 +219,7 @@ void *ws_list_extract_at(list_t *l, unsigned int pos){
 }
 
 
-void *ws_list_get_at(const list_t *l, unsigned int pos){
+void VISIBLE_ATTR *ws_list_get_at(const list_t *l, unsigned int pos){
     
     struct list_entry* cur = ws_list_get_entry_at( l, pos );
     if ( cur == 0 )
@@ -228,7 +229,7 @@ void *ws_list_get_at(const list_t *l, unsigned int pos){
 }
 
 
-void *ws_list_seek(list_t *l, const void *indicator){
+void VISIBLE_ATTR *ws_list_seek(list_t *l, const void *indicator){
     struct list_entry* cur = l->first;
     
     if ( cur == 0 ) return 0;
@@ -249,11 +250,11 @@ void *ws_list_seek(list_t *l, const void *indicator){
 
 
 
-unsigned int ws_list_size(const list_t *l){ 
+unsigned int VISIBLE_ATTR ws_list_size(const list_t *l){ 
     return l->element_count; 
 }
 
-int ws_list_empty(const list_t *l) {
+int VISIBLE_ATTR ws_list_empty(const list_t *l) {
     return (l->element_count == 0);
 }
 
