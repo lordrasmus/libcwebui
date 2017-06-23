@@ -23,6 +23,7 @@
 
 
 #include <strings.h>
+#include <errno.h>
 
 #include "webserver.h"
 
