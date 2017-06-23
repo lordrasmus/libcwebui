@@ -43,7 +43,9 @@ INCLUDES= -I. -Iinclude -Iplatform/include -Ithird_party/src/rb_tree/ -Ithird_pa
 			-Ithird_party/src/mbedtls-2.4.2/include/
 LIBS=
 
-COMPILER=$(CC)
+ifneq ($(TRAVIS_BUILD),true)
+	COMPILER=$(CC)
+endif
 
 include Makefile.files
 
