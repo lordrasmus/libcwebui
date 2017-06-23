@@ -21,7 +21,7 @@
 
 */
 
-#include "../WebserverConfig.h"
+#include "WebserverConfig.h"
 
 
 #include "webserver.h"

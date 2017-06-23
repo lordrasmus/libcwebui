@@ -69,3 +69,9 @@ bw-outputs/
 
 fuzzing/parse_header/afl-*
 logs
+
+
+tests/list/test_list_new
+tests/list/test_list_old
+tests/list/test_new.txt
+tests/list/test_old.txt

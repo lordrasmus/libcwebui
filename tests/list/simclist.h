@@ -19,9 +19,10 @@
  * SimCList library. See http://mij.oltrelinux.com/devel/simclist
  */
 
-
 #ifndef SIMCLIST_H
 #define SIMCLIST_H
+
+
 
 #ifdef __cplusplus
 extern "C" {

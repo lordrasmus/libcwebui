@@ -23,7 +23,7 @@
 
 
 #include "webserver.h"
-#include "simclist.h"
+
 #include <math.h>
 
 #ifdef DMALLOC
@@ -618,6 +618,13 @@ Cookie* WebserverMallocCookie(void) {
 }
 
 void WebserverFreeCookie(Cookie* cookie) {
+	#ifdef _WEBSERVER_COOKIE_DEBUG_
+	if ( cookie == 0 ){
+		WebServerPrintf("Free Cookie ( %p )\n",cookie);
+	}else{
+		WebServerPrintf("Free Cookie ( %p ) Name <%s>  Value <%s> \n",cookie,cookie->name,cookie->value);
+	}
+	#endif
 	if ( cookie == 0){
 		return;
 	}
@@ -669,7 +676,7 @@ HttpRequestHeader* WebserverMallocHttpRequestHeader(void) {
 void WebserverResetHttpRequestHeader(HttpRequestHeader *header) {
 
 	clearVariables(header->parameter_store);
-	ws_list_clear(&header->cookie_list);
+	ws_list_destroy(&header->cookie_list);
 
 
 	header->post_buffer_pos = 0;
@@ -786,7 +793,7 @@ void WebserverFreeFunctionParas(FUNCTION_PARAS *func) {
 
 html_chunk* WebserverMallocHtml_chunk(void) {
 	html_chunk* ret;
-	if (chunk_cache.numels == 0) {
+	if ( ws_list_size( &chunk_cache ) == 0 ) {
 		ret = (html_chunk*) WebserverMalloc( sizeof(html_chunk) );
 		ret->text = (char*) WebserverMalloc( 2000 );
 	} else {
