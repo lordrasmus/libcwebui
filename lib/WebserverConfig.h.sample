@@ -31,19 +31,21 @@
 #define WEBSERVER_GUID_LENGTH		50					// länge der guids für die sessions
 
 
-#define WEBSERVER_USE_PYTHON							// Python Support
+//#define WEBSERVER_USE_PYTHON							// Python Support
 
 #define WEBSERVER_USE_SSL							// HTTPS ( SSL ) Support
 //#define WEBSERVER_USE_YASSL_CRYPTO					// SSL mit yaSSL
 #define WEBSERVER_USE_OPENSSL_CRYPTO				// SSL mit openssl
+//#define WEBSERVER_USE_MBEDTLS_CRYPTO				// SSL mit mbed tls
 
 
 
 #ifndef WEBSERVER_USE_SSL
 	#undef WEBSERVER_USE_YASSL_CRYPTO
 	#undef WEBSERVER_USE_OPENSSL_CRYPTO
+	#undef WEBSERVER_USE_MBEDTLS_CRYPTO
 #else
-	#if !defined(WEBSERVER_USE_YASSL_CRYPTO) && !defined(WEBSERVER_USE_OPENSSL_CRYPTO)
+	#if !defined(WEBSERVER_USE_YASSL_CRYPTO) && !defined(WEBSERVER_USE_OPENSSL_CRYPTO) && !defined(WEBSERVER_USE_MBEDTLS_CRYPTO)
 		#error "kein SSL crypto definiert"
 	#endif
 #endif
