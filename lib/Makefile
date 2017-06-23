@@ -109,7 +109,8 @@ build: $(OBJ)
 
 obj/%.o : %.c
 	@echo 'Compiling File : $<'
-	@$(COMPILER) $(INCLUDES) $(DEFS) $(FLAGS) -fno-lto -c -o $@ $<
+	@$(COMPILER) $(INCLUDES) $(DEFS) $(FLAGS)  -c -o $@ $<
+#-fno-lto	
 #	@$(COMPILER) $(INCLUDES) $(DEFS) $(FLAGS) -flto -c -o $@.lto $<
 
 

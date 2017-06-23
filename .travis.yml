@@ -27,7 +27,7 @@ matrix:
       env: COMPILER=gcc-4.4 CC=gcc-4.4
     
     - os: linux
-      compiler: gcc
+      compiler: gcc-4.5
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
@@ -35,14 +35,14 @@ matrix:
       env: COMPILER=gcc-4.5 CC=gcc-4.5
     
     - os: linux
-      compiler: gcc
+      compiler: gcc-4.6
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['gcc-4.6']
       env: COMPILER=gcc-4.6 CC=gcc-4.6
     - os: linux
-      compiler: gcc
+      compiler: gcc-4.7
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
@@ -50,7 +50,7 @@ matrix:
       env: COMPILER=gcc-4.7 CC=gcc-4.7
       
     - os: linux
-      compiler: gcc
+      compiler: gcc-4.8
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
@@ -58,7 +58,7 @@ matrix:
       env: COMPILER=gcc-4.8 CC=gcc-4.8
 
     - os: linux
-      compiler: gcc
+      compiler: gcc-4.9
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
@@ -66,7 +66,7 @@ matrix:
       env: COMPILER=gcc-4.9 CC=gcc-4.9
 
     - os: linux
-      compiler: gcc
+      compiler: gcc-5
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
@@ -74,7 +74,7 @@ matrix:
       env: COMPILER=gcc-5 CC=gcc-5
 
     - os: linux
-      compiler: gcc
+      compiler: gcc-6
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
@@ -94,7 +94,7 @@ matrix:
       env: COMPILER=clang++
 
     - os: linux
-      compiler: clang
+      compiler: clang++-3.5
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.5']
@@ -102,7 +102,7 @@ matrix:
       env: COMPILER=clang++-3.5  CC=clang++-3.5
 
     - os: linux
-      compiler: clang
+      compiler: clang++-3.6
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
