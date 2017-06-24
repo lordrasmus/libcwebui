@@ -142,7 +142,7 @@ int prepare_file_content(WebserverFileInfo* file) {
 			case FS_BINARY :
 				//printf("compressed : %d\n",file->Compressed);
 				if ( file->Compressed == 2 ){
-					printf("warning: decompressing file : %s\n", file->FilePath );
+					//printf("warning: decompressing file : %s\n", file->FilePath );
 					file->Data = WebserverMalloc( file->RealDataLenght );
 					tinfl_decompress_mem_to_mem( (char*)file->Data, file->RealDataLenght, file->CompressedData, file->CompressedDataLenght, 0 );
 					file->DataLenght = file->RealDataLenght;

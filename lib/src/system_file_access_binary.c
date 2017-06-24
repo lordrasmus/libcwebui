@@ -174,18 +174,18 @@ static const unsigned char* read_file( const unsigned char *alias, const unsigne
 
 				case 2: 	// deflate compression
 
-					printf("decompressing template ( deflate ) : %s\n",name);
+					//printf("decompressing template ( deflate ) : %s\n",name);
 
 					new_size = tinfl_decompress_mem_to_mem( decomp_buffer, decomp_size, ret, compresed_size, 0 );
 					//printf("%d\n%s\n",new_size,decomp_buffer);
 					break;
 
-			//size_t s = uncompress(decomp_buffer, decomp_size, ret, compresed_size);
-			//printf("%d %s\n",s,decomp_buffer);
+					//size_t s = uncompress(decomp_buffer, decomp_size, ret, compresed_size);
+					//printf("%d %s\n",s,decomp_buffer);
 
 				case 1:{		// gzip compression
 
-						printf("decompressing template ( gzip ) : %s\n",name);
+						//printf("decompressing template ( gzip ) : %s\n",name);
 
 						z_stream strm;
 						strm.next_in = (unsigned char*)ret;
