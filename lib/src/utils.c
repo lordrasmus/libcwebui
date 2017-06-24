@@ -44,8 +44,12 @@ int StringComp(const void* a, const void* b) {
 	}
 
 	ret = strcmp(p_a, p_b);
-	if (ret < 0) return -1;
-	if (ret > 0) return 1;
+	if (ret < 0){
+		return -1;
+	}
+	if (ret > 0){
+		return 1;
+	}
 	return 0;
 }
 
@@ -86,13 +90,16 @@ int stringfind(const char *buffer, const char *pattern) {
 		return 0;
 	}
 	length = (int) strlen((char*) buffer);
-	for (i = 0; i < length; i++)
+	for (i = 0; i < length; i++){
 		if (buffer[i] == pattern[i2]) {
 			i2++;
-			if (pattern[i2] == '\0') return i;
+			if (pattern[i2] == '\0'){
+				return i;
+			}
 		} else {
 			i2 = 0;
 		}
+	}
 	return 0;
 
 }
@@ -120,14 +127,19 @@ long stringnfind(const char *buffer, const char *pattern, unsigned int buffer_le
 int stringfindAtPos(const char *buffer, const char *pattern) {
 	int i, i2 = 0;
 	int lenght = (int) strlen((char*) pattern);
-	for (i = 0; i < lenght; i++)
+	for (i = 0; i < lenght; i++){
 		if (buffer[i] == pattern[i2]) {
 			i2++;
-			if (pattern[i2] == '\0') return i;
-			if (i2 == lenght) return i;
+			if (pattern[i2] == '\0'){
+				return i;
+			}
+			if (i2 == lenght){
+				return i;
+			}
 		} else {
 			return 0;
 		}
+	}
 	return 0;
 
 }
@@ -215,19 +227,21 @@ unsigned int getHTMLDateFormat(char* buffer, int day, int month, int year, int h
 
 }
 
-void convertBinToHexString(unsigned char* bin, int bin_length, char* text, int text_length) {
+void convertBinToHexString(const unsigned char* bin, int bin_length, char* text, int text_length) {
 	int l;
 	for (l = 0; l < bin_length; l++) {
 		text[l * 2 + 0] = bin[l] >> 4;
-		if (text[l * 2 + 0] <= 9)
+		if (text[l * 2 + 0] <= 9){
 			text[l * 2 + 0] += 48;
-		else
+		}else{
 			text[l * 2 + 0] += 55;
+		}
 		text[l * 2 + 1] = bin[l] & 0x0F;
-		if (text[l * 2 + 1] <= 9)
+		if (text[l * 2 + 1] <= 9){
 			text[l * 2 + 1] += 48;
-		else
+		}else{
 			text[l * 2 + 1] += 55;
+		}
 	}
 	text[text_length] = '\0';
 }
@@ -239,8 +253,9 @@ void generateGUID(char* buf, int length) {
 	if (0 != WebserverRANDBytes(tmp, length / 2)) {
 		convertBinToHexString(tmp, length / 2, buf, length);
 		l = strlen(buf);
-		if (l != length)
-		LOG( PLATFORM_LOG, NOTICE_LEVEL, 0, "error generating Data %d->%d %s",length,l, buf);
+		if (l != length){
+			LOG( PLATFORM_LOG, NOTICE_LEVEL, 0, "error generating Data %d->%d %s",length,l, buf);
+		}
 		WebserverFree(tmp);
 		return;
 	}

@@ -51,7 +51,7 @@ int local_file_system_check_file_modified( WebserverFileInfo *file ){
 	int time_changed = 0;
 	int new_size = 0;
 
-	// TODO : Problem mit clients die die datei noch laden lösen
+	// TODO(lordrasmus) : Problem mit clients die die datei noch laden lösen
 
 	if ( 0 == PlatformGetFileInfo( file, &time_changed, &new_size )){
 		printf("local_file_system_check_file_modified: Error file not found %s\n",file->FilePath);
@@ -145,8 +145,9 @@ void add_local_file_system_dir(const char* alias, const char* dir, const int use
 	tmp = addWSVariableArray( file_dirs , alias);
 	
 	strncpy(buffer, dir, 990);
-	if (buffer[strlen(buffer)] != '/')
+	if (buffer[strlen(buffer)] != '/'){
 		strcat(buffer, "/");
+	}
 
 	info->dir = WebserverMalloc( strlen( buffer ) + 1 );
 	strcpy( info->dir, buffer);
@@ -189,8 +190,9 @@ static struct dir_info *search_file_dir ( const unsigned char* name, unsigned ch
 	}
 	stopWSVariableArrayIterate( file_dirs );
 	
-	if ( found == 1 )
+	if ( found == 1 ){
 		return dir_tmp;
+	}
 	
 	return 0;
 }
@@ -202,8 +204,9 @@ static WebserverFileInfo* getFileInformation( const unsigned char *name) {
 	WebserverFileInfo *file = 0;
 	
 	/*  um ein Zeichen weiterspringen wenn name mit / anfängt */
-	while( name[0] == '/' )
+	while( name[0] == '/' ){
 		name++;
+	}
 		
 	
 	dir = search_file_dir( name, name_tmp, 1000 );

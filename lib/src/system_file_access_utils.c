@@ -119,8 +119,9 @@ void copyFilePath(WebserverFileInfo* file, const unsigned char* name) {
 
 void copyURL(WebserverFileInfo* file, const unsigned char* url) {
 
-	while( url[0] == '/' )
+	while( url[0] == '/' ){
 		url++;
+	}
 
 	file->UrlLengt = strlen((char*) url);
 	if (file->Url != 0) {
@@ -156,8 +157,9 @@ void setFileType(WebserverFileInfo* file) {
 	}
 
 	if ( ( strlen((char*) file->Url) - len ) <= 10 ){
-		for (i = 0; i < strlen((char*) file->Url) - len; i++)
+		for (i = 0; i < strlen((char*) file->Url) - len; i++){
 			ext[i] = tolower(file->Url[i + len]);
+		}
 		ext[i] = '\0';
 	}else{
 		ext[0] = '\0';
@@ -167,46 +169,47 @@ void setFileType(WebserverFileInfo* file) {
 	 * http://www.sitepoint.com/web-foundations/mime-types-complete-list/
 	 */
 
-	if (0 == strncmp((char*) ext, ".html", 10))
+	if (0 == strncmp((char*) ext, ".html", 10)){
 		file->FileType = FILE_TYPE_HTML;
-	else if (0 == strncmp((char*) ext, ".inc", 10))
+	}else if (0 == strncmp((char*) ext, ".inc", 10)){
 		file->FileType = FILE_TYPE_HTML_INC;
-	else if (0 == strncmp((char*) ext, ".css", 10))
+	}else if (0 == strncmp((char*) ext, ".css", 10)){
 		file->FileType = FILE_TYPE_CSS;
-	else if (0 == strncmp((char*) ext, ".js", 10))
+	}else if (0 == strncmp((char*) ext, ".js", 10)){
 		file->FileType = FILE_TYPE_JS;
-	else if (0 == strncmp((char*) ext, ".ico", 10))
+	}else if (0 == strncmp((char*) ext, ".ico", 10)){
 		file->FileType = FILE_TYPE_ICO;
-	else if (0 == strncmp((char*) ext, ".gif", 10))
+	}else if (0 == strncmp((char*) ext, ".gif", 10)){
 		file->FileType = FILE_TYPE_GIF;
-	else if (0 == strncmp((char*) ext, ".jpg", 10))
+	}else if (0 == strncmp((char*) ext, ".jpg", 10)){
 		file->FileType = FILE_TYPE_JPG;
-	else if (0 == strncmp((char*) ext, ".png", 10))
+	}else if (0 == strncmp((char*) ext, ".png", 10)){
 		file->FileType = FILE_TYPE_PNG;
-	else if (0 == strncmp((char*) ext, ".xml", 10))
+	}else if (0 == strncmp((char*) ext, ".xml", 10)){
 		file->FileType = FILE_TYPE_XML;
-	else if (0 == strncmp((char*) ext, ".xsl", 10))
+	}else if (0 == strncmp((char*) ext, ".xsl", 10)){
 		file->FileType = FILE_TYPE_XSL;
-	else if (0 == strncmp((char*) ext, ".manifest", 10))
+	}else if (0 == strncmp((char*) ext, ".manifest", 10)){
 		file->FileType = FILE_TYPE_MANIFEST;
-	else if (0 == strncmp((char*) ext, ".svg", 10))
+	}else if (0 == strncmp((char*) ext, ".svg", 10)){
 		file->FileType = FILE_TYPE_SVG;
-	else if (0 == strncmp((char*) ext, ".bmp", 10))
+	}else if (0 == strncmp((char*) ext, ".bmp", 10)){
 		file->FileType = FILE_TYPE_BMP;
-	else if (0 == strncmp((char*) ext, ".pdf", 10))
+	}else if (0 == strncmp((char*) ext, ".pdf", 10)){
 		file->FileType = FILE_TYPE_PDF;
-	else if (0 == strncmp((char*) ext, ".json", 10))
+	}else if (0 == strncmp((char*) ext, ".json", 10)){
 		file->FileType = FILE_TYPE_JSON;
-	else if (0 == strncmp((char*) ext, ".woff", 10))
+	}else if (0 == strncmp((char*) ext, ".woff", 10)){
 		file->FileType = FILE_TYPE_WOFF;
-	else if (0 == strncmp((char*) ext, ".eot", 10))
+	}else if (0 == strncmp((char*) ext, ".eot", 10)){
 		file->FileType = FILE_TYPE_EOT;
-	else if (0 == strncmp((char*) ext, ".ttf", 10))
+	}else if (0 == strncmp((char*) ext, ".ttf", 10)){
 		file->FileType = FILE_TYPE_TTF;
-	else if (0 == strncmp((char*) ext, ".c", 10))
+	}else if (0 == strncmp((char*) ext, ".c", 10)){
 		file->FileType = FILE_TYPE_C_SRC;
-	else
+	}else{
 		LOG(FILESYSTEM_LOG, NOTICE_LEVEL, 0, "%s is FILE_TYPE_PLAIN", file->Url );
+	}
 }
 
 
@@ -232,7 +235,9 @@ void generateEtag(WebserverFileInfo* wfi) {
 #else
 
 	unsigned char buf[SSL_SHA_DIG_LEN];
-	if (wfi->etag != 0) WebserverFree( (void*) wfi->etag);
+	if (wfi->etag != 0){
+		WebserverFree( (void*) wfi->etag);
+	}
 	wfi->etag = (unsigned char *) WebserverMalloc ( SSL_SHA_DIG_LEN * 2 + 1 );
 	memset( (void*) wfi->etag ,0,SSL_SHA_DIG_LEN*2+1);
 
@@ -249,8 +254,9 @@ void generateEtag(WebserverFileInfo* wfi) {
 		unsigned char *data;
 
 
-		if (!PlatformOpenDataReadStream(wfi->FilePath))
+		if (!PlatformOpenDataReadStream(wfi->FilePath)){
 			return;
+		}
 
 		pos = 0;
 		sha_context = WebserverSHA1Init();
@@ -275,7 +281,9 @@ void generateEtag(WebserverFileInfo* wfi) {
 			WebserverSHA1Update(sha_context, data, to_read);
 			pos += to_read;
 
-			if (pos == wfi->DataLenght) break;
+			if (pos == wfi->DataLenght){
+				break;
+			}
 
 		}
 		WebserverSHA1Final(sha_context, buf);
@@ -300,9 +308,9 @@ WebserverFileInfo *create_empty_file(int pSize)
 	WebserverFileInfo *file = (WebserverFileInfo *) WebserverMalloc(sizeof(WebserverFileInfo));
 	memset(file, 0, sizeof(WebserverFileInfo));
 
-
-	if( !file )
+	if( !file ){
 		return 0;
+	}
 
 	file->RamCached = 1;
 
@@ -310,8 +318,9 @@ WebserverFileInfo *create_empty_file(int pSize)
 
 	file->Data = (unsigned char *) WebserverMalloc(pSize);
 
-	if( !file->Data )
+	if( !file->Data ){
 		return 0;
+	}
 
 	file->DataLenght = pSize;
 
@@ -320,16 +329,17 @@ WebserverFileInfo *create_empty_file(int pSize)
 
 void free_empty_file(WebserverFileInfo *file)
 {
-	if(file->Data)
+	if(file->Data){
 		WebserverFree((char*)file->Data);
+	}
 
-	if(file->FilePath)
+	if(file->FilePath){
 		WebserverFree((char*)file->FilePath);
+	}
 
-
-	if(file->Url)
+	if(file->Url){
 		WebserverFree((char*)file->Url);
-
+	}
 
 	WebserverFree(file);
 }

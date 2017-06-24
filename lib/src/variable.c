@@ -126,10 +126,12 @@ SIZE_TYPE getWSVariableSize(ws_variable* var) {
 	ret = sizeof(ws_variable);
 	ret += var->name_len + 1;
 
-	if (var->type == VAR_TYPE_STRING)
+	if (var->type == VAR_TYPE_STRING){
 		ret += var->extra.str_len + 1;
-	if (var->type == VAR_TYPE_ARRAY)
+	}
+	if (var->type == VAR_TYPE_ARRAY){
 		ret += getVariableStoreSize(var->val.value_array);
+	}
 	return ret;
 }
 
@@ -137,8 +139,9 @@ void setWSVariableString(ws_variable* var, const char* text) {
 	SIZE_TYPE length;
 	int ret;
 
-	if (var == 0)
+	if (var == 0){
 		return;
+	}
 
 	freeWSVariableValue(var);
 	var->type = VAR_TYPE_STRING;
@@ -167,8 +170,9 @@ void setWSVariableString(ws_variable* var, const char* text) {
 }
 
 void setWSVariableCustomData(ws_variable* var, var_free_handler handle, void* data ) {
-	if (var == 0)
+	if (var == 0){
 		return;
+	}
 
 	freeWSVariableValue(var);
 
@@ -178,8 +182,9 @@ void setWSVariableCustomData(ws_variable* var, var_free_handler handle, void* da
 }
 
 int getWSVariableString(ws_variable* var, char* buffer,	unsigned int buffer_length) {
-	if (var == 0)
+	if (var == 0){
 		return -1;
+	}
 
 	if ((var->val.value_p == 0) && (var->type != VAR_TYPE_INT)) {
 		return snprintf(buffer, buffer_length, "Empty");
@@ -307,11 +312,13 @@ ws_variable* getWSVariableArray(ws_variable* var, const char* name) {
 	if ( var == 0 ){
 		return 0;
 	}
-	if (var->type == VAR_TYPE_ARRAY)
+	if (var->type == VAR_TYPE_ARRAY){
 		return getVariable(var->val.value_array, name);
+	}
 
-	if ((var->type == VAR_TYPE_REF) && (var->val.value_ref->type == VAR_TYPE_ARRAY))
+	if ((var->type == VAR_TYPE_REF) && (var->val.value_ref->type == VAR_TYPE_ARRAY)){
 		return getVariable(var->val.value_ref->val.value_array, name);
+	}
 	return 0;
 }
 
@@ -345,8 +352,9 @@ void delWSVariableArray(ws_variable* var, const char* name) {
 	if (var == 0){
 		return;
 	}
-	if (var->type != VAR_TYPE_ARRAY)
+	if (var->type != VAR_TYPE_ARRAY){
 		return;
+	}
 	tmp = getWSVariableArray(var, name);
 	freeVariable(var->val.value_array, tmp);
 }
@@ -355,8 +363,9 @@ ws_variable VISIBLE_ATTR * getWSVariableArrayFirst(ws_variable* var) {
 	if ( var == 0 ){
 		return 0;
 	}
-	if (var->type != VAR_TYPE_ARRAY)
+	if (var->type != VAR_TYPE_ARRAY){
 		return 0;
+	}
 
 	return getFirstVariable(var->val.value_array);
 }
@@ -365,8 +374,9 @@ ws_variable VISIBLE_ATTR * getWSVariableArrayNext(ws_variable* var) {
 	if ( var == 0 ){
 		return 0;
 	}
-	if (var->type != VAR_TYPE_ARRAY)
+	if (var->type != VAR_TYPE_ARRAY){
 		return 0;
+	}
 
 	return getNextVariable(var->val.value_array);
 }
@@ -375,8 +385,9 @@ void VISIBLE_ATTR stopWSVariableArrayIterate(ws_variable* var) {
 	if ( var == 0 ){
 		return;
 	}
-	if (var->type != VAR_TYPE_ARRAY)
+	if (var->type != VAR_TYPE_ARRAY){
 		return;
+	}
 	stopIterateVariable(var->val.value_array);
 }
 
@@ -388,8 +399,9 @@ ws_variable* getWSVariableArrayIndex(ws_variable* var, unsigned int index) {
 		return 0;
 	}
 
-	if (var->type != VAR_TYPE_ARRAY)
+	if (var->type != VAR_TYPE_ARRAY){
 		return 0;
+	}
 
 	tmp = getFirstVariable(var->val.value_array);
 	while (tmp != 0) {
@@ -402,8 +414,7 @@ ws_variable* getWSVariableArrayIndex(ws_variable* var, unsigned int index) {
 	return 0;
 }
 
-ws_variable* addWSVariableArrayIndex(ws_variable* var,
-		unsigned int index) {
+ws_variable* addWSVariableArrayIndex(ws_variable* var,	unsigned int index) {
 	ws_variable *tmp;
 	unsigned int i = 0;
 	char name_buf[10];
@@ -412,13 +423,15 @@ ws_variable* addWSVariableArrayIndex(ws_variable* var,
 		return 0;
 	}
 
-	if (var->type != VAR_TYPE_ARRAY)
+	if (var->type != VAR_TYPE_ARRAY){
 		return 0;
+	}
 
 	tmp = getFirstVariable(var->val.value_array);
 	while (tmp != 0) {
-		if (i == index)
+		if (i == index){
 			return tmp;
+		}
 		i++;
 		tmp = getNextVariable(var->val.value_array);
 	}

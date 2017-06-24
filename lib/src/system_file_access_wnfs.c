@@ -42,17 +42,20 @@ WebserverFileInfo* wnfs_get_file( unsigned char* name){
 	//printf("wnfs_get_file  : %s\n", name );
 	uint32_t len = sprintf(buffer,"{\"op\":\"get_file\",\"file\":\"%s\"}",name);
 	int ret;
-	if ( 4 != PlatformSendSocket( wnfs_socket, (unsigned char *)&len, 4,0 ) )
+	if ( 4 != PlatformSendSocket( wnfs_socket, (unsigned char *)&len, 4,0 ) ){
 		goto  error_out;
+	}
 
 	ret = PlatformSendSocket( wnfs_socket, (const unsigned char *)buffer, len , 0 );
-	if ( ( ret <= 0 ) || ( len != (uint32_t)ret) )
+	if ( ( ret <= 0 ) || ( len != (uint32_t)ret) ){
 		goto  error_out;
+	}
 		
 	
 	ret = PlatformRecvSocket( wnfs_socket, (unsigned char *)&len, 4, 0 );
-	if ( ret < 0 )
+	if ( ret < 0 ){
 		goto  error_out;
+	}
 
 	if ( len == 0 ){
 		return 0;
@@ -120,18 +123,21 @@ void wnfs_store_file( WebserverFileInfo* file ){
 	uint32_t len = sprintf(buffer,"{\"op\":\"put_file\",\"file\":\"%s\"}",file->Url);
 	int ret;
 	ret = PlatformSendSocket( wnfs_socket, (const unsigned char *)&len, 4,0 );
-	if ( 4 != ret )
+	if ( 4 != ret ){
 		goto  error_out;
+	}
 
 	ret = PlatformSendSocket( wnfs_socket, (const unsigned char *)buffer, len , 0 );
-	if ( ( ret <= 0 ) || ( len != (uint32_t)ret) )
+	if ( ( ret <= 0 ) || ( len != (uint32_t)ret) ){
 		goto  error_out;
+	}
 
 	len = file->DataLenght;
 	
 	ret = PlatformSendSocket( wnfs_socket, (const unsigned char *)&len , 4,0 );
-	if ( 4 != ret )
+	if ( 4 != ret ){
 		goto  error_out;
+	}
 
 	ret = send ( wnfs_socket,file->Data,len,0 );
 	if ( ( ret <= 0 ) || ( len != (uint32_t)ret) ){
@@ -149,7 +155,6 @@ error_out:
 	printf("wnfs_store_file error: %m\n");
 	PlatformCloseSocket( wnfs_socket );
 	wnfs_socket = 0;
-	return ;
 
 }
 

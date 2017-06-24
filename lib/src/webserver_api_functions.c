@@ -244,8 +244,9 @@ int getVariableAsString(dummy_var* var, char* buffer, unsigned int buffer_length
 
 char* getVariableAsStringP(dummy_var* var){
 	ws_variable* var2 = (ws_variable*) var;
-	if ( var2->type == VAR_TYPE_STRING )
+	if ( var2->type == VAR_TYPE_STRING ){
 		return var2->val.value_string;
+	}
 	return 0;
 }
 
@@ -326,19 +327,25 @@ int  getFileCount(dummy_handler* s){
 
 char*     getFileName(dummy_handler* s,int index){
 	upload_file_info* tmp = ws_list_get_at( &((http_request*) s)->upload_files, index );
-	if ( ! tmp ) return 0;
+	if ( ! tmp ){
+		return 0;
+	}
 	return tmp->name;
 }
 
 char*     getFileData(dummy_handler* s,int index){
 	upload_file_info* tmp = ws_list_get_at( &((http_request*) s)->upload_files, index );
-	if ( ! tmp ) return 0;
+	if ( ! tmp ){
+		return 0;
+	}
 	return tmp->data;
 }
 
 int     getFileSize(dummy_handler* s,int index){
 	upload_file_info* tmp = ws_list_get_at( &((http_request*) s)->upload_files, index );
-	if ( ! tmp ) return 0;
+	if ( ! tmp ){
+		return 0;
+	}
 	return tmp->length;
 }
 
@@ -367,7 +374,9 @@ dummy_var* getURLParameter(dummy_handler* s,const char* name) {
 
 char* getEngineParameter(dummy_handler* s, int index) {
 	FUNCTION_PARAS* f = &((http_request*)s)->engine_current->func;
-	if ( index >= MAX_FUNC_PARAS ) return 0;
+	if ( index >= MAX_FUNC_PARAS ){
+		return 0;
+	}
 
 	return f->parameter[index].text;
 }
