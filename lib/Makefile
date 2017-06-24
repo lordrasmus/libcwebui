@@ -24,7 +24,9 @@ FLAGS= $(COMP_OPT) -Wall -fPIC -Wextra   -std=c99  -D_POSIX_SOURCE \
 	-Werror=implicit-function-declaration
 
 ifneq ($(TRAVIS_BUILD),true)
-	FLAGS += -fsanitize=address	
+#	FLAGS += -fsanitize=address	 
+	FLAGS += -fsanitize=thread
+	FLAGS += -fsanitize=undefined
 endif
 	
 #-Wno-cpp
