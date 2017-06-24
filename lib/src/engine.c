@@ -248,8 +248,9 @@ void parseFunction(engine_infos* engine, const char* buffer, int length) {
 				para_ende = i;
 				for (; i2 < MAX_FUNC_PARAS; i2++) {
 					if (func->parameter[i2].text == 0) {
-						func->parameter[i2].text = (char*) WebserverMalloc ( para_ende-para_start + 1 );
-						func->parameter[i2].length = (uint16_t)(para_ende - para_start);
+						int l = para_ende - para_start;
+						func->parameter[i2].text = (char*) WebserverMalloc ( l + 1 );
+						func->parameter[i2].length = (uint16_t)(l);
 						memcpy(func->parameter[i2].text, &buffer[para_start], func->parameter[i2].length);
 						func->parameter[i2].text[func->parameter[i2].length] = '\0';
 						i2++;
