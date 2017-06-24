@@ -415,7 +415,12 @@ int recFrameV8(socket_info *sock) {
 
 			case WSF_CLOSE:
 				sendCloseFrame(sock);
+				// sanitizer sagt das schreiben hier ist nicht gelockt
+				// aber der socket sollte schon gelockt sein wenn der handler aufgerufen wird
+				//PlatformLockMutex(&sock->socket_mutex);
 				sock->closeSocket = 1;
+				//PlatformUnlockMutex(&sock->socket_mutex);
+				#warning thread sanitizer sagt hier wird ohne lock geschrieben
 				return 0;
 
 			case WSF_PONG:
