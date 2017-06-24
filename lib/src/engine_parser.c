@@ -35,6 +35,7 @@ ws_variable* NEED_RESUL_CHECK parseVariable(http_request *s,char* buffer) {
 	int name_space = 0;
 	int offset = 0;
 	char error_buffer[100];
+	char error_index[100];
 	ws_variable *var,*tmp,*tmp2;
 
 	if(buffer == 0)
@@ -125,44 +126,50 @@ ws_variable* NEED_RESUL_CHECK parseVariable(http_request *s,char* buffer) {
 			if(tmp->type == VAR_TYPE_REF)
 				tmp = tmp->val.value_ref;
 			if(tmp->type == VAR_TYPE_ARRAY){
-                i=strlen(buffer)+1;
-                buffer = &buffer[i];
-                while(1){
-                    tmp2 = 0;   
-                    if(buffer[0]=='['){
-                        l = strlen(buffer);
-                        for(i=0;i<l;i++){
-                            if(buffer[i]==']'){
-                                break;
-                            }
-                        }
-                        buffer[i] = '\0';
-                        buffer = &buffer[1];
-                        if(buffer[0] == '\"'){		/* String Index */
-                            buffer[i-2] = '\0';
-                            buffer = &buffer[1];
-                            tmp2 = getWSVariableArray(tmp,buffer);
-                        }else{						/* Int Index */
-                            i = atoi(buffer);
-                            tmp2 = getWSVariableArrayIndex(tmp,i);
-                        }
-                    }else{
-                        setWSVariableRef(var,tmp);
-                        return var;
-                    }		
-                          
-                    /* bei verschachtelte arrays nochmal das array element suchen */
-                    buffer = &buffer[strlen(buffer)+2];
-                    if( ( buffer[0] == '[' ) && (tmp2->type == VAR_TYPE_ARRAY) ){
-                        tmp = tmp2;
-                        continue;
-                    }
-                    break;
-                }
+				i=strlen(buffer)+1;
+				buffer = &buffer[i];
+				while(1){
+				    tmp2 = 0;
+				    if(buffer[0]=='['){
+					l = strlen(buffer);
+					for(i=0;i<l;i++){
+					    if(buffer[i]==']'){
+						break;
+					    }
+					}
+					buffer[i] = '\0';
+					buffer = &buffer[1];
+					if(buffer[0] == '\"'){		/* String Index */
+					    buffer[i-2] = '\0';
+					    buffer = &buffer[1];
+					    tmp2 = getWSVariableArray(tmp,buffer);
+					    if( tmp2 == 0 ){
+						strcpy(error_index,buffer);
+					    }
+					}else{						/* Int Index */
+					    i = atoi(buffer);
+					    tmp2 = getWSVariableArrayIndex(tmp,i);
+					    if( tmp2 == 0 ){
+						strcpy(error_index,buffer);
+					    }
+					}
+				    }else{
+					setWSVariableRef(var,tmp);
+					return var;
+				    }
+
+				    /* bei verschachtelte arrays nochmal das array element suchen */
+				    buffer = &buffer[strlen(buffer)+2];
+				    if( ( buffer[0] == '[' ) && (tmp2->type == VAR_TYPE_ARRAY) ){
+					tmp = tmp2;
+					continue;
+				    }
+				    break;
+				}
                 
 
 				if(tmp2 == 0){
-					snprintf(error_buffer,100,"ARRAY %s INDEX %s not found",tmp->name,buffer);
+					snprintf(error_buffer,100,"ARRAY %s INDEX %s not found",tmp->name,error_index);
 					setWSVariableString(var,error_buffer);
 					return var;
 				}else{
