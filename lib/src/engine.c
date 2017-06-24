@@ -512,6 +512,7 @@ int processHTML(http_request* s, const char* prefix, const char *pagename, const
 	if ( 1 == isChunkListbigger(&s->socket->html_chunk_list, 1000) ){
 		s->socket->use_output_compression = 1;
 	}
+	#warning noch prüfen ob der client compression kann
 
 
 	return return_found;
