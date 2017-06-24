@@ -325,7 +325,7 @@ void generateOutputBuffer(socket_info* sock) {
 		double proz = offset;
 		proz /= (double)body_size;
 		proz *= 100.0;
-		printf("orig: %lu  compress: %lu  %.2f %%\n",body_size,offset,proz );
+		//printf("orig: %lu  compress: %lu  %.2f %%\n",body_size,offset,proz );
 		
 		printHeaderChunk(sock, "Content-Encoding: deflate\r\n");
 		printHeaderChunk(sock, "Content-Length: %d\r\n", offset);
