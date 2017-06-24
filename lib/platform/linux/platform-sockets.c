@@ -24,6 +24,8 @@
 
 
 #include <stdio.h>
+#include <errno.h>
+#include <unistd.h>
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <sys/types.h>
@@ -31,7 +33,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
-#include <errno.h>
+
 
 #include "webserver.h"
 
@@ -289,8 +291,9 @@ int     PlatformSendSocket ( int socket, const unsigned char *buf, SIZE_TYPE len
             }
         }
         send_bytes += (SIZE_TYPE)ret;
-        if ( send_bytes == len )
+        if ( send_bytes == len ){
             break;
+        }
     }
     return ret;
 }

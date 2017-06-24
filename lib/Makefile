@@ -113,22 +113,27 @@ obj/%.o : %.c
 #-fno-lto	
 #	@$(COMPILER) $(INCLUDES) $(DEFS) $(FLAGS) -flto -c -o $@.lto $<
 
-
-# http://www.labri.fr/perso/fleury/posts/programming/using-clang-tidy-and-clang-format.html
-
-#-checks=*,-readability-avoid-const-params-in-decls,-llvm-include-order -dump-config
-tidy:
-	clang-tidy -config=''  $(LIB_SOURCES) -- \
-		-std=c99 -Iinclude/ -I. -Iinclude/intern -Ithird_party/src/rb_tree/ \
-		-Iplatform/include/ -Ithird_party/src/is_utf8/ -Ithird_party/src/miniz/
-format:
-	clang-format -style=file $(SOURCES)
-
 clean:
 	@echo 'Deleting Object Files'
 
 	@rm -rvf .lib/obj/*
 	@rm -rvf obj/*
+
+# http://www.labri.fr/perso/fleury/posts/programming/using-clang-tidy-and-clang-format.html
+
+tidy:
+	clang-tidy -config=''  $(LIB_SOURCES) -- \
+		-std=c99 -Iinclude/ -I. -Iinclude/intern -Ithird_party/src/rb_tree/ \
+		-Iplatform/include/ -Ithird_party/src/is_utf8/ -Ithird_party/src/miniz/
+
+tidy_file:
+	clang-tidy -config=''  $(TIDY_FILE) -- \
+		-std=c99 -Iinclude/ -I. -Iinclude/intern -Ithird_party/src/rb_tree/ \
+		-Iplatform/include/ -Ithird_party/src/is_utf8/ -Ithird_party/src/miniz/
+format:
+	clang-format -style=file $(SOURCES)
+
+
 
 
 

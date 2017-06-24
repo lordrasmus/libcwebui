@@ -26,9 +26,7 @@
 
 #include "WebserverConfig.h"
 
-#ifndef WEBSERVER_USE_MBEDTLS_CRYPTO
-	#warning "mbed TLS Support Disabled"
-#else
+#ifdef WEBSERVER_USE_MBEDTLS_CRYPTO
 
 #include "webserver.h"
 #include "mbedtls/version.h"

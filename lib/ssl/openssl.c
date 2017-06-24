@@ -582,7 +582,9 @@ SOCKET_SEND_STATUS WebserverSSLSendNonBlocking(socket_info* s, const unsigned ch
 #if _WEBSERVER_CONNECTION_DEBUG_ > 3
 			LOG( CONNECTION_LOG, ERROR_LEVEL, s->socket, "SSL_ERROR_WANT_READ", "");
 #endif
-			if (bytes_send != 0) *bytes_send = l;
+			if (bytes_send != 0){
+				*bytes_send = l;
+			}
 			return SOCKET_SEND_SEND_BUFFER_FULL;
 
 		case SSL_ERROR_WANT_WRITE:
@@ -590,7 +592,9 @@ SOCKET_SEND_STATUS WebserverSSLSendNonBlocking(socket_info* s, const unsigned ch
 #if _WEBSERVER_CONNECTION_DEBUG_ > 3
 			LOG(CONNECTION_LOG,ERROR_LEVEL,s->socket,"SSL_ERROR_WANT_WRITE","");
 #endif
-			if (bytes_send != 0) *bytes_send = l;
+			if (bytes_send != 0){
+				*bytes_send = l;
+			}
 			return SOCKET_SEND_SEND_BUFFER_FULL;
 
 		case SSL_ERROR_SSL:
@@ -620,11 +624,15 @@ SOCKET_SEND_STATUS WebserverSSLSendNonBlocking(socket_info* s, const unsigned ch
 			ERR_error_string(err_code, buffer);
 			//ERR_error_string(r2,buffer);
 			LOG( CONNECTION_LOG, ERROR_LEVEL, s->socket, "Unhandled SSL Error ( %d ) %s", r2, buffer);
-			if (bytes_send != 0) *bytes_send = l;
+			if (bytes_send != 0){
+				*bytes_send = l;
+			}
 			return SOCKET_SEND_SSL_ERROR;
 		}
 		if (l == len) {
-			if (bytes_send != 0) *bytes_send = l;
+			if (bytes_send != 0){
+				*bytes_send = l;
+			}
 			return SOCKET_SEND_NO_MORE_DATA;
 		}
 		//}while(SSL_pending(s->ssl)>0);
