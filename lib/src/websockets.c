@@ -166,8 +166,12 @@ int checkIskWebsocketConnection(socket_info* sock,HttpRequestHeader* header) {
 						return 3;
 					}
 
-					if (header->SecWebSocketKey != 0) return 2;
-					if (header->SecWebSocketKey1 != 0) return 2;
+					if (header->SecWebSocketKey != 0){
+						return 2;
+					}
+					if (header->SecWebSocketKey1 != 0){
+						return 2;
+					}
 
 					return 1;
 				}
@@ -275,8 +279,9 @@ unsigned long calckey(char* buffer) {
 			spaces++;
 		}
 	}
-	if ( spaces > 0 )
+	if ( spaces > 0 ){
 		key /= spaces;
+	}
 	return key;
 }
 
@@ -284,10 +289,13 @@ void calcWebsocketSecKeys(socket_info* request) {
 	unsigned int k1, k2;
 	unsigned char google[16];
 
-	if (request->header->SecWebSocketKey1 == 0) /* Alte (BETA) Protokoll Version */
+	if (request->header->SecWebSocketKey1 == 0){ /* Alte (BETA) Protokoll Version */
 		return;
+	}
 
-	if (request->header->SecWebSocketKey2 == 0) return;
+	if (request->header->SecWebSocketKey2 == 0){
+		return;
+	}
 
 	k1 = calckey(request->header->SecWebSocketKey1);
 	k2 = calckey(request->header->SecWebSocketKey2);
@@ -303,7 +311,9 @@ char* getWebsocketStoreGUID(char* guid) {
 	socket_info *sock = getSocketByGUID(guid); /* Locked */
 	http_request *s;
 	char* ret = 0;
-	if (sock == 0) return 0;
+	if (sock == 0){
+		return 0;
+	}
 	if (sock->closeSocket == 1){
 		PlatformUnlockMutex(&sock->socket_mutex);
 		return 0;
@@ -314,7 +324,9 @@ char* getWebsocketStoreGUID(char* guid) {
 
 	if (sock->s != 0) {
 		s = (http_request*) sock->s;
-		if (s->store != 0) ret = s->store->guid;
+		if (s->store != 0){
+			ret = s->store->guid;
+		}
 	}
 
 	PlatformUnlockMutex(&sock->socket_mutex);
@@ -324,7 +336,9 @@ char* getWebsocketStoreGUID(char* guid) {
 
 long getWebsocketStoreTimeout ( char* guid ){
 	socket_info *sock = getSocketByGUID(guid);
-	if (sock == 0) return -1;
+	if (sock == 0){
+		return -1;
+	}
 
 	if (sock->closeSocket == 1) {
 		PlatformUnlockMutex(&sock->socket_mutex);
@@ -339,12 +353,14 @@ long getWebsocketStoreTimeout ( char* guid ){
 	PlatformUnlockMutex(&sock->socket_mutex);
 
 	long tmp = getSessionTimeoutByGUID( store_guid , SESSION_STORE );
-	if ( tmp < 0 )
+	if ( tmp < 0 ){
 		return -1;
+	}
 
 	long timeout = getConfigInt("session_timeout") - tmp;
-	if ( timeout < 0 )
+	if ( timeout < 0 ){
 		return -1;
+	}
 
 	/*http_request *s = sock->s;
 	if ( s == 0 ) return ULONG_MAX;
@@ -365,8 +381,12 @@ long getWebsocketStoreTimeout ( char* guid ){
 
 int closeWebsocket(char* guid) {
 	socket_info *sock = getSocketByGUID(guid); /* Locked */
-	if (sock == 0) return 0;
-	if (sock != 0) sock->closeSocket = 1;
+	if (sock == 0){
+		return 0;
+	}
+	if (sock != 0){
+		sock->closeSocket = 1;
+	}
 
 	PlatformUnlockMutex(&sock->socket_mutex);
 #ifdef ENABLE_DEVEL_WARNINGS

@@ -73,11 +73,15 @@ static int handleWebsocket(socket_info* sock, EVENT_TYPES type) {
 
 			while (1) {
 
-				if (unlikely(ws_list_empty(&sock->websocket_chunk_list) == 1)) break;
+				if (unlikely(ws_list_empty(&sock->websocket_chunk_list) == 1)){
+					break;
+				}
 
 				chunk = (html_chunk*) ws_list_get_at(&sock->websocket_chunk_list, 0);
 
-				if (unlikely(chunk == 0)) break;
+				if (unlikely(chunk == 0)){
+					break;
+				}
 
 				to_send = chunk->length - sock->file_infos.file_send_pos;
 				status = WebserverSend(sock, (unsigned char*) &chunk->text[sock->file_infos.file_send_pos], to_send, 0, &send_bytes);
@@ -86,8 +90,9 @@ static int handleWebsocket(socket_info* sock, EVENT_TYPES type) {
 					sock->file_infos.file_send_pos = 0;
 					ws_list_delete(&sock->websocket_chunk_list, chunk);
 					WebserverFreeHtml_chunk(chunk);
-					if (likely ( status == SOCKET_SEND_NO_MORE_DATA ) )
+					if (likely ( status == SOCKET_SEND_NO_MORE_DATA ) ){
 						continue;
+					}
 				}
 
 				if ((status == SOCKET_SEND_UNKNOWN_ERROR) || (status == SOCKET_SEND_CLIENT_DISCONNECTED)) {
