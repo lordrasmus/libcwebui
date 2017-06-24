@@ -37,29 +37,29 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 /* Authentifizierung über Cookies */
-#define NORMAL_CHECK_OK			1
-#define SSL_CHECK_OK			2
-#define NOT_REGISTERED			0
-#define SESSION_MISMATCH_ERROR -1
+#define NORMAL_CHECK_OK			( 1 )
+#define SSL_CHECK_OK			( 2 )
+#define NOT_REGISTERED			( 0 )
+#define SESSION_MISMATCH_ERROR 		( -1 )
 
 /* Session Status */
-#define NOT_REGISTERED 	0
-#define REGISTERED 		1
+#define NOT_REGISTERED 			( 0 )
+#define REGISTERED			( 1 )
 
 
 /* Session Store Typen */
-#define STORE_NORMAL  1
-#define STORE_SSL	  2
+#define STORE_NORMAL			( 1 )
+#define STORE_SSL			( 2 )
 
 /* Condition Rückgabewerte */
-#define COND_TRUE 		1
-#define COND_FALSE 		2
-#define COND_ERROR  	3
+#define COND_TRUE			( 1 )
+#define COND_FALSE			( 2 )
+#define COND_ERROR			( 3 )
 
 /* Websocket Signale */
-#define WEBSOCKET_CONNECT 		1
-#define WEBSOCKET_MSG 			2
-#define WEBSOCKET_DISCONNECT 	3
+#define WEBSOCKET_CONNECT 		( 1 )
+#define WEBSOCKET_MSG 			( 2 )
+#define WEBSOCKET_DISCONNECT 		( 3 )
 
 
 
@@ -85,8 +85,6 @@ extern "C" {
 
 #endif
 
-
-void WebserverGenerateGUID(char* buf, int length);
 
 
 /***********************************************************************************************
