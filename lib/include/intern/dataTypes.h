@@ -314,9 +314,13 @@ typedef struct {
 
 	socket_file_infos file_infos;
 
+	char use_output_compression;
 
-	char *output_buffer;
-	unsigned long output_buffer_size;
+	char *output_header_buffer;
+	unsigned long output_header_buffer_size;
+
+	char *output_main_buffer;
+	unsigned long output_main_buffer_size;
 
 	extern_handler extern_handle;
 	void* extern_handle_data_ptr;

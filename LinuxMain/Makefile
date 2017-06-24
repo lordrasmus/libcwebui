@@ -1,9 +1,10 @@
 
 FLAGS=-I../lib/ -I../lib/include -Wswitch-enum
 
-FLAGS += -fsanitize=thread
-#FLAGS += -fsanitize=address
-FLAGS += -fsanitize=undefined
+
+FLAGS += -fsanitize=address
+#FLAGS += -fsanitize=thread
+#FLAGS += -fsanitize=undefined
 
 all: ../testSite/src/test_plugin.so
 	$(CXX) $(FLAGS) -c main.cpp  -O0 -ggdb3 

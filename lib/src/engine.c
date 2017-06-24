@@ -508,6 +508,12 @@ int processHTML(http_request* s, const char* prefix, const char *pagename, const
 
 	template_engine_stop(s);
 
+
+	if ( 1 == isChunkListbigger(&s->socket->html_chunk_list, 1000) ){
+		s->socket->use_output_compression = 1;
+	}
+
+
 	return return_found;
 }
 

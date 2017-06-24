@@ -49,6 +49,7 @@ int sendHTMLFile(http_request* s, WebserverFileInfo *info);
 void sendWebsocketChunk ( socket_info* sock,const unsigned char* text,const unsigned int length );
 void printWebsocketChunk ( socket_info* sock,const char *fmt,... );
 
+int isChunkListbigger(list_t* liste, int bytes);
 void sendHeaderChunk(socket_info* sock,const char* text,const unsigned int length);
 void sendHeaderChunkEnd(socket_info* sock);
 void printHeaderChunk(socket_info* sock,const char *fmt,...);

@@ -508,6 +508,7 @@ int handleClient(socket_info* sock) {
 #if _WEBSERVER_HANDLER_DEBUG_ > 4
 		LOG ( HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Handle Web Request","" );
 #endif
+		sock->use_output_compression = 0;
 		/* das hier tritt auf wenn mehrer requests ueber einen Socket im Burst gesendet werden */
 		if (handleWebRequest(sock) < 0) {
 			return -1;
@@ -550,6 +551,7 @@ char sendData(socket_info* sock, const unsigned char* buffer, FILE_OFFSET length
 			return CLIENT_DICONNECTED;
 
 		case SOCKET_SEND_SEND_BUFFER_FULL:
+			sock->file_infos.file_send_pos += ret;
 			return DATA_PENDING;
 
 		case SOCKET_SEND_SSL_ERROR:
@@ -574,28 +576,56 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendOutputBuffer(socket_info* sock
 	LOG ( CONNECTION_LOG,ERROR_LEVEL,sock->socket,"handleClientWriteData Send Output Buffer ","" );
 #endif
 
-	ret = sendData(sock, (unsigned char*) sock->output_buffer, sock->output_buffer_size);
-	switch (ret) {
-	case CLIENT_NO_MORE_DATA:
-		break;
-	case DATA_PENDING:
-		return DATA_PENDING;
-	case CLIENT_DICONNECTED:
-		WebserverFree(sock->output_buffer);
-		sock->file_infos.file_send_pos = 0;
-		return CLIENT_DICONNECTED;
-	default:
-		WebserverFree(sock->output_buffer);
-		sock->file_infos.file_send_pos = 0;
-		LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "unhandled send status output_buffer pos : %d status : %d",
-				sock->file_infos.file_send_pos, ret);
-		return CLIENT_DICONNECTED;
+	if ( sock->output_header_buffer != 0 ){
+		ret = sendData(sock, (unsigned char*) sock->output_header_buffer, sock->output_header_buffer_size);
+		switch (ret) {
+			case CLIENT_NO_MORE_DATA:
+				WebserverFree(sock->output_header_buffer);
+				sock->output_header_buffer = 0;
+				sock->file_infos.file_send_pos = 0;
+				break;
+			case DATA_PENDING:
+				return DATA_PENDING;
+			case CLIENT_DICONNECTED:
+				goto client_diconnected_header;
+			default:
+				LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "unhandled send status output_header_buffer pos : %d status : %d",
+						sock->file_infos.file_send_pos, ret);
+				goto client_diconnected_header;
+		}
 	}
-	WebserverFree(sock->output_buffer);
-
-	sock->output_buffer = 0;
+	
+	if ( sock->output_main_buffer_size > 0 ){
+	
+		ret = sendData(sock, (unsigned char*) sock->output_main_buffer, sock->output_main_buffer_size);
+		switch (ret) {
+			case CLIENT_NO_MORE_DATA:
+				break;
+			case DATA_PENDING:
+				return DATA_PENDING;
+			case CLIENT_DICONNECTED:
+				goto client_diconnected_main;
+			default:
+				LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "unhandled send status output_main_buffer pos : %d status : %d",
+						sock->file_infos.file_send_pos, ret);
+				goto client_diconnected_main;
+		}
+	}
+	if ( sock->output_main_buffer != 0 )
+		WebserverFree(sock->output_main_buffer);
+	sock->output_main_buffer = 0;
 	sock->file_infos.file_send_pos = 0;
 	return NO_MORE_DATA;
+
+client_diconnected_header:
+	WebserverFree(sock->output_header_buffer);
+	sock->output_header_buffer = 0;
+
+client_diconnected_main:
+	WebserverFree(sock->output_main_buffer);
+	sock->output_main_buffer = 0;
+	sock->file_infos.file_send_pos = 0;
+	return CLIENT_DICONNECTED;
 }
 
 CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendRamFile(socket_info* sock) {
@@ -694,7 +724,7 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCached(socket_info* sock) {
 CLIENT_WRITE_DATA_STATUS handleClientWriteData(socket_info* sock) {
 	CLIENT_WRITE_DATA_STATUS status_ret;
 
-	if (sock->output_buffer != 0) {
+	if (sock->output_main_buffer != 0) {
 		status_ret = handleClientWriteDataSendOutputBuffer(sock);
 		if (status_ret != NO_MORE_DATA) return status_ret;
 	}
@@ -1057,7 +1087,8 @@ unsigned long getSocketInfoSize(socket_info* sock) {
 	if(sock->websocket_guid != 0)
 		ret+= WEBSERVER_GUID_LENGTH+1;
 #endif
-	ret += sock->output_buffer_size;
+	ret += sock->output_header_buffer_size;
+	ret += sock->output_main_buffer_size;
 
 	return ret;
 }

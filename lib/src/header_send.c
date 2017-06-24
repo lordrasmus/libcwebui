@@ -460,13 +460,16 @@ void addSessionCookies(http_request* s,WebserverFileInfo *info){
  */
 int sendHeader(http_request* s, WebserverFileInfo *info, int p_lenght) {
 
+
 	printHeaderChunk(s->socket, "HTTP/1.1 200 OK\r\n");
 	printHeaderChunk(s->socket, "Server: %s\r\n", "libCWebUI");
 
 	addSessionCookies( s , info );
 
 	printHeaderChunk(s->socket, "Accept-Ranges: bytes\r\n");
-	printHeaderChunk(s->socket, "%s %d\r\n", "Content-Length:", p_lenght);
+	
+	if ( s->socket->use_output_compression == 0 )
+		printHeaderChunk(s->socket, "%s %d\r\n", "Content-Length:", p_lenght);
 
 	addCSPHeaderLines(s);
 
@@ -493,8 +496,9 @@ int sendHeader(http_request* s, WebserverFileInfo *info, int p_lenght) {
 		printHeaderChunk(s->socket, "Cache-Control: must-revalidate, post-check=0, pre-check=0\r\n");
 		printHeaderChunk(s->socket, "Pragma: public\r\n");
 	}
-
-	printHeaderChunk(s->socket, "\r\n"); /* HTTP Header beenden */
+		
+	if ( s->socket->use_output_compression == 0 )
+		printHeaderChunk(s->socket, "\r\n"); /* HTTP Header beenden */
 	return 1;
 }
 
