@@ -45,7 +45,11 @@ void template_engine_stop(http_request *s) {
 	}
 	s->engine_index--;
 	memset(&s->engine_list[s->engine_index], 0, sizeof(engine_infos));
-	s->engine_current = &s->engine_list[s->engine_index - 1];
+	if ( s->engine_index != 0 ){
+		s->engine_current = &s->engine_list[s->engine_index - 1];
+	}else{
+		s->engine_current = 0;
+	}
 }
 
 void getFunction(unsigned char *para, int *function, int *id) {
