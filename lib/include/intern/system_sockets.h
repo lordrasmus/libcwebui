@@ -53,8 +53,6 @@ extern "C" {
 	int		handleWebRequest(socket_info* request);
 
 	int		WebserverAccept(void);
-	int		WebserverSSLInit(socket_info* s);
-	int 	WebserverSSLAccept(socket_info* s);
 	int   	WebserverRecv(socket_info* s,unsigned char *buf, int len, int flags);
 	SOCKET_SEND_STATUS 	WebserverSend(socket_info* s,const unsigned char *buf, int len, int flags,int* bytes_send);
 	int   	WebserverCloseSocket(socket_info* conno);

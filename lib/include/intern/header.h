@@ -28,16 +28,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "webserver_api_functions.h"
 
 
-#define CONTENTTYP_TEXT 1
-#define CONTENTTYP_OCTETSTREAM 2
+#define CONTENTTYP_TEXT 		( 1 )
+#define CONTENTTYP_OCTETSTREAM 	( 2 )
 
 #ifndef WEBSERVER_MAX_HEADER_LINE_LENGHT
 	#error WEBSERVER_MAX_HEADER_LINE_LENGHT not defined
 #endif
 
-#define MAX_HEADER_LINE_ERROR -20
-#define NO_SSL_CONNECTION_ERROR -21
-#define SSL_ACCEPT_OK 2
+#define MAX_HEADER_LINE_ERROR 	( -20 )
+#define NO_SSL_CONNECTION_ERROR ( -21 )
+#define SSL_ACCEPT_OK 			( 2 )
 
 
 
