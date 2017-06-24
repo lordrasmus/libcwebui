@@ -36,10 +36,13 @@ ws_variable* NEED_RESUL_CHECK parseVariable(http_request *s,char* buffer) {
 	int offset = 0;
 	char error_buffer[100];
 	char error_index[100];
+
 	ws_variable *var,*tmp,*tmp2;
 
 	if(buffer == 0)
 		return 0;
+
+	char* buffer_end = buffer + strlen( buffer );
 
 #ifdef _WEBSERVER_TEMPLATE_DEBUG_ 
 	LOG (TEMPLATE_LOG,NOTICE_LEVEL,0,"parseVariable string %s",buffer);
@@ -158,11 +161,18 @@ ws_variable* NEED_RESUL_CHECK parseVariable(http_request *s,char* buffer) {
 					return var;
 				    }
 
-				    /* bei verschachtelte arrays nochmal das array element suchen */
-				    buffer = &buffer[strlen(buffer)+2];
-				    if( ( buffer[0] == '[' ) && (tmp2->type == VAR_TYPE_ARRAY) ){
-					tmp = tmp2;
-					continue;
+				    /* bei verschachtelte arrays nochmal das array element suchen
+				     * aber nur wenn der original buffer noch nicht zuende ist */
+				    #warning verhalten bei verschachtelten arrays nochmal prüfen
+				    /* bei dem vorherigen parsen wurde das ende des index [ 
+				     * durch \0 ersetzt , darum strlen(buffer)+2 */
+				    char * next_index = &buffer[strlen(buffer)+2];
+				    if ( ( tmp2 != 0 ) && ( next_index < buffer_end ) ) {
+					buffer = next_index;
+					if( ( buffer[0] == '[' ) && (tmp2->type == VAR_TYPE_ARRAY) ){
+					    tmp = tmp2;
+					    continue;
+					}
 				    }
 				    break;
 				}
