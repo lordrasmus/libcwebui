@@ -198,6 +198,7 @@ typedef struct {
 	char *Origin;
 	char *Access_Control_Request_Method;
 	char *Access_Control_Request_Headers;
+	char *Accept_Encoding;
 	char isHttp1_1;
 
 #ifdef WEBSERVER_USE_WEBSOCKETS

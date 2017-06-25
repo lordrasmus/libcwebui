@@ -529,11 +529,18 @@ int processHTML(http_request* s, const char* prefix, const char *pagename, const
 
 	template_engine_stop(s);
 
+	if ( ( s->header->Accept_Encoding != 0 ) && ( s->engine_index == 0 ) ){
+		//printf("s->engine_index : %d\n",s->engine_index);
+		//printf("Accept_Encoding: %s\n",s->header->Accept_Encoding);
+		
+		if ( 0 != strstr( s->header->Accept_Encoding, "deflate" ) ){
 
-	if ( 1 == isChunkListbigger(&s->socket->html_chunk_list, 1000) ){
-		s->socket->use_output_compression = 1;
+			if ( 1 == isChunkListbigger(&s->socket->html_chunk_list, 1000) ){
+				s->socket->use_output_compression = 1;
+			}
+		}
+		
 	}
-	#warning noch prüfen ob der client compression kann
 
 
 	return return_found;

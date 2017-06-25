@@ -410,9 +410,7 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 	if (!strncmp( line, "Accept-Language: ", 17)) {
 		return 0;
 	}
-	if (!strncmp( line, "Accept-Encoding: ", 17)) {
-		return 0;
-	}
+	
 	if (!strncmp( line, "Accept-Charset: ", 16)) {
 		return 0;
 	}
@@ -471,6 +469,8 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 
 	CHECK_HEADER_LINE("Access-Control-Request-Method: ",Access_Control_Request_Method )
 	CHECK_HEADER_LINE("Access-Control-Request-Headers: ",Access_Control_Request_Headers )
+	
+	CHECK_HEADER_LINE("Accept-Encoding: ",Accept_Encoding )
 
 	CHECK_HEADER_LINE("If-Modified-Since: ", If_Modified_Since) /* Wed, 12 Dec 2007 13:13:08 GMT */
 
