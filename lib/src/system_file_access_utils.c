@@ -213,7 +213,7 @@ void setFileType(WebserverFileInfo* file) {
 }
 
 
-void generateEtag(WebserverFileInfo* wfi) {
+void generateEtag(WebserverFileInfo* file) {
 
 #ifndef WEBSERVER_USE_SSL
 
@@ -225,24 +225,24 @@ void generateEtag(WebserverFileInfo* wfi) {
 		#error "etag generierung ohne ssl richtig implementieren"
 	#endif
 
-	if (wfi->etag == 0) {
-		wfi->etag = (char *) WebserverMalloc( 100 );
+	if (file->etag == 0) {
+		file->etag = (char *) WebserverMalloc( 100 );
 	}
 
-	wfi->etagLength = sprintf((char*) wfi->etag, "Test %s", wfi->Url);
-	wfi->etagLength = 100;
+	file->etagLength = sprintf((char*) file->etag, "Test %s", file->Url);
+	file->etagLength = 100;
 
 #else
 
 	unsigned char buf[SSL_SHA_DIG_LEN];
-	if (wfi->etag != 0){
-		WebserverFree( (void*) wfi->etag);
+	if (file->etag != 0){
+		WebserverFree( (void*) file->etag);
 	}
-	wfi->etag = (char *) WebserverMalloc ( SSL_SHA_DIG_LEN * 2 + 1 );
-	memset( (void*) wfi->etag ,0,SSL_SHA_DIG_LEN*2+1);
+	file->etag = (char *) WebserverMalloc ( SSL_SHA_DIG_LEN * 2 + 1 );
+	memset( (void*) file->etag ,0,SSL_SHA_DIG_LEN*2+1);
 
-	if (wfi->RamCached == 1) {
-		WebserverSHA1(wfi->Data, wfi->DataLenght, buf);
+	if (file->RamCached == 1) {
+		WebserverSHA1(file->Data, file->DataLenght, buf);
 	} else {
 
 		// Datei ist nicht im RAM cache
@@ -254,7 +254,7 @@ void generateEtag(WebserverFileInfo* wfi) {
 		unsigned char *data;
 
 
-		if (!PlatformOpenDataReadStream(wfi->FilePath)){
+		if (!PlatformOpenDataReadStream(file->FilePath)){
 			return;
 		}
 
@@ -265,7 +265,7 @@ void generateEtag(WebserverFileInfo* wfi) {
 		PlatformSeekToPosition(0);
 
 		while (1) {
-			diff = wfi->DataLenght - pos;
+			diff = file->DataLenght - pos;
 
 			if (diff > WRITE_DATA_SIZE) {
 				to_read = WRITE_DATA_SIZE;
@@ -281,7 +281,7 @@ void generateEtag(WebserverFileInfo* wfi) {
 			WebserverSHA1Update(sha_context, data, to_read);
 			pos += to_read;
 
-			if (pos == wfi->DataLenght){
+			if (pos == file->DataLenght){
 				break;
 			}
 
@@ -293,8 +293,8 @@ void generateEtag(WebserverFileInfo* wfi) {
 
 	}
 
-	convertBinToHexString(buf, SSL_SHA_DIG_LEN, (char*)wfi->etag, SSL_SHA_DIG_LEN * 2 + 1);
-	wfi->etagLength = strlen( ( char*) wfi->etag);
+	convertBinToHexString(buf, SSL_SHA_DIG_LEN, (char*)file->etag, SSL_SHA_DIG_LEN * 2 + 1);
+	file->etagLength = strlen( ( char*) file->etag);
 
 
 #endif

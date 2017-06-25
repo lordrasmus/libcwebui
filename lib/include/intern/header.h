@@ -51,15 +51,15 @@ int sendHeaderNotModified(http_request* s, WebserverFileInfo *info);
 int sendHeaderWebsocket(socket_info* sock);
 int sendPreflightAllowed(socket_info *sock);
 
-void sendHeaderError(socket_info* socket, char* ErrorMessage,int p_lenght);
+void sendHeaderError(socket_info* sock, char* ErrorMessage,int p_lenght);
 void sendHeaderNotFound(http_request* s, int p_lenght);
 
-int analyseHeaderLine(socket_info* socket,char *line,unsigned int length,HttpRequestHeader *header);
+int analyseHeaderLine(socket_info* sock,char *line,unsigned int length,HttpRequestHeader *header);
 int analyseFormDataLine(socket_info* sock, char *line, unsigned int length, HttpRequestHeader *header);
 
 int getHttpRequestHeader(http_request* s);
 
-int ParseHeader(socket_info* socket,HttpRequestHeader* header,char* buffer,unsigned int length, unsigned int* bytes_parsed);
+int ParseHeader(socket_info* sock,HttpRequestHeader* header,char* buffer,unsigned int length, unsigned int* bytes_parsed);
 
 void clearHeader(http_request *s);
 

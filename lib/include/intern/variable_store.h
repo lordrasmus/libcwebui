@@ -56,7 +56,7 @@ ws_variable* getVariable(ws_variable_store* store, const char* name);
 void addVariable(ws_variable_store* store, ws_variable* var);
 void delVariable(ws_variable_store* store, const char* name);
 ws_variable* refVariable(ws_variable_store* store, ws_variable* ref, const char* new_name);
-void freeVariable(ws_variable_store* store, ws_variable* vs);
+void freeVariable(ws_variable_store* store, ws_variable* var);
 
 ws_variable* getFirstVariable(ws_variable_store* store);
 ws_variable* getNextVariable(ws_variable_store* store);

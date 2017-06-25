@@ -86,7 +86,7 @@ Parameter* WebserverMallocParameter(void);
 void WebserverFreeParameter(Parameter* para);
 
 socket_info* WebserverMallocSocketInfo(void);
-void WebserverFreeSocketInfo(socket_info* para);
+void WebserverFreeSocketInfo(socket_info* sock);
 
 Cookie* WebserverMallocCookie(void);
 void WebserverFreeCookie(Cookie* cookie);

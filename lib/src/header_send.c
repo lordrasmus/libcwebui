@@ -137,31 +137,31 @@ void addConnectionStatusLines(socket_info* socket) {
 
 }
 
-int sendPreflightAllowed(socket_info *socket) {
+int sendPreflightAllowed(socket_info *sock) {
 
-	printHeaderChunk( socket, "HTTP/1.1 204 No Content\r\n");
-	printHeaderChunk( socket, "Server: %s\r\n", "libCWebUI");
+	printHeaderChunk( sock, "HTTP/1.1 204 No Content\r\n");
+	printHeaderChunk( sock, "Server: %s\r\n", "libCWebUI");
 
 
-	if ( ( socket->header->Access_Control_Request_Method != 0 ) && ( COND_TRUE == checkCORS( CORS_ALLOW_METHODS, socket ) ) ){
-		printHeaderChunk( socket, "Access-Control-Allow-Methods: %s\r\n",socket->header->Access_Control_Request_Method);
+	if ( ( sock->header->Access_Control_Request_Method != 0 ) && ( COND_TRUE == checkCORS( CORS_ALLOW_METHODS, sock ) ) ){
+		printHeaderChunk( sock, "Access-Control-Allow-Methods: %s\r\n",sock->header->Access_Control_Request_Method);
 	}
 
-	if ( ( socket->header->Access_Control_Request_Headers != 0 ) && ( COND_TRUE == checkCORS( CORS_ALLOW_HEADERS, socket ) ) ){
-		printHeaderChunk( socket, "Access-Control-Allow-Headers: %s\r\n",socket->header->Access_Control_Request_Headers);
+	if ( ( sock->header->Access_Control_Request_Headers != 0 ) && ( COND_TRUE == checkCORS( CORS_ALLOW_HEADERS, sock ) ) ){
+		printHeaderChunk( sock, "Access-Control-Allow-Headers: %s\r\n",sock->header->Access_Control_Request_Headers);
 	}
 
 	// Access-Control-Max-Age
 
-	if ( ( socket->header->Origin != 0 ) && ( COND_TRUE == checkCORS( CORS_ALLOW_ORIGIN, socket ) ) ){
-		printHeaderChunk( socket, "Access-Control-Allow-Origin: %s\r\n",socket->header->Origin);
+	if ( ( sock->header->Origin != 0 ) && ( COND_TRUE == checkCORS( CORS_ALLOW_ORIGIN, sock ) ) ){
+		printHeaderChunk( sock, "Access-Control-Allow-Origin: %s\r\n",sock->header->Origin);
 	}
 
-	if ( COND_TRUE == checkCORS( CORS_ALLOW_CREDENTIALS, socket ) ){
-		printHeaderChunk( socket, "Access-Control-Allow-Credentials: true\r\n");
+	if ( COND_TRUE == checkCORS( CORS_ALLOW_CREDENTIALS, sock ) ){
+		printHeaderChunk( sock, "Access-Control-Allow-Credentials: true\r\n");
 	}
 
-	printHeaderChunk( socket, "\r\n"); /* HTTP Header beenden */
+	printHeaderChunk( sock, "\r\n"); /* HTTP Header beenden */
 
 	return 1;
 }
@@ -203,13 +203,13 @@ void sendHeaderNotFound(http_request* s, int p_lenght) {
 	printHeaderChunk(s->socket, "\r\n");
 }
 
-void sendHeaderError(socket_info* socket, char* ErrorMessage, int p_lenght) {
-	printHeaderChunk(socket, "HTTP/1.1 %s\r\n", ErrorMessage);
-	printHeaderChunk(socket, "Server: %s\r\n", "libCWebUI");
-	printHeaderChunk(socket, "Content-Length: %d\r\n", p_lenght);
-	printHeaderChunk(socket, "Content-Type: text/html\r\n");
-	addConnectionStatusLines(socket);
-	printHeaderChunk(socket, "\r\n");
+void sendHeaderError(socket_info* sock, char* ErrorMessage, int p_lenght) {
+	printHeaderChunk(sock, "HTTP/1.1 %s\r\n", ErrorMessage);
+	printHeaderChunk(sock, "Server: %s\r\n", "libCWebUI");
+	printHeaderChunk(sock, "Content-Length: %d\r\n", p_lenght);
+	printHeaderChunk(sock, "Content-Type: text/html\r\n");
+	addConnectionStatusLines(sock);
+	printHeaderChunk(sock, "\r\n");
 }
 
 void addContentTypeLines(http_request *s, WebserverFileInfo *info) {

@@ -30,13 +30,13 @@
 
 
 
-SOCKET_SEND_STATUS WebserverSend(socket_info* s, const unsigned char *buffer, int len, int flags, int* bytes_send) {
+SOCKET_SEND_STATUS WebserverSend(socket_info* sock, const unsigned char *buffer, int len, int flags, int* bytes_send) {
 	int ret;
 
 #ifdef WEBSERVER_USE_SSL
-	if (s->use_ssl == 1) {
+	if (sock->use_ssl == 1) {
 		SOCKET_SEND_STATUS status;
-		status = WebserverSSLSendNonBlocking(s, buffer, len, flags, bytes_send);
+		status = WebserverSSLSendNonBlocking(sock, buffer, len, flags, bytes_send);
 		return status;
 	}
 #endif
@@ -45,7 +45,7 @@ SOCKET_SEND_STATUS WebserverSend(socket_info* s, const unsigned char *buffer, in
 		*bytes_send = 0;
 	}
 
-	ret = PlatformSendSocketNonBlocking(s->socket, buffer, len, flags);
+	ret = PlatformSendSocketNonBlocking(sock->socket, buffer, len, flags);
 	if (likely(ret == len)) {
 		if (likely(bytes_send != 0)){
 			*bytes_send = ret;
@@ -74,7 +74,7 @@ SOCKET_SEND_STATUS WebserverSend(socket_info* s, const unsigned char *buffer, in
 		return SOCKET_SEND_NO_MORE_DATA;
 	}
 
-	LOG(CONNECTION_LOG, ERROR_LEVEL, s->socket, "Status %d\n", ret);
+	LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "Status %d\n", ret);
 	return SOCKET_SEND_UNKNOWN_ERROR;
 }
 

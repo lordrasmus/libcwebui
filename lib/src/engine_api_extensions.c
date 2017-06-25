@@ -86,7 +86,7 @@ void free_extension_api(void) {
 	ws_list_destroy(&plugin_liste);
 }
 
-void register_function(const char* name, user_function f, const char* file, int line) {
+void register_function(const char* name, user_function func, const char* file, int line) {
 	int len = 0;
 	user_func_s *tmp = (user_func_s*) WebserverMalloc( sizeof(user_func_s) );
 	len = strlen(name) + 1;
@@ -98,7 +98,7 @@ void register_function(const char* name, user_function f, const char* file, int 
 	tmp->plugin = current_plugin;
 
 	tmp->type = 0;
-	tmp->uf = f;
+	tmp->uf = func;
 
 	RBTreeInsert(user_func_tree, tmp->name, tmp);
 }

@@ -192,7 +192,7 @@ void parsePostData(http_request *s){
  *																		    *
  ***************************************************************************/
 
-int getHttpRequest(socket_info* sockp) {
+int getHttpRequest(socket_info* sock) {
 	http_request s;
 	WebserverFileInfo *file = 0;
 
@@ -202,24 +202,24 @@ int getHttpRequest(socket_info* sockp) {
 
 	initRenderVariable(&s);
 
-	s.socket = sockp;
-	s.header = sockp->header;
-	sockp->disable_output = 0;
+	s.socket = sock;
+	s.header = sock->header;
+	sock->disable_output = 0;
 
 	if (s.header->method == HTTP_UNKNOWN_METHOD) {
-		sendMethodNotAllowed(sockp);
+		sendMethodNotAllowed(sock);
 		endHTTPRequest(&s);
 		return 0;
 	}
 
 	if (s.header->method == HTTP_OPTIONS) {
-		sendPreflightAllowed(sockp);
+		sendPreflightAllowed(sock);
 		endHTTPRequest(&s);
 		return 0;
 	}
 
 	if (s.header->error != 0) {
-		sendMethodBadRequest(sockp);
+		sendMethodBadRequest(sock);
 		endHTTPRequest(&s);
 		return 0;
 	}

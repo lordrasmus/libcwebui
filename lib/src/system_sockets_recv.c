@@ -47,19 +47,19 @@
 
 
 
-int     WebserverRecv(socket_info* s, unsigned char *buf, int len, int flags)
+int     WebserverRecv(socket_info* sock, unsigned char *buf, int len, int flags)
 {
 	#ifdef WEBSERVER_USE_SSL
 		int l=0;
-		if(s->use_ssl == 1){
-			l = WebserverSSLRecvNonBlocking(s,buf,len,flags);
+		if(sock->use_ssl == 1){
+			l = WebserverSSLRecvNonBlocking(sock,buf,len,flags);
 			return l;
 		}else{
 			/* printf("Not an SSL Connection. Reading unencrypted\r\n"); */
-			return PlatformRecvSocketNonBlocking(s->socket,buf,len,0);
+			return PlatformRecvSocketNonBlocking(sock->socket,buf,len,0);
 		}
 	#else
-		return PlatformRecvSocketNonBlocking(s->socket,buf,len,0);
+		return PlatformRecvSocketNonBlocking(sock->socket,buf,len,0);
 	#endif
 }
 

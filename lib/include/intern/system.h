@@ -53,8 +53,8 @@ void init_file_access( void );
 void free_file_access( void );
 
 
-int prepare_file_content(WebserverFileInfo* info);
-void release_file_content(WebserverFileInfo* info);
+int prepare_file_content(WebserverFileInfo* file);
+void release_file_content(WebserverFileInfo* file);
 
 
 #ifndef DISABLE_OLD_TEMPLATE_SYSTEM

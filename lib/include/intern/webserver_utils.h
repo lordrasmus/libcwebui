@@ -37,7 +37,7 @@ unsigned int readInt( void );
 
 
 int stringfind(const char *buffer,const char *pattern);
-long stringnfind(const char *buffer,const char *pattern,unsigned int length);
+long stringnfind(const char *buffer,const char *pattern,unsigned int buffer_length);
 
 int stringfindAtPos(const char *buffer,const char *pattern);
 
