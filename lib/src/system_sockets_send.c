@@ -41,11 +41,15 @@ SOCKET_SEND_STATUS WebserverSend(socket_info* s, const unsigned char *buffer, in
 	}
 #endif
 
-	if (likely(bytes_send != 0)) *bytes_send = 0;
+	if (likely(bytes_send != 0)){
+		*bytes_send = 0;
+	}
 
 	ret = PlatformSendSocketNonBlocking(s->socket, buffer, len, flags);
 	if (likely(ret == len)) {
-		if (likely(bytes_send != 0)) *bytes_send = ret;
+		if (likely(bytes_send != 0)){
+			*bytes_send = ret;
+		}
 		return SOCKET_SEND_NO_MORE_DATA;
 	}
 
@@ -59,8 +63,9 @@ SOCKET_SEND_STATUS WebserverSend(socket_info* s, const unsigned char *buffer, in
 	}
 
 	if (likely((ret > 0) && (ret < len))) {
-		if (likely(bytes_send != 0))
+		if (likely(bytes_send != 0)){
 			*bytes_send = ret;
+		}
 
 		#if _WEBSERVER_CONNECTION_DEBUG_ > 0
 			LOG(SOCKET_LOG, WARNING_LEVEL, s->socket, "SOCKET_SEND_NO_MORE_DATA    %d of %d send", ret, len);

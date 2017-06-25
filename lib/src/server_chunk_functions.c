@@ -62,10 +62,11 @@ void writeChunk(list_t* liste, const unsigned char* text, unsigned int length) {
 			ws_list_append(liste, chunk);
 		}
 		diff = 2000 - chunk->length;
-		if (length < diff)
+		if (length < diff){
 			to_write = length;
-		else
+		}else{
 			to_write = diff;
+		}
 
 		memcpy(&chunk->text[chunk->length], &text[offset], to_write);
 		chunk->length += to_write;
@@ -91,7 +92,9 @@ void writeChunk(list_t* liste, const unsigned char* text, unsigned int length) {
 void writeChunkVariable(list_t* liste, ws_variable* var) {
 	char buffer[20];
 	ws_variable* it;
-	if (var == 0) return;
+	if (var == 0){
+		return;
+	}
 
 	switch (var->type) {
 	case VAR_TYPE_STRING:
@@ -134,13 +137,19 @@ void sendHeaderChunk(socket_info* sock, const char* text, const unsigned int len
 }
 
 void sendHTMLChunk(socket_info* sock, const char* text, const unsigned int length) {
-	if (length == 0) return;
-	if (sock->disable_output == 1) return;
+	if (length == 0){
+		return;
+	}
+	if (sock->disable_output == 1){
+		return;
+	}
 	writeChunk(&sock->html_chunk_list, (unsigned char*) text, length);
 }
 
 void VISIBLE_ATTR sendHTMLChunkVariable(socket_info* sock, ws_variable* var) {
-	if (sock->disable_output == 1) return;
+	if (sock->disable_output == 1){
+		return;
+	}
 	writeChunkVariable(&sock->html_chunk_list, var);
 }
 
@@ -185,7 +194,9 @@ int isChunkListbigger(list_t* liste, int bytes){
 void vprintHeaderChunk(socket_info* sock, const char *fmt, va_list argptr) {
 	int l;
 	char tmp[1000];
-	if (sock == 0) return;
+	if (sock == 0){
+		return;
+	}
 	l = vsnprintf(tmp, 1000, fmt, argptr);
 	writeChunk(&sock->header_chunk_list, (unsigned char*) tmp, l);
 }
@@ -200,7 +211,9 @@ void printHeaderChunk(socket_info* sock, const char *fmt, ... ) {
 int vprintHTMLChunk(socket_info* sock, const char *fmt, va_list argptr) {
 	int l;
 	char tmp[1000];
-	if (sock == 0) return 0;
+	if (sock == 0){
+		return 0;
+	}
 	l = vsnprintf(tmp, 1000, fmt, argptr);
 	writeChunk(&sock->html_chunk_list, (unsigned char*) tmp, l);
 	return l;
@@ -220,7 +233,9 @@ int printHTMLChunk(socket_info* sock, const char *fmt, ... ) {
 void vprintWebsocketChunk(socket_info* sock, const char *fmt, va_list argptr) {
 	int l;
 	char tmp[1000];
-	if (sock == 0) return;
+	if (sock == 0){
+		return;
+	}
 	l = vsnprintf(tmp, 1000, fmt, argptr);
 	writeChunk(&sock->websocket_chunk_list, (unsigned char*) tmp, l);
 }
@@ -259,8 +274,9 @@ unsigned long writeChunksToBuffer(list_t* liste, char* out_buffer, int compress)
 		
 		// create tdefl() compatible flags (we have to compose the low-level flags ourselves, or use tdefl_create_comp_flags_from_zip_params() but that means MINIZ_NO_ZLIB_APIS can't be defined).
 		mz_uint comp_flags = s_tdefl_num_probes[MZ_MIN(10, level)] | ((level <= 3) ? TDEFL_GREEDY_PARSING_FLAG : 0);
-		if (!level)
+		if (!level){
 			comp_flags |= TDEFL_FORCE_ALL_RAW_BLOCKS;
+		}
 
 		deflator = tdefl_compressor_alloc();
 		// Initialize the low-level compressor.
@@ -280,8 +296,9 @@ unsigned long writeChunksToBuffer(list_t* liste, char* out_buffer, int compress)
 			// Compress as much of the input as possible (or all of it) to the output buffer.
 			status = tdefl_compress( deflator, chunk->text, &in_bytes, &out_buffer[offset], &out_bytes, TDEFL_FULL_FLUSH);
 			offset += out_bytes;
-			if ( status != TDEFL_STATUS_OKAY )
+			if ( status != TDEFL_STATUS_OKAY ){
 				printf("status : %s %ld\n",get_status(status),offset);
+			}
 		}else{
 			memcpy(&out_buffer[offset], chunk->text, chunk->length);
 			offset += chunk->length;
@@ -296,8 +313,9 @@ unsigned long writeChunksToBuffer(list_t* liste, char* out_buffer, int compress)
 		size_t out_bytes = 1000000;
 		status = tdefl_compress( deflator, 0, &in_bytes, &out_buffer[offset], &out_bytes, TDEFL_FINISH);
 		offset += out_bytes;
-		if ( status != TDEFL_STATUS_DONE )
+		if ( status != TDEFL_STATUS_DONE ){
 			printf("status : %s %ld\n",get_status(status),offset);
+		}
 		tdefl_compressor_free( deflator );
 	}
 	
@@ -322,10 +340,12 @@ void generateOutputBuffer(socket_info* sock) {
 		if ( body_size == 0){
 			printf("url : %s\n",sock->header->url);
 		}
+#if 0
 		double proz = offset;
 		proz /= (double)body_size;
 		proz *= 100.0;
-		//printf("orig: %lu  compress: %lu  %.2f %%\n",body_size,offset,proz );
+		printf("orig: %lu  compress: %lu  %.2f %%\n",body_size,offset,proz );
+#endif
 		
 		printHeaderChunk(sock, "Content-Encoding: deflate\r\n");
 		printHeaderChunk(sock, "Content-Length: %d\r\n", offset);

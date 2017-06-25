@@ -67,14 +67,16 @@ void setConfigInt(const char* name, const int value) {
 char* getConfigText(const char* name) {
 	ws_variable* var;
 	var = getVariable(config_v_store, name);
-	if (var != 0)
+	if (var != 0){
 		return var->val.value_string;
+	}
 	return 0;
 }
 
 int getConfigInt(const char* name) {
 	ws_variable* var = getVariable(config_v_store, name);
-	if (var != 0)
+	if (var != 0){
 		return getWSVariableInt(var);
+	}
 	return 0;
 }

@@ -120,8 +120,9 @@ int sendFile(http_request* s, WebserverFileInfo *file) {
 		return 0;
 	}
 
-	if (0 > sendHeader(s, file, file->DataLenght))
+	if (0 > sendHeader(s, file, file->DataLenght)){
 		return -1;
+	}
 
 	s->socket->file_infos.file_send_pos = 0;
 	s->socket->file_infos.file_info = file;

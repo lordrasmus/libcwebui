@@ -29,7 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 extern "C" {
 #endif
 
-unsigned int getInt(unsigned char *buffer);
+unsigned int getInt(const unsigned char *buffer);
 void url_decode(char *line);
 
 #ifdef __cplusplus

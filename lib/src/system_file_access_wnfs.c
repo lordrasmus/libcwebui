@@ -31,7 +31,7 @@
 
 
 
-WebserverFileInfo* wnfs_get_file( unsigned char* name){
+WebserverFileInfo* wnfs_get_file( const char* name ){
 
 	if ( wnfs_socket == 0 ){
 		return 0;
@@ -83,7 +83,7 @@ WebserverFileInfo* wnfs_get_file( unsigned char* name){
 	copyURL(file, name);
 
 	/* tmp_var ist permanent in der liste der prefixe darum pointer direkt nehmen */
-	file->FilePrefix = (unsigned char*)"/";
+	file->FilePrefix = "/";
 	setFileType(file);
 
 	file->TemplateFile = 1;

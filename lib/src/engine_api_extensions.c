@@ -55,10 +55,12 @@ int StrKeyComp(const void* a, const void* b) {
 	char *p_a = (char*) a;
 	char *p_b = (char*) b;
 	ret = strcmp(p_a, p_b);
-	if (ret < 0)
+	if (ret < 0){
 		return -1;
-	if (ret > 0)
+	}
+	if (ret > 0){
 		return 1;
+	}
 	return 0;
 }
 
@@ -163,8 +165,9 @@ void engine_platformFunction(http_request *s, FUNCTION_PARAS* func) {
 	char dummy[] = "compiled in";
        	char *name;
 
-	if (func->parameter[0].text == 0)
+	if (func->parameter[0].text == 0){
 		return;
+	}
 	node = func->platform_function;
 
 	tmp = (user_func_s*) node->info;
@@ -172,17 +175,19 @@ void engine_platformFunction(http_request *s, FUNCTION_PARAS* func) {
 	LOG( TEMPLATE_LOG, NOTICE_LEVEL, s->socket->socket, "Calling Plugin Function %s enter", func->para[0]);
 #endif
 
-	if ((error_handler != 0) && (tmp->plugin != 0))
+	if ((error_handler != 0) && (tmp->plugin != 0)){
 		name = tmp->plugin->name;
-	else
+	}else{
 		name = dummy;
+	}
 
 	if (error_handler != 0) {
 		error_handler(PLUGIN_FUNCTION_CALLING, name, func->parameter[0].text, "crashed");
 	}
 
-	if ( tmp->type == 0 )
+	if ( tmp->type == 0 ){
 		tmp->uf(s, func);
+	}
 
 #ifdef WEBSERVER_USE_PYTHON
 	if ( tmp->type == 1 )
@@ -258,8 +263,12 @@ void printRegisteredFunctions(http_request* s) {
 		}
 
 		char type[10];
-		if( uf->type == 0 ) sprintf(type,"C");
-		if( uf->type == 1 ) sprintf(type,"Python");
+		if( uf->type == 0 ){
+			sprintf(type,"C");
+		}
+		if( uf->type == 1 ){
+			sprintf(type,"Python");
+		}
 
 		if (uf->plugin != 0){
 			printHTMLChunk(s->socket, "<tr><td>%s<td>%s<td>%s<td>%s<td>%d<td>%s", uf->plugin->name,  uf->name, type, uf->file, uf->line, buffer);
@@ -281,21 +290,24 @@ void printRegisteredConditions(http_request* s) {
 		uc = (user_condition_s*) node->info;
 
 		if (error_handler != 0) {
-			if (uc->plugin == 0)
+			if (uc->plugin == 0){
 				status = error_handler(PLUGIN_FUNCTION_CHECK_ERROR, "internal", uc->name, "crashed");
-			else
+			}else{
 				status = error_handler(PLUGIN_FUNCTION_CHECK_ERROR, uc->plugin->name, uc->name, "crashed");
+			}
 		}
 
-		if (status == 0)
+		if (status == 0){
 			sprintf(buffer, "<FONT color=green>ok</font>");
-		else
+		}else{
 			sprintf(buffer, "<FONT color=red>crashed</font>");
+		}
 
-		if (uc->plugin == 0)
+		if (uc->plugin == 0){
 			printHTMLChunk(s->socket, "<tr><td>internal<td>%s<td>%s<td>%d<td>%s", uc->name, uc->file, uc->line, buffer);
-		else
+		}else{
 			printHTMLChunk(s->socket, "<tr><td>%s<td>%s<td>%s<td>%d<td>%s", uc->plugin->name, uc->name, uc->file, uc->line, buffer);
+		}
 	}
 	free(stack);
 }
@@ -531,13 +543,18 @@ void printRegisteredPlugins(http_request* s) {
 	ws_list_iterator_start(&plugin_liste);
 	while ((p = (plugin_s*) ws_list_iterator_next(&plugin_liste))) {
 		char type[10];
-		if( p->type == 0 ) sprintf(type,"C");
-		if( p->type == 1 ) sprintf(type,"Python");
+		if( p->type == 0 ){
+			sprintf(type,"C");
+		}
+		if( p->type == 1 ){
+			sprintf(type,"Python");
+		}
 
-		if (0 == strcmp(p->error, "crashed"))
+		if (0 == strcmp(p->error, "crashed")){
 			printHTMLChunk(s->socket, "<tr><td>%s<td>%s<td>%s<td><font color=red>%s</font>", p->name, p->path, type, p->error);
-		else
+		}else{
 			printHTMLChunk(s->socket, "<tr><td>%s<td>%s<td>%s<td><font color=green>%s</font>", p->name, p->path, type, p->error);
+		}
 	}
 	ws_list_iterator_stop(&plugin_liste);
 }

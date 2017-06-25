@@ -28,7 +28,7 @@
 #endif
 
 
-unsigned int getInt(unsigned char *buffer)
+unsigned int getInt(const unsigned char *buffer)
 {
     unsigned int tmp=0;
     tmp+=buffer[0];

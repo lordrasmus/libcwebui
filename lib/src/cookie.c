@@ -39,8 +39,9 @@ int checkCookie(char *name,char *value,HttpRequestHeader *header){
 	while( ( cookie = (Cookie*)ws_list_iterator_next(&header->cookie_list) ) ){
 		if(0==strcmp((char*)name,(char*)cookie->name)){
 			l = strlen(cookie->value)+1;
-			if(l > WEBSERVER_GUID_LENGTH)
-			  l = WEBSERVER_GUID_LENGTH;
+			if(l > WEBSERVER_GUID_LENGTH){
+				l = WEBSERVER_GUID_LENGTH;
+			}
 			memcpy(value,cookie->value,l);
 			#ifdef _WEBSERVER_COOKIE_DEBUG_
 			WebServerPrintf("-> gefunden Value <%s>\r\n",value);

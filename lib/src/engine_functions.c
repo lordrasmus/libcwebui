@@ -37,8 +37,9 @@
 void engine_includeFile(http_request *s, const char* prefix, FUNCTION_PARAS* func) {
 	WebserverFileInfo *file;
 
-	if ( func->parameter[0].text == 0 )
+	if ( func->parameter[0].text == 0 ){
 		return;
+	}
 
 	file = getFile(func->parameter[0].text);
 	if (file == 0) {
@@ -103,7 +104,9 @@ void engine_setVariable(http_request *s, FUNCTION_PARAS* func) {
 	ws_variable* var2;
 	ws_variable* set_value_var;
 
-	if ( var == 0 ) return;
+	if ( var == 0 ){
+		return;
+	}
 
 	set_value_var = parseVariable(s, func->parameter[1].text);
 

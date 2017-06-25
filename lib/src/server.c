@@ -39,8 +39,12 @@ void endHTTPRequest(http_request *s) {
 	upload_file_info * f_info;
 
 	clearRenderVariables(s);
-	if (s->store != 0) unlockStore(s->store->vars);
-	if (s->store_ssl != 0) unlockStore(s->store_ssl->vars);
+	if (s->store != 0){
+		unlockStore(s->store->vars);
+	}
+	if (s->store_ssl != 0){
+		unlockStore(s->store_ssl->vars);
+	}
 
 
 	ws_list_iterator_start(&s->upload_files);

@@ -24,6 +24,8 @@
 
 #include <strings.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "webserver.h"
 
@@ -51,8 +53,6 @@
 	int wnfs_socket = 0;
 #endif
 
-CLIENT_WRITE_DATA_STATUS handleClientWriteData(socket_info* sock);
-CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* sock);
 
 int WebserverStartConnectionManager(void) {
 	int socket;
@@ -536,7 +536,9 @@ char sendData(socket_info* sock, const unsigned char* buffer, FILE_OFFSET length
 
 	while (sock->file_infos.file_send_pos < length) {
 		to_send = length - sock->file_infos.file_send_pos;
-		if (to_send > WRITE_DATA_SIZE) to_send = WRITE_DATA_SIZE;
+		if (to_send > WRITE_DATA_SIZE){
+			to_send = WRITE_DATA_SIZE;
+		}
 
 		status = WebserverSend(sock, &buffer[sock->file_infos.file_send_pos], to_send, 0, &ret);
 #if _WEBSERVER_CONNECTION_DEBUG_ > 4
@@ -611,8 +613,9 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendOutputBuffer(socket_info* sock
 				goto client_diconnected_main;
 		}
 	}
-	if ( sock->output_main_buffer != 0 )
+	if ( sock->output_main_buffer != 0 ){
 		WebserverFree(sock->output_main_buffer);
+	}
 	sock->output_main_buffer = 0;
 	sock->file_infos.file_send_pos = 0;
 	return NO_MORE_DATA;
@@ -660,7 +663,7 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendFileSystem_sendfile(socket_inf
 
 	//printf("handleClientWriteDataSendFileSystem_sendfile : %s\n",sock->file_infos.file_info->Url);
 
-	// TODO : an fs anpassen
+	// TODO(lordrasmus) : an fs anpassen
 
 	fd = PlatformOpenDataReadStream(sock->file_infos.file_info->FilePath);
 	diff = sock->file_infos.file_info->DataLenght - sock->file_infos.file_send_pos;
@@ -726,7 +729,9 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteData(socket_info* sock) {
 
 	if (sock->output_main_buffer != 0) {
 		status_ret = handleClientWriteDataSendOutputBuffer(sock);
-		if (status_ret != NO_MORE_DATA) return status_ret;
+		if (status_ret != NO_MORE_DATA){
+			return status_ret;
+		}
 	}
 
 	if (sock->file_infos.file_info == 0) {
@@ -757,12 +762,15 @@ void handleServer(socket_info* sock) {
 
 	while (1) {
 		c = PlatformAccept(sock, &port);
-		if (c == -1) return;
+		if (c == -1){
+			return;
+		}
 
 #ifdef WEBSERVER_USE_WNFS
 		if (sock->server == 2) {
-			if ( wnfs_socket != 0 )
+			if ( wnfs_socket != 0 ){
 				close( wnfs_socket );
+			}
 			wnfs_socket = c;
 
 			LOG ( CONNECTION_LOG,NOTICE_LEVEL,c,"WNFS Connection from %s",sock->client_ip_str );
@@ -847,10 +855,11 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* so
 
 	while (1) {
 		diff = sock->file_infos.file_info->DataLenght - sock->file_infos.file_send_pos;
-		if (diff > WRITE_DATA_SIZE)
+		if (diff > WRITE_DATA_SIZE){
 			to_read = WRITE_DATA_SIZE;
-		else
+		}else{
 			to_read = diff;
+		}
 
 
 		FILE_OFFSET ret2 = PlatformReadBytes(buffer, to_read);
@@ -1078,14 +1087,20 @@ void handleer( int a, short b, void *t ) {
 unsigned long getSocketInfoSize(socket_info* sock) {
 	unsigned long ret = sizeof(socket_info);
 
-	if (sock->header_buffer != 0) ret += WEBSERVER_MAX_HEADER_LINE_LENGHT + 1; /* header_buffer */
-	if (sock->header != 0) ret += sizeof(HttpRequestHeader); /* header */
+	if (sock->header_buffer != 0){
+		ret += WEBSERVER_MAX_HEADER_LINE_LENGHT + 1; /* header_buffer */
+	}
+	if (sock->header != 0){
+		ret += sizeof(HttpRequestHeader); /* header */
+	}
 #ifdef WEBSERVER_USE_WEBSOCKETS
-	if(sock->websocket_buffer != 0)
+	if(sock->websocket_buffer != 0){
 		ret+= WebserverMallocedSize(sock->websocket_buffer);
+	}
 
-	if(sock->websocket_guid != 0)
+	if(sock->websocket_guid != 0){
 		ret+= WEBSERVER_GUID_LENGTH+1;
+	}
 #endif
 	ret += sock->output_header_buffer_size;
 	ret += sock->output_main_buffer_size;

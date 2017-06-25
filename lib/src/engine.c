@@ -52,7 +52,7 @@ void template_engine_stop(http_request *s) {
 	}
 }
 
-void getFunction(unsigned char *para, int *function, int *id) {
+void getFunction(const unsigned char *para, int *function, int *id) {
 	*function = para[1];
 	*id = para[3] - '0';
 }
@@ -99,10 +99,11 @@ void engine_loop_array(http_request *s, const char* prefix, const char *pagename
 		setWSVariableRef(tmp, tmp_value);
 
 		if ((var_key_name != 0) && (var_key_name->type == VAR_TYPE_STRING)) {
-			if ((0 == strcmp(tmp_value->name, "")) && (tmp_value->type == VAR_TYPE_REF))
+			if ((0 == strcmp(tmp_value->name, "")) && (tmp_value->type == VAR_TYPE_REF)){
 				setWSVariableString(tmp_key, tmp_value->val.value_ref->name);
-			else
+			}else{
 				setWSVariableString(tmp_key, tmp_value->name);
+			}
 		}
 
 		processHTML(s, prefix, pagename, pagedata, pos1);
@@ -188,38 +189,54 @@ ENGINE_FUNCTIONS getEngineFunctionCode(const char *buffer2, int length) {
 int checkParameterString(parameter_info* para) {
 	int i;
 	for (i = 0; i < para->length; i++) {
-		if (para->text[i] == '"')
+		if (para->text[i] == '"'){
 			continue;
-		if (para->text[i] == ' ')
+		}
+		if (para->text[i] == ' '){
 			continue;
-		if (para->text[i] == '-')
+		}
+		if (para->text[i] == '-'){
 			continue;
-		if (para->text[i] == '.')
+		}
+		if (para->text[i] == '.'){
 			continue;
-		if (para->text[i] == '=')
+		}
+		if (para->text[i] == '='){
 			continue;
-		if (para->text[i] == ';')
+		}
+		if (para->text[i] == ';'){
 			continue;
-		if (para->text[i] == '_')
+		}
+		if (para->text[i] == '_'){
 			continue;
-		if (para->text[i] == '[')
+		}
+		if (para->text[i] == '['){
 			continue;
-		if (para->text[i] == ']')
+		}
+		if (para->text[i] == ']'){
 			continue;
-		if (para->text[i] == '/')
+		}
+		if (para->text[i] == '/'){
 			continue;
-		if (para->text[i] == '<')
+		}
+		if (para->text[i] == '<'){
 			continue;
-		if (para->text[i] == '>')
+		}
+		if (para->text[i] == '>'){
 			continue;
-		if (para->text[i] < '0')
+		}
+		if (para->text[i] < '0'){
 			return 1;
-		if (para->text[i] > 'z')
+		}
+		if (para->text[i] > 'z'){
 			return 1;
-		if ((para->text[i] > '9') && (para->text[i] < 'A'))
+		}
+		if ((para->text[i] > '9') && (para->text[i] < 'A')){
 			return 1;
-		if ((para->text[i] > 'Z') && (para->text[i] < 'a'))
+		}
+		if ((para->text[i] > 'Z') && (para->text[i] < 'a')){
 			return 1;
+		}
 	}
 	return 0;
 }
@@ -263,8 +280,9 @@ void parseFunction(engine_infos* engine, const char* buffer, int length) {
 	}
 	i = 0;
 	while (1) {
-		if (func->parameter[i].text == 0)
+		if (func->parameter[i].text == 0){
 			break;
+		}
 		i++;
 	}
 	func->parameter_count = i;
@@ -278,8 +296,9 @@ void parseFunction(engine_infos* engine, const char* buffer, int length) {
 
 	switch (func->function) {
 	case TEMPLATE_PLATFORM_FUNCTION:
-		if ( 0 != check_platformFunction_exists(func))
+		if ( 0 != check_platformFunction_exists(func)){
 			func->function = TEMPLATE_UNKNOWN;
+		}
 		break;
 	default:
 		break;
@@ -292,8 +311,9 @@ void freeFunction(engine_infos* engine) {
 	FUNCTION_PARAS* func = &engine->func;
 
 	for (i = 0; i < MAX_FUNC_PARAS; i++) {
-		if (func->parameter[i].text != 0)
+		if (func->parameter[i].text != 0){
 			WebserverFree(func->parameter[i].text);
+		}
 		func->parameter[i].text = 0;
 	}
 }
@@ -374,8 +394,7 @@ int processHTML(http_request* s, const char* prefix, const char *pagename, const
 			function_start_pos = i;
 			end_pos = i;
 
-			while ((end_pos < datalenght) && (pagedata[end_pos++] != '}'))
-				;
+			while ((end_pos < datalenght) && (pagedata[end_pos++] != '}')){}
 			if (pagedata[end_pos - 1] != '}') {
 				continue;
 			}
@@ -461,15 +480,17 @@ int processHTML(http_request* s, const char* prefix, const char *pagename, const
 			case TEMPLATE_ECHO_FUNCS_ON:
 				s->socket->enable_print_funcs = 1;
 
-				if (s->engine_current->func.parameter[0].text != 0)
+				if (s->engine_current->func.parameter[0].text != 0){
 					strncpy(s->socket->print_func_prefix, s->engine_current->func.parameter[0].text, 50);
-				else
+				}else{
 					strncpy(s->socket->print_func_prefix, "", 50);
+				}
 
-				if (s->engine_current->func.parameter[1].text != 0)
+				if (s->engine_current->func.parameter[1].text != 0){
 					strncpy(s->socket->print_func_postfix, s->engine_current->func.parameter[1].text, 50);
-				else
+				}else{
 					strncpy(s->socket->print_func_postfix, "", 50);
+				}
 
 				last_chunk_send_pos = i + 1;
 				break;

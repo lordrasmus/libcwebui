@@ -93,7 +93,9 @@ void checkSessionTimeout(void) {
 
 	/* nur alle 10 sekunden auf timeouts testen */
 	diff = PlatformGetTick() - last_timeout_check;
-	if (diff < (10 * PlatformGetTicksPerSeconde())) return;
+	if (diff < (10 * PlatformGetTicksPerSeconde())){
+		return;
+	}
 
 	last_timeout_check = PlatformGetTick();
 
@@ -137,17 +139,22 @@ void checkSessionTimeout(void) {
 	PlatformUnlockMutex( &session_mutex );
 
 #ifdef _WEBSERVER_SESSION_DEBUG_
-	if (deleted > 0)
-	WebServerPrintf("Deleted Sessions %d\n",deleted);
+	if (deleted > 0){
+		WebServerPrintf("Deleted Sessions %d\n",deleted);
+	}
 #endif
 
 }
 
-char guid_cmp(char* a, char* b) {
+char guid_cmp(const char* a, const char* b) {
 	int i;
-	if (a[0] == 0) return 0;
+	if (a[0] == 0){
+		return 0;
+	}
 	for (i = 0; i < WEBSERVER_GUID_LENGTH; i++) {
-		if (a[i] != b[i]) return 0;
+		if (a[i] != b[i]){
+			return 0;
+		}
 	}
 	return 1;
 }
@@ -198,7 +205,9 @@ int checkUserRegistered(http_request* s) {
 			if (var->type == VAR_TYPE_STRING) {
 				if (0 == strcmp(var->val.value_string, "true")) {
 					true_ssl = true;
-					if (true_normal) true_both = true;
+					if (true_normal){
+						true_both = true;
+					}
 				}
 			}
 		}
@@ -231,15 +240,23 @@ int checkUserRegistered(http_request* s) {
 	PlatformUnlockMutex( &session_mutex );
 
 	if (s->socket->use_ssl == 1) {
-		if (got_guid_ssl != got_giud) return SESSION_MISMATCH_ERROR;
-		if (guid_match != true_both) return SESSION_MISMATCH_ERROR;
-		if (got_guid_ssl && got_normal && (true_normal != true_ssl)) return SESSION_MISMATCH_ERROR;
+		if (got_guid_ssl != got_giud){
+			return SESSION_MISMATCH_ERROR;
+		}
+		if (guid_match != true_both){
+			return SESSION_MISMATCH_ERROR;
+		}
+		if (got_guid_ssl && got_normal && (true_normal != true_ssl)){
+			return SESSION_MISMATCH_ERROR;
+		}
 	}
 #endif
 
 
 
-	if (got_giud && true_normal) return NORMAL_CHECK_OK;
+	if (got_giud && true_normal){
+		return NORMAL_CHECK_OK;
+	}
 
 	return NOT_REGISTERED;
 }
@@ -493,9 +510,15 @@ long getSessionTimeoutByGUID(char* store_guid, STORE_TYPES store ) {
 
 
 char setSessionValue(http_request* s, STORE_TYPES store, const char* name, const char* value) {
-	if (0 == strcmp("registered", name)) return false;
-	if (0 == strcmp("session-id", name)) return false;
-	if (0 == strcmp("session-id-ssl", name)) return false;
+	if (0 == strcmp("registered", name)){
+		return false;
+	}
+	if (0 == strcmp("session-id", name)){
+		return false;
+	}
+	if (0 == strcmp("session-id-ssl", name)){
+		return false;
+	}
 
 	PlatformLockMutex( &session_mutex );
 
@@ -509,15 +532,23 @@ char setSessionValue(http_request* s, STORE_TYPES store, const char* name, const
 static char int_setSessionValue(http_request* s, STORE_TYPES store, const char* name, const char* value) {
 	ws_variable* var = 0;
 	if (store == SESSION_STORE) {
-		if (s->store == 0) return false;
+		if (s->store == 0){
+			return false;
+		}
 		var = newVariable(s->store->vars, name);
 		setWSVariableString(var, value);
 	}
 #ifdef WEBSERVER_USE_SSL
 	if (store == SESSION_STORE_SSL) {
-		if (s->store_ssl == 0) return false;
-		if (s->socket == 0) return false;
-		if (s->socket->use_ssl == 0) return false;
+		if (s->store_ssl == 0){
+			return false;
+		}
+		if (s->socket == 0){
+			return false;
+		}
+		if (s->socket->use_ssl == 0){
+			return false;
+		}
 		var = newVariable(s->store_ssl->vars, name);
 		setWSVariableString(var, value);
 	}
@@ -527,9 +558,16 @@ static char int_setSessionValue(http_request* s, STORE_TYPES store, const char* 
 }
 
 ws_variable* addSessionValue(http_request* s, STORE_TYPES store, const char* name) {
-	if (0 == strcmp("registered", name)) return 0;
-	if (0 == strcmp("session-id", name)) return 0;
-	if (0 == strcmp("session-id-ssl", name)) return 0;
+	if (0 == strcmp("registered", name)){
+		return 0;
+	}
+	if (0 == strcmp("session-id", name)){
+		return 0;
+	}
+	if (0 == strcmp("session-id-ssl", name)){
+		return 0;
+		
+	}
 
 	PlatformLockMutex( &session_mutex );
 
@@ -543,17 +581,27 @@ ws_variable* addSessionValue(http_request* s, STORE_TYPES store, const char* nam
 static ws_variable* int_addSessionValue(http_request* s, STORE_TYPES store, const char* name ) {
 	ws_variable* var = 0;
 
-	if ( s == 0 ) return 0;
+	if ( s == 0 ){
+		return 0;
+	}
 
 	if (store == SESSION_STORE) {
-		if (s->store == 0) return 0;
+		if (s->store == 0){
+			return 0;
+		}
 		var = newVariable(s->store->vars, name);
 	}
 #ifdef WEBSERVER_USE_SSL
 	if (store == SESSION_STORE_SSL) {
-		if (s->store_ssl == 0) return 0;
-		if (s->socket == 0) return 0;
-		if (s->socket->use_ssl == 0) return 0;
+		if (s->store_ssl == 0){
+			return 0;
+		}
+		if (s->socket == 0){
+			return 0;
+		}
+		if (s->socket->use_ssl == 0){
+			return 0;
+		}
 		var = newVariable(s->store_ssl->vars, name);
 	}
 #endif
@@ -565,17 +613,27 @@ static ws_variable* int_addSessionValue(http_request* s, STORE_TYPES store, cons
 static ws_variable* int_getSessionValue(http_request* s, STORE_TYPES store, const char* name) {
 	ws_variable* var = 0;
 
-	if (s == 0) return 0;
+	if (s == 0){
+		return 0;
+	}
 
 	if (store == SESSION_STORE) {
-		if (s->store == 0) return 0; /* snprintf(value,value_size,"value %s not found",name); */
+		if (s->store == 0){
+			return 0; /* snprintf(value,value_size,"value %s not found",name); */
+		}
 		var = getVariable(s->store->vars, name);
 	}
 	if (store == SESSION_STORE_SSL) {
 #ifdef WEBSERVER_USE_SSL
-		if (s->socket == 0) return 0; /* snprintf(value,value_size,"value %s not found",name); */
-		if (s->socket->use_ssl == 0) return 0; /*snprintf(value,value_size,"value %s not found",name); */
-		if (s->store_ssl == 0) return 0; /*snprintf(value,value_size,"value %s not found",name); */
+		if (s->socket == 0){
+			return 0; /* snprintf(value,value_size,"value %s not found",name); */
+		}
+		if (s->socket->use_ssl == 0){
+			return 0; /*snprintf(value,value_size,"value %s not found",name); */
+		}
+		if (s->store_ssl == 0){
+			return 0; /*snprintf(value,value_size,"value %s not found",name); */
+		}
 		var = getVariable(s->store_ssl->vars, name);
 #else
 		return 0; /* kein SSL verfügbar */
@@ -586,10 +644,17 @@ static ws_variable* int_getSessionValue(http_request* s, STORE_TYPES store, cons
 }
 
 ws_variable* getSessionValue(http_request* s, STORE_TYPES store, const char* name) {
-	if (s == 0) return 0;
+	
+	if (s == 0){
+		return 0;
+	}
 
-	if (0 == strcmp("session-id", name)) return 0;
-	if (0 == strcmp("session-id-ssl", (char*) name)) return 0;
+	if (0 == strcmp("session-id", name)){
+		return 0;
+	}
+	if (0 == strcmp("session-id-ssl", (char*) name)){
+		return 0;
+	}
 
 	PlatformLockMutex( &session_mutex );
 
@@ -601,8 +666,12 @@ ws_variable* getSessionValue(http_request* s, STORE_TYPES store, const char* nam
 }
 
 void printSessionValue(http_request* s, STORE_TYPES store, char* name) {
-	if (0 == strcmp("session-id", (char*) name)) return;
-	if (0 == strcmp("session-id-ssl", (char*) name)) return;
+	if (0 == strcmp("session-id", (char*) name)){
+		return;
+	}
+	if (0 == strcmp("session-id-ssl", (char*) name)){
+		return;
+	}
 }
 
 char removeSessionValue(http_request* s, STORE_TYPES store, char* name) {
@@ -612,8 +681,12 @@ char removeSessionValue(http_request* s, STORE_TYPES store, char* name) {
 
 
 	if (store == SESSION_STORE ) {
-		if (s->store == 0) return false;
-		if (s->store->vars == 0) return false;
+		if (s->store == 0){
+			return false;
+		}
+		if (s->store->vars == 0){
+			return false;
+		}
 
 		PlatformLockMutex( &session_mutex );
 
@@ -621,9 +694,15 @@ char removeSessionValue(http_request* s, STORE_TYPES store, char* name) {
 	}
 #ifdef WEBSERVER_USE_SSL
 	if (store == SESSION_STORE_SSL ) {
-		if (s->socket->use_ssl==0) return false;
-		if (s->store_ssl == 0) return false;
-		if (s->store_ssl->vars == 0) return false;
+		if (s->socket->use_ssl==0){
+			return false;
+		}
+		if (s->store_ssl == 0){
+			return false;
+		}
+		if (s->store_ssl->vars == 0){
+			return false;
+		}
 
 		PlatformLockMutex( &session_mutex );
 
@@ -749,6 +828,8 @@ unsigned long dumpSessionsSize(int* count) {
 		i++;
 	}
 	free(stack);
-	if (count != 0) *count = i;
+	if (count != 0){
+		*count = i;
+	}
 	return size;
 }

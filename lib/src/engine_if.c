@@ -178,7 +178,6 @@ void engine_TemplateIF ( http_request *s,const char* prefix ,const char *pagenam
 
 
     *i+=endif_tag_pos;
-    return;
 
 }
 

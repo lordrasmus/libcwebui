@@ -139,10 +139,10 @@ typedef struct {
 	const char *Url;
 	unsigned int UrlLengt;
 
-	const unsigned char *FilePath;
+	const char *FilePath;
 	unsigned int FilePathLengt;
 
-	const unsigned char *FilePrefix;
+	const char *FilePrefix;
 
 	const unsigned char *Data;
 	FILE_OFFSET DataLenght;
@@ -167,7 +167,7 @@ typedef struct {
 
 	char* lastmodified;
 	unsigned int lastmodifiedLength;
-	const unsigned char* etag;
+	const char* etag;
 	unsigned char etagLength;
 
 	unsigned long int	last_mod_sec;

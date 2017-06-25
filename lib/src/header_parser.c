@@ -63,7 +63,9 @@ void recieveParameterFromGet(char *line, HttpRequestHeader *header, int len) {
 
 	char bak1,bak2;
 
-	if ( len < 1 ) return;
+	if ( len < 1 ){
+		return;
+	}
 
 #ifdef _WEBSERVER_DEBUG_
 	WebServerPrintf("recieveParameterFromGet : %s\n", line);
@@ -438,11 +440,13 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 	h_len = strlen("Host: ");
 	if (!strncmp((char*)line,"Host: ",h_len)){
 		len = length - h_len;
-		if ( header->Host != 0)
+		if ( header->Host != 0){
 			WebserverFree(header->Host);
+		}
 
-		if ( header->HostName != 0)
+		if ( header->HostName != 0){
 			WebserverFree(header->HostName);
+		}
 
 		header->Host = (char*)WebserverMalloc( len + 1 );
 		Webserver_strncpy((char*)header->Host,len+1,(char*)&line[h_len],len);
@@ -524,9 +528,11 @@ Origin: http://192.168.1.50
 
 			i2++;
 
-			for(i=i2;i<length;i++)
-				if(line[i]=='\r')
+			for(i=i2;i<length;i++){
+				if(line[i]=='\r'){
 					break;
+				}
+			}
 
 			header->boundary=(char*)WebserverMalloc( ( i - i2 )  + 3 ); /* + 2 für -- , +1 \0 */
 			strncpy(header->boundary,"--",2);		/* nach http://www.w3.org/Protocols/rfc1341/7_2_Multipart.html */
@@ -572,7 +578,9 @@ int ParseHeader(socket_info* sock, HttpRequestHeader* header, char* buffer, unsi
 	unsigned int line_length;
 
 
-	if (length < 2) return length;
+	if (length < 2){
+		return length;
+	}
 
 	if (length < 4) {
 		if ((buffer[0] == '\r') && (buffer[1] == '\n')) {
@@ -613,7 +621,9 @@ int ParseHeader(socket_info* sock, HttpRequestHeader* header, char* buffer, unsi
 
 			*bytes_parsed = i;
 			/* es ist ein weiterer header im datenstrom gewesen */
-			if ( (i + 1 ) < length) return -3;
+			if ( (i + 1 ) < length){
+				return -3;
+			}
 			return -2;
 
 		}
@@ -652,7 +662,9 @@ ws_variable* getParameter(http_request* s, const char* name) {
 }
 
 bool checkHeaderComplete(HttpRequestHeader* header) {
-	if (header->url == 0) return false;
+	if (header->url == 0){
+		return false;
+	}
 
 	return true;
 }

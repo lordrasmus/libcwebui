@@ -58,11 +58,11 @@ void engine_end(http_request *s);*/
 int getNextTag ( const char* pagedata,const int datalength, tag_groups search_tag_group,TAG_IDS *tag );
 int find_tag_end_pos(const char *pagedata,const int datalenght,const char *start_tag,const char *end_tag);
 
-void getFunction(unsigned char *para,int *function,int *id);
+void getFunction(const unsigned char *para,int *function,int *id);
 
 int processHTML(http_request* s,const char* prefix,const char *pagename,const char *pagedata,const int datalenght);
 
-void register_function(const char* name,user_function,const char* file,int line);
+void register_function(const char* name,user_function func,const char* file,int line);
 #ifdef WEBSERVER_USE_PYTHON
 void register_py_function(const char* name, PyObject * py_func, const char* file, int line);
 #endif

@@ -33,8 +33,8 @@ int check_blocked_urls( const char* url );
 
 int doNotRamCacheFile( WebserverFileInfo *file );
 
-void copyFilePath(WebserverFileInfo* file, const unsigned char* name);
-void copyURL(WebserverFileInfo* file, const unsigned char* url);
+void copyFilePath(WebserverFileInfo* file, const char* name);
+void copyURL(WebserverFileInfo* file, const char* url);
 
 void setFileType(WebserverFileInfo* file);
 void generateEtag( WebserverFileInfo *file );

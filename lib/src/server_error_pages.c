@@ -31,10 +31,11 @@
 int printAddressInfo(socket_info *socket){
 	int length = 0;
 	length += printHTMLChunk(socket,"<address>%s at %s ",SERVER_NAME,SERVER_DOMAIN);
-	if(socket->use_ssl == 1)
+	if(socket->use_ssl == 1){
 		length += printHTMLChunk(socket,"Port %d</address></body></html>",getConfigInt("ssl_port"));
-	else
+	}else{
 		length += printHTMLChunk(socket,"Port %d</address></body></html>",getConfigInt("port"));
+	}
 	return length;
 }
 

@@ -41,24 +41,30 @@ void setCORS_Handler( cors_handler handler ){
 
 int checkCORS( CORS_HEADER_TYPES type, socket_info* socket ){
 
-	if ( cors_handle_func == 0 ) return COND_FALSE;
+	if ( cors_handle_func == 0 ){
+		return COND_FALSE;
+	}
 
 	cors_infos info;
 	info.type = type;
 
-	if ( socket->header->Origin != 0 )
+	if ( socket->header->Origin != 0 ){
 		info.origin = socket->header->Origin;
-	else
+	}else{
 		info.origin = "";
+	}
 
-	if ( socket->header->method == HTTP_OPTIONS )
+	if ( socket->header->method == HTTP_OPTIONS ){
 		info.method = "OPTIONS";
+	}
 
-	if ( socket->header->method == HTTP_GET )
+	if ( socket->header->method == HTTP_GET ){
 		info.method = "GET";
+	}
 
-	if ( socket->header->method == HTTP_POST )
+	if ( socket->header->method == HTTP_POST ){
 		info.method = "POST";
+	}
 
 	return cors_handle_func( &info );
 
@@ -167,11 +173,13 @@ void addCacheControlLines(http_request* s, WebserverFileInfo *info) {
 		printHeaderChunk ( s->socket,"Cache-Control: max-age=%d, public\r\n",MAX_CACHE_AGE ); /* sekunden bis refresh */
 		/* printHeaderChunk ( s->socket,"Expires: Thu, 15 Apr 2060 20:00:00 GMT\r\n"); */
 
-		if ( info->etag != 0 )
+		if ( info->etag != 0 ){
 			printHeaderChunk ( s->socket,"ETag: %s\r\n",info->etag );
+		}
 
-		if ( info->lastmodified != 0 )
+		if ( info->lastmodified != 0 ){
 			printHeaderChunk ( s->socket,"Last-Modified: %s\r\n",info->lastmodified );
+		}
 
 	}
 #endif
@@ -376,8 +384,9 @@ void addCSPHeaderLines(http_request* s){
 	char buff[1000];
 	int offset = 0;
 
-	if ( getConfigInt( "use_csp") == 0 )
+	if ( getConfigInt( "use_csp") == 0 ){
 		return;
+	}
 
 	/* ; style-src 'self' ; img-src 'self' ; script-src 'self' */
 
@@ -468,8 +477,9 @@ int sendHeader(http_request* s, WebserverFileInfo *info, int p_lenght) {
 
 	printHeaderChunk(s->socket, "Accept-Ranges: bytes\r\n");
 	
-	if ( s->socket->use_output_compression == 0 )
+	if ( s->socket->use_output_compression == 0 ){
 		printHeaderChunk(s->socket, "%s %d\r\n", "Content-Length:", p_lenght);
+	}
 
 	addCSPHeaderLines(s);
 
@@ -497,8 +507,9 @@ int sendHeader(http_request* s, WebserverFileInfo *info, int p_lenght) {
 		printHeaderChunk(s->socket, "Pragma: public\r\n");
 	}
 		
-	if ( s->socket->use_output_compression == 0 )
+	if ( s->socket->use_output_compression == 0 ){
 		printHeaderChunk(s->socket, "\r\n"); /* HTTP Header beenden */
+	}
 	return 1;
 }
 

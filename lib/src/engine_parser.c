@@ -39,8 +39,9 @@ ws_variable* NEED_RESUL_CHECK parseVariable(http_request *s,char* buffer) {
 
 	ws_variable *var,*tmp,*tmp2;
 
-	if(buffer == 0)
+	if(buffer == 0){
 		return 0;
+	}
 
 	char* buffer_end = buffer + strlen( buffer );
 
@@ -88,8 +89,9 @@ ws_variable* NEED_RESUL_CHECK parseVariable(http_request *s,char* buffer) {
 	if(0 == strncmp(&buffer[offset],"\"",1)){
 		offset++;
 		for(i=offset;i<l;i++){
-			if(buffer[i] == '\"')
+			if(buffer[i] == '\"'){
 				break;
+			}
 		}
 		buffer[i] = '\0';
 		buffer = &buffer[offset];
@@ -126,8 +128,9 @@ ws_variable* NEED_RESUL_CHECK parseVariable(http_request *s,char* buffer) {
 			setWSVariableString(var,error_buffer);
 			return var;
 		}else{
-			if(tmp->type == VAR_TYPE_REF)
-				tmp = tmp->val.value_ref;
+			if(tmp->type == VAR_TYPE_REF){
+			    tmp = tmp->val.value_ref;
+			}
 			if(tmp->type == VAR_TYPE_ARRAY){
 				i=strlen(buffer)+1;
 				buffer = &buffer[i];

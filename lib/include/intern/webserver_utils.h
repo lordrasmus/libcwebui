@@ -55,7 +55,7 @@ unsigned int getHTMLDateFormat( char* buffer,int day,int month,int year,int hour
 
 void 	generateGUID ( char* buf,int length );
 
-void 	convertBinToHexString(unsigned char* bin,int bin_length,char* text, int text_length);
+void 	convertBinToHexString(const unsigned char* bin,int bin_length,char* text, int text_length);
 
 
 

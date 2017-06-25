@@ -12,21 +12,25 @@ void VISIBLE_ATTR ws_list_destroy(list_t *l){
     struct list_entry* cur = l->first;
     struct list_entry* del;
     
-    if ( l->first == 0 ) return;
+    if ( l->first == 0 ){
+        return;
+    }
      
     while( cur->next != 0 ){
         del = cur;
         cur = cur->next;
         
-        if( l->freer != 0 )
+        if( l->freer != 0 ){
             l->freer( del->data );
+        }
         free( del );
         
         l->element_count--;
     }
     
-    if( l->freer != 0 )
+    if( l->freer != 0 ){
         l->freer( cur->data );
+    }
     free( cur );
     
     l->element_count--;
@@ -38,7 +42,9 @@ int VISIBLE_ATTR ws_list_clear(list_t *l){
     struct list_entry* cur = l->first;
     struct list_entry* del;
     
-    if ( l->first == 0 ) return 0;
+    if ( l->first == 0 ){
+        return 0;
+    }
      
     while( cur->next != 0 ){
         del = cur;
@@ -63,7 +69,9 @@ int VISIBLE_ATTR ws_list_delete(list_t *l, void *data){
     
     struct list_entry* del = 0;
     
-    if ( cur == 0 ) return 0;
+    if ( cur == 0 ){
+        return 0;
+    }
     
     while( cur->next != 0 ){
         if ( cur->data == data ){
@@ -91,12 +99,14 @@ int VISIBLE_ATTR ws_list_delete(list_t *l, void *data){
     if( prev ){
         prev->next = next;
     }else{
-        if( cur == l->first )
+        if( cur == l->first ){
             l->first = next;
+        }
     }
     
-    if( next )
+    if( next ){
         next->prev = prev;
+    }
     
     //if ( l->freer != 0 ) // data wird im original nicht gelöscht
     //    l->freer( del->data );
@@ -155,13 +165,17 @@ int VISIBLE_ATTR ws_list_iterator_start(list_t *l){
 }
 
 int VISIBLE_ATTR ws_list_iterator_hasnext(const list_t *l){
-    if ( l->cur_iter == 0 ) return 0;
+    if ( l->cur_iter == 0 ){
+        return 0;
+    }
     return 1;
 }
 
 void VISIBLE_ATTR *ws_list_iterator_next(list_t *l){
     struct list_entry* ret =  l->cur_iter;
-    if ( ret == 0 ) return 0;
+    if ( ret == 0 ){
+        return 0;
+    }
     
     l->cur_iter =  l->cur_iter->next;
     return ret->data;
@@ -174,7 +188,9 @@ int VISIBLE_ATTR ws_list_iterator_stop(list_t *l){
 
 static struct list_entry *ws_list_get_entry_at(const list_t *l, unsigned int pos){
     unsigned int cur_pos = 0;
-    if ( l->first == 0 ) return 0;
+    if ( l->first == 0 ){
+        return 0;
+    }
     
     struct list_entry* cur = l->first;
     while( cur->next != 0 ){
@@ -193,8 +209,9 @@ static struct list_entry *ws_list_get_entry_at(const list_t *l, unsigned int pos
 
 void VISIBLE_ATTR *ws_list_extract_at(list_t *l, unsigned int pos){
     struct list_entry* cur = ws_list_get_entry_at( l, pos );
-    if ( cur == 0 )
+    if ( cur == 0 ){
         return 0;
+    }
     
     l->element_count--;
     
@@ -206,12 +223,14 @@ void VISIBLE_ATTR *ws_list_extract_at(list_t *l, unsigned int pos){
     if( prev ){
         prev->next = next;
     }else{
-        if( cur == l->first )
+        if( cur == l->first ){
             l->first = next;
+        }
     }
     
-    if( next )
+    if( next ){
         next->prev = prev;
+    }
     
     free( cur );
     
@@ -222,8 +241,9 @@ void VISIBLE_ATTR *ws_list_extract_at(list_t *l, unsigned int pos){
 void VISIBLE_ATTR *ws_list_get_at(const list_t *l, unsigned int pos){
     
     struct list_entry* cur = ws_list_get_entry_at( l, pos );
-    if ( cur == 0 )
+    if ( cur == 0 ){
         return 0;
+    }
     
     return cur->data;
 }
@@ -232,7 +252,9 @@ void VISIBLE_ATTR *ws_list_get_at(const list_t *l, unsigned int pos){
 void VISIBLE_ATTR *ws_list_seek(list_t *l, const void *indicator){
     struct list_entry* cur = l->first;
     
-    if ( cur == 0 ) return 0;
+    if ( cur == 0 ){
+        return 0;
+    }
      
     while( cur->next != 0 ){
         if ( l->seeker( cur->data, indicator ) == 1 ){

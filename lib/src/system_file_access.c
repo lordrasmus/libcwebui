@@ -45,7 +45,7 @@ void init_file_access( void ){
 
 void free_file_access( void ){
 
-	// TODO alle elemente richtig freigeben
+	// TODO(lordrasmus) alle elemente richtig freigeben
 
 	//freeFileCache();
 
@@ -215,8 +215,9 @@ void release_file_content(WebserverFileInfo* file) {
 WebserverFileInfo VISIBLE_ATTR *getFile( char *name)  {
 	WebserverFileInfo *file = 0;
 
-	if (name == 0)
+	if (name == 0){
 		return 0;
+	}
 
 	while( name[0] == '/'){
 		name++;
@@ -231,9 +232,10 @@ WebserverFileInfo VISIBLE_ATTR *getFile( char *name)  {
 
 #ifdef WEBSERVER_USE_WNFS
 
-	file = wnfs_get_file( (unsigned char*)name );
-	if ( file != 0 )
+	file = wnfs_get_file( name );
+	if ( file != 0 ){
 		return file;
+	}
 
 #endif
 
@@ -246,7 +248,7 @@ WebserverFileInfo VISIBLE_ATTR *getFile( char *name)  {
 	}
 
 
-	file = getFileLocalFileSystem( ( unsigned char*) name);
+	file = getFileLocalFileSystem( name);
 	if ( file == 0 ){
 		printf("getFile : Error File %s not found\n", name );
 		return 0;

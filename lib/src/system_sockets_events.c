@@ -119,10 +119,11 @@ void addEventSocketRead(socket_info* sock) {
 	LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Add Event Read ","");
 #endif
 	
-	if (sock->my_ev == 0)
+	if (sock->my_ev == 0){
 		sock->my_ev = event_new(base, sock->socket, EV_READ, eventHandler, sock);
-	else
+	}else{
 		event_assign(sock->my_ev, base, sock->socket, EV_READ, eventHandler, sock);
+	}
 	event_add(sock->my_ev, NULL);
 
 }
@@ -142,10 +143,11 @@ void addEventSocketReadPersist(socket_info* sock) {
 	LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Add Event Read Persist","");
 #endif
 	
-	if (sock->my_ev == 0)
+	if (sock->my_ev == 0){
 		sock->my_ev = event_new(base, sock->socket, EV_READ | EV_PERSIST, eventHandler, sock);
-	else
+	}else{
 		event_assign(sock->my_ev, base, sock->socket, EV_READ | EV_PERSIST, eventHandler, sock);
+	}
 	event_add(sock->my_ev, NULL);
 
 }
@@ -166,10 +168,11 @@ void addEventSocketWrite(socket_info* sock) {
 	LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Add Event Write","");
 #endif
 	
-	if (sock->my_ev == 0)
+	if (sock->my_ev == 0){
 		sock->my_ev = event_new(base, sock->socket, EV_WRITE, eventHandler, sock);
-	else
+	}else{
 		event_assign(sock->my_ev, base, sock->socket, EV_WRITE, eventHandler, sock);
+	}
 	event_add(sock->my_ev, NULL);
 
 }
@@ -192,10 +195,11 @@ void addEventSocketWritePersist(socket_info* sock) {
 #endif
 
 	
-	if (sock->my_ev == 0)
+	if (sock->my_ev == 0){
 		sock->my_ev = event_new(base, sock->socket, EV_WRITE | EV_PERSIST, eventHandler, sock);
-	else
+	}else{
 		event_assign(sock->my_ev, base, sock->socket, EV_WRITE | EV_PERSIST, eventHandler, sock);
+	}
 	event_add(sock->my_ev, NULL);
 
 }
@@ -216,10 +220,11 @@ void addEventSocketReadWritePersist(socket_info* sock) {
 	LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Add Event Read/Write Persist","");
 #endif
 	
-	if (sock->my_ev == 0)
+	if (sock->my_ev == 0){
 		sock->my_ev = event_new(base, sock->socket, EV_READ | EV_WRITE | EV_PERSIST, eventHandler, sock);
-	else
+	}else{
 		event_assign(sock->my_ev, base, sock->socket, EV_READ | EV_WRITE | EV_PERSIST, eventHandler, sock);
+	}
 	event_add(sock->my_ev, NULL);
 
 }
@@ -230,10 +235,11 @@ void commitSslEventFlags( socket_info* sock ) {
 
 	sock->ssl_block_event_flags = 0;
 	
-	if (sock->my_ev == 0)
+	if (sock->my_ev == 0){
 		sock->my_ev = event_new(base, sock->socket, sock->ssl_event_flags, eventHandler, sock);
-	else
+	}else{
 		event_assign(sock->my_ev, base, sock->socket, sock->ssl_event_flags, eventHandler, sock);
+	}
 	event_add(sock->my_ev, NULL);
 #if _WEBSERVER_HANDLER_DEBUG_ > 4
 	LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"commit SSL Event Flags Persist","");
@@ -302,8 +308,9 @@ void delEventSocketAll(socket_info* sock) {
 }*/
 
 void deleteEvent(socket_info* sock){
-	if ( sock->my_ev != 0)
+	if ( sock->my_ev != 0){
 		event_free(sock->my_ev);
+	}
 	sock->my_ev=0;
 }
 

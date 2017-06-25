@@ -52,7 +52,7 @@ unsigned short l;
  *                                                             *
  **************************************************************/
 
-int PlatformOpenDataReadStream( const unsigned char* name ) {
+int PlatformOpenDataReadStream( const char* name ) {
 	struct stat st;
 
 	g_fp = fopen( ( char* ) name, "rb");

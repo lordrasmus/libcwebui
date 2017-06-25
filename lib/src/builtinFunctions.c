@@ -405,11 +405,13 @@ int builtinFunction ( http_request* s,FUNCTION_PARAS* func ) {
 		dumpSession ( s );
         return 0;
     }
-    if ( miniFunctions ( s,func->parameter[0].text ) )
+    if ( miniFunctions ( s,func->parameter[0].text ) ){
         return 0;
+    }
 
-    if ( sessionFunctions ( s,func->parameter[0].text ) )
+    if ( sessionFunctions ( s,func->parameter[0].text ) ){
         return 0;
+    }
 
     printHTMLChunk ( s->socket ,"Unbekannt :%s\n",func->parameter[0].text );
     return 0;

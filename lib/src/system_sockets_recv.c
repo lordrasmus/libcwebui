@@ -34,9 +34,6 @@
 
 
 
-CLIENT_WRITE_DATA_STATUS handleClientWriteData(socket_info* sock);
-
-
 /* 
  http://tangentsoft.net/wskfaq/articles/bsd-compatibility.html
  http://publib.boulder.ibm.com/infocenter/iseries/v5r3/index.jsp?topic=/rzab6/rzab6xnonblock.htm

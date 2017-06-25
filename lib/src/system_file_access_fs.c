@@ -79,7 +79,7 @@ int local_file_system_check_file_modified( WebserverFileInfo *file ){
 		printf("local_file_system:  file change %s File System -> FS_LOCAL_FILE_SYSTEM ( RAM cached )\n", file->FilePath );
 
 		// Datei ist im RAM cache
-		PlatformOpenDataReadStream(file->FilePath);
+		PlatformOpenDataReadStream( file->FilePath );
 
 		// zur sicherheit die länge mit geöffnetem filehandel nochmal lesen
 		file->DataLenght = PlatformGetFileSize();
@@ -102,7 +102,7 @@ int local_file_system_check_file_modified( WebserverFileInfo *file ){
 
 int local_file_system_read_content( WebserverFileInfo *file ){
 
-	if (PlatformOpenDataReadStream(file->FilePath)) {
+	if (PlatformOpenDataReadStream( file->FilePath )) {
 
 		file->DataLenght = PlatformGetFileSize();
 		file->Data = (unsigned char*) WebserverMalloc( file->DataLenght );
@@ -160,7 +160,7 @@ void add_local_file_system_dir(const char* alias, const char* dir, const int use
 }
 
 
-static struct dir_info *search_file_dir ( const unsigned char* name, unsigned char* real_path, int real_path_length ){
+static struct dir_info *search_file_dir ( const char* name, char* real_path, int real_path_length ){
 	
 	struct dir_info *dir_tmp = 0;
 	ws_variable*tmp_var = getWSVariableArrayFirst( file_dirs );
@@ -180,7 +180,7 @@ static struct dir_info *search_file_dir ( const unsigned char* name, unsigned ch
 				int l = real_path_length - strlen( (char*)real_path );
 			
 				strncat( (char*) real_path, (char*)(name + tmp_var->name_len), l);
-				if (PlatformOpenDataReadStream(real_path)) {
+				if (PlatformOpenDataReadStream( real_path )) {
 					found = 1;
 					break;
 				}
@@ -198,8 +198,8 @@ static struct dir_info *search_file_dir ( const unsigned char* name, unsigned ch
 }
 
 
-static WebserverFileInfo* getFileInformation( const unsigned char *name) {
-	unsigned char name_tmp[1000];
+static WebserverFileInfo* getFileInformation( const char *name) {
+	char name_tmp[1000];
 	struct dir_info* dir = 0;
 	WebserverFileInfo *file = 0;
 	
@@ -223,11 +223,11 @@ static WebserverFileInfo* getFileInformation( const unsigned char *name) {
 	
 	file->auth_only = dir->auth_only;
 
-	copyFilePath(file, (unsigned char*) name_tmp);
+	copyFilePath(file, name_tmp);
 	copyURL(file, name);
 
 	/* tmp_var ist permanent in der liste der prefixe darum pointer direkt nehmen */
-	file->FilePrefix = (unsigned char*) dir->alias;
+	file->FilePrefix = dir->alias;
 	setFileType(file);
 
 #ifdef _WEBSERVER_FILESYSTEM_CACHE_DEBUG_
@@ -259,7 +259,7 @@ static WebserverFileInfo* getFileInformation( const unsigned char *name) {
 }
 
 
-WebserverFileInfo *getFileLocalFileSystem( const unsigned char *name) {
+WebserverFileInfo *getFileLocalFileSystem( const char *name) {
 	WebserverFileInfo *file = 0;
 	int a,b;
 

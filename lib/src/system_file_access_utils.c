@@ -107,17 +107,17 @@ void VISIBLE_ATTR WebserverAddBlockedFile( const char* url ){
 
 
 
-void copyFilePath(WebserverFileInfo* file, const unsigned char* name) {
+void copyFilePath(WebserverFileInfo* file, const char* name) {
 	file->FilePathLengt = strlen((char*) name);
 	if (file->FilePath != 0) {
 		WebserverFree( (void*) file->FilePath);
 	}
-	file->FilePath = (unsigned char*) WebserverMalloc(file->FilePathLengt + 1 );
+	file->FilePath = ( char*) WebserverMalloc(file->FilePathLengt + 1 );
 	strncpy((char*) file->FilePath, (char*) name, file->FilePathLengt);
 	((char*)file->FilePath)[file->FilePathLengt] = '\0';
 }
 
-void copyURL(WebserverFileInfo* file, const unsigned char* url) {
+void copyURL(WebserverFileInfo* file, const char* url) {
 
 	while( url[0] == '/' ){
 		url++;
@@ -238,7 +238,7 @@ void generateEtag(WebserverFileInfo* wfi) {
 	if (wfi->etag != 0){
 		WebserverFree( (void*) wfi->etag);
 	}
-	wfi->etag = (unsigned char *) WebserverMalloc ( SSL_SHA_DIG_LEN * 2 + 1 );
+	wfi->etag = (char *) WebserverMalloc ( SSL_SHA_DIG_LEN * 2 + 1 );
 	memset( (void*) wfi->etag ,0,SSL_SHA_DIG_LEN*2+1);
 
 	if (wfi->RamCached == 1) {

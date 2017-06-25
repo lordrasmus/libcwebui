@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _WEBSERVER_SYSTEM_FILE_ACCESS_WNFS_H_
 #define _WEBSERVER_SYSTEM_FILE_ACCESS_WNFS_H_
 
-WebserverFileInfo* wnfs_get_file( unsigned char* name);
+WebserverFileInfo* wnfs_get_file( const char* name );
 
 void wnfs_store_file( WebserverFileInfo* file );
 
