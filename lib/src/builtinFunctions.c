@@ -97,7 +97,7 @@ DEFINE_FUNCTION_INT( compiler ) {
 }
 
 int miniFunctions ( http_request* s,char* buffer ) {
-    if ( !strncmp ( ( char* ) buffer,"ssl_avaible",11 ) ) {
+    if ( !strncmp ( buffer,"ssl_avaible",11 ) ) {
 #ifdef WEBSERVER_USE_SSL
         printHTMLChunk ( s->socket ,"AVAILABLE" );
 #else
@@ -105,7 +105,7 @@ int miniFunctions ( http_request* s,char* buffer ) {
 #endif
         return 1;
     }
-    if ( !strncmp ( ( char* ) buffer,"64bit_avaible",13 ) ) {
+    if ( !strncmp ( buffer,"64bit_avaible",13 ) ) {
 #ifdef __INTEL_COMPILER
 #ifdef _WIN64
         printHTMLChunk ( s->socket ,"AVAILABLE" );
@@ -144,7 +144,7 @@ int miniFunctions ( http_request* s,char* buffer ) {
 }
 
 int sessionFunctions ( http_request* s,char* buffer ) {
-    if ( !strncmp ( ( char* ) buffer,"startSession",12 ) ) {
+    if ( !strncmp ( buffer,"startSession",12 ) ) {
 #ifdef WEBSERVER_USE_SESSIONS
 #ifdef _WEBSERVER_SESSION_DEBUG_
         WebServerPrintf ( "builtinFunction: Start Session\r\n" );

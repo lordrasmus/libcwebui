@@ -175,43 +175,43 @@ unsigned long Webserver_strlen(char *text) {
 void getHTMLMonth(unsigned char month, char* buffer, SIZE_TYPE size) {
 	switch (month) {
 	case 1:
-		snprintf((char*) buffer, size, "Jan");
+		snprintf( buffer, size, "Jan");
 		break;
 	case 2:
-		snprintf((char*) buffer, size, "Feb");
+		snprintf( buffer, size, "Feb");
 		break;
 	case 3:
-		snprintf((char*) buffer, size, "Mar");
+		snprintf( buffer, size, "Mar");
 		break;
 	case 4:
-		snprintf((char*) buffer, size, "Apr");
+		snprintf( buffer, size, "Apr");
 		break;
 	case 5:
-		snprintf((char*) buffer, size, "May");
+		snprintf( buffer, size, "May");
 		break;
 	case 6:
-		snprintf((char*) buffer, size, "Jun");
+		snprintf( buffer, size, "Jun");
 		break;
 	case 7:
-		snprintf((char*) buffer, size, "Jul");
+		snprintf( buffer, size, "Jul");
 		break;
 	case 8:
-		snprintf((char*) buffer, size, "Aug");
+		snprintf( buffer, size, "Aug");
 		break;
 	case 9:
-		snprintf((char*) buffer, size, "Sep");
+		snprintf( buffer, size, "Sep");
 		break;
 	case 10:
-		snprintf((char*) buffer, size, "Oct");
+		snprintf( buffer, size, "Oct");
 		break;
 	case 11:
-		snprintf((char*) buffer, size, "Nov");
+		snprintf( buffer, size, "Nov");
 		break;
 	case 12:
-		snprintf((char*) buffer, size, "Dec");
+		snprintf( buffer, size, "Dec");
 		break;
 	default:
-		snprintf((char*) buffer, size, "Unknown Month %d", month);
+		snprintf( buffer, size, "Unknown Month %d", month);
 		break;
 	}
 }

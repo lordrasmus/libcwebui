@@ -60,7 +60,7 @@ void url_decode(char *line) {
 	size_t i_in=0,i_out=0;
 	size_t lenght;
 
-	lenght = strlen((char*) line);
+	lenght = strlen( line );
 	for (i_in = 0; i_in <= lenght; i_in++) {
 		if ( (unlikely(line[i_in]=='%')) && ( ( lenght - i_in ) > 2 ) )  {
 			hex = (unsigned char)(toHex(line[i_in + 1]) << 4);

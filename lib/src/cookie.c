@@ -37,7 +37,7 @@ int checkCookie(char *name,char *value,HttpRequestHeader *header){
 	#endif
 	ws_list_iterator_start(&header->cookie_list);
 	while( ( cookie = (Cookie*)ws_list_iterator_next(&header->cookie_list) ) ){
-		if(0==strcmp((char*)name,(char*)cookie->name)){
+		if(0==strcmp( name, cookie->name )){
 			l = strlen(cookie->value)+1;
 			if(l > WEBSERVER_GUID_LENGTH){
 				l = WEBSERVER_GUID_LENGTH;

@@ -114,7 +114,7 @@ void addLog ( LogChannels channel,LogLevels level,char* filename,int fileline,co
 	len += snprintf (&buff[len],450-len,"( %d ) : ",socket);
 
 	va_start ( ap, text );
-	len+= vsnprintf ( &buff[len],450-len, ( char* ) text, ap );
+	len+= vsnprintf ( &buff[len],450-len, text, ap );
 	va_end ( ap );
 
 	switch ( level ){

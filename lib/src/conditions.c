@@ -143,18 +143,18 @@ CONDITION_RETURN builtinConditions(http_request* s, FUNCTION_PARAS* func) {
 	CheckCondition( "is_user_registered_ssl", is_user_registered_ssl)
 	CheckCondition( "is_user_not_registered_ssl", is_user_not_registered_ssl)
 
-	if (0 == strcmp((char*) func->parameter[0].text, "is_false")) {
+	if (0 == strcmp( func->parameter[0].text, "is_false")) {
 		return CONDITION_FALSE;
 	}
 
-	if (0 == strcmp((char*) func->parameter[0].text, "is_true")) {
+	if (0 == strcmp( func->parameter[0].text, "is_true")) {
 		return CONDITION_TRUE;
 	}
 
-	if (0 == strncmp((char*) func->parameter[0].text, "eq", 2)) {
+	if (0 == strncmp( func->parameter[0].text, "eq", 2)) {
 		return equal_condition(s, func);
 	}
-	if (0 == strncmp((char*) func->parameter[0].text, "!eq", 2)) {
+	if (0 == strncmp( func->parameter[0].text, "!eq", 2)) {
 		tmp = equal_condition(s, func);
 		if (tmp == CONDITION_TRUE){
 			return CONDITION_FALSE;

@@ -269,10 +269,10 @@ int getHttpRequest(socket_info* sock) {
 	} else {
 		ws_variable *download;
 
-		if (0 != strlen((char*) s.header->url)){
+		if (0 != strlen( s.header->url)){
 			file = getFile(s.header->url); /* Eingabe von zB http://192.168.2.80/test.html */
 		}else{
-			file = getFile((char*) "index.html"); /* Eingabe von zB http://192.168.2.80/ */
+			file = getFile( "index.html"); /* Eingabe von zB http://192.168.2.80/ */
 		}
 		
 		
@@ -372,7 +372,7 @@ int sendHTMLFile(http_request* s, WebserverFileInfo *file) {
 		printf("Warning Engine Template Header <%s> not found: %s \n",template_v1_header,file->FilePath);
 	}
 
-	processHTML(s, (const char *) file->FilePrefix, file->Url, (const char *) file->Data, file->DataLenght);
+	processHTML(s, file->FilePrefix, file->Url, (const char *) file->Data, file->DataLenght);
 
 	release_file_content( file );
 

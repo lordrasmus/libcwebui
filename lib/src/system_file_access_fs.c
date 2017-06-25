@@ -172,14 +172,14 @@ static struct dir_info *search_file_dir ( const char* name, char* real_path, int
 		
 		real_path[0] = '\0';
 		
-		if (0 == strncmp(tmp_var->name, (char*) name, tmp_var->name_len)) {
+		if (0 == strncmp(tmp_var->name, name, tmp_var->name_len)) {
 			
-			if (strlen( (char*) name ) > tmp_var->name_len ) {
-				strncpy( (char*) real_path, dir_tmp->dir, real_path_length );
+			if (strlen( name ) > tmp_var->name_len ) {
+				strncpy( real_path, dir_tmp->dir, real_path_length );
 				
-				int l = real_path_length - strlen( (char*)real_path );
+				int l = real_path_length - strlen( real_path );
 			
-				strncat( (char*) real_path, (char*)(name + tmp_var->name_len), l);
+				strncat( real_path, (char*)(name + tmp_var->name_len), l);
 				if (PlatformOpenDataReadStream( real_path )) {
 					found = 1;
 					break;

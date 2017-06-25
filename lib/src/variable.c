@@ -41,7 +41,7 @@ int cmpVariableStoreName(void* var, char* name) {
 	LOG(TEMPLATE_LOG,NOTICE_LEVEL,0,"%s<->%s",name,sv->name);
 #endif
 
-	if (0 == strcmp((char*) name, (char*) sv->name)) {
+	if (0 == strcmp( name, sv->name)) {
 #ifdef _WEBSERVER_TEMPLATE_DEBUG_
 		LOG(TEMPLATE_LOG,NOTICE_LEVEL,0,"%s found",name);
 #endif
@@ -74,7 +74,7 @@ ws_variable* newWSVariable(const char* name) {
 		SIZE_TYPE length = strlen((char*) name);
 		ret->name = (char*) WebserverMalloc( length + 1 );
 		ret->name_len = length;
-		Webserver_strncpy((char*) ret->name, length + 1, (char*) name, length);
+		Webserver_strncpy( ret->name, length + 1, (char*) name, length);
 	}
 	return ret;
 }

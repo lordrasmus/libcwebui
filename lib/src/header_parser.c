@@ -271,7 +271,7 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 		//printf("%p %p  %d  %d\n",line,c_pos, ( line + length - c_pos ),  length);fflush(stdout);
 	}
 
-	if ( ( header->method == 0 ) && (!strncmp((char*) line, "GET ", 4)) ) {
+	if ( ( header->method == 0 ) && (!strncmp( line, "GET ", 4)) ) {
 		header->method = HTTP_GET;
 
 		pos = stringfind(&line[5], "?");
@@ -279,7 +279,7 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 		{
 			pos = stringfind(&line[5], " ");
 			header->url = (char *) WebserverMalloc( pos + 1 );
-			Webserver_strncpy((char*) header->url, pos + 1, (char*) &line[5], pos); /* -4 wegen dem GET am anfang */
+			Webserver_strncpy( header->url, pos + 1, &line[5], pos); /* -4 wegen dem GET am anfang */
 		} else /* mit parametern */
 		{
 			*c_pos = '\0';
@@ -287,7 +287,7 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 			//fflush( stdout );
 
 			header->url = (char *) WebserverMalloc( pos + 1 );
-			Webserver_strncpy((char*) header->url, pos + 1, (char*) &line[5], pos); /* -4 wegen dem GET am anfang */
+			Webserver_strncpy( header->url, pos + 1, &line[5], pos); /* -4 wegen dem GET am anfang */
 
 			char* start = ( &line[5] ) + pos + 1;
 			int l = c_pos - start;
@@ -324,13 +324,13 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 		{
 			pos = stringfind(&line[6], " ");
 			header->url = (char *) WebserverMalloc( pos + 1 );
-			Webserver_strncpy((char*) header->url, pos + 1, (char*) &line[6], pos); /* -4 wegen dem GET am anfang */
+			Webserver_strncpy( header->url, pos + 1, &line[6], pos); /* -4 wegen dem GET am anfang */
 		} else /* mit parametern */
 		{
 			*c_pos = '\0';
 
 			header->url = (char *) WebserverMalloc( pos + 1 );
-			Webserver_strncpy((char*) header->url, pos + 1, (char*) &line[6], pos); /* -4 wegen dem GET am anfang */
+			Webserver_strncpy( header->url, pos + 1, &line[6], pos); /* -4 wegen dem GET am anfang */
 
 			char* start = ( &line[6] ) + pos + 1;
 			int l = c_pos - start;
@@ -353,7 +353,7 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 		return 0;
 	}
 
-	if ( ( header->method == 0 ) && (!strncmp((char*) line, "OPTIONS ", 8)) ) {
+	if ( ( header->method == 0 ) && (!strncmp( line, "OPTIONS ", 8)) ) {
 		header->method = HTTP_OPTIONS;
 
 		pos = stringfind(&line[9], "?");
@@ -361,7 +361,7 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 		{
 			pos = stringfind(&line[9], " ");
 			header->url = (char *) WebserverMalloc( pos + 1 );
-			Webserver_strncpy((char*) header->url, pos + 1, (char*) &line[9], pos); /* -4 wegen dem GET am anfang */
+			Webserver_strncpy( header->url, pos + 1, &line[9], pos); /* -4 wegen dem GET am anfang */
 		} else /* mit parametern */
 		{
 			*c_pos = '\0';
@@ -369,7 +369,7 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 			//fflush( stdout );
 
 			header->url = (char *) WebserverMalloc( pos + 1 );
-			Webserver_strncpy((char*) header->url, pos + 1, (char*) &line[9], pos); /* -4 wegen dem GET am anfang */
+			Webserver_strncpy( header->url, pos + 1,  &line[9], pos); /* -4 wegen dem GET am anfang */
 
 			char* start = ( &line[9] ) + pos + 1;
 			int l = c_pos - start;
@@ -401,44 +401,44 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 
 
 	/* noch nicht verarbeitete header lines */
-	if (!strncmp((char*) line, "User-Agent: ", 12)) {
+	if (!strncmp( line, "User-Agent: ", 12)) {
 		return 0;
 	}
-	if (!strncmp((char*) line, "Accept: ", 8)) {
+	if (!strncmp( line, "Accept: ", 8)) {
 		return 0;
 	}
-	if (!strncmp((char*) line, "Accept-Language: ", 17)) {
+	if (!strncmp( line, "Accept-Language: ", 17)) {
 		return 0;
 	}
-	if (!strncmp((char*) line, "Accept-Encoding: ", 17)) {
+	if (!strncmp( line, "Accept-Encoding: ", 17)) {
 		return 0;
 	}
-	if (!strncmp((char*) line, "Accept-Charset: ", 16)) {
+	if (!strncmp( line, "Accept-Charset: ", 16)) {
 		return 0;
 	}
-	if (!strncmp((char*) line, "Keep-Alive: ", 12)) {
+	if (!strncmp( line, "Keep-Alive: ", 12)) {
 		return 0;
 	}
-	if (!strncmp((char*) line, "Referer: ", 9)) {
+	if (!strncmp( line, "Referer: ", 9)) {
 		return 0;
 	}
-	if (!strncmp((char*) line, "Cache-Control: ", 14)) {
+	if (!strncmp( line, "Cache-Control: ", 14)) {
 		return 0;
 	}
 
-	if (!strncmp((char*) line, "Cookie: ", 8)) {
+	if (!strncmp( line, "Cookie: ", 8)) {
 		parseCookies(line, length, header);
 		return 0;
 	}
 
-	if ( (!strncmp((char*) line, "Content-Length: ", 16)) && ( strlen( &line[15]  ) > 1  ) ) {
-		header->contentlenght = atol((char*) &line[16]);
+	if ( (!strncmp( line, "Content-Length: ", 16)) && ( strlen( &line[15]  ) > 1  ) ) {
+		header->contentlenght = atol( &line[16]);
 		return 0;
 	}
 
 
 	h_len = strlen("Host: ");
-	if (!strncmp((char*)line,"Host: ",h_len)){
+	if (!strncmp( line,"Host: ",h_len)){
 		len = length - h_len;
 		if ( header->Host != 0){
 			WebserverFree(header->Host);
@@ -449,7 +449,7 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 		}
 
 		header->Host = (char*)WebserverMalloc( len + 1 );
-		Webserver_strncpy((char*)header->Host,len+1,(char*)&line[h_len],len);
+		Webserver_strncpy( header->Host,len+1, &line[h_len],len);
 
 		char* doppelpunkt = strstr(line + h_len, ":");
 		if( doppelpunkt ) {
@@ -457,10 +457,10 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 			len = doppelpunkt - ( line + h_len );
 
 			header->HostName = (char*)WebserverMalloc( len + 1 );
-			Webserver_strncpy((char*)header->HostName,len+1,(char*)&line[h_len],len);
+			Webserver_strncpy( header->HostName,len+1, &line[h_len],len);
 		}else{
 			header->HostName = (char*)WebserverMalloc( len + 1 );
-			Webserver_strncpy((char*)header->HostName,len+1,(char*)&line[h_len],len);
+			Webserver_strncpy( header->HostName,len+1, &line[h_len],len);
 		}
 
 		//printf("HostName : %s ( %d )  \n",header->HostName);
@@ -500,7 +500,7 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 	/* CHECK_HEADER_LINE("Sec-WebSocket-Version: ",SecWebSocketVersion) */
 
 	h_len = strlen("Sec-WebSocket-Version: ");
-	if (!strncmp((char*)line,"Sec-WebSocket-Version: ",h_len))
+	if (!strncmp( line,"Sec-WebSocket-Version: ",h_len))
 	{
 		//len = length - h_len; // // clang Dead store
 		sscanf(&line[h_len],"%d",&header->SecWebSocketVersion);
@@ -521,7 +521,7 @@ Host: 192.168.1.50
 Origin: http://192.168.1.50
 */
 	/* mootools benutzt Content-type */
-	if ( (!strncmp((char*) line, "Content-Type: ", 14)) || (!strncmp((char*) line, "Content-type: ", 14)) ){
+	if ( (!strncmp( line, "Content-Type: ", 14)) || (!strncmp( line, "Content-type: ", 14)) ){
 		if(stringfind(&line[14],"multipart/form-data") > 0){
 			int i2=stringfind(line,"boundary=");
 			header->contenttype=MULTIPART_FORM_DATA;

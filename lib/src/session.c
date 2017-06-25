@@ -652,7 +652,7 @@ ws_variable* getSessionValue(http_request* s, STORE_TYPES store, const char* nam
 	if (0 == strcmp("session-id", name)){
 		return 0;
 	}
-	if (0 == strcmp("session-id-ssl", (char*) name)){
+	if (0 == strcmp("session-id-ssl", name)){
 		return 0;
 	}
 
@@ -666,10 +666,10 @@ ws_variable* getSessionValue(http_request* s, STORE_TYPES store, const char* nam
 }
 
 void printSessionValue(http_request* s, STORE_TYPES store, char* name) {
-	if (0 == strcmp("session-id", (char*) name)){
+	if (0 == strcmp("session-id", name)){
 		return;
 	}
-	if (0 == strcmp("session-id-ssl", (char*) name)){
+	if (0 == strcmp("session-id-ssl", name)){
 		return;
 	}
 }
