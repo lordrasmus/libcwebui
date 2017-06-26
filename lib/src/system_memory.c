@@ -764,6 +764,11 @@ void WebserverResetHttpRequestHeader(HttpRequestHeader *header) {
 		WebserverFree(header->Access_Control_Request_Headers);
 		header->Access_Control_Request_Headers = 0;
 	}
+	
+	if (header->Accept_Encoding != 0) {
+		WebserverFree(header->Accept_Encoding);
+		header->Accept_Encoding = 0;
+	}
 
 
 #ifdef WEBSERVER_USE_WEBSOCKETS
