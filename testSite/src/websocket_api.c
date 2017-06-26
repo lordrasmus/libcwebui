@@ -80,15 +80,17 @@ void uhr_loop() {
 		remove = 0;
 		
 		// iterate connected clients
-		ws_list_iterator_start(&clock_clients);		
+		ws_list_iterator_start(&clock_clients);
 		while ((guid = (char*) ws_list_iterator_next(&clock_clients))) {
 			
 			// send text frame to client
 			ret = WebsocketSendTextFrame(guid, buffer2, strlen(buffer2));
+			//printf("send : %s %d\n",guid,ret);
 			
 			// mark client for removal if send fails
 			if (ret == -1) {
 				remove = guid;
+				printf("remove\n");
 			}
 		}		
 		ws_list_iterator_stop(&clock_clients);
@@ -112,6 +114,7 @@ void handleCommandSocket(char *guid, const char *msg) {
 		int ret = 0;
 		ret = pthread_mutex_lock(&clock_mutex);
 		if (ret == 0) {
+			
 			tmp = WebserverMalloc(strlen(guid)+1);
 			strcpy(tmp, guid);
 			ws_list_append(&clock_clients, tmp);
@@ -148,7 +151,10 @@ void deleteClient(char* guid) {
 		}
 		ws_list_iterator_stop(&clock_clients);
 		
-		if (tmp_guid != 0) ws_list_delete(&clock_clients, tmp_guid);
+		if (tmp_guid != 0){ 
+			ws_list_delete(&clock_clients, tmp_guid);
+			WebserverFree(tmp_guid);
+		}
 		
 		pthread_mutex_unlock(&clock_mutex);
 	} else {
@@ -206,6 +212,7 @@ DEFINE_WEBSOCKET_HANDLER( "CommandSocket" , CommandSocket_handler) {
 	tmp = WebserverMalloc(strlen(guid)+1);
 	strcpy(tmp, guid);
 	
+	printf("command socket : %d\n",signal);
 	switch (signal) {
 		
 		case WEBSOCKET_MSG:
