@@ -67,7 +67,9 @@ void initSocketContainer(void) {
 void freeSocketContainer(void) {
 	deleteAllSockets();
 	ws_list_destroy(&sock_list);
-	RBTreeDestroy(sock_tree);
+	if ( sock_tree != 0 ){
+		RBTreeDestroy(sock_tree);
+	}
 }
 
 void deleteSocket(socket_info* sock) {

@@ -45,6 +45,25 @@ plugin_error_handler error_handler = 0;
 
 plugin_s *current_plugin = 0;
 
+static void free_websocket_handler( void* a );
+
+static void free_user_func_key( UNUSED_PARA void* a) {
+	//printf("free_user_func_key\n");
+	// diese funktion macht nichts weil der key teil des elements ist
+}
+
+static void free_user_func_value( void* a) {
+	user_func_s* b = (user_func_s*)a;
+	WebserverFree( b->name );
+	WebserverFree( a );
+}
+
+static void free_user_cond_value( void* a) {
+	user_condition_s *b = (user_condition_s*)a;
+	WebserverFree( b->name );
+	WebserverFree( a );
+}
+
 void DummyFunc( UNUSED_PARA void* a) {
 }
 void DummyFuncConst( UNUSED_PARA const void* a) {
@@ -64,18 +83,30 @@ int StrKeyComp(const void* a, const void* b) {
 	return 0;
 }
 
+void free_plugin_info(const void *free_element){
+	
+	plugin_s *plugin = (plugin_s*)free_element;
+	
+	WebserverFree( plugin->name );
+	WebserverFree( plugin->error );
+	WebserverFree( plugin->path );
+	
+	WebserverFree( plugin );
+}
+
 void init_extension_api(void) {
 
 #ifdef WEBSERVER_USE_WEBSOCKETS
 	initWebsocketApi();
 #endif
 
-	user_func_tree = RBTreeCreate(StrKeyComp, DummyFunc, DummyFunc, DummyFuncConst, DummyFunc);
-	user_condition_tree = RBTreeCreate(StrKeyComp, DummyFunc, DummyFunc, DummyFuncConst, DummyFunc);
+	user_func_tree = RBTreeCreate(StrKeyComp, free_user_func_key, free_user_func_value, DummyFuncConst, DummyFunc);
+	user_condition_tree = RBTreeCreate(StrKeyComp, DummyFunc, free_user_cond_value, DummyFuncConst, DummyFunc);
 
-	websocket_handler_tree = RBTreeCreate(StrKeyComp, DummyFunc, DummyFunc, DummyFuncConst, DummyFunc);
+	websocket_handler_tree = RBTreeCreate(StrKeyComp, DummyFunc, free_websocket_handler, DummyFuncConst, DummyFunc);
 
 	ws_list_init(&plugin_liste);
+	ws_list_attributes_freer(&plugin_liste,free_plugin_info);
 
 }
 
@@ -84,6 +115,7 @@ void free_extension_api(void) {
 	RBTreeDestroy(user_condition_tree);
 	RBTreeDestroy(websocket_handler_tree);
 	ws_list_destroy(&plugin_liste);
+	
 }
 
 void register_function(const char* name, user_function func, const char* file, int line) {
@@ -353,6 +385,22 @@ void register_condition(const char* name, user_condition f, const char* file, in
  Kein Locking fuer Websocket Handler weil Plugins im init_hook handler registrieren muessen
 */
 
+static void free_websocket_handler( void* a ){
+	websocket_handler_list_s *l = (websocket_handler_list_s*)a;
+	WebserverFree( l->url );
+	
+	ws_list_destroy( l->handler_list );
+	WebserverFree( l->handler_list );
+	
+	WebserverFree( l );
+}
+
+static void* free_websocket_handler_ele( const void* a ){
+	websocket_handler_s *b = (websocket_handler_s*)a;
+	
+	WebserverFree( b );
+}
+
 void register_function_websocket_handler(const char* url, websocket_handler f, const char* file, int line) {
 	websocket_handler_s *tmp;
 	rb_red_blk_node* node = RBExactQuery(websocket_handler_tree, (char*) url);
@@ -361,7 +409,8 @@ void register_function_websocket_handler(const char* url, websocket_handler f, c
 	if (node == 0) {
 		list = (websocket_handler_list_s*) WebserverMalloc( sizeof(websocket_handler_list_s) );
 		list->handler_list = (list_t*) WebserverMalloc( sizeof(list_t) );
-		ws_list_init(list->handler_list);
+		ws_list_init( list->handler_list );
+		ws_list_attributes_freer( list->handler_list,free_websocket_handler_ele );
 		list->url = (char*) WebserverMalloc( strlen(url) + 1 );
 		strcpy(list->url, url);
 		RBTreeInsert(websocket_handler_tree, list->url, list);
