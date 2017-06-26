@@ -179,10 +179,10 @@ void WebserverConnectionManagerCloseRequest(socket_info* sock) {
 #ifdef WEBSERVER_USE_WEBSOCKETS
 	if ( sock->isWebsocket == 1 ) {
 		/* laenge 1 um keinen malloc mit 0 bytes zu machen */
-		/*
-		msg = create_websocket_input_queue_msg(WEBSOCKET_SIGNAL_DISCONNECT,sock->websocket_guid,sock->header->url,1);
+		
+		websocket_queue_msg* msg = create_websocket_input_queue_msg(WEBSOCKET_SIGNAL_DISCONNECT,sock->websocket_guid,sock->header->url,1);
 		insert_websocket_input_queue( msg);
-		*/
+		
 #if _WEBSERVER_CONNECTION_DEBUG_ > 1
 		LOG ( CONNECTION_LOG,NOTICE_LEVEL, sock->socket, "Websocket Close Request","" );
 #endif
