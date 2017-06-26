@@ -24,7 +24,7 @@ FLAGS= $(COMP_OPT) -Wall -fPIC -Wextra   -std=c99  -D_POSIX_SOURCE \
 	-Werror=implicit-function-declaration
 
 ifneq ($(TRAVIS_BUILD),true)
-	FLAGS += -fsanitize=address
+#	FLAGS += -fsanitize=address
 #	FLAGS += -fsanitize=thread
 #	FLAGS += -fsanitize=undefined
 endif
@@ -125,12 +125,12 @@ clean:
 
 tidy:
 	clang-tidy -config=''  $(LIB_SOURCES) -- \
-		-std=c99 -Iinclude/ -I. -Iinclude/intern -Ithird_party/src/rb_tree/ \
+		-std=c99 -DLINUX -Iinclude/ -I. -Iinclude/intern -Ithird_party/src/rb_tree/ \
 		-Iplatform/include/ -Ithird_party/src/is_utf8/ -Ithird_party/src/miniz/
 
 tidy_file:
 	clang-tidy -config=''  $(TIDY_FILE) -- \
-		-std=c99 -Iinclude/ -I. -Iinclude/intern -Ithird_party/src/rb_tree/ \
+		-std=c99 -DLINUX -Iinclude/ -I. -Iinclude/intern -Ithird_party/src/rb_tree/ \
 		-Iplatform/include/ -Ithird_party/src/is_utf8/ -Ithird_party/src/miniz/
 format:
 	clang-format -style=file $(SOURCES)
