@@ -63,6 +63,7 @@ int my_cors_handler( cors_infos* infos){
 
 
 extern unsigned char data__[];
+extern unsigned long allocated;
 
 int main(int argc, char **argv) {
 
@@ -111,6 +112,8 @@ int main(int argc, char **argv) {
 	}
 
 	WebserverShutdown();
+	
+	printf("allocated : %d\n",allocated);
 
 	return 0;
 }

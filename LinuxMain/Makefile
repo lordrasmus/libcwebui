@@ -2,7 +2,7 @@
 FLAGS=-I../lib/ -I../lib/include -Wswitch-enum
 
 
-FLAGS += -fsanitize=address
+#FLAGS += -fsanitize=address
 #FLAGS += -fsanitize=thread
 #FLAGS += -fsanitize=undefined
 
