@@ -237,23 +237,26 @@ int analyseFormDataLine(socket_info* sock, char *line, unsigned int length, Http
 	return line2 - line;
 }
 
-int header_attr_compare( char* text, char* line){
+int header_attr_compare( char* text, char* line,  unsigned int line_length ){
 	int ret = 0;
 	int text_len = strlen( text );
-	int line_length = strlen( line );
 	
 	char *low_text = WebserverMalloc( text_len + 1 );
-	for(int i = 0; low_text[i]; i++){
+	for(int i = 0; text[i]; i++){
 		low_text[i] = tolower(text[i]);
 	}
 	low_text[text_len] = '\0';
 	
 	char *line_text = WebserverMalloc( line_length + 1 );
-	for(int i = 0; line_text[i]; i++){
+	for(int i = 0; line[i]; i++){
 		line_text[i] = tolower(line[i]);
 	}
 	line_text[line_length] = '\0';
 	
+	/*printf("text : %s\n",text);
+	printf("line : %s\n",line);
+	printf("low_text : %s\n",low_text);
+	printf("line_text : %s\n",line_text);*/
 	
 	if ( 0 == strncmp( low_text, line_text, text_len ) ){
 		ret = 1;
@@ -549,7 +552,7 @@ Origin: http://192.168.1.50
 	
 	/* mootools benutzt Content-type */
 	//if ( (!strncmp((char*) line, "Content-Type: ", 14)) || (!strncmp((char*) line, "Content-type: ", 14)) ){
-	if ( header_attr_compare("Content-Type:", line ) ){
+	if ( header_attr_compare("Content-Type:", line , length ) ){
 		if(stringfind(&line[14],"multipart/form-data") > 0){
 			int i2=stringfind(line,"boundary=");
 			header->contenttype=MULTIPART_FORM_DATA;
