@@ -1,4 +1,21 @@
 
+function upload_file(){
+	
+	var file_ele = document.getElementById("form_file");
+	
+	const formData = new FormData();
+	if ( file_ele.files.length > 0 ){
+		formData.append(file_ele.value,  file_ele.files[0]);
+	}
+          
+	const client = new XMLHttpRequest();
+	
+	client.open("POST", "/file_upload.html" );
+    client.withCredentials = true;
+    client.send(formData);
+    
+}
+
 
 
 // variable for the CommandSocket Websocket connection

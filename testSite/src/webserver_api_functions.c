@@ -230,11 +230,34 @@ DEFINE_FUNCTION( js_func ){
 	printHTML(s,"Hallo C");
 }
 
+DEFINE_FUNCTION( file_upload ){
+	printf("Files : %d\n",getFileCount(s));
+	printHTML(s,"Files : %d<br>",getFileCount(s));
+	if ( getFileCount(s) > 0 ){
+		printf("Name  : %s\n",getFileName(s,0));
+		printf("Size  : %d\n",getFileSize(s,0));
+		
+		printHTML(s,"Name  : %s<br>",getFileName(s,0));
+		printHTML(s,"Size  : %d<br>",getFileSize(s,0));
+		
+		char *data = getFileData(s,0);
+		FILE* fd = fopen("out.dat","w");
+		fwrite( data, getFileSize(s,0), 1 , fd );
+		fclose(fd);
+		
+		system("sha256sum out.dat");
+	}
+}
+
+
+
 #ifdef SINGLE_MAIN
 void init_testsite( void ){
 #else
 WEBSERVER_API_HOOK{	
 #endif
+
+	REGISTER_LOCAL_FUNCTION( file_upload );
 
     REGISTER_LOCAL_FUNCTION ( checkregister );
 	REGISTER_LOCAL_FUNCTION  ( register );
