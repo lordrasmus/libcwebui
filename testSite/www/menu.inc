@@ -31,7 +31,7 @@ TEMPLATE_V1
 {if:is_websockets_available}
 			<tr><td><a class={get:render;"mp12_class"} href={b:link_std}/websocket.html>Websocket Test</a>
 {endif}
-
+			
 			<tr><td><a class={get:render;"mp13_class"} href={b:link_std}/ajax_test.html>AJAX Test</a>
 {if:is_ssl_available}
 			<a class={get:render;"mp14_class"} href={b:link_ssl}/ajax_test.html>SSL</a>
@@ -42,6 +42,8 @@ TEMPLATE_V1
 {endif}
 
 			<tr><td><a class={get:render;"mp17_class"} href={b:link_std}/python.html>Python API</a>
+			
+			<tr><td><a class={get:render;"mp18_class"} href={b:link_std}/file_upload.html>File Upload</a>
 
 		</table>
 </table>

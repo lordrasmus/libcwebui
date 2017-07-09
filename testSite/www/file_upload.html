@@ -1,0 +1,25 @@
+TEMPLATE_V1
+{b:startSession}
+
+{set:render;"title":"Memory"}
+
+{include:header.inc}
+<h1>Hallo File Upload!</h1>
+
+<form method="post" enctype="multipart/form-data">
+  <label>Wählen Sie eine Textdatei (*.txt, *.html usw.) von Ihrem Rechner aus.
+    <input id=form_file name="datei" type="file" size="50" accept="*"> 
+  </label>  
+  <button>… und ab geht die Post! per Form</button>
+</form>
+
+<button onclick=upload_file() >… und ab geht die Post! per JS</button>
+
+<br>
+<br>
+
+<filedset>
+{f:file_upload}
+</filedset>
+
+{include:footer.inc}
