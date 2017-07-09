@@ -183,15 +183,17 @@ static void url_sanity_check( HttpRequestHeader *header ){
 	}
 }
 
-#define CHECK_HEADER_LINE(a,b)  h_len = strlen(a); \
-if (!strncmp((char*)line,a,h_len)) \
-{ \
-	len = length - h_len; \
-	if ( header->b != 0) WebserverFree(header->b); \
-    header->b = (char*)WebserverMalloc( len + 1 ); \
-    Webserver_strncpy((char*)header->b,len+1,(char*)&line[h_len],len); \
-    return 0; \
+static int header_attr_compare( char* text, char* line,  unsigned int line_length ){
+	
+	for(unsigned int i = 0; text[i] && i < line_length ; i++){
+		if ( tolower(text[i]) != tolower(line[i]) ){
+			return 0;
+		}
+	}
+	
+	return 1;
 }
+
 
 #define CHECK_HEADER_LINE2(a,b)  h_len = strlen(a); \
 if (!strncmp((char*)line2,a,h_len)) \
@@ -237,6 +239,17 @@ int analyseFormDataLine(socket_info* sock, char *line, unsigned int length, Http
 #endif
 
 	return line2 - line;
+}
+
+
+#define CHECK_HEADER_LINE(a,b)  h_len = strlen(a); \
+if (header_attr_compare( a, line, length)) \
+{ \
+	len = length - h_len; \
+	if ( header->b != 0) WebserverFree(header->b); \
+    header->b = (char*)WebserverMalloc( len + 1 ); \
+    Webserver_strncpy((char*)header->b,len+1,(char*)&line[h_len],len); \
+    return 0; \
 }
 
 int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRequestHeader *header) {
@@ -508,20 +521,8 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 	}
 #endif
 
-/*	V 8
-Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
-Sec-WebSocket-Origin: http://example.com
-Sec-WebSocket-Protocol: chat, superchat
-Sec-WebSocket-Version
-
-	V ?
-Upgrade: WebSocket
-Connection: Upgrade
-Host: 192.168.1.50
-Origin: http://192.168.1.50
-*/
-	/* mootools benutzt Content-type */
-	if ( (!strncmp( line, "Content-Type: ", 14)) || (!strncmp( line, "Content-type: ", 14)) ){
+	
+	if ( header_attr_compare("Content-Type:", line , length ) ){
 		if(stringfind(&line[14],"multipart/form-data") > 0){
 			int i2=stringfind(line,"boundary=");
 			header->contenttype=MULTIPART_FORM_DATA;
