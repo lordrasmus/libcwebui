@@ -6,6 +6,7 @@ LinuxMain/libWebserver_lto.so
 LinuxMain/libWebserver_ltog.so
 LinuxMain/main
 LinuxMain/main.o
+LinuxMain/out.dat
 lib/lib/
 lib/obj/
 
