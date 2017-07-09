@@ -7,6 +7,7 @@ LinuxMain/libWebserver_ltog.so
 LinuxMain/main
 LinuxMain/main.o
 LinuxMain/.gdbinit
+LinuxMain/out.dat
 lib/lib/
 lib/obj/
 
