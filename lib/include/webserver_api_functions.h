@@ -62,8 +62,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define WEBSOCKET_DISCONNECT 	3
 
 
-#include "webserver_api_version.h"
 
+#define WEBSERVER_API 5
 
 #ifdef __cplusplus
 extern "C" {
