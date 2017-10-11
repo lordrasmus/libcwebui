@@ -256,9 +256,15 @@ static WebserverFileInfo* getFileInformation( const unsigned char *name) {
 }
 
 
-WebserverFileInfo *getFileLocalFileSystem( const unsigned char *name) {
+WebserverFileInfo *getFileLocalFileSystem( const unsigned char *url_name) {
 	WebserverFileInfo *file = 0;
 	int a,b;
+	
+	char name[512];
+	strncpy( name, url_name, 512 );
+	name[511] = '\0';
+	
+	url_decode( name );
 
 #ifdef _WEBSERVER_FILESYSTEM_DEBUG_
 	LOG (FILESYSTEM_LOG,NOTICE_LEVEL, 0,"getFileLocalFileSystem : %s",name );
