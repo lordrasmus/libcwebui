@@ -473,7 +473,7 @@ long getSessionTimeoutByGUID(char* store_guid, STORE_TYPES store ) {
 	PlatformLockMutex( &session_mutex );
 
 	node = RBExactQuery(session_store_tree, store_guid);
-	printf("Session %p\n",node);
+	//printf("Session %p\n",node);
 	if (node != 0) {
 		ss = (sessionStore*) node->info;
 		if ((store == SESSION_STORE) && (ss->ssl == 0)) {
