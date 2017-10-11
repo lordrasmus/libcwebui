@@ -484,9 +484,9 @@ int sendHeader(http_request* s, WebserverFileInfo *info, int p_lenght) {
 		printHeaderChunk(s->socket, "Content-Type: application/octet-stream\r\n");
 		*/
 		if ( 0 == strcmp("",(char*)info->ForceDownloadName)){
-			printHeaderChunk(s->socket, "Content-Disposition: attachment; filename=%s\r\n",info->Url);
+			printHeaderChunk(s->socket, "Content-Disposition: attachment; filename=\"%s\"\r\n",info->Url);
 		}else{
-			printHeaderChunk(s->socket, "Content-Disposition: attachment; filename=%s\r\n",info->ForceDownloadName);
+			printHeaderChunk(s->socket, "Content-Disposition: attachment; filename=\"%s\"\r\n",info->ForceDownloadName);
 		}
 		printHeaderChunk(s->socket, "Content-Transfer-Encoding: binary\r\n");
 		printHeaderChunk(s->socket, "Expires: 0\r\n");
