@@ -84,3 +84,7 @@ tests/list/test_old.txt
 LinuxMain/.cproject
 LinuxMain/.project
 LinuxMain/.settings/
+
+lib/.obj~/
+lib/Makefile.bbs
+lib/libWebserver.so
