@@ -183,9 +183,15 @@ static void url_sanity_check( HttpRequestHeader *header ){
 	}
 }
 
-static int header_attr_compare( char* text, char* line,  unsigned int line_length ){
-	
-	for(unsigned int i = 0; text[i] && i < line_length ; i++){
+
+static int header_attr_compare( char* text, unsigned int text_length, char* line,  unsigned int line_length ){
+
+	unsigned int i = 0;
+
+	if ( line_length < text_length )
+		return 0;
+
+	for( i = 0; text[i] && i < line_length ; i++){
 		if ( tolower(text[i]) != tolower(line[i]) ){
 			return 0;
 		}
@@ -243,7 +249,7 @@ int analyseFormDataLine(socket_info* sock, char *line, unsigned int length, Http
 
 
 #define CHECK_HEADER_LINE(a,b)  h_len = strlen(a); \
-if (header_attr_compare( a, line, length)) \
+if (header_attr_compare( a, h_len, line, length)) \
 { \
 	len = length - h_len; \
 	if ( header->b != 0) WebserverFree(header->b); \
@@ -522,7 +528,7 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 #endif
 
 	
-	if ( header_attr_compare("Content-Type:", line , length ) ){
+	if ( header_attr_compare("Content-Type: ",strlen("Content-Type: "), line , length ) ){
 		if(stringfind(&line[14],"multipart/form-data") > 0){
 			int i2=stringfind(line,"boundary=");
 			header->contenttype=MULTIPART_FORM_DATA;
