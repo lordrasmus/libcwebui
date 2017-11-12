@@ -18,6 +18,21 @@ script:
 #  - gcc
 matrix:
   include:
+  
+    - os: linux
+      compiler: gcc
+      addons:
+          coverity_scan:
+
+             project:
+                 name: lordrasmus/libcwebui
+
+             notification_email: 
+                 - lordrasmus@gmail.com
+
+             build_command: make -C lib rebuild
+             branch_pattern: master
+             
     - os: linux
       compiler: gcc-4.4
       addons:
@@ -89,6 +104,7 @@ matrix:
 #          packages: ['gcc-7']
 #      env: COMPILER=gcc-7
       
+
     - os: linux
       compiler: clang
       env: COMPILER=clang
