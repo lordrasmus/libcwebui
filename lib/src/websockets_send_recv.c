@@ -420,7 +420,9 @@ int recFrameV8(socket_info *sock) {
 				//PlatformLockMutex(&sock->socket_mutex);
 				sock->closeSocket = 1;
 				//PlatformUnlockMutex(&sock->socket_mutex);
+#ifdef ENABLE_DEVEL_WARNINGS
 				#warning thread sanitizer sagt hier wird ohne lock geschrieben
+#endif
 				return 0;
 
 			case WSF_PONG:

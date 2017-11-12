@@ -42,7 +42,9 @@ void init_local_file_system( void ){
 void free_local_file_system( void ){
 
 	freeWSVariable(file_dirs);
+#ifdef ENABLE_DEVEL_WARNINGS
 	#warning free handler noch überarbeiten
+#endif
 
 }
 

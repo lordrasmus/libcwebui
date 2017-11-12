@@ -87,7 +87,9 @@ WebserverFileInfo* wnfs_get_file( const char* name ){
 	setFileType(file);
 
 	file->TemplateFile = 1;
+#ifdef ENABLE_DEVEL_WARNINGS	
 	#warning Das hier besser lösen
+#endif
 	
 	if ( file->DataLenght > (int)sizeof( template_v1_header ) ) {
 

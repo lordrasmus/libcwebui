@@ -166,7 +166,10 @@ ws_variable* NEED_RESUL_CHECK parseVariable(http_request *s,char* buffer) {
 
 				    /* bei verschachtelte arrays nochmal das array element suchen
 				     * aber nur wenn der original buffer noch nicht zuende ist */
+#ifdef ENABLE_DEVEL_WARNINGS				     
 				    #warning verhalten bei verschachtelten arrays nochmal prüfen
+
+#endif				    
 				    /* bei dem vorherigen parsen wurde das ende des index [ 
 				     * durch \0 ersetzt , darum strlen(buffer)+2 */
 				    char * next_index = &buffer[strlen(buffer)+2];

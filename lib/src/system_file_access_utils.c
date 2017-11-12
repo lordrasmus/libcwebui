@@ -245,8 +245,10 @@ void generateEtag(WebserverFileInfo* file) {
 		WebserverSHA1(file->Data, file->DataLenght, buf);
 	} else {
 
+#ifdef ENABLE_DEVEL_WARNINGS
 		// Datei ist nicht im RAM cache
 		#warning hier noch das fs handling einbauen
+#endif
 		struct sha_context* sha_context;
 		unsigned int to_read;
 		unsigned long diff;

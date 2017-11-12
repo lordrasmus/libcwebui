@@ -246,8 +246,9 @@ int recv_post_payload( socket_info* sock, const char* buffer, uint32_t len){
 		if ( len > diff ){
 			sock->header_buffer_pos = diff;
 			reCopyHeaderBuffer(sock, diff);
+#ifdef ENABLE_DEVEL_WARNINGS			
 			#warning "verarbeitung von weiteren header bytes noch testen"
-
+#endif
 			call_post_post_handler( sock );
 
 			return 1;
@@ -352,7 +353,9 @@ int handleClientHeaderData(socket_info* sock) {
 				if ( this_post_read > 20000 ){
 					return 0;
 				}
+#ifdef ENABLE_DEVEL_WARNINGS				
 				#warning "ändern weil so der WDT nicht mehr rankommt"
+#endif
 				continue;
 			}
 

@@ -693,7 +693,9 @@ stk_stack* RBEnumerate(rb_red_blk_tree* tree, void* low, void* high) {
       x=x->right;
     }
   }
-#warning "warum funktioniert der tree bei sessions nicht ???"
+#ifdef ENABLE_DEVEL_WARNINGS  
+    #warning "warum funktioniert der tree bei sessions nicht ???"
+#endif    
 
   /* so gehts bei sessions
   while ( (lastBest != nil) && (1 == tree->Compare(low,lastBest->key))) {

@@ -85,7 +85,9 @@ ALL_SRC void initMemoryManager(void) {
 	ws_list_init(&chunk_cache);
 
 	/* ws_list_attributes_freer(&chunk_cache,freeChunkCallBack); */
-#warning "chunk cache elemente richtig freigeben"
+#ifdef ENABLE_DEVEL_WARNINGS	
+	#warning "chunk cache elemente richtig freigeben"
+#endif
 }
 
 
@@ -363,7 +365,10 @@ void* WebserverRealloc(void *mem, const unsigned long size ) {
 	return __ws_assume_aligned( p2 + MEM_OFFSET, __BIGGEST_ALIGNMENT__ );
 #endif
 
+#ifdef ENABLE_DEVEL_WARNINGS
 	#warning "an Memory Debug anpassen"
+
+#endif	
 }
 
 static void *get_real_pointer(void* mem){
@@ -617,8 +622,9 @@ void WebserverFreeSocketInfo(socket_info* sock) {
 	freeChunkList(&sock->header_chunk_list);
 	freeChunkList(&sock->html_chunk_list);
 
-
+#ifdef ENABLE_DEVEL_WARNINGS
 	#warning "ssl strukturen freigeben"
+#endif
 
 	ws_list_destroy(&sock->firephplogs);
 

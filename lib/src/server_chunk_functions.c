@@ -28,8 +28,9 @@
 #include <dmalloc/dmalloc.h>
 #endif
 
-
-#warning feste Buffer entfernen
+#ifdef ENABLE_DEVEL_WARNINGS
+	#warning feste Buffer entfernen
+#endif
 
 void WebserverPrintShortInfos(void);
 

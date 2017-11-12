@@ -81,8 +81,9 @@ CONDITION_RETURN equal_condition(http_request* s, FUNCTION_PARAS* func) {
 		//if (op2 != 0)
 			//if (0 == strcmp(op2->name, "op")) /* erzeugte Variable */
 				freeWSVariable(op2);
-
+#ifdef ENABLE_DEVEL_WARNINGS
 		#warning prüfen ob die checks eine bedeutung hatten
+#endif
 
 		return CONDITION_FALSE;
 	}

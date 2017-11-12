@@ -83,7 +83,7 @@ int StrKeyComp(const void* a, const void* b) {
 	return 0;
 }
 
-void free_plugin_info(const void *free_element){
+void* free_plugin_info(const void *free_element){
 	
 	plugin_s *plugin = (plugin_s*)free_element;
 	

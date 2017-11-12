@@ -222,7 +222,9 @@ int VISIBLE_ATTR WebserverSSLTestKeyfile( char* keyfile ){
 		error = 1;
 	}
 
+#ifdef ENABLE_DEVEL_WARNINGS
 	#warning Memory Leak
+#endif	
 
 	return error;
 }
