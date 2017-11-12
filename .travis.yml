@@ -145,15 +145,16 @@ addons: &def_addons
   apt:
     packages:
       - libevent-2.0-5 libevent-dev libevent-pthreads-2.0-5
-#addons:
-#  coverity_scan:
-#
-#     project:
-#         name: lordrasmus/libcwebui
-#
-#     notification_email: 
-#         - lordrasmus@gmail.com
-#
-#     build_command: make -C lib rebuild
-#     branch_pattern: master
+
+addons:
+  coverity_scan:
+
+     project:
+         name: lordrasmus/libcwebui
+
+     notification_email: 
+         - lordrasmus@gmail.com
+
+     build_command: make -C lib rebuild
+     branch_pattern: master
 
