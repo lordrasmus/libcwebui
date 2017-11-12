@@ -1,8 +1,9 @@
 
 OPTS= -DLINUX -std=c99
 #-O2
+#-D _WEBSERVER_HEADER_DEBUG_
 
-FLAGS=-I../../lib/ -I../../lib/include/ -I../../lib/include/intern/ -I../../lib/third_party/src/miniz/ \
+FLAGS= -I../../lib/ -I../../lib/include/ -I../../lib/include/intern/ -I../../lib/third_party/src/miniz/ \
 	-I../../lib/third_party/src/rb_tree/ -I../../lib/platform/include/ -I../../lib/third_party/src/is_utf8/ \
 	${OPTS} $$(python2.7-config --cflags)  $$(python2.7-config --ldflags)
 

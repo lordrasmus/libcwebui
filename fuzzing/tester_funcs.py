@@ -6,7 +6,7 @@ from pprint import pprint
 
 def run_tester():
 
-	os.system("make")
+	#os.system("make")
 
 	ret = subprocess.getstatusoutput( "find output*/ | grep crashes | grep id")
 	liste1 = ret[1].split("\n")
@@ -20,7 +20,7 @@ def run_tester():
 	#liste = liste3 + liste2 + liste1
 	liste = liste2 + liste1
 
-	pprint( liste )
+	#pprint( liste )
 	#sys.exit(1)
 
 	for crash in liste:
@@ -32,7 +32,7 @@ def run_tester():
 			continue
 
 		print("testing : " + crash)
-		ret = subprocess.getstatusoutput( "./main < " + crash )
+		ret = subprocess.getstatusoutput( "./main.gcc < " + crash )
 		#pprint ( ret )
 
 		if ret[0] == 0:

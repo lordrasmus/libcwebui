@@ -24,7 +24,7 @@ CLANG_FLAGS= -fno-omit-frame-pointer  ${FLAGS}
 
 LIBS=-lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
 
-main.gcc: ${FILES} main.c afl-*/llvm_mode/afl-clang-fast
+main.gcc: ${FILES} main.c #afl-*/llvm_mode/afl-clang-fast
 	gcc ${FLAGS} main.c ${FILES} -o main.gcc ${LIBS}
 
 main.afl.clang: ${FILES} main.c 
