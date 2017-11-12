@@ -346,7 +346,8 @@ long getWebsocketStoreTimeout ( char* guid ){
 	}
 
 	char store_guid[ WEBSERVER_GUID_LENGTH + 1 ];
-	strcpy( store_guid , sock->websocket_store_guid );
+	strncpy( store_guid , sock->websocket_store_guid,WEBSERVER_GUID_LENGTH );
+	store_guid[WEBSERVER_GUID_LENGTH] = '\0';
 
 	//printf("Store GUID : %s WS : %s\n", store_guid, guid );
 

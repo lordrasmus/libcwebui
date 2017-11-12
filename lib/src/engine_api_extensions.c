@@ -92,6 +92,8 @@ void* free_plugin_info(const void *free_element){
 	WebserverFree( plugin->path );
 	
 	WebserverFree( plugin );
+
+	return 0;
 }
 
 void init_extension_api(void) {
@@ -391,7 +393,7 @@ static void free_websocket_handler( void* a ){
 	
 	ws_list_destroy( l->handler_list );
 	WebserverFree( l->handler_list );
-	
+
 	WebserverFree( l );
 }
 
@@ -399,6 +401,8 @@ static void* free_websocket_handler_ele( const void* a ){
 	websocket_handler_s *b = (websocket_handler_s*)a;
 	
 	WebserverFree( b );
+
+	return 0;
 }
 
 void register_function_websocket_handler(const char* url, websocket_handler f, const char* file, int line) {

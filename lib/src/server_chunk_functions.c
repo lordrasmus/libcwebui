@@ -275,9 +275,9 @@ unsigned long writeChunksToBuffer(list_t* liste, char* out_buffer, int compress)
 		
 		// create tdefl() compatible flags (we have to compose the low-level flags ourselves, or use tdefl_create_comp_flags_from_zip_params() but that means MINIZ_NO_ZLIB_APIS can't be defined).
 		mz_uint comp_flags = s_tdefl_num_probes[MZ_MIN(10, level)] | ((level <= 3) ? TDEFL_GREEDY_PARSING_FLAG : 0);
-		if (!level){
-			comp_flags |= TDEFL_FORCE_ALL_RAW_BLOCKS;
-		}
+		// mit level == 0 kann man noch das anhängen
+		// 		comp_flags |= TDEFL_FORCE_ALL_RAW_BLOCKS;
+
 
 		deflator = tdefl_compressor_alloc();
 		// Initialize the low-level compressor.
