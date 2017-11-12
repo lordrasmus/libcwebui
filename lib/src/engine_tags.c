@@ -83,8 +83,9 @@ int getNextTag ( const char* pagedata,const int datalength, tag_groups search_ta
 
     for ( i=0;i<datalength;i++ ) {
         data = &pagedata[i];
-        if ( data[0] != '{' )
+        if ( data[0] != '{' ){
             continue;
+        }
         for ( i2=0;i2<tags_in_group;i2++ ) {
             tag_info = &search_tags[i2];
 
@@ -121,8 +122,9 @@ int find_tag_end_pos ( const char *pagedata,int datalenght,const char *start_tag
     }
 
     pos2 = stringnfind ( ( char* ) pagedata+offset,start_tag,pos1 );
-    if ( pos2>0 )
+    if ( pos2>0 ){
       level++;
+    }
     offset+=pos1;
   } while ( level > 0 );
 

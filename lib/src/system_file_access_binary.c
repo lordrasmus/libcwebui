@@ -28,6 +28,7 @@
 #include <zlib.h>
 
 #include "webserver.h"
+#include "miniz_tinfl.h"
 
 #include "intern/system_file_access.h"
 
@@ -69,7 +70,7 @@ static uint32_t read_uint32( const unsigned char* data, uint64_t* offset_p ){
 	return val;
 }
 
-static const unsigned char* read_string( const unsigned char* data, uint64_t* offset_p, uint32_t* length){
+static const char* read_string( const unsigned char* data, uint64_t* offset_p, uint32_t* length){
 
 	const unsigned char* ret;
 
@@ -79,7 +80,7 @@ static const unsigned char* read_string( const unsigned char* data, uint64_t* of
 
 	*offset_p += *length + 1;
 
-	return ret;
+	return (const char*) ret;
 }
 
 
@@ -94,10 +95,10 @@ static const unsigned char* read_string( const unsigned char* data, uint64_t* of
 
 
 
-static const unsigned char* read_file( const unsigned char *alias, const unsigned char* data, uint64_t* offset_p, uint32_t* compressed_p ){
+static const unsigned char* read_file( const char *alias, const unsigned char* data, uint64_t* offset_p, uint32_t* compressed_p ){
 
-	const unsigned char *name;
-	const unsigned char *etag;
+	const char *name;
+	const char *etag;
 	const unsigned char *ret;
 	uint32_t size = 0;
 	uint32_t real_size,compresed_size;
@@ -118,7 +119,7 @@ static const unsigned char* read_file( const unsigned char *alias, const unsigne
 
 	template = read_uint32( data, offset_p );
 
-	// TODO lastmodified noch einbauen
+	// TODO(lordrasmus) lastmodified noch einbauen
 	//file->lastmodified = etag;
 	//file->lastmodifiedLength = strlen ( etag );
 
@@ -173,18 +174,18 @@ static const unsigned char* read_file( const unsigned char *alias, const unsigne
 
 				case 2: 	// deflate compression
 
-					printf("decompressing template ( deflate ) : %s\n",name);
+					//printf("decompressing template ( deflate ) : %s\n",name);
 
 					new_size = tinfl_decompress_mem_to_mem( decomp_buffer, decomp_size, ret, compresed_size, 0 );
 					//printf("%d\n%s\n",new_size,decomp_buffer);
 					break;
 
-			//size_t s = uncompress(decomp_buffer, decomp_size, ret, compresed_size);
-			//printf("%d %s\n",s,decomp_buffer);
+					//size_t s = uncompress(decomp_buffer, decomp_size, ret, compresed_size);
+					//printf("%d %s\n",s,decomp_buffer);
 
 				case 1:{		// gzip compression
 
-						printf("decompressing template ( gzip ) : %s\n",name);
+						//printf("decompressing template ( gzip ) : %s\n",name);
 
 						z_stream strm;
 						strm.next_in = (unsigned char*)ret;
@@ -271,7 +272,7 @@ static const unsigned char* read_file( const unsigned char *alias, const unsigne
 void read_binary_data( const unsigned char* data ){
 	uint64_t offset = 0;
 	uint32_t size = 0;
-	const unsigned char *alias;
+	const char *alias;
 	uint64_t time;
 	uint32_t files;
 	uint32_t compressed;

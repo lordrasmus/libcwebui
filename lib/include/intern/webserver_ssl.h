@@ -51,7 +51,7 @@ int					WebserverSSLAccept(socket_info* s);
 
 int 				WebserverSSLPending(socket_info* s);
 SOCKET_SEND_STATUS	WebserverSSLSendNonBlocking(socket_info* s, const unsigned char *buf, int len, int flags,int* bytes_send);
-int					WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, int len, int flags);
+int					WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, unsigned len, int flags);
 int					WebserverSSLCloseSockets(socket_info *s);
 
 
@@ -59,7 +59,7 @@ int					WebserverSSLCloseSockets(socket_info *s);
 
 int                 WebserverSHA1(const unsigned char* data,size_t len,unsigned char* md);
 struct sha_context* WebserverSHA1Init(void);
-int                 WebserverSHA1Update(struct sha_context* ssl_context,const void* data,size_t len);
+int                 WebserverSHA1Update(struct sha_context* sha_ctx,const void* data,size_t len);
 int                 WebserverSHA1Final(struct sha_context* sha_ctx,unsigned char* data);
 void                WebserverSHA1Free(struct sha_context* sha_ctx );
 

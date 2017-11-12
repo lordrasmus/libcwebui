@@ -53,17 +53,8 @@ void init_file_access( void );
 void free_file_access( void );
 
 
-int prepare_file_content(WebserverFileInfo* info);
-void release_file_content(WebserverFileInfo* info);
-
-enum
-{
-  TINFL_FLAG_PARSE_ZLIB_HEADER = 1,
-  TINFL_FLAG_HAS_MORE_INPUT = 2,
-  TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF = 4,
-  TINFL_FLAG_COMPUTE_ADLER32 = 8
-};
-size_t tinfl_decompress_mem_to_mem(void *pOut_buf, size_t out_buf_len, const void *pSrc_buf, size_t src_buf_len, int flags);
+int prepare_file_content(WebserverFileInfo* file);
+void release_file_content(WebserverFileInfo* file);
 
 
 #ifndef DISABLE_OLD_TEMPLATE_SYSTEM

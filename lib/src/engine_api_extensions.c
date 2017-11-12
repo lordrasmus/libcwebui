@@ -45,6 +45,25 @@ plugin_error_handler error_handler = 0;
 
 plugin_s *current_plugin = 0;
 
+static void free_websocket_handler( void* a );
+
+static void free_user_func_key( UNUSED_PARA void* a) {
+	//printf("free_user_func_key\n");
+	// diese funktion macht nichts weil der key teil des elements ist
+}
+
+static void free_user_func_value( void* a) {
+	user_func_s* b = (user_func_s*)a;
+	WebserverFree( b->name );
+	WebserverFree( a );
+}
+
+static void free_user_cond_value( void* a) {
+	user_condition_s *b = (user_condition_s*)a;
+	WebserverFree( b->name );
+	WebserverFree( a );
+}
+
 void DummyFunc( UNUSED_PARA void* a) {
 }
 void DummyFuncConst( UNUSED_PARA const void* a) {
@@ -55,11 +74,24 @@ int StrKeyComp(const void* a, const void* b) {
 	char *p_a = (char*) a;
 	char *p_b = (char*) b;
 	ret = strcmp(p_a, p_b);
-	if (ret < 0)
+	if (ret < 0){
 		return -1;
-	if (ret > 0)
+	}
+	if (ret > 0){
 		return 1;
+	}
 	return 0;
+}
+
+void free_plugin_info(const void *free_element){
+	
+	plugin_s *plugin = (plugin_s*)free_element;
+	
+	WebserverFree( plugin->name );
+	WebserverFree( plugin->error );
+	WebserverFree( plugin->path );
+	
+	WebserverFree( plugin );
 }
 
 void init_extension_api(void) {
@@ -68,12 +100,13 @@ void init_extension_api(void) {
 	initWebsocketApi();
 #endif
 
-	user_func_tree = RBTreeCreate(StrKeyComp, DummyFunc, DummyFunc, DummyFuncConst, DummyFunc);
-	user_condition_tree = RBTreeCreate(StrKeyComp, DummyFunc, DummyFunc, DummyFuncConst, DummyFunc);
+	user_func_tree = RBTreeCreate(StrKeyComp, free_user_func_key, free_user_func_value, DummyFuncConst, DummyFunc);
+	user_condition_tree = RBTreeCreate(StrKeyComp, DummyFunc, free_user_cond_value, DummyFuncConst, DummyFunc);
 
-	websocket_handler_tree = RBTreeCreate(StrKeyComp, DummyFunc, DummyFunc, DummyFuncConst, DummyFunc);
+	websocket_handler_tree = RBTreeCreate(StrKeyComp, DummyFunc, free_websocket_handler, DummyFuncConst, DummyFunc);
 
 	ws_list_init(&plugin_liste);
+	ws_list_attributes_freer(&plugin_liste,free_plugin_info);
 
 }
 
@@ -82,9 +115,10 @@ void free_extension_api(void) {
 	RBTreeDestroy(user_condition_tree);
 	RBTreeDestroy(websocket_handler_tree);
 	ws_list_destroy(&plugin_liste);
+	
 }
 
-void register_function(const char* name, user_function f, const char* file, int line) {
+void register_function(const char* name, user_function func, const char* file, int line) {
 	int len = 0;
 	user_func_s *tmp = (user_func_s*) WebserverMalloc( sizeof(user_func_s) );
 	len = strlen(name) + 1;
@@ -96,7 +130,7 @@ void register_function(const char* name, user_function f, const char* file, int 
 	tmp->plugin = current_plugin;
 
 	tmp->type = 0;
-	tmp->uf = f;
+	tmp->uf = func;
 
 	RBTreeInsert(user_func_tree, tmp->name, tmp);
 }
@@ -163,8 +197,9 @@ void engine_platformFunction(http_request *s, FUNCTION_PARAS* func) {
 	char dummy[] = "compiled in";
        	char *name;
 
-	if (func->parameter[0].text == 0)
+	if (func->parameter[0].text == 0){
 		return;
+	}
 	node = func->platform_function;
 
 	tmp = (user_func_s*) node->info;
@@ -172,17 +207,19 @@ void engine_platformFunction(http_request *s, FUNCTION_PARAS* func) {
 	LOG( TEMPLATE_LOG, NOTICE_LEVEL, s->socket->socket, "Calling Plugin Function %s enter", func->para[0]);
 #endif
 
-	if ((error_handler != 0) && (tmp->plugin != 0))
+	if ((error_handler != 0) && (tmp->plugin != 0)){
 		name = tmp->plugin->name;
-	else
+	}else{
 		name = dummy;
+	}
 
 	if (error_handler != 0) {
 		error_handler(PLUGIN_FUNCTION_CALLING, name, func->parameter[0].text, "crashed");
 	}
 
-	if ( tmp->type == 0 )
+	if ( tmp->type == 0 ){
 		tmp->uf(s, func);
+	}
 
 #ifdef WEBSERVER_USE_PYTHON
 	if ( tmp->type == 1 )
@@ -258,8 +295,12 @@ void printRegisteredFunctions(http_request* s) {
 		}
 
 		char type[10];
-		if( uf->type == 0 ) sprintf(type,"C");
-		if( uf->type == 1 ) sprintf(type,"Python");
+		if( uf->type == 0 ){
+			sprintf(type,"C");
+		}
+		if( uf->type == 1 ){
+			sprintf(type,"Python");
+		}
 
 		if (uf->plugin != 0){
 			printHTMLChunk(s->socket, "<tr><td>%s<td>%s<td>%s<td>%s<td>%d<td>%s", uf->plugin->name,  uf->name, type, uf->file, uf->line, buffer);
@@ -281,21 +322,24 @@ void printRegisteredConditions(http_request* s) {
 		uc = (user_condition_s*) node->info;
 
 		if (error_handler != 0) {
-			if (uc->plugin == 0)
+			if (uc->plugin == 0){
 				status = error_handler(PLUGIN_FUNCTION_CHECK_ERROR, "internal", uc->name, "crashed");
-			else
+			}else{
 				status = error_handler(PLUGIN_FUNCTION_CHECK_ERROR, uc->plugin->name, uc->name, "crashed");
+			}
 		}
 
-		if (status == 0)
+		if (status == 0){
 			sprintf(buffer, "<FONT color=green>ok</font>");
-		else
+		}else{
 			sprintf(buffer, "<FONT color=red>crashed</font>");
+		}
 
-		if (uc->plugin == 0)
+		if (uc->plugin == 0){
 			printHTMLChunk(s->socket, "<tr><td>internal<td>%s<td>%s<td>%d<td>%s", uc->name, uc->file, uc->line, buffer);
-		else
+		}else{
 			printHTMLChunk(s->socket, "<tr><td>%s<td>%s<td>%s<td>%d<td>%s", uc->plugin->name, uc->name, uc->file, uc->line, buffer);
+		}
 	}
 	free(stack);
 }
@@ -341,6 +385,22 @@ void register_condition(const char* name, user_condition f, const char* file, in
  Kein Locking fuer Websocket Handler weil Plugins im init_hook handler registrieren muessen
 */
 
+static void free_websocket_handler( void* a ){
+	websocket_handler_list_s *l = (websocket_handler_list_s*)a;
+	WebserverFree( l->url );
+	
+	ws_list_destroy( l->handler_list );
+	WebserverFree( l->handler_list );
+	
+	WebserverFree( l );
+}
+
+static void* free_websocket_handler_ele( const void* a ){
+	websocket_handler_s *b = (websocket_handler_s*)a;
+	
+	WebserverFree( b );
+}
+
 void register_function_websocket_handler(const char* url, websocket_handler f, const char* file, int line) {
 	websocket_handler_s *tmp;
 	rb_red_blk_node* node = RBExactQuery(websocket_handler_tree, (char*) url);
@@ -349,7 +409,8 @@ void register_function_websocket_handler(const char* url, websocket_handler f, c
 	if (node == 0) {
 		list = (websocket_handler_list_s*) WebserverMalloc( sizeof(websocket_handler_list_s) );
 		list->handler_list = (list_t*) WebserverMalloc( sizeof(list_t) );
-		ws_list_init(list->handler_list);
+		ws_list_init( list->handler_list );
+		ws_list_attributes_freer( list->handler_list,free_websocket_handler_ele );
 		list->url = (char*) WebserverMalloc( strlen(url) + 1 );
 		strcpy(list->url, url);
 		RBTreeInsert(websocket_handler_tree, list->url, list);
@@ -531,13 +592,18 @@ void printRegisteredPlugins(http_request* s) {
 	ws_list_iterator_start(&plugin_liste);
 	while ((p = (plugin_s*) ws_list_iterator_next(&plugin_liste))) {
 		char type[10];
-		if( p->type == 0 ) sprintf(type,"C");
-		if( p->type == 1 ) sprintf(type,"Python");
+		if( p->type == 0 ){
+			sprintf(type,"C");
+		}
+		if( p->type == 1 ){
+			sprintf(type,"Python");
+		}
 
-		if (0 == strcmp(p->error, "crashed"))
+		if (0 == strcmp(p->error, "crashed")){
 			printHTMLChunk(s->socket, "<tr><td>%s<td>%s<td>%s<td><font color=red>%s</font>", p->name, p->path, type, p->error);
-		else
+		}else{
 			printHTMLChunk(s->socket, "<tr><td>%s<td>%s<td>%s<td><font color=green>%s</font>", p->name, p->path, type, p->error);
+		}
 	}
 	ws_list_iterator_stop(&plugin_liste);
 }

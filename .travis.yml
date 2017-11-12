@@ -4,6 +4,7 @@ env:
   global:
     secure: "SS5efj7kz0thoFmWqwrLwvXVvMMviJ2tKk+y0E6FyiVXZ173qRPn5ZGlIpLVVwx0pev1tf92+RQ/BmTha3lREf+qc9Gt9G3lBXzch4m5+gKAOG2XWvqSKnD2nVGBVjZvvC579Bt1JhFJ1bKMETGdJGOOCNU2+1TQlCfFhOPMCuORBD5m1N2kDWhGoDr8jhoV884gFeLYvSoQLbrXLo9IXVsj+KWI97Ck8SMCtT3oPc7jtqQrsZ4ECS5N+wXvR71HPpgP1lIe/K/wvvkLQmZvVWnVsroiiwGQbWKJuN0CcbG2ooxkzYT4BMbCoVdyezxFZNkyMQB7Adzgera+Cymh0zmQadK4SYuPR6wl+K9K8wgfGDikAw0dUyVnI2JjDvGjRq9IFy8nUfOK70OSP2OLG0FsSLCYENkm5+/iek41gEd7W0A7Kfz6n+4djGguqML8TJaKMY2qQ2so/hyE1Pv2ne2yHVNjXhDO0VBBgSULqRawWejNlvlubD0As9ea24CCgNYsiG9Zps7yERN14fL6to1u9pBxDxLyoqeqV2ngj5HTV9FAly6Q2lXUoqXjf+YTjkiFtNLFj6qSbHF2J/aGsuz+Cxn2fMB1Vh1LDTsQGPEaSF2GDg3CXOa9E8PXjRdLC2i0Aub+92yUdnARa54nhZ7nxF9Ly8lfc0STPMN3O7U="
 
+
 notifications:
    email: 
       - lordrasmus@gmail.com
@@ -12,10 +13,134 @@ script:
 #  - ./tools/travis-sonarqube.sh make -C lib rebuild
   - make -C lib rebuild
 
-compiler:
-  - clang
-  - gcc
+#compiler:
+#  - clang
+#  - gcc
+matrix:
+  include:
+    - os: linux
+      compiler: gcc-4.4
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['gcc-4.4']
+      env: COMPILER=gcc-4.4 CC=gcc-4.4
+    
+    - os: linux
+      compiler: gcc-4.5
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['gcc-4.5']
+      env: COMPILER=gcc-4.5 CC=gcc-4.5
+    
+    - os: linux
+      compiler: gcc-4.6
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['gcc-4.6']
+      env: COMPILER=gcc-4.6 CC=gcc-4.6
+    - os: linux
+      compiler: gcc-4.7
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['gcc-4.7']
+      env: COMPILER=gcc-4.7 CC=gcc-4.7
+      
+    - os: linux
+      compiler: gcc-4.8
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['gcc-4.8']
+      env: COMPILER=gcc-4.8 CC=gcc-4.8
 
+    - os: linux
+      compiler: gcc-4.9
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['gcc-4.9']
+      env: COMPILER=gcc-4.9 CC=gcc-4.9
+
+    - os: linux
+      compiler: gcc-5
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['gcc-5']
+      env: COMPILER=gcc-5 CC=gcc-5
+
+    - os: linux
+      compiler: gcc-6
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['gcc-6']
+      env: COMPILER=gcc-6  CC=gcc-6
+    
+#    - os: linux
+#      compiler: gcc
+#      addons:
+#        apt:
+#          sources: ['ubuntu-toolchain-r-test']
+#          packages: ['gcc-7']
+#      env: COMPILER=gcc-7
+      
+    - os: linux
+      compiler: clang
+      env: COMPILER=clang
+
+    - os: linux
+      compiler: clang-3.5
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.5']
+          packages: ['clang-3.5']
+      env: COMPILER=clang-3.5  CC=clang-3.5
+
+    - os: linux
+      compiler: clang-3.6
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
+          packages: ['clang-3.6']
+      env: COMPILER=clang-3.6 CC=clang-3.6
+      
+    - os: linux
+      compiler: clang-3.7
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.7']
+          packages: ['clang-3.7']
+      env: COMPILER=clang-3.7 CC=clang-3.7
+      
+    - os: linux
+      compiler: clang-3.8
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.8']
+          packages: ['clang-3.8']
+      env: COMPILER=clang-3.8 CC=clang-3.8
+      
+    - os: linux
+      compiler: clang-3.9
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.9']
+          packages: ['clang-3.9']
+      env: COMPILER=clang-3.9 CC=clang-3.9
+
+#    - os: linux
+#      compiler: clang-4.0
+#      addons:
+#        apt:
+#          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-4.0']
+#          packages: ['clang-4.0']
+#      env: COMPILER=clang-4.0 CC=clang-4.0
+      
 addons: &def_addons
   apt:
     packages:

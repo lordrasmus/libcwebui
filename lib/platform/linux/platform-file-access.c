@@ -21,6 +21,9 @@
 
 */
 
+#ifndef _POSIX_C_SOURCE
+	#define _POSIX_C_SOURCE 1
+#endif
 
 #include <stdio.h>
 #include <time.h>
@@ -49,12 +52,13 @@ unsigned short l;
  *                                                             *
  **************************************************************/
 
-int PlatformOpenDataReadStream( const unsigned char* name ) {
+int PlatformOpenDataReadStream( const char* name ) {
 	struct stat st;
 
 	g_fp = fopen( ( char* ) name, "rb");
-	if (g_fp == NULL) 
+	if (g_fp == NULL){ 
 		return false;
+	}
 
 	/* Auf normale Datei Prüfen */
 	if ( 0 != fstat(fileno(g_fp), &st) ){
@@ -62,8 +66,9 @@ int PlatformOpenDataReadStream( const unsigned char* name ) {
 		return false;
 	}
 
-	if (!S_ISREG(st.st_mode)) 
+	if (!S_ISREG(st.st_mode)){
 		return false;
+	}
 
 	return fileno(g_fp);
 }
@@ -93,13 +98,15 @@ int PlatformReadBytes(unsigned char *data, FILE_OFFSET lenght) {
 }
 
 void PlatformSeek(long offset) {
-	if ( 0 != fseek(g_fp, offset, SEEK_CUR) )
+	if ( 0 != fseek(g_fp, offset, SEEK_CUR) ){
 		printf("fseek error : %m\n");
+	}
 }
 
 void PlatformSeekToPosition(long position) {
-	if ( 0 != fseek(g_fp, position, SEEK_SET) )
+	if ( 0 != fseek(g_fp, position, SEEK_SET) ){
 		printf("fseek error : %m\n");
+	}
 }
 
 
@@ -117,7 +124,7 @@ int PlatformGetFileInfo(WebserverFileInfo* file, int* time_changed, int *new_siz
 	struct stat st;
 	struct tm ts_var;
 	struct tm *ts;
-	unsigned int len;
+	size_t len;
 	char* buffer;
 	__time_t f_sec;
 	__time_t f_nsec;

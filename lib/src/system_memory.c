@@ -23,7 +23,7 @@
 
 
 #include "webserver.h"
-#include "simclist.h"
+
 #include <math.h>
 
 #ifdef DMALLOC
@@ -58,7 +58,9 @@ WS_MUTEX mem_mutex;
 
 void *freeChunkCallBack(const void *restrict free_element) {
 	html_chunk* chunk = (html_chunk*)free_element;
-	if (chunk->text != 0) WebserverFree(chunk->text);
+	if (chunk->text != 0){
+		WebserverFree(chunk->text);
+	}
 	WebserverFree(chunk);
 	return 0;
 }
@@ -306,7 +308,9 @@ void* real_WebserverMalloc(const unsigned long size ) {
 #endif
 
 	allocated += real_alloc;
-	if (allocated_max < allocated) allocated_max = allocated;
+	if (allocated_max < allocated){
+		allocated_max = allocated;
+	}
 
 
 #ifdef _WEBSERVER_MEMORY_DEBUG_
@@ -364,7 +368,9 @@ void* WebserverRealloc(void *mem, const unsigned long size ) {
 
 static void *get_real_pointer(void* mem){
 	char* p;
-	if (mem == 0) return 0;
+	if (mem == 0){
+		return 0;
+	}
 	p = (char*) mem;
 
 #ifdef _WEBSERVER_MEMORY_DEBUG_
@@ -383,7 +389,9 @@ static void *get_real_pointer(void* mem){
 
 static void *get_block_pointer(void* mem){
 	char* p;
-	if (mem == 0) return 0;
+	if (mem == 0){
+		return 0;
+	}
 	p = (char*) mem;
 
 	p -= __BIGGEST_ALIGNMENT__ * 2;
@@ -399,7 +407,9 @@ unsigned long WebserverMallocedSize(void* mem){
 	unsigned long size;
 	char* p;
 
-	if (mem == 0) return 0;
+	if (mem == 0){
+		return 0;
+	}
 
 #ifdef _WEBSERVER_MEMORY_DEBUG_
 
@@ -436,7 +446,9 @@ unsigned long WebserverMallocedRealSize(void* mem){
 	unsigned long size;
 	char* p;
 
-	if (mem == 0) return 0;
+	if (mem == 0){
+		return 0;
+	}
 
 	p = get_real_pointer( mem );
 #if __BIGGEST_ALIGNMENT__ == 16
@@ -460,7 +472,9 @@ void WebserverFree(void *mem) {
 
 	unsigned long size;
 
-	if (mem == 0) return;
+	if (mem == 0){
+		return;
+	}
 
 	PlatformLockMutex(&mem_mutex);
 
@@ -541,8 +555,12 @@ Parameter* WebserverMallocParameter(void) {
 }
 
 void WebserverFreeParameter(Parameter* para) {
-	if (para->name != 0) WebserverFree(para->name);
-	if (para->value != 0) WebserverFree(para->value);
+	if (para->name != 0){
+		WebserverFree(para->name);
+	}
+	if (para->value != 0){
+		WebserverFree(para->value);
+	}
 	WebserverFree(para);
 }
 
@@ -618,6 +636,13 @@ Cookie* WebserverMallocCookie(void) {
 }
 
 void WebserverFreeCookie(Cookie* cookie) {
+	#ifdef _WEBSERVER_COOKIE_DEBUG_
+	if ( cookie == 0 ){
+		WebServerPrintf("Free Cookie ( %p )\n",cookie);
+	}else{
+		WebServerPrintf("Free Cookie ( %p ) Name <%s>  Value <%s> \n",cookie,cookie->name,cookie->value);
+	}
+	#endif
 	if ( cookie == 0){
 		return;
 	}
@@ -669,7 +694,7 @@ HttpRequestHeader* WebserverMallocHttpRequestHeader(void) {
 void WebserverResetHttpRequestHeader(HttpRequestHeader *header) {
 
 	clearVariables(header->parameter_store);
-	ws_list_clear(&header->cookie_list);
+	ws_list_destroy(&header->cookie_list);
 
 
 	header->post_buffer_pos = 0;
@@ -739,6 +764,11 @@ void WebserverResetHttpRequestHeader(HttpRequestHeader *header) {
 		WebserverFree(header->Access_Control_Request_Headers);
 		header->Access_Control_Request_Headers = 0;
 	}
+	
+	if (header->Accept_Encoding != 0) {
+		WebserverFree(header->Accept_Encoding);
+		header->Accept_Encoding = 0;
+	}
 
 
 #ifdef WEBSERVER_USE_WEBSOCKETS
@@ -786,7 +816,7 @@ void WebserverFreeFunctionParas(FUNCTION_PARAS *func) {
 
 html_chunk* WebserverMallocHtml_chunk(void) {
 	html_chunk* ret;
-	if (chunk_cache.numels == 0) {
+	if ( ws_list_size( &chunk_cache ) == 0 ) {
 		ret = (html_chunk*) WebserverMalloc( sizeof(html_chunk) );
 		ret->text = (char*) WebserverMalloc( 2000 );
 	} else {
@@ -800,7 +830,9 @@ void WebserverFreeHtml_chunk(html_chunk* chunk) {
 	/*if (chunk_cache.numels < 20) {
 		ws_list_append(&chunk_cache, chunk);
 	} else {*/
-		if (chunk->text != 0) WebserverFree(chunk->text);
+		if (chunk->text != 0){
+			WebserverFree(chunk->text);
+		}
 		WebserverFree(chunk);
 	/*}*/
 }

@@ -44,11 +44,12 @@ extern "C" {
 #endif
 
 int getHttpRequest(socket_info* sock);
-int sendHTMLFile(http_request* s, WebserverFileInfo *info);
+int sendHTMLFile(http_request* s, WebserverFileInfo *file);
 
 void sendWebsocketChunk ( socket_info* sock,const unsigned char* text,const unsigned int length );
 void printWebsocketChunk ( socket_info* sock,const char *fmt,... );
 
+int isChunkListbigger(list_t* liste, int bytes);
 void sendHeaderChunk(socket_info* sock,const char* text,const unsigned int length);
 void sendHeaderChunkEnd(socket_info* sock);
 void printHeaderChunk(socket_info* sock,const char *fmt,...);
@@ -62,14 +63,14 @@ unsigned long getChunkListSize(list_t* liste);
 
 void generateOutputBuffer(socket_info* sock);
 
-int sendFile(http_request* s, WebserverFileInfo *info);
+int sendFile(http_request* s, WebserverFileInfo *file);
 
 int sendFileNotFound(http_request* s);
 int sendAccessDenied(http_request* s);
-int sendMethodNotAllowed(socket_info *s);
-int sendMethodBadRequest(socket_info *s);
-int sendMethodBadRequestLineToLong(socket_info *s);
-int sendMethodBadRequestMissingHeaderLines(socket_info *socket);
+int sendMethodNotAllowed(socket_info *sock);
+int sendMethodBadRequest(socket_info *sock);
+int sendMethodBadRequestLineToLong(socket_info *sock);
+int sendMethodBadRequestMissingHeaderLines(socket_info *sock);
 
 int checkBuilinSites(http_request* s);
 

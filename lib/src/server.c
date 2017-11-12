@@ -39,8 +39,12 @@ void endHTTPRequest(http_request *s) {
 	upload_file_info * f_info;
 
 	clearRenderVariables(s);
-	if (s->store != 0) unlockStore(s->store->vars);
-	if (s->store_ssl != 0) unlockStore(s->store_ssl->vars);
+	if (s->store != 0){
+		unlockStore(s->store->vars);
+	}
+	if (s->store_ssl != 0){
+		unlockStore(s->store_ssl->vars);
+	}
 
 
 	ws_list_iterator_start(&s->upload_files);
@@ -188,9 +192,9 @@ void parsePostData(http_request *s){
  *																		    *
  ***************************************************************************/
 
-int getHttpRequest(socket_info* sockp) {
+int getHttpRequest(socket_info* sock) {
 	http_request s;
-	WebserverFileInfo *file;
+	WebserverFileInfo *file = 0;
 
 	memset(&s, 0, sizeof(http_request));
 
@@ -198,24 +202,24 @@ int getHttpRequest(socket_info* sockp) {
 
 	initRenderVariable(&s);
 
-	s.socket = sockp;
-	s.header = sockp->header;
-	sockp->disable_output = 0;
+	s.socket = sock;
+	s.header = sock->header;
+	sock->disable_output = 0;
 
 	if (s.header->method == HTTP_UNKNOWN_METHOD) {
-		sendMethodNotAllowed(sockp);
+		sendMethodNotAllowed(sock);
 		endHTTPRequest(&s);
 		return 0;
 	}
 
 	if (s.header->method == HTTP_OPTIONS) {
-		sendPreflightAllowed(sockp);
+		sendPreflightAllowed(sock);
 		endHTTPRequest(&s);
 		return 0;
 	}
 
 	if (s.header->error != 0) {
-		sendMethodBadRequest(sockp);
+		sendMethodBadRequest(sock);
 		endHTTPRequest(&s);
 		return 0;
 	}
@@ -265,10 +269,10 @@ int getHttpRequest(socket_info* sockp) {
 	} else {
 		ws_variable *download;
 
-		if (0 != strlen((char*) s.header->url)){
+		if (0 != strlen( s.header->url)){
 			file = getFile(s.header->url); /* Eingabe von zB http://192.168.2.80/test.html */
 		}else{
-			file = getFile((char*) "index.html"); /* Eingabe von zB http://192.168.2.80/ */
+			file = getFile( "index.html"); /* Eingabe von zB http://192.168.2.80/ */
 		}
 		
 		
@@ -368,7 +372,7 @@ int sendHTMLFile(http_request* s, WebserverFileInfo *file) {
 		printf("Warning Engine Template Header <%s> not found: %s \n",template_v1_header,file->FilePath);
 	}
 
-	processHTML(s, (const char *) file->FilePrefix, file->Url, (const char *) file->Data, file->DataLenght);
+	processHTML(s, file->FilePrefix, file->Url, (const char *) file->Data, file->DataLenght);
 
 	release_file_content( file );
 

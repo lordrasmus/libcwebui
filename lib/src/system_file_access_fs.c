@@ -51,7 +51,7 @@ int local_file_system_check_file_modified( WebserverFileInfo *file ){
 	int time_changed = 0;
 	int new_size = 0;
 
-	// TODO : Problem mit clients die die datei noch laden lösen
+	// TODO(lordrasmus) : Problem mit clients die die datei noch laden lösen
 
 	if ( 0 == PlatformGetFileInfo( file, &time_changed, &new_size )){
 		printf("local_file_system_check_file_modified: Error file not found %s\n",file->FilePath);
@@ -79,7 +79,7 @@ int local_file_system_check_file_modified( WebserverFileInfo *file ){
 		printf("local_file_system:  file change %s File System -> FS_LOCAL_FILE_SYSTEM ( RAM cached )\n", file->FilePath );
 
 		// Datei ist im RAM cache
-		PlatformOpenDataReadStream(file->FilePath);
+		PlatformOpenDataReadStream( file->FilePath );
 
 		// zur sicherheit die länge mit geöffnetem filehandel nochmal lesen
 		file->DataLenght = PlatformGetFileSize();
@@ -102,7 +102,7 @@ int local_file_system_check_file_modified( WebserverFileInfo *file ){
 
 int local_file_system_read_content( WebserverFileInfo *file ){
 
-	if (PlatformOpenDataReadStream(file->FilePath)) {
+	if (PlatformOpenDataReadStream( file->FilePath )) {
 
 		file->DataLenght = PlatformGetFileSize();
 		file->Data = (unsigned char*) WebserverMalloc( file->DataLenght );
@@ -145,8 +145,9 @@ void add_local_file_system_dir(const char* alias, const char* dir, const int use
 	tmp = addWSVariableArray( file_dirs , alias);
 	
 	strncpy(buffer, dir, 990);
-	if (buffer[strlen(buffer)] != '/')
+	if (buffer[strlen(buffer)] != '/'){
 		strcat(buffer, "/");
+	}
 
 	info->dir = WebserverMalloc( strlen( buffer ) + 1 );
 	strcpy( info->dir, buffer);
@@ -159,7 +160,7 @@ void add_local_file_system_dir(const char* alias, const char* dir, const int use
 }
 
 
-static struct dir_info *search_file_dir ( const unsigned char* name, unsigned char* real_path, int real_path_length ){
+static struct dir_info *search_file_dir ( const char* name, char* real_path, int real_path_length ){
 	
 	struct dir_info *dir_tmp = 0;
 	ws_variable*tmp_var = getWSVariableArrayFirst( file_dirs );
@@ -171,15 +172,15 @@ static struct dir_info *search_file_dir ( const unsigned char* name, unsigned ch
 		
 		real_path[0] = '\0';
 		
-		if (0 == strncmp(tmp_var->name, (char*) name, tmp_var->name_len)) {
+		if (0 == strncmp(tmp_var->name, name, tmp_var->name_len)) {
 			
-			if (strlen( (char*) name ) > tmp_var->name_len ) {
-				strncpy( (char*) real_path, dir_tmp->dir, real_path_length );
+			if (strlen( name ) > tmp_var->name_len ) {
+				strncpy( real_path, dir_tmp->dir, real_path_length );
 				
-				int l = real_path_length - strlen( (char*)real_path );
+				int l = real_path_length - strlen( real_path );
 			
-				strncat( (char*) real_path, (char*)(name + tmp_var->name_len), l);
-				if (PlatformOpenDataReadStream(real_path)) {
+				strncat( real_path, (char*)(name + tmp_var->name_len), l);
+				if (PlatformOpenDataReadStream( real_path )) {
 					found = 1;
 					break;
 				}
@@ -189,21 +190,23 @@ static struct dir_info *search_file_dir ( const unsigned char* name, unsigned ch
 	}
 	stopWSVariableArrayIterate( file_dirs );
 	
-	if ( found == 1 )
+	if ( found == 1 ){
 		return dir_tmp;
+	}
 	
 	return 0;
 }
 
 
-static WebserverFileInfo* getFileInformation( const unsigned char *name) {
-	unsigned char name_tmp[1000];
+static WebserverFileInfo* getFileInformation( const char *name) {
+	char name_tmp[1000];
 	struct dir_info* dir = 0;
 	WebserverFileInfo *file = 0;
 	
 	/*  um ein Zeichen weiterspringen wenn name mit / anfängt */
-	while( name[0] == '/' )
+	while( name[0] == '/' ){
 		name++;
+	}
 		
 	
 	dir = search_file_dir( name, name_tmp, 1000 );
@@ -220,11 +223,11 @@ static WebserverFileInfo* getFileInformation( const unsigned char *name) {
 	
 	file->auth_only = dir->auth_only;
 
-	copyFilePath(file, (unsigned char*) name_tmp);
+	copyFilePath(file, name_tmp);
 	copyURL(file, name);
 
 	/* tmp_var ist permanent in der liste der prefixe darum pointer direkt nehmen */
-	file->FilePrefix = (unsigned char*) dir->alias;
+	file->FilePrefix = dir->alias;
 	setFileType(file);
 
 #ifdef _WEBSERVER_FILESYSTEM_CACHE_DEBUG_
@@ -256,7 +259,7 @@ static WebserverFileInfo* getFileInformation( const unsigned char *name) {
 }
 
 
-WebserverFileInfo *getFileLocalFileSystem( const unsigned char *url_name) {
+WebserverFileInfo *getFileLocalFileSystem( const char *url_name) {
 	WebserverFileInfo *file = 0;
 	int a,b;
 	

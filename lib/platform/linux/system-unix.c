@@ -141,7 +141,7 @@ void 	PlatformGetGUID ( char* buf,SIZE_TYPE length ) {
     	return;
     }
 
-    ret = snprintf ( ( char* ) buf,length,"\"Test %d",guid++ );
+    ret = snprintf ( buf, length, "\"Test %d", guid++ );
     if ( ret < 0 ){
 		buf[0]='\0';
 		perror("PlatformGetGUID: snprintf failed\n");
@@ -190,8 +190,9 @@ ALL_SRC int PlatformLockMutex(WS_MUTEX* m){
 	}
 	ret =  pthread_mutex_lock(&m->handle);
 	m->locked++;
-	if ( m->locked > 1)
+	if ( m->locked > 1){
 		printf("PlatformLockMutex wurde doppelt gelocked\n");
+	}
 	return ret;
 }
 

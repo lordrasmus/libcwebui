@@ -161,7 +161,9 @@ int sendWebsocketFrameReal(const char* guid, const unsigned char* in, const WEBS
 
 	/* getSocketByGUID locked den socket mutex */
 	socket_info *sock = getSocketByGUID(guid);
-	if (sock == 0) return -1;
+	if (sock == 0){
+		return -1;
+	}
 
 	if (sock->closeSocket == 1) {
 		PlatformUnlockMutex(&sock->socket_mutex);
@@ -215,7 +217,9 @@ int recFrameV8(socket_info *sock) {
 	while (1) {
 		max_read = WebserverMallocedSize(sock->websocket_buffer) - sock->websocket_buffer_offset;
 		ret = WebserverRecv(sock, &sock->websocket_buffer[sock->websocket_buffer_offset], max_read, 0);
-		if (ret <= 0) return ret;
+		if (ret <= 0){
+			return ret;
+		}
 
 		sock->websocket_buffer_offset += ret;
 
@@ -229,8 +233,9 @@ int recFrameV8(socket_info *sock) {
 				printf("sock->websocket_buffer_offset ( %d ) <=  offset ( %d ) \n", sock->websocket_buffer_offset, offset);
 			}
 
-			if (diff < 2)
+			if (diff < 2){
 				goto recopy_buffer;
+			}
 
 			/* Reserved Bits must be 0 */
 			if ( ( sock->websocket_buffer[offset] & 0x70 ) != 0 ){
@@ -262,7 +267,9 @@ int recFrameV8(socket_info *sock) {
 				extra_bytes += 8;
 			}
 
-			if (diff < (2 + extra_bytes )) goto recopy_buffer;
+			if (diff < (2 + extra_bytes )){
+				goto recopy_buffer;
+			}
 
 			wsf.real_length = wsf.playload_length;
 
@@ -408,7 +415,12 @@ int recFrameV8(socket_info *sock) {
 
 			case WSF_CLOSE:
 				sendCloseFrame(sock);
+				// sanitizer sagt das schreiben hier ist nicht gelockt
+				// aber der socket sollte schon gelockt sein wenn der handler aufgerufen wird
+				//PlatformLockMutex(&sock->socket_mutex);
 				sock->closeSocket = 1;
+				//PlatformUnlockMutex(&sock->socket_mutex);
+				#warning thread sanitizer sagt hier wird ohne lock geschrieben
 				return 0;
 
 			case WSF_PONG:
@@ -487,9 +499,13 @@ close_socket_error:
 
 int recFrame(socket_info *sock) {
 
-	if (sock == 0) return -1;
+	if (sock == 0){
+		return -1;
+	}
 
-	if (sock->header->SecWebSocketVersion > 6) return recFrameV8(sock);
+	if (sock->header->SecWebSocketVersion > 6){
+		return recFrameV8(sock);
+	}
 
 	LOG( WEBSOCKET_LOG, ERROR_LEVEL, sock->socket, "Websocket Frame < 7 not handled", "");
 	return -1;

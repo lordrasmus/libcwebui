@@ -68,8 +68,9 @@ ws_variable* setGlobalVariable(const char* name, const char* text) {
 
 ws_variable* getGlobalVariable(const char* name) {
 	ws_variable* ret = getVariable(global_v_store, name);
-	if (ret == 0)
+	if (ret == 0){
 		ret = newVariable(global_v_store, name);
+	}
 	return ret;
 }
 

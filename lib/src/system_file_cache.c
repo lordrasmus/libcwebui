@@ -41,8 +41,12 @@ int FileComp(const void* a, const void* b) {
 	char *p_a = (char*) a;
 	char *p_b = (char*) b;
 	ret = strcmp(p_a, p_b);
-	if (ret < 0) return -1;
-	if (ret > 0) return 1;
+	if (ret < 0){
+		return -1;
+	}
+	if (ret > 0){
+		return 1;
+	}
 	return 0;
 }
 
@@ -55,11 +59,21 @@ void InfoPrint( UNUSED_PARA void* a) {
 
 void InfoDest(void *a) {
 	WebserverFileInfo* wfi = (WebserverFileInfo*) a;
-	if (wfi->Url != 0) WebserverFree( (void*) wfi->Url);
-	if (wfi->FilePath != 0) WebserverFree( (void*) wfi->FilePath);
-	if (wfi->Data != 0) WebserverFree( (void*) wfi->Data);
-	if (wfi->lastmodified != 0) WebserverFree(wfi->lastmodified);
-	if (wfi->etag != 0) WebserverFree( (void*) wfi->etag);
+	if (wfi->Url != 0){
+		WebserverFree( (void*) wfi->Url);
+	}
+	if (wfi->FilePath != 0){
+		WebserverFree( (void*) wfi->FilePath);
+	}
+	if (wfi->Data != 0){
+		WebserverFree( (void*) wfi->Data);
+	}
+	if (wfi->lastmodified != 0){
+		WebserverFree(wfi->lastmodified);
+	}
+	if (wfi->etag != 0){
+		WebserverFree( (void*) wfi->etag);
+	}
 	WebserverFree(wfi);
 }
 
@@ -105,13 +119,17 @@ unsigned long getLoadedFilesSize(int *p_count) {
 		wfi = (WebserverFileInfo*) node->info;
 		filesize += wfi->etagLength;
 		filesize += wfi->lastmodifiedLength;
-		if (wfi->RamCached == 1) filesize += wfi->DataLenght;
+		if (wfi->RamCached == 1){
+			filesize += wfi->DataLenght;
+		}
 		filesize += wfi->FilePathLengt;
 		filesize += sizeof(WebserverFileInfo);
 		filesize += sizeof(rb_red_blk_node);
 		count++;
 	}
-	if (p_count != 0) *p_count = count;
+	if (p_count != 0){
+		*p_count = count;
+	}
 
 	free(stack);
 
@@ -131,15 +149,18 @@ void dumpLoadedFiles(http_request *s) {
 		wfi = (WebserverFileInfo*) node->info;
 		filesize = wfi->etagLength;
 		filesize += wfi->lastmodifiedLength;
-		if (wfi->RamCached == 1) filesize += wfi->DataLenght;
+		if (wfi->RamCached == 1){
+			filesize += wfi->DataLenght;
+		}
 		filesize += wfi->FilePathLengt;
 		filesize += sizeof(WebserverFileInfo);
 		
 		printHTMLChunk(s->socket, "<tr><td>%s", wfi->Url);
-		if ( filesize > 1024 )
+		if ( filesize > 1024 ){
 			printHTMLChunk(s->socket, "<td>%d kB", filesize / 1024);
-		else
+		}else{
 			printHTMLChunk(s->socket, "<td>%d B", filesize );
+		}
 		
 		switch ( wfi->fs_type ){
 			case FS_BINARY: printHTMLChunk(s->socket, "<td>binary"); break;
@@ -147,15 +168,17 @@ void dumpLoadedFiles(http_request *s) {
 			case FS_WNFS: printHTMLChunk(s->socket, "<td>wnfs"); break;
 		}
 		
-		if ( wfi->RamCached == 1 )
+		if ( wfi->RamCached == 1 ){
 			printHTMLChunk(s->socket, "<td>true");
-		else
+		}else{
 			printHTMLChunk(s->socket, "<td>false");
+		}
 		
-		if ( wfi->auth_only == 1 )
+		if ( wfi->auth_only == 1 ){
 			printHTMLChunk(s->socket, "<td>true");
-		else
+		}else{
 			printHTMLChunk(s->socket, "<td>false");
+		}
 			
 		switch ( wfi->Compressed  ){
 			case 0 : printHTMLChunk(s->socket, "<td>"); break;
@@ -163,10 +186,11 @@ void dumpLoadedFiles(http_request *s) {
 			case 2 : printHTMLChunk(s->socket, "<td><font color=green>deflate</font>"); break;
 		}
 			
-		if ( wfi->TemplateFile == 1 )
+		if ( wfi->TemplateFile == 1 ){
 			printHTMLChunk(s->socket, "<td><font color=green>true</font>");
-		else
+		}else{
 			printHTMLChunk(s->socket, "<td>");
+		}
 		
 			
 		

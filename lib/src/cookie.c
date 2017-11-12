@@ -37,10 +37,11 @@ int checkCookie(char *name,char *value,HttpRequestHeader *header){
 	#endif
 	ws_list_iterator_start(&header->cookie_list);
 	while( ( cookie = (Cookie*)ws_list_iterator_next(&header->cookie_list) ) ){
-		if(0==strcmp((char*)name,(char*)cookie->name)){
+		if(0==strcmp( name, cookie->name )){
 			l = strlen(cookie->value)+1;
-			if(l > WEBSERVER_GUID_LENGTH)
-			  l = WEBSERVER_GUID_LENGTH;
+			if(l > WEBSERVER_GUID_LENGTH){
+				l = WEBSERVER_GUID_LENGTH;
+			}
 			memcpy(value,cookie->value,l);
 			#ifdef _WEBSERVER_COOKIE_DEBUG_
 			WebServerPrintf("-> gefunden Value <%s>\r\n",value);
@@ -79,7 +80,7 @@ void createCookie(HttpRequestHeader *header, char* name, unsigned int name_lengt
 	}
 
 	#ifdef _WEBSERVER_COOKIE_DEBUG_
-	WebServerPrintf("Parsed Cookie Name <%s>  Value <%s> \n",cookie->name,cookie->value);
+	WebServerPrintf("Parsed Cookie ( %p ) Name <%s>  Value <%s> \n",cookie,cookie->name,cookie->value);
 	#endif
 
 	ws_list_append(&header->cookie_list,cookie);

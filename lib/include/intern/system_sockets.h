@@ -50,14 +50,12 @@ extern "C" {
 	void	WebserverConnectionManagerStartLoop( void );
 	void	WebserverConnectionManagerCloseRequest(socket_info* sock);
 	void 	WebserverConnectionManagerCloseConnections(void);
-	int		handleWebRequest(socket_info* request);
+	int		handleWebRequest(socket_info* sock);
 
 	int		WebserverAccept(void);
-	int		WebserverSSLInit(socket_info* s);
-	int 	WebserverSSLAccept(socket_info* s);
-	int   	WebserverRecv(socket_info* s,unsigned char *buf, int len, int flags);
-	SOCKET_SEND_STATUS 	WebserverSend(socket_info* s,const unsigned char *buf, int len, int flags,int* bytes_send);
-	int   	WebserverCloseSocket(socket_info* conno);
+	int   	WebserverRecv(socket_info* sock,unsigned char *buf, int len, int flags);
+	SOCKET_SEND_STATUS 	WebserverSend(socket_info* sock,const unsigned char *buffer, int len, int flags,int* bytes_send);
+	int   	WebserverCloseSocket(socket_info* sock);
 
 
 

@@ -23,6 +23,7 @@
 
 
 #include "webserver.h"
+#include "miniz.h"
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -67,6 +68,7 @@ inline global_vars* initWebserver(void) {
 	PlatformInitNetwork();
 
 	initEvents();
+	LOG(MESSAGE_LOG, NOTICE_LEVEL, 0, "miniz: %s ", mz_version() );
 
 	if (!initFilesystem()) {
 		return 0;
@@ -101,9 +103,14 @@ void startWebServer(void) {
 }
 
 int handleWebRequest(socket_info* sock) {
-	if (sock == 0) return -1;
+	
+	if (sock == 0){
+		return -1;
+	}
 
-	if (sock->header == 0) return -1;
+	if (sock->header == 0){
+		return -1;
+	}
 
 	if (checkHeaderComplete(sock->header) == false) {
 		sendMethodBadRequestMissingHeaderLines(sock);
@@ -193,7 +200,9 @@ char isTemplateFile(const char* file) {
 	}
 	stopWSVariableArrayIterate(template_file_postfix);
 
-	if (ret == 0) return 0;
+	if (ret == 0){
+		return 0;
+	}
 
 	/* template ignores suchen */
 	tmp = getWSVariableArrayFirst(template_file_postfix);

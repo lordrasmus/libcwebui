@@ -28,16 +28,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "webserver_api_functions.h"
 
 
-#define CONTENTTYP_TEXT 1
-#define CONTENTTYP_OCTETSTREAM 2
+#define CONTENTTYP_TEXT 		( 1 )
+#define CONTENTTYP_OCTETSTREAM 	( 2 )
 
 #ifndef WEBSERVER_MAX_HEADER_LINE_LENGHT
 	#error WEBSERVER_MAX_HEADER_LINE_LENGHT not defined
 #endif
 
-#define MAX_HEADER_LINE_ERROR -20
-#define NO_SSL_CONNECTION_ERROR -21
-#define SSL_ACCEPT_OK 2
+#define MAX_HEADER_LINE_ERROR 	( -20 )
+#define NO_SSL_CONNECTION_ERROR ( -21 )
+#define SSL_ACCEPT_OK 			( 2 )
 
 
 
@@ -51,15 +51,15 @@ int sendHeaderNotModified(http_request* s, WebserverFileInfo *info);
 int sendHeaderWebsocket(socket_info* sock);
 int sendPreflightAllowed(socket_info *sock);
 
-void sendHeaderError(socket_info* socket, char* ErrorMessage,int p_lenght);
+void sendHeaderError(socket_info* sock, char* ErrorMessage,int p_lenght);
 void sendHeaderNotFound(http_request* s, int p_lenght);
 
-int analyseHeaderLine(socket_info* socket,char *line,unsigned int length,HttpRequestHeader *header);
+int analyseHeaderLine(socket_info* sock,char *line,unsigned int length,HttpRequestHeader *header);
 int analyseFormDataLine(socket_info* sock, char *line, unsigned int length, HttpRequestHeader *header);
 
 int getHttpRequestHeader(http_request* s);
 
-int ParseHeader(socket_info* socket,HttpRequestHeader* header,char* buffer,unsigned int length, unsigned int* bytes_parsed);
+int ParseHeader(socket_info* sock,HttpRequestHeader* header,char* buffer,unsigned int length, unsigned int* bytes_parsed);
 
 void clearHeader(http_request *s);
 

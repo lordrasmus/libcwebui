@@ -44,8 +44,12 @@ int StringComp(const void* a, const void* b) {
 	}
 
 	ret = strcmp(p_a, p_b);
-	if (ret < 0) return -1;
-	if (ret > 0) return 1;
+	if (ret < 0){
+		return -1;
+	}
+	if (ret > 0){
+		return 1;
+	}
 	return 0;
 }
 
@@ -86,13 +90,16 @@ int stringfind(const char *buffer, const char *pattern) {
 		return 0;
 	}
 	length = (int) strlen((char*) buffer);
-	for (i = 0; i < length; i++)
+	for (i = 0; i < length; i++){
 		if (buffer[i] == pattern[i2]) {
 			i2++;
-			if (pattern[i2] == '\0') return i;
+			if (pattern[i2] == '\0'){
+				return i;
+			}
 		} else {
 			i2 = 0;
 		}
+	}
 	return 0;
 
 }
@@ -120,14 +127,19 @@ long stringnfind(const char *buffer, const char *pattern, unsigned int buffer_le
 int stringfindAtPos(const char *buffer, const char *pattern) {
 	int i, i2 = 0;
 	int lenght = (int) strlen((char*) pattern);
-	for (i = 0; i < lenght; i++)
+	for (i = 0; i < lenght; i++){
 		if (buffer[i] == pattern[i2]) {
 			i2++;
-			if (pattern[i2] == '\0') return i;
-			if (i2 == lenght) return i;
+			if (pattern[i2] == '\0'){
+				return i;
+			}
+			if (i2 == lenght){
+				return i;
+			}
 		} else {
 			return 0;
 		}
+	}
 	return 0;
 
 }
@@ -163,43 +175,43 @@ unsigned long Webserver_strlen(char *text) {
 void getHTMLMonth(unsigned char month, char* buffer, SIZE_TYPE size) {
 	switch (month) {
 	case 1:
-		snprintf((char*) buffer, size, "Jan");
+		snprintf( buffer, size, "Jan");
 		break;
 	case 2:
-		snprintf((char*) buffer, size, "Feb");
+		snprintf( buffer, size, "Feb");
 		break;
 	case 3:
-		snprintf((char*) buffer, size, "Mar");
+		snprintf( buffer, size, "Mar");
 		break;
 	case 4:
-		snprintf((char*) buffer, size, "Apr");
+		snprintf( buffer, size, "Apr");
 		break;
 	case 5:
-		snprintf((char*) buffer, size, "May");
+		snprintf( buffer, size, "May");
 		break;
 	case 6:
-		snprintf((char*) buffer, size, "Jun");
+		snprintf( buffer, size, "Jun");
 		break;
 	case 7:
-		snprintf((char*) buffer, size, "Jul");
+		snprintf( buffer, size, "Jul");
 		break;
 	case 8:
-		snprintf((char*) buffer, size, "Aug");
+		snprintf( buffer, size, "Aug");
 		break;
 	case 9:
-		snprintf((char*) buffer, size, "Sep");
+		snprintf( buffer, size, "Sep");
 		break;
 	case 10:
-		snprintf((char*) buffer, size, "Oct");
+		snprintf( buffer, size, "Oct");
 		break;
 	case 11:
-		snprintf((char*) buffer, size, "Nov");
+		snprintf( buffer, size, "Nov");
 		break;
 	case 12:
-		snprintf((char*) buffer, size, "Dec");
+		snprintf( buffer, size, "Dec");
 		break;
 	default:
-		snprintf((char*) buffer, size, "Unknown Month %d", month);
+		snprintf( buffer, size, "Unknown Month %d", month);
 		break;
 	}
 }
@@ -215,19 +227,21 @@ unsigned int getHTMLDateFormat(char* buffer, int day, int month, int year, int h
 
 }
 
-void convertBinToHexString(unsigned char* bin, int bin_length, char* text, int text_length) {
+void convertBinToHexString(const unsigned char* bin, int bin_length, char* text, int text_length) {
 	int l;
 	for (l = 0; l < bin_length; l++) {
 		text[l * 2 + 0] = bin[l] >> 4;
-		if (text[l * 2 + 0] <= 9)
+		if (text[l * 2 + 0] <= 9){
 			text[l * 2 + 0] += 48;
-		else
+		}else{
 			text[l * 2 + 0] += 55;
+		}
 		text[l * 2 + 1] = bin[l] & 0x0F;
-		if (text[l * 2 + 1] <= 9)
+		if (text[l * 2 + 1] <= 9){
 			text[l * 2 + 1] += 48;
-		else
+		}else{
 			text[l * 2 + 1] += 55;
+		}
 	}
 	text[text_length] = '\0';
 }
@@ -239,8 +253,9 @@ void generateGUID(char* buf, int length) {
 	if (0 != WebserverRANDBytes(tmp, length / 2)) {
 		convertBinToHexString(tmp, length / 2, buf, length);
 		l = strlen(buf);
-		if (l != length)
-		LOG( PLATFORM_LOG, NOTICE_LEVEL, 0, "error generating Data %d->%d %s",length,l, buf);
+		if (l != length){
+			LOG( PLATFORM_LOG, NOTICE_LEVEL, 0, "error generating Data %d->%d %s",length,l, buf);
+		}
 		WebserverFree(tmp);
 		return;
 	}

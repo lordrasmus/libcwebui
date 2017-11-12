@@ -34,7 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ********************************************************************/
 
 char			WebServerReadDataStart( void );
-int 			PlatformOpenDataReadStream( const unsigned char* name );
+int 			PlatformOpenDataReadStream( const char* name );
 int				PlatformGetFileSize(void);
 int 			PlatformGetFileInfo(WebserverFileInfo* file, int* time_changed, int *new_size);
 char			PlatformCloseDataStream( void );

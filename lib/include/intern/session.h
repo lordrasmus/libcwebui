@@ -36,10 +36,6 @@ typedef enum {
 	SESSION_STORE_SSL	= 2
 } STORE_TYPES;
 
-#define NORMAL_CHECK_OK			1
-#define SSL_CHECK_OK			2
-#define NOT_REGISTERED			0
-#define SESSION_MISMATCH_ERROR -1
 
 #ifdef __cplusplus
 extern "C" {

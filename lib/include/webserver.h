@@ -53,10 +53,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 	#endif
 #endif
 
-#include "simclist.h"
 #include "red_black_tree.h"
 
-
+#include "intern/linked_list.h"
 #include "intern/helper.h"
 #include "intern/webserver_utils.h"
 

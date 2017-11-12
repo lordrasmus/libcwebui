@@ -22,6 +22,7 @@
 */
 
 #include "webserver.h"
+#include "miniz_tinfl.h"
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -44,7 +45,7 @@ void init_file_access( void ){
 
 void free_file_access( void ){
 
-	// TODO alle elemente richtig freigeben
+	// TODO(lordrasmus) alle elemente richtig freigeben
 
 	//freeFileCache();
 
@@ -141,7 +142,7 @@ int prepare_file_content(WebserverFileInfo* file) {
 			case FS_BINARY :
 				//printf("compressed : %d\n",file->Compressed);
 				if ( file->Compressed == 2 ){
-					printf("warning: decompressing file : %s\n", file->FilePath );
+					//printf("warning: decompressing file : %s\n", file->FilePath );
 					file->Data = WebserverMalloc( file->RealDataLenght );
 					tinfl_decompress_mem_to_mem( (char*)file->Data, file->RealDataLenght, file->CompressedData, file->CompressedDataLenght, 0 );
 					file->DataLenght = file->RealDataLenght;
@@ -214,8 +215,9 @@ void release_file_content(WebserverFileInfo* file) {
 WebserverFileInfo VISIBLE_ATTR *getFile( char *name)  {
 	WebserverFileInfo *file = 0;
 
-	if (name == 0)
+	if (name == 0){
 		return 0;
+	}
 
 	while( name[0] == '/'){
 		name++;
@@ -230,9 +232,10 @@ WebserverFileInfo VISIBLE_ATTR *getFile( char *name)  {
 
 #ifdef WEBSERVER_USE_WNFS
 
-	file = wnfs_get_file( (unsigned char*)name );
-	if ( file != 0 )
+	file = wnfs_get_file( name );
+	if ( file != 0 ){
 		return file;
+	}
 
 #endif
 
@@ -245,7 +248,7 @@ WebserverFileInfo VISIBLE_ATTR *getFile( char *name)  {
 	}
 
 
-	file = getFileLocalFileSystem( ( unsigned char*) name);
+	file = getFileLocalFileSystem( name);
 	if ( file == 0 ){
 		printf("getFile : Error File %s not found\n", name );
 		return 0;

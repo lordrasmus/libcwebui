@@ -30,20 +30,26 @@
 
 CONDITION_RETURN is_user_registered(http_request* s) {
 	int i = checkUserRegistered(s);
-	if ((i == NORMAL_CHECK_OK) || (i == SSL_CHECK_OK)) return CONDITION_TRUE;
+	if ((i == NORMAL_CHECK_OK) || (i == SSL_CHECK_OK)){
+		return CONDITION_TRUE;
+	}
 	return CONDITION_FALSE;
 }
 
 CONDITION_RETURN is_user_not_registered(http_request* s) {
 	int i = checkUserRegistered(s);
-	if ((i == NORMAL_CHECK_OK) || (i == SSL_CHECK_OK)) return CONDITION_FALSE;
+	if ((i == NORMAL_CHECK_OK) || (i == SSL_CHECK_OK)){
+		return CONDITION_FALSE;
+	}
 	return CONDITION_TRUE;
 }
 
 CONDITION_RETURN is_user_registered_ssl(http_request* s) {
 #ifdef WEBSERVER_USE_SSL
 	int i = checkUserRegistered(s);
-	if (i == SSL_CHECK_OK ) return CONDITION_TRUE;
+	if (i == SSL_CHECK_OK ){
+		return CONDITION_TRUE;
+	}
 #endif
 	return CONDITION_FALSE;
 }
@@ -51,7 +57,9 @@ CONDITION_RETURN is_user_registered_ssl(http_request* s) {
 CONDITION_RETURN is_user_not_registered_ssl(http_request* s) {
 #ifdef WEBSERVER_USE_SSL
 	int i = checkUserRegistered(s);
-	if (i == SSL_CHECK_OK ) return CONDITION_FALSE;
+	if (i == SSL_CHECK_OK ){
+		return CONDITION_FALSE;
+	}
 #endif
 	return CONDITION_TRUE;
 }
@@ -79,29 +87,43 @@ CONDITION_RETURN equal_condition(http_request* s, FUNCTION_PARAS* func) {
 		return CONDITION_FALSE;
 	}
 
-	if (op1->type == VAR_TYPE_REF)
+	if (op1->type == VAR_TYPE_REF){
 		var1 = op1->val.value_ref;
-	else
+	}else{
 		var1 = op1;
+	}
 
-	if (op2->type == VAR_TYPE_REF)
+	if (op2->type == VAR_TYPE_REF){
 		var2 = op2->val.value_ref;
-	else
+	}else{
 		var2 = op2;
+	}
 
 	if (var1->type == var2->type) {
-		if (var1->type == VAR_TYPE_INT) if (var1->val.value_int == var2->val.value_int) ret = CONDITION_TRUE;
+		if (var1->type == VAR_TYPE_INT){
+			if (var1->val.value_int == var2->val.value_int){
+				ret = CONDITION_TRUE;
+			}
+		}
 
-		if (var1->type == VAR_TYPE_STRING) if (0 == strcmp(var1->val.value_string, var2->val.value_string)) ret = CONDITION_TRUE;
+		if (var1->type == VAR_TYPE_STRING){
+			if (0 == strcmp(var1->val.value_string, var2->val.value_string)){
+				ret = CONDITION_TRUE;
+			}
+		}
 	}
 
 	if ((var1->type == VAR_TYPE_INT) && (var2->type == VAR_TYPE_STRING)) {
-		if (var1->val.value_int == getWSVariableInt(var2)) ret = CONDITION_TRUE;
+		if (var1->val.value_int == getWSVariableInt(var2)){
+			ret = CONDITION_TRUE;
+		}
 
 	}
 
 	if ((var2->type == VAR_TYPE_INT) && (var1->type == VAR_TYPE_STRING)) {
-		if (var2->val.value_int == getWSVariableInt(var1)) ret = CONDITION_TRUE;
+		if (var2->val.value_int == getWSVariableInt(var1)){
+			ret = CONDITION_TRUE;
+		}
 	}
 
 	freeWSVariable(op1);
@@ -121,30 +143,37 @@ CONDITION_RETURN builtinConditions(http_request* s, FUNCTION_PARAS* func) {
 	CheckCondition( "is_user_registered_ssl", is_user_registered_ssl)
 	CheckCondition( "is_user_not_registered_ssl", is_user_not_registered_ssl)
 
-	if (0 == strcmp((char*) func->parameter[0].text, "is_false")) {
+	if (0 == strcmp( func->parameter[0].text, "is_false")) {
 		return CONDITION_FALSE;
 	}
 
-	if (0 == strcmp((char*) func->parameter[0].text, "is_true")) {
+	if (0 == strcmp( func->parameter[0].text, "is_true")) {
 		return CONDITION_TRUE;
 	}
 
-	if (0 == strncmp((char*) func->parameter[0].text, "eq", 2)) {
+	if (0 == strncmp( func->parameter[0].text, "eq", 2)) {
 		return equal_condition(s, func);
 	}
-	if (0 == strncmp((char*) func->parameter[0].text, "!eq", 2)) {
+	if (0 == strncmp( func->parameter[0].text, "!eq", 2)) {
 		tmp = equal_condition(s, func);
-		if (tmp == CONDITION_TRUE) return CONDITION_FALSE;
-		if (tmp == CONDITION_FALSE) return CONDITION_TRUE;
+		if (tmp == CONDITION_TRUE){
+			return CONDITION_FALSE;
+		}
+		if (tmp == CONDITION_FALSE){
+			return CONDITION_TRUE;
+		}
 	}
 
 	if (0 == strcmp(func->parameter[0].text, "is_ssl_active")) {
 #ifdef WEBSERVER_USE_SSL
-		if (s->socket->use_ssl == 1)
+		if (s->socket->use_ssl == 1){
 			return CONDITION_TRUE;
-		else
+		}else{
 #endif
 			return CONDITION_FALSE;
+#ifdef WEBSERVER_USE_SSL
+		}
+#endif
 	}
 
 	if (0 == strcmp(func->parameter[0].text, "is_websockets_available")) {

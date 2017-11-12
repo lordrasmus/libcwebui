@@ -96,7 +96,11 @@ int initOpenSSL(void) {
 
 	int file_error = 0;
 
+	const char* vers = SSLeay_version(SSLEAY_VERSION);
+
 	bio_err = 0;
+
+	LOG( SSL_LOG, NOTICE_LEVEL, 0, "using openssl : %s ", vers);
 
 	if (0 == getConfigText("ssl_key_file")) {
 		LOG( SSL_LOG, ERROR_LEVEL, 0, "SSL fehler kein ssl_key_file gesetzt", "");
@@ -106,7 +110,7 @@ int initOpenSSL(void) {
 	}
 
 	if (0 == getConfigText("ssl_key_file_backup")) {
-		LOG( SSL_LOG, WARNING_LEVEL, 0, "SSL fehler kein ssl_key_file_backup gesetzt", "");
+		//LOG( SSL_LOG, WARNING_LEVEL, 0, "SSL fehler kein ssl_key_file_backup gesetzt", "");
 	}else{
 		LOG( SSL_LOG, NOTICE_LEVEL, 0, "SSL ssl_key_file_backup %s", getConfigText("ssl_key_file_backup") );
 	}
@@ -451,7 +455,7 @@ int WebserverSSLAccept(socket_info* s) {
 	return NO_SSL_CONNECTION_ERROR;
 }
 
-int WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, int len, UNUSED_PARA int flags) {
+int WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, unsigned int len, UNUSED_PARA int flags) {
 	int ret = 0;
 	int l = 0;
 	int r2;
@@ -549,7 +553,7 @@ int WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, int len, UNU
 //#endif
 			return SSL_PROTOCOL_ERROR;
 		}
-		if (l == len) {
+		if ((unsigned int)l == len) {
 			return l;
 		}
 		//}while(SSL_pending(s->ssl)>0);
@@ -581,7 +585,9 @@ SOCKET_SEND_STATUS WebserverSSLSendNonBlocking(socket_info* s, const unsigned ch
 #if _WEBSERVER_CONNECTION_DEBUG_ > 3
 			LOG( CONNECTION_LOG, ERROR_LEVEL, s->socket, "SSL_ERROR_WANT_READ", "");
 #endif
-			if (bytes_send != 0) *bytes_send = l;
+			if (bytes_send != 0){
+				*bytes_send = l;
+			}
 			return SOCKET_SEND_SEND_BUFFER_FULL;
 
 		case SSL_ERROR_WANT_WRITE:
@@ -589,7 +595,9 @@ SOCKET_SEND_STATUS WebserverSSLSendNonBlocking(socket_info* s, const unsigned ch
 #if _WEBSERVER_CONNECTION_DEBUG_ > 3
 			LOG(CONNECTION_LOG,ERROR_LEVEL,s->socket,"SSL_ERROR_WANT_WRITE","");
 #endif
-			if (bytes_send != 0) *bytes_send = l;
+			if (bytes_send != 0){
+				*bytes_send = l;
+			}
 			return SOCKET_SEND_SEND_BUFFER_FULL;
 
 		case SSL_ERROR_SSL:
@@ -619,11 +627,15 @@ SOCKET_SEND_STATUS WebserverSSLSendNonBlocking(socket_info* s, const unsigned ch
 			ERR_error_string(err_code, buffer);
 			//ERR_error_string(r2,buffer);
 			LOG( CONNECTION_LOG, ERROR_LEVEL, s->socket, "Unhandled SSL Error ( %d ) %s", r2, buffer);
-			if (bytes_send != 0) *bytes_send = l;
+			if (bytes_send != 0){
+				*bytes_send = l;
+			}
 			return SOCKET_SEND_SSL_ERROR;
 		}
 		if (l == len) {
-			if (bytes_send != 0) *bytes_send = l;
+			if (bytes_send != 0){
+				*bytes_send = l;
+			}
 			return SOCKET_SEND_NO_MORE_DATA;
 		}
 		//}while(SSL_pending(s->ssl)>0);

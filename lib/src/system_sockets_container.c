@@ -49,8 +49,12 @@ int SockComp(const void* a, const void* b) {
 	char *p_a = (char*) a;
 	char *p_b = (char*) b;
 	ret = strcmp(p_a, p_b);
-	if (ret < 0) return -1;
-	if (ret > 0) return 1;
+	if (ret < 0){
+		return -1;
+	}
+	if (ret > 0){
+		return 1;
+	}
 	return 0;
 }
 
@@ -63,7 +67,9 @@ void initSocketContainer(void) {
 void freeSocketContainer(void) {
 	deleteAllSockets();
 	ws_list_destroy(&sock_list);
-	RBTreeDestroy(sock_tree);
+	if ( sock_tree != 0 ){
+		RBTreeDestroy(sock_tree);
+	}
 }
 
 void deleteSocket(socket_info* sock) {
@@ -102,7 +108,9 @@ void addSocketContainer(socket_info* sock) {
 
 void addSocketByGUID(socket_info* sock) {
 	PlatformLockMutex(&socks_mutex);
-	if (sock->isWebsocket == 1) RBTreeInsert(sock_tree, sock->websocket_guid, sock);
+	if (sock->isWebsocket == 1){
+		RBTreeInsert(sock_tree, sock->websocket_guid, sock);
+	}
 	PlatformUnlockMutex(&socks_mutex);
 }
 
@@ -167,7 +175,9 @@ unsigned long dumpSocketsSize(int *count) {
 		i++;
 	}
 	ws_list_iterator_stop(&sock_list);
-	if (count != 0) *count = i;
+	if (count != 0){
+		*count = i;
+	}
 
 	PlatformUnlockMutex(&socks_mutex);
 	return size;

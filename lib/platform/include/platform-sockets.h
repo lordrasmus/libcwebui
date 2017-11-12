@@ -33,10 +33,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 *																	*
 ********************************************************************/
 
-#define CLIENT_NO_MORE_DATA 0
-#define CLIENT_DISCONNECTED -1
-#define CLIENT_UNKNOWN_ERROR -2
-#define CLIENT_SEND_BUFFER_FULL -3
+#define CLIENT_NO_MORE_DATA 	( 0 )
+#define CLIENT_DISCONNECTED 	( -1 )
+#define CLIENT_UNKNOWN_ERROR 	( -2 )
+#define CLIENT_SEND_BUFFER_FULL ( -3 )
 
 
 

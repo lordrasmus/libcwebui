@@ -20,8 +20,15 @@
  */
 
 
+#include <simclist.h>
+
+
+#ifndef USE_NEW_LIST
+
+
+
 /* SimCList implementation, version 1.5 */
-#include "stdafx.h"
+//#include "stdafx.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -1510,6 +1517,8 @@ static int list_attrOk(const list_t *restrict l) {
     ok = (l->attrs.copy_data == 0 || l->attrs.meter != NULL);
     return ok;
 }
+
+#endif
 
 #endif
 

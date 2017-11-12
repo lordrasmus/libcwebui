@@ -32,13 +32,21 @@
 int var_seeker(const void *el, const void *key) {
 	/* let's assume el and key being always != NULL */
 	ws_variable *var = (ws_variable *) el;
-	if ( var == 0) return 0;
-	if ( key == 0) return 0;
+	if ( var == 0){
+		return 0;
+	}
+	if ( key == 0){
+		return 0;
+	}
 
 	if ((var->type == VAR_TYPE_REF) && (var->name == 0)) {
-		if (0 == strcmp((char*) key, var->val.value_ref->name)) return 1;
+		if (0 == strcmp((char*) key, var->val.value_ref->name)){
+			return 1;
+		}
 	} else {
-		if (0 == strcmp(var->name, (char*) key)) return 1;
+		if (0 == strcmp(var->name, (char*) key)){
+			return 1;
+		}
 	}
 	return 0;
 }
@@ -75,7 +83,9 @@ void deleteVariableStore(ws_variable_store* store) {
 unsigned int getVariableStoreSize(ws_variable_store* store) {
 	unsigned int ret = 0;
 	ws_variable* var = 0;
-	if (store == 0) return 0;
+	if (store == 0){
+		return 0;
+	}
 
 	var = getFirstVariable(store);
 	while (var != 0) {
@@ -90,7 +100,9 @@ unsigned int getVariableStoreSize(ws_variable_store* store) {
 
 ws_variable* searchVariable(ws_variable_store* store, const char* name) {
 	ws_variable* var = 0;
-	if (store == 0) return 0;
+	if (store == 0){
+		return 0;
+	}
 
 	var = (ws_variable *) ws_list_seek(&store->var_list, name);
 
@@ -99,7 +111,9 @@ ws_variable* searchVariable(ws_variable_store* store, const char* name) {
 
 ws_variable* newVariable(ws_variable_store* store, const char* name) {
 	ws_variable* var = 0;
-	if (store == 0) return 0;
+	if (store == 0){
+		return 0;
+	}
 
 	if (name != 0) {
 		var = searchVariable(store, name);
@@ -115,18 +129,24 @@ ws_variable* newVariable(ws_variable_store* store, const char* name) {
 }
 
 ws_variable* getVariable(ws_variable_store* store, const char* name) {
-	if (store == 0) return 0;
+	if (store == 0){
+		return 0;
+	}
 	return searchVariable(store, name);
 }
 
 void addVariable(ws_variable_store* store, ws_variable* var) {
-	if (store == 0) return;
+	if (store == 0){
+		return;
+	}
 	ws_list_append(&store->var_list, var);
 }
 
 void delVariable(ws_variable_store* store, const char* name) {
 	ws_variable* var;
-	if (store == 0) return ;
+	if (store == 0){
+		return;
+	}
 	var = searchVariable(store, name);
 	freeVariable(store,var);
 
@@ -141,8 +161,12 @@ ws_variable* refVariable(ws_variable_store* store, ws_variable* ref, const char*
 }
 
 void freeVariable(ws_variable_store* store, ws_variable* var) {
-	if (var == 0) return;
-	if (store == 0) return;
+	if (var == 0){
+		return;
+	}
+	if (store == 0){
+		return;
+	}
 
 	ws_list_attributes_seeker(&store->var_list, 0);
 	ws_list_delete(&store->var_list, var);
@@ -153,7 +177,9 @@ void freeVariable(ws_variable_store* store, ws_variable* var) {
 
 void clearVariables(ws_variable_store* store) {
 	ws_variable *var;
-	if (store == 0) return;
+	if (store == 0){
+		return;
+	}
 
 	var = getFirstVariable(store);
 	while (var != 0) {
@@ -165,9 +191,13 @@ void clearVariables(ws_variable_store* store) {
 }
 
 ws_variable* getFirstVariable(ws_variable_store* store) {
-	if (store == 0) return 0;
+	if (store == 0){
+		return 0;
+	}
 
-	if (ws_list_size(&store->var_list) == 0) return 0;
+	if (ws_list_size(&store->var_list) == 0){
+		return 0;
+	}
 
 	ws_list_iterator_start(&store->var_list);
 	if (0 == ws_list_iterator_hasnext(&store->var_list)) {
@@ -178,7 +208,9 @@ ws_variable* getFirstVariable(ws_variable_store* store) {
 }
 
 ws_variable* getNextVariable(ws_variable_store* store) {
-	if (store == 0) return 0;
+	if (store == 0){
+		return 0;
+	}
 	if (0 == ws_list_iterator_hasnext(&store->var_list)) {
 		ws_list_iterator_stop(&store->var_list);
 		return 0;
@@ -187,7 +219,9 @@ ws_variable* getNextVariable(ws_variable_store* store) {
 }
 
 void stopIterateVariable(ws_variable_store* store) {
-	if (store == 0) return;
+	if (store == 0){
+		return;
+	}
 	ws_list_iterator_stop(&store->var_list);
 }
 
