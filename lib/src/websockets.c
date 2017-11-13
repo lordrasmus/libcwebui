@@ -166,10 +166,8 @@ int checkIskWebsocketConnection(socket_info* sock,HttpRequestHeader* header) {
 						return 3;
 					}
 
+					#warning was macht das nochmal ??
 					if (header->SecWebSocketKey != 0){
-						return 2;
-					}
-					if (header->SecWebSocketKey1 != 0){
 						return 2;
 					}
 
@@ -187,17 +185,11 @@ int startWebsocketConnection(socket_info* sock) {
 	http_request *s;
 	sock->active = 0;
 
-	if (sock->header->SecWebSocketVersion < 7) {
-		if (sock->header->SecWebSocketKey1 != 0) {
-			calcWebsocketSecKeys(sock);
-		}
-	} else {
-		if (sock->header->SecWebSocketKey != 0) {
-			strncpy( buffer, sock->header->SecWebSocketKey, 100 );
-			strcat(buffer, "258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
-			WebserverSHA1((unsigned char*) buffer, strlen(buffer), (unsigned char*) buffer2);
-			WebserverBase64Encode((unsigned char*) buffer2, 20, sock->header->WebSocketOutHash, 40);
-		}
+	if (sock->header->SecWebSocketKey != 0) {
+		strncpy( buffer, sock->header->SecWebSocketKey, 100 );
+		strcat(buffer, "258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
+		WebserverSHA1((unsigned char*) buffer, strlen(buffer), (unsigned char*) buffer2);
+		WebserverBase64Encode((unsigned char*) buffer2, 20, sock->header->WebSocketOutHash, 40);
 	}
 
 	sendHeaderWebsocket(sock);
@@ -232,26 +224,6 @@ int startWebsocketConnection(socket_info* sock) {
 	return 0;
 }
 
-static void setChallengeNumber(unsigned char* buf, uint32_t number) {
-	int i;
-	unsigned char* p = buf + 3;
-	for (i = 0; i < 4; i++) {
-		*p = number & 0xFF;
-		--p;
-		number >>= 8;
-	}
-}
-
-static void generateExpectedChallengeResponse(uint32_t number1, uint32_t number2, char key3[8], char expectedChallenge[16]) {
-	unsigned char challenge[16];
-
-	setChallengeNumber(&challenge[0], number1);
-	setChallengeNumber(&challenge[4], number2);
-	memcpy(&challenge[8], key3, 8);
-
-	WebserverMD5(challenge, 16, (unsigned char*) expectedChallenge);
-}
-
 unsigned long calckey(char* buffer) {
 	int offset;
 	unsigned long key = 0;
@@ -284,28 +256,6 @@ unsigned long calckey(char* buffer) {
 	}
 	return key;
 }
-
-void calcWebsocketSecKeys(socket_info* request) {
-	unsigned int k1, k2;
-	unsigned char google[16];
-
-	if (request->header->SecWebSocketKey1 == 0){ /* Alte (BETA) Protokoll Version */
-		return;
-	}
-
-	if (request->header->SecWebSocketKey2 == 0){
-		return;
-	}
-
-	k1 = calckey(request->header->SecWebSocketKey1);
-	k2 = calckey(request->header->SecWebSocketKey2);
-
-	generateExpectedChallengeResponse(k1, k2, request->header->WebSocketKey3, (char*) google);
-
-	memcpy(request->header->WebSocketOutHash, google, 16);
-
-}
-
 
 char* getWebsocketStoreGUID(char* guid) {
 	socket_info *sock = getSocketByGUID(guid); /* Locked */

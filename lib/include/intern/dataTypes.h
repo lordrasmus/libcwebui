@@ -202,9 +202,6 @@ typedef struct {
 	char isHttp1_1;
 
 #ifdef WEBSERVER_USE_WEBSOCKETS
-	char *SecWebSocketKey1;
-	char *SecWebSocketKey2;
-	char WebSocketKey3[8];
 	unsigned char WebSocketOutHash[40]; /* Versionen vor 8 benutzen nur 16 byte */
 	char *SecWebSocketProtocol;
 

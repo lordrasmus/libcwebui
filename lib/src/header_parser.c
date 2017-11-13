@@ -506,10 +506,6 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 
 #ifdef WEBSERVER_USE_WEBSOCKETS
 
-	CHECK_HEADER_LINE("Sec-WebSocket-Key1: ",SecWebSocketKey1)
-
-	CHECK_HEADER_LINE("Sec-WebSocket-Key2: ",SecWebSocketKey2)
-
 	CHECK_HEADER_LINE("Sec-WebSocket-Key: ",SecWebSocketKey)
 
 	CHECK_HEADER_LINE("Sec-WebSocket-Origin: ",SecWebSocketOrigin)
@@ -580,7 +576,7 @@ int ParseHeader(socket_info* sock, HttpRequestHeader* header, char* buffer, unsi
 	char* pos = buffer;
 	char back;
 #ifdef WEBSERVER_USE_WEBSOCKETS
-	int diff,ret;
+	int ret;
 #endif
 	unsigned int line_length;
 
@@ -593,15 +589,10 @@ int ParseHeader(socket_info* sock, HttpRequestHeader* header, char* buffer, unsi
 		if ((buffer[0] == '\r') && (buffer[1] == '\n')) {
 #ifdef WEBSERVER_USE_WEBSOCKETS
 			ret = checkIskWebsocketConnection(sock,header);
+			// ist > 1 wenn SecWebSocketKeys noch fehlen
 			if( ret > 1) {
-				diff = length -i;
-				if( diff == 9) {
-					memcpy(header->WebSocketKey3,&buffer[i+1],8);
-					return -2;
-				} else {
-					/* TODO: Behandlung wenn der Teil nach dem Websocket header nicht vollstaendig ist */
-					printf("Fehlt noch \n");
-				}
+				#warning Behandlung wenn der Teil nach dem Websocket header nicht vollständig ist fehlt noch
+				printf("incomplete websocket header handling not implemented\n");
 			}
 #endif
 			return -2;
@@ -612,17 +603,10 @@ int ParseHeader(socket_info* sock, HttpRequestHeader* header, char* buffer, unsi
 
 #ifdef WEBSERVER_USE_WEBSOCKETS
 			ret = checkIskWebsocketConnection(sock,header);
+			// ist > 1 wenn SecWebSocketKeys noch fehlen
 			if( ret > 1) {
-				if ( header->SecWebSocketVersion < 13 ) {
-					printf("Warning SecWebSocketVersion < 13\n");
-					diff = length -i;
-					if( diff == 9) {
-						memcpy(header->WebSocketKey3,&buffer[i+1],8);
-					} else {
-						printf("Fehlt noch \n");
-						/* TODO: Behandlung wenn der Teil nach dem Websocket header nicht vollstaendig ist */
-					}
-				}
+				#warning Behandlung wenn der Teil nach dem Websocket header nicht vollständig ist fehlt noch
+				printf("incomplete websocket header handling not implemented\n");
 			}
 #endif
 

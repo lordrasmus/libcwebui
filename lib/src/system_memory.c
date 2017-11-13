@@ -778,14 +778,6 @@ void WebserverResetHttpRequestHeader(HttpRequestHeader *header) {
 
 
 #ifdef WEBSERVER_USE_WEBSOCKETS
-	if (header->SecWebSocketKey1 != 0) {
-		WebserverFree(header->SecWebSocketKey1);
-		header->SecWebSocketKey1 = 0;
-	}
-	if (header->SecWebSocketKey2 != 0) {
-		WebserverFree(header->SecWebSocketKey2);
-		header->SecWebSocketKey2 = 0;
-	}
 	if (header->SecWebSocketKey != 0) {
 		WebserverFree(header->SecWebSocketKey);
 		header->SecWebSocketKey = 0;

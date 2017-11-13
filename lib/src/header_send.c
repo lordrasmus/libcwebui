@@ -85,26 +85,10 @@ char* get_cors_type_name( CORS_HEADER_TYPES type ){
 #ifdef WEBSERVER_USE_WEBSOCKETS
 
 int sendHeaderWebsocket(socket_info* sock) {
-	if (sock->header->SecWebSocketVersion < 7) {
-		printWebsocketChunk(sock, "HTTP/1.1 101 Web Socket Protocol Handshake\r\n");
-		printWebsocketChunk(sock, "Upgrade: WebSocket\r\n");
-		printWebsocketChunk(sock, "Connection: Upgrade\r\n");
-		if (sock->header->SecWebSocketKey1 != 0) { /* neuers websocket handshake protokol */
-			printWebsocketChunk(sock, "sec-websocket-origin: %s\r\n", sock->header->Origin);
-			printWebsocketChunk(sock, "sec-websocket-location: ws://%s/%s\r\n", sock->header->Host, sock->header->url);
-		} else {
-			printWebsocketChunk(sock, "WebSocket-Origin: %s\r\n", sock->header->Origin);
-			printWebsocketChunk(sock, "WebSocket-Location: ws://%s/%s\r\n", sock->header->Host, sock->header->url);
-		}
-		if (sock->header->SecWebSocketKey1 != 0) {
-			sendWebsocketChunk(sock, sock->header->WebSocketOutHash, 16);
-		}
-	} else {
-		printWebsocketChunk(sock, "HTTP/1.1 101 Switching Protocols\r\n");
-		printWebsocketChunk(sock, "Upgrade: websocket\r\n");
-		printWebsocketChunk(sock, "Connection: Upgrade\r\n");
-		printWebsocketChunk(sock, "Sec-WebSocket-Accept: %s\r\n", sock->header->WebSocketOutHash);
-	}
+	printWebsocketChunk(sock, "HTTP/1.1 101 Switching Protocols\r\n");
+	printWebsocketChunk(sock, "Upgrade: websocket\r\n");
+	printWebsocketChunk(sock, "Connection: Upgrade\r\n");
+	printWebsocketChunk(sock, "Sec-WebSocket-Accept: %s\r\n", sock->header->WebSocketOutHash);
 	printWebsocketChunk(sock, "\r\n");
 	return 0;
 }
