@@ -63,7 +63,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 
-#define WEBSERVER_API 5
+#define WEBSERVER_API 6
 
 #ifdef __cplusplus
 extern "C" {

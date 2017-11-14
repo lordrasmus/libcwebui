@@ -533,7 +533,7 @@ int loadPlugin(const char* name, const char* path) {
 			error_handler(PLUGIN_LOADING, name, "", "API Version inkompatibel");
 		}
 		COPY_ERROR("API Version inkompatibel")
-		LOG( TEMPLATE_LOG, ERROR_LEVEL, 0, "Plugin API Version inkompatibel %s %s", path, error_text);
+		LOG( TEMPLATE_LOG, ERROR_LEVEL, 0, "Plugin API Version inkompatibel ( Plugin %d > Webserver %d ) -> %s", version, WEBSERVER_API, path);
 		dlclose( dl );
 		return -4;
 	}
