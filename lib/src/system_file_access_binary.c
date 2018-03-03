@@ -287,9 +287,10 @@ void read_binary_data( const unsigned char* data ){
 	time = read_uint64( data, &offset );
 	files = read_uint32( data, &offset );
 
-	printf("Alias : %s\n",alias);
-	printf("Time  : %" PRIu64 "\n",time);
-	printf("Files : %" PRIu32 "\n",files);
+	LOG(FILESYSTEM_LOG,NOTICE_LEVEL,0,"loading binary data","");
+	LOG(FILESYSTEM_LOG,NOTICE_LEVEL,0,"Alias : %s",alias);
+	LOG(FILESYSTEM_LOG,NOTICE_LEVEL,0,"Time  : %" PRIu64 "",time);
+	LOG(FILESYSTEM_LOG,NOTICE_LEVEL,0,"Files : %" PRIu32 "",files);
 
 	for ( uint32_t i = 0 ; i < files ; i++ ){
 		read_file( alias, data , &offset , &compressed);
