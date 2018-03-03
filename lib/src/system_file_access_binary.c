@@ -84,15 +84,24 @@ static const char* read_string( const unsigned char* data, uint64_t* offset_p, u
 }
 
 
+static void set_file_url( WebserverFileInfo *file, const char *alias, const char *name){
 
-/*static void print_next_bytes( unsigned char* data, uint64_t offset){
+	char tmp[512];
+	snprintf(tmp,512,"%s%s",alias,name);
+	tmp[511] = '\0';
 
-	for ( uint64_t i = offset ; i < offset + 20 ; i++ )
-		printf("%d ",data[i]);
-	printf("\n\n");
-}*/
+	char* last = &tmp[strlen(tmp)-1];
 
+	char* p = strstr( tmp, "//" );
+	while ( p != 0 ){
+		memmove( p , &p[1], strlen( &p[1] ));
+		*last = '\0';
+		last--;
+		p = strstr( tmp, "//" );
+	}
 
+	copyURL(file, tmp);
+}
 
 
 static const unsigned char* read_file( const char *alias, const unsigned char* data, uint64_t* offset_p, uint32_t* compressed_p ){
@@ -103,8 +112,6 @@ static const unsigned char* read_file( const char *alias, const unsigned char* d
 	uint32_t size = 0;
 	uint32_t real_size,compresed_size;
 	uint32_t template;
-
-
 
 	WebserverFileInfo *file = 0;
 
@@ -123,6 +130,7 @@ static const unsigned char* read_file( const char *alias, const unsigned char* d
 	//file->lastmodified = etag;
 	//file->lastmodifiedLength = strlen ( etag );
 
+
 #ifndef WEBSERVER_DISABLE_CACHE
 	file->etag = etag;
 	file->etagLength = strlen ( (char*)etag );
@@ -133,14 +141,11 @@ static const unsigned char* read_file( const char *alias, const unsigned char* d
 	file->FilePrefix = alias;
 
 	
-	copyFilePath(file, name);
+	copyFilePath( file, name);
 	
-	char tmp[200];
-	snprintf(tmp,200,"%s%s",alias,name);
-	tmp[199] = '\0';
-	copyURL(file, tmp);
+	set_file_url( file, alias, name );
 
-	setFileType(file);
+	setFileType( file );
 
 	if ( *compressed_p > 0 ){
 
