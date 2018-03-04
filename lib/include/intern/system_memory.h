@@ -65,7 +65,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 extern "C" {
 #endif
 
-ALL_EXTRA void	initMemoryManager(void) ALL_ATTR;
+void	initMemoryManager(void);
 
 void    freeMemoryManager(void);
 #ifdef _WEBSERVER_MEMORY_DEBUG_

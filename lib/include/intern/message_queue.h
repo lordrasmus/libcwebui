@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 #include "webserver.h"
- #include <semaphore.h>
+
 
 typedef struct {
 	WS_MUTEX lock;
@@ -31,6 +31,6 @@ typedef struct {
 	sem_t semid;
 }ws_MessageQueue;
 
-ALL_EXTRA ws_MessageQueue* ws_createMessageQueue(void) ALL_ATTR;
-ALL_EXTRA void *ws_popQueue(ws_MessageQueue* mq) ALL_ATTR;
-ALL_EXTRA void ws_pushQueue(ws_MessageQueue* mq,void* element) ALL_ATTR;
+ws_MessageQueue* ws_createMessageQueue(void);
+void *ws_popQueue(ws_MessageQueue* mq);
+void ws_pushQueue(ws_MessageQueue* mq,void* element);

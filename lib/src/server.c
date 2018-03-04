@@ -364,7 +364,7 @@ void *WebserverHTMLChunkFree(const void *restrict free_element) {
 int sendHTMLFile(http_request* s, WebserverFileInfo *file) {
 
 	if ( 0 == prepare_file_content( file ) ){
-		WebServerPrintf("File : %s error loading content \n",file->FilePath);
+		printf("File : %s error loading content \n",file->FilePath);
 		return -1;
 	}
 

@@ -37,6 +37,7 @@
 #include "is_utf8.h"
 
 
+
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
 #endif
@@ -113,7 +114,11 @@ char* WebsocketGetStoreGUID(char* guid){
 }
 
 long ws_get_websocket_store_timeout( char* guid ){
-	return getWebsocketStoreTimeout( guid );
+	#ifdef WEBSERVER_USE_WEBSOCKETS
+		return getWebsocketStoreTimeout( guid );
+	#else
+		return -1;
+	#endif
 }
 
 
@@ -439,7 +444,9 @@ void ws_add_dir(const char* alias,const char* dir, const int use_cache, const in
 
 
 void WebserverAddBinaryData(const unsigned char* data){
+	#ifdef WEBSERVER_USE_BINARY_FORMAT
 	read_binary_data( data );
+	#endif
 }
 
 

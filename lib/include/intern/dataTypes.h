@@ -24,10 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _DATATYPES_H_
 #define _DATATYPES_H_
 
-#ifdef __GNUC__
-	#include <netinet/in.h>
-	#include <limits.h>
-#endif
+#include "platform_includes.h"
 
 #ifdef _WIN32
 #include <ws2tcpip.h>

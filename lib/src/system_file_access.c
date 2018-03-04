@@ -22,6 +22,7 @@
 */
 
 #include "webserver.h"
+#include "miniz.h"
 #include "miniz_tinfl.h"
 
 #ifdef DMALLOC
@@ -53,7 +54,7 @@ void free_file_access( void ){
 	//free_local_file_system();
 
 }
-#include <zlib.h>
+
 
 bool initFilesystem(void) {
 

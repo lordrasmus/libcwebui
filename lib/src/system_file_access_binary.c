@@ -25,8 +25,6 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-#include <zlib.h>
-
 #include "webserver.h"
 #include "miniz_tinfl.h"
 

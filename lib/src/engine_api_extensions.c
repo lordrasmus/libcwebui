@@ -22,7 +22,7 @@
 */
 
 
-#include <dlfcn.h>
+
 
 
 #include "webserver.h"
@@ -461,7 +461,7 @@ int loadPlugin(const char* name, const char* path) {
 
 #ifdef _WIN32
 #pragma message ( "loadPlugin not implemented on WIN32" )
-#elif defined( __GNUC__ )
+#elif defined( LINU )
 
 	plugin_s *plugin, *plugin_tmp;
 
@@ -575,7 +575,9 @@ int loadPlugin(const char* name, const char* path) {
 
 	return 0;
 #else
-#error "loadPlugin not implemented in system"
+#warning "loadPlugin not implemented"
+	printf("loadPlugin not implemented\n");
+	return 0;
 #endif
 }
 

@@ -59,10 +59,10 @@ unsigned long	PlatformGetTicksPerSeconde(void);
 ********************************************************************/
 
 
-ALL_EXTRA int PlatformCreateMutex(WS_MUTEX* m) ALL_ATTR;
-ALL_EXTRA int PlatformLockMutex(WS_MUTEX* m) ALL_ATTR;
-ALL_EXTRA int PlatformUnlockMutex(WS_MUTEX* m) ALL_ATTR;
-ALL_EXTRA int PlatformDestroyMutex(WS_MUTEX* m) ALL_ATTR;
+int PlatformCreateMutex(WS_MUTEX* m);
+int PlatformLockMutex(WS_MUTEX* m);
+int PlatformUnlockMutex(WS_MUTEX* m);
+int PlatformDestroyMutex(WS_MUTEX* m);
 
 #endif
 

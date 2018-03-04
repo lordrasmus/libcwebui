@@ -64,7 +64,7 @@ WebserverFileInfo* wnfs_get_file( const char* name ){
 	WebserverFileInfo *file = create_empty_file( len );
 	uint32_t recv_bytes = 0;
 	while(1){
-		ret = recv( wnfs_socket, (char*)&file->Data[recv_bytes], len -recv_bytes , 0 );
+		ret = PlatformRecvSocket( wnfs_socket, (unsigned char *)&file->Data[recv_bytes], len -recv_bytes , 0 );
 		if ( ret <= 0 ){
 			goto  error_out2;
 		}
@@ -141,7 +141,7 @@ void wnfs_store_file( WebserverFileInfo* file ){
 		goto  error_out;
 	}
 
-	ret = send ( wnfs_socket,file->Data,len,0 );
+	ret = PlatformSendSocket ( wnfs_socket,file->Data,len,0 );
 	if ( ( ret <= 0 ) || ( len != (uint32_t)ret) ){
 		printf("wnfs_store_file error: %d %d %X %m\n",len,ret,(unsigned int)(*file->Data));
 		goto  error_out;

@@ -25,15 +25,10 @@
 
 #include "webserver.h"
 
-#ifdef __GNUC__
-	#include <sys/ioctl.h>
-#endif
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
 #endif
-
-
 
 
 #ifdef USE_SELECT

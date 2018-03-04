@@ -65,7 +65,7 @@ void *freeChunkCallBack(const void *restrict free_element) {
 	return 0;
 }
 
-ALL_SRC void initMemoryManager(void) {
+void initMemoryManager(void) {
 
 #ifdef USE_MALLOC_CACHE
 	int i;

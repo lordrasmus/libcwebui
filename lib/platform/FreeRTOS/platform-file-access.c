@@ -21,37 +21,48 @@
 
 */
 
+
 #include "webserver.h"
 
 
-#ifdef DMALLOC
-#include <dmalloc/dmalloc.h>
-#endif
+/**************************************************************
+ *                                                             *
+ *                   Datei Operationen                         *
+ *                                                             *
+ **************************************************************/
 
-
-ws_MessageQueue* ws_createMessageQueue(){
-	ws_MessageQueue* mq = (ws_MessageQueue*)WebserverMalloc( sizeof(ws_MessageQueue) );
-	PlatformCreateMutex(&mq->lock);
-	ws_list_init(&mq->entry_list);
-	sem_init(&mq->semid, 0, 0);
-	return mq;
+int PlatformOpenDataReadStream( const char* name ) {
+	return 0;
 }
 
 
-void *ws_popQueue(ws_MessageQueue* mq){
-	void* ret;
-	sem_wait(&mq->semid);
-	PlatformLockMutex(&mq->lock);
-	ret = ws_list_extract_at(&mq->entry_list,0);
-	PlatformUnlockMutex(&mq->lock);
-	return ret;
+int PlatformGetFileSize(void) {
+	return 0;
+}
+
+char PlatformCloseDataStream(void) {
+	return 0;
+}
+
+void PlatformResetDataStream(void) {
+	
+}
+
+int PlatformReadBytes(unsigned char *data, FILE_OFFSET lenght) {
+	return 0;
+}
+
+void PlatformSeek(long offset) {
+	
+}
+
+void PlatformSeekToPosition(long position) {
+	
 }
 
 
-void ws_pushQueue(ws_MessageQueue* mq,void* element){
-	PlatformLockMutex(&mq->lock);
-	ws_list_append(&mq->entry_list,element);
-	PlatformUnlockMutex(&mq->lock);
-	sem_post(&mq->semid);
+int PlatformGetFileInfo(WebserverFileInfo* file, int* time_changed, int *new_size) {
+
+	return 1;
 }
 
