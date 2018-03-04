@@ -1,11 +1,19 @@
 #!/usr/bin/python3
 
 import hashlib
+import argparse
 
-import os, struct, gzip, zlib
+import os, sys, struct, gzip, zlib
 
 from pprint import pprint
 
+def sizeof_fmt(num, suffix='B'):
+    for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+        if abs(num) < 1024.0:
+            return "%3.1f %s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f %s%s" % (num, 'Yi', suffix)
+    
 def list_files( startpath, alias ):
 	
 	file_list = []
@@ -67,24 +75,19 @@ def check_template( f,  path , f_data ):
 	data = f2.read(20)
 	f2.close()
 	
-	#print("check template: " + f_data["PATH"] )
-	
-	
 	template = 0
 	if data.startswith(b"TEMPLATE_V1"):
 		template=1
-		#print(" template")
 		
 	if f_data["PATH"].endswith(".inc"):
 		template=1
-		#print(" template")
 	
 	write_uint32( f, template )
 	
 	return template
 	
 
-def write_uncompressed_file( f, path , f_data ):
+def write_uncompressed_file( stats, f, path , f_data ):
 	
 	f2 = open( path + f_data["PATH"], "rb")
 	data = f2.read()
@@ -94,40 +97,25 @@ def write_uncompressed_file( f, path , f_data ):
 	h.update( data )
 	etag = h.hexdigest().upper()
 	
-		
 	write_uint32( f, 0 ) # nicht komprimiert
 	write_string( f, f_data["PATH"] )
 	write_string( f, etag )
 	tp = check_template( f, path, f_data )	# auf template prüfen
 	write_uint32( f, f_data["SIZE"] )
 	
-	add = ""
-	if tp == 1:
-		add = "  ( template ) "
-	print("not compressing        : " + f_data["PATH"] + add )
-	
+	stats["compressed"] += f_data["SIZE"]
+	stats["uncompressed"] += f_data["SIZE"]
 	
 	for b in bytes_from_file( path + f_data["PATH"]):
-		#pprint(b)
 		f.write( "" + str( b ) + "," )
 	f.write( "'\\0'," )
 
 def compress_data( data ):
 	
-	
-	#f2 = open( "dict" , "rb")
-	#dictator = f2.read()
-	#f2.close()
-	
-	#dictator= None
-	
 	strats = [ 
 		[ zlib.Z_DEFAULT_STRATEGY, 0 , None],
 		[ zlib.Z_FILTERED, 0 , None],
 		[ zlib.Z_HUFFMAN_ONLY, 0, None ],
-#		[ zlib.Z_DEFAULT_STRATEGY, 0 , dictator],
-#		[ zlib.Z_FILTERED, 0 , dictator],
-#		[ zlib.Z_HUFFMAN_ONLY, 0, dictator ]
 	]
 	outs = []
 	
@@ -146,10 +134,6 @@ def compress_data( data ):
 		if ret[1] > strat[1]:
 			ret = strat
 	
-	#for a in strats:
-	#	print( str( a[0] ) + " : " + str( a[1] ) )
-		
-	#pprint( ret )
 	if ret[0] == zlib.Z_DEFAULT_STRATEGY:
 		t_out = "zlib.Z_DEFAULT "
 		
@@ -171,7 +155,7 @@ def compress_data( data ):
 	return [ s_out, t_out ]
 	
 
-def write_compressed_file( f, path, f_data ):
+def write_compressed_file( stats, f, path, f_data ):
 				
 	with open( path + f_data["PATH"], 'rb') as f_in:
 		s_in = f_in.read()
@@ -181,17 +165,12 @@ def write_compressed_file( f, path, f_data ):
 		h.update( s_in )
 		etag = h.hexdigest().upper()
 		
-		
 		ret = compress_data( s_in )
 		s_out = ret[0]
 		t_out = ret[1]
 		
-		#s_out = gzip.compress(s_in)
-		#print( "l gzip : " + str( len( s_out ) ) )
 		
 		if len (s_out) < f_data["SIZE"]:
-			
-			
 			
 			write_uint32( f, 2 )  # komprimiert
 			write_string( f, f_data["PATH"] )
@@ -200,44 +179,46 @@ def write_compressed_file( f, path, f_data ):
 			write_uint32( f, f_data["SIZE"] )
 			
 			text = "compressing ( " 
-			#text += t_out + " "
-			#text += str( f_data["SIZE"]) + " / " + str( len (s_out) ) + " "
 			text += str ( int ( ( len (s_out) / f_data["SIZE"] ) * 100 ) ) + " % " 
 			text += " )  : " + f_data["PATH"] 
 			if  tp == 1 :
 				text += "  ( template )"
-			print( text )
+			#sys.stdout.write( text + "\r")
 			
 			write_uint32( f, len (s_out))
 			for b in s_out:
-				#pprint(b)
-				f.write( "" + str( b ) + "," )	
+				f.write( "" + str( b ) + "," )
+			
+			stats["compressed"] += len (s_out)
+			stats["uncompressed"] += f_data["SIZE"]
 				
 		else:
 			
-			write_uncompressed_file( f, path, f_data )
+			write_uncompressed_file( stats, f, path, f_data )
 			
-def gen_c_file( path, alias ):
+def gen_c_file( path, alias, outname ):
 	
 	liste = list_files ( path, alias )
 	
 	info = { "ALIAS" : alias , "PATH": path , "TIME" : liste[0], "FILES" : liste[1] }
 	
 	
-	#pprint( info )
-	
 	tmp = path
 	if path.endswith("/"):
 		tmp = path[:-1]
-		
-	f_name = tmp + "_data_" + alias.replace("/","_") + ".c"
 	
-	print("\nwriting : " + f_name )
+	if not outname.endswith(".c"):
+		outname = outname + ".c"
+	#f_name = tmp + "_data_" + alias.replace("/","_") + ".c"
+	
+	print("\nwriting : " + outname )
 	print("  Alias : " + info["ALIAS"] )
 	print("  Time  : " + str( int( info["TIME"] ) ))
 	print("  Files : " + str (len (info["FILES"] ) ) )
 	
-	with open(  f_name, "w" ) as f:
+	file_site_stats = {"compressed":0,"uncompressed":0}
+	
+	with open(  outname, "w" ) as f:
 	
 		f.write("\n")
 		
@@ -245,31 +226,44 @@ def gen_c_file( path, alias ):
 		
 		write_string( f, info["ALIAS"] )
 		write_uint64( f, info["TIME"] )
-		#write_uint64( f, 1 )
 		
 		write_uint32( f, len( info["FILES"] ) )
 		for f_data in info["FILES"]:
-			#pprint( f_data )
 			if f_data["PATH"].lower().endswith(".jpg"): 
-				write_uncompressed_file( f, info["PATH"],  f_data )
+				write_uncompressed_file( file_site_stats, f, info["PATH"],  f_data )
 				continue
-			write_compressed_file( f, info["PATH"],  f_data )
+			write_compressed_file( file_site_stats, f, info["PATH"],  f_data )
 			
 			
 			
 		f.write("0};\n")
 		f.write("\n")
 	
-	st = os.stat(f_name)
-	print("  c code size   : " + str( int ( st.st_size / 1024 ) ) + " kB" )
+	comp_ratio = ( file_site_stats["compressed"] / file_site_stats["uncompressed"] ) * 100
+	text = "  Size  : %.1f %%" % ( comp_ratio )
+	text += " ( " + sizeof_fmt( file_site_stats["compressed"] )
+	text += " / " + sizeof_fmt( file_site_stats["uncompressed"] ) +  " )  \n"
 	
-	os.system("gcc -O0 -c " + f_name + " -o /tmp/comp_test ")
-	st = os.stat("/tmp/comp_test")
-	print("  c object size : " + str( int ( st.st_size / 1024 ) ) + " kB" )
+	print(text)
 	
+	#st = os.stat(outname)
+	#print("  c code size   : " + sizeof_fmt ( st.st_size ) )
 	
-       
-gen_c_file( "../testSite/www/" , "/" )
-gen_c_file( "../testSite/img/" , "img" )
+	#os.system("gcc -O0 -c " + outname + " -o /tmp/comp_test ")
+	#st = os.stat("/tmp/comp_test")
+	#print("  c object size : " + sizeof_fmt( st.st_size ) )
+	
 
-#gen_c_file( "." , "/tools" )
+parser = argparse.ArgumentParser()
+parser.add_argument("--dir", help="input directory", required=True)
+parser.add_argument("--alias", help="directory name in urls", required=True)
+parser.add_argument("--out", help="output file name", required=True)
+args = parser.parse_args()
+    
+if args.out.endswith(".c"):
+	args.out = args.out.replace(".c","")
+	
+gen_c_file( args.dir , args.alias, args.out )
+
+#gen_c_file( "../testSite/img/" , "img" )
+
