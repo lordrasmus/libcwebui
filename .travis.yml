@@ -12,6 +12,7 @@ notifications:
 script:  
 #  - ./tools/travis-sonarqube.sh make -C lib rebuild
   - make -C lib rebuild
+  - make -C SingleMain/
 
 #compiler:
 #  - clang
@@ -178,6 +179,6 @@ addons:
      notification_email: 
          - lordrasmus@gmail.com
 
-     build_command: make -C lib rebuild ; make -C SingleMain/
+     build_command: make -C lib rebuild 
      branch_pattern: master
 
