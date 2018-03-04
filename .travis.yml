@@ -110,7 +110,11 @@ matrix:
 
     - os: linux
       compiler: clang
-      env: COMPILER=clang
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['libevent-dev', 'clang']
+      env: COMPILER=clang CC=clang
 
     - os: linux
       compiler: clang-3.5
@@ -174,6 +178,6 @@ addons:
      notification_email: 
          - lordrasmus@gmail.com
 
-     build_command: make -C lib rebuild
+     build_command: make -C lib rebuild ; make -C SingleMain/
      branch_pattern: master
 
