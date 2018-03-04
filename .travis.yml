@@ -33,7 +33,23 @@ matrix:
             build_command: make -C lib rebuild
             branch_pattern: master
              
-
+    - os: linux
+      dist: trusty
+      compiler: clang-4.0
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-4.0']
+          packages: ['libevent-dev', 'clang-4.0']
+      env: COMPILER=clang-4.0 CC=clang-4.0
+    
+    - os: linux
+      dist: trusty
+      compiler: clang-5.0
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
+          packages: ['libevent-dev', 'clang-5.0']
+      env: COMPILER=clang-5.0 CC=clang-5.0
     
 #    - os: osx
 #      compiler: xcode9.1
