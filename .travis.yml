@@ -154,7 +154,7 @@ matrix:
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.9']
-          packages: ['libevent-dev', 'clang-4']
+          packages: ['libevent-dev', 'clang-3.9']
       env: COMPILER=clang-3.9 CC=clang-3.9
 
     - os: linux
@@ -162,7 +162,7 @@ matrix:
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-4.0']
-          packages: ['clang-4.0']
+          packages: ['libevent-dev', 'clang-4.0']
       env: COMPILER=clang-4.0 CC=clang-4.0
     
     - os: linux
@@ -170,11 +170,12 @@ matrix:
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
-          packages: ['clang-5.0']
+          packages: ['libevent-dev', 'clang-5.0']
       env: COMPILER=clang-5.0 CC=clang-5.0
     
     - os: osx
       compiler: xcode9.1
+      addons:
       env: COMPILER=clang CC=clang
       
 addons: &def_addons
