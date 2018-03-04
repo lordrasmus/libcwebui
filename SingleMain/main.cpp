@@ -28,7 +28,7 @@ void sig_pipe_hanler(int signum) {
 
 
 extern unsigned char data__[];
-extern unsigned char data_img[];
+extern unsigned char data__css_[];
 extern "C" void init_testsite( void );
 
 int main(int argc, char **argv) {
@@ -43,11 +43,8 @@ int main(int argc, char **argv) {
 
 	if (0 == WebserverInit()) {
 
-		//WebserverAddBinaryData( data__ );
-		//WebserverAddBinaryData( data_img );
-		
-		WebserverAddFileDir("", "../testSite/www");
-		ws_add_dir("img", "../testSite/img",0,1);
+		WebserverAddBinaryData( data__ );
+		WebserverAddBinaryData( data__css_ );
 		
 		#ifdef WEBSERVER_USE_PYTHON
 

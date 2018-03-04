@@ -22,10 +22,7 @@ TEMPLATE_V1
 {if:is_ssl_available}
 			<a class={get:render;"mp8_class"} href={b:link_ssl}/session_storage.html>SSL</a>
 {endif}
-			<tr><td><a class={get:render;"mp9_class"} href={b:link_std}/cache_test.html>Cache Test</a>
-{if:is_ssl_available}
-			<a class={get:render;"mp10_class"} href={b:link_ssl}/cache_test.html>SSL</a>
-{endif}
+			
 			<tr><td><a class={get:render;"mp11_class"} href={b:link_std}/memory_info.html?menu=0>Memory Info</a>
 
 {if:is_websockets_available}

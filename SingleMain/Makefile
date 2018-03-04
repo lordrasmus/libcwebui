@@ -50,30 +50,28 @@ PY_LINK = -lpython2.7
 
 FLAGS=-I../lib/ -I../lib/include -I../lib/third_party/src/miniz/ -I../lib/third_party/src/rb_tree/ \
 	-I../lib/platform/include/ -I../lib/include/intern/  -I../lib/third_party/src/is_utf8/ \
-	-D_POSIX_SOURCE   -DLINUX -DSINGLE_MAIN -O0 -ggdb3 -flto=12 ${PY_FLAGS} -Wno-unused-result
+	-D_POSIX_SOURCE   -DLINUX -DSINGLE_MAIN -O3 -ggdb3 -flto=12 ${PY_FLAGS} -Wno-unused-result
 
 LIBS=-lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads -lz -lstdc++
 
 .SILENT:
-all: www_data.o img_data.o
+all: testSite
 	echo "C++  main.cpp"
 	g++ $(FLAGS) -c main.cpp  -o main.o
-	echo "CC   *.c"
-	gcc $(FLAGS) -std=gnu99 $(FILES) main.o  www_data.o img_data.o -o main $(LIBS) ${PY_LINK}
+	echo "CC   www_css.c www_data.c ../lib/*.c"
+	gcc $(FLAGS) -std=gnu99 $(FILES) main.o  www_css.c www_data.c -o main $(LIBS) ${PY_LINK}
 	echo "LINK main"
 
-../testSite/www_data__.c:
-	( cd ../tools ; ./pack_dir.py )
+	
+testSite: 
+	echo "GEN  www_data.c "
+	../tools/pack_dir.py --dir ../testSite/www --alias=/ --out www_data.c
+	
+	echo "GEN  www_css.c "
+	../tools/pack_dir.py --dir ../testSite/css --alias=/css/ --out www_css.c
 
-../testSite/img_data_img.c:
-	( cd ../tools ; ./pack_dir.py )
 	
-www_data.o: ../testSite/www_data__.c 
-	gcc -O0 -c ../testSite/www_data__.c  -o www_data.o
-	
-img_data.o: ../testSite/img_data_img.c
-	gcc -O0 -c ../testSite/img_data_img.c -o img_data.o
 
 clean:
-	rm -f *.o main	
+	rm -f *.o main	www_data.c
 	

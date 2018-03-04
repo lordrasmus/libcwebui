@@ -124,7 +124,7 @@ void handleCommandSocket(char *guid, const char *msg) {
 	if (0 == strncmp(msg, "echo:", 5)) {
 		
 		if ( 0 == strcmp( msg, "echo:error" ) ){
-			char *msg2 = msg;
+			char *msg2 = (char*)msg;
 			msg2[3] = 0x88;
 		}
 		
@@ -145,7 +145,7 @@ void deleteClient(char* guid) {
 		
 		while ((tmp_guid = (char*) ws_list_iterator_next(&clock_clients))) {
 			if (0 == strcmp(tmp_guid, guid)) {
-				printf("Client entfern           : %s CommandSocket\n", guid);
+				//printf("Client entfern           : %s CommandSocket\n", guid);
 				break;
 			}
 		}
@@ -212,7 +212,7 @@ DEFINE_WEBSOCKET_HANDLER( "CommandSocket" , CommandSocket_handler) {
 	tmp = WebserverMalloc(strlen(guid)+1);
 	strcpy(tmp, guid);
 	
-	printf("command socket : %d\n",signal);
+	//printf("command socket : %d\n",signal);
 	switch (signal) {
 		
 		case WEBSOCKET_MSG:
