@@ -73,7 +73,7 @@ void freeSocketContainer(void) {
 }
 
 void deleteSocket(socket_info* sock) {
-	rb_red_blk_node* node;
+	
 	PlatformLockMutex(&socks_mutex);
 
 	PlatformLockMutex(&sock->socket_mutex);
@@ -84,6 +84,7 @@ void deleteSocket(socket_info* sock) {
 	ws_list_delete(&sock_list, sock);
 #ifdef WEBSERVER_USE_WEBSOCKETS
 	if (sock->isWebsocket == 1) {
+		rb_red_blk_node* node;
 		node = RBExactQuery(sock_tree, sock->websocket_guid);
 		if ( node != 0 ){
 			RBDelete(sock_tree, node);
