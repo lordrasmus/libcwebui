@@ -212,25 +212,63 @@ void setFileType(WebserverFileInfo* file) {
 	}
 }
 
+static uint32_t adler32(const void *buf, uint32_t buflength) {
+
+     const uint8_t *buffer = (const uint8_t*)buf;
+
+     uint32_t s1 = 1;
+     uint32_t s2 = 0;
+
+     for (size_t n = 0; n < buflength; n++) {
+        s1 = (s1 + buffer[n]) % 65521;
+        s2 = (s2 + s1) % 65521;
+     }
+
+     return (s2 << 16) | s1;
+}
+
+static uint32_t reg32 = 0xffffffff;
+ 
+static uint32_t crc32_byte(char byte){
+	uint32_t i;
+	uint32_t polynom = 0xEDB88320;
+
+	for (i=0; i<8; ++i){
+		if ((reg32 & 1) != (byte & 1)){
+			reg32 = (reg32>>1) ^ polynom; 
+        }else{
+			reg32 >>= 1;
+		}
+		byte >>= 1;
+	}
+	return reg32 ^ 0xffffffff;
+}
+
+static uint32_t crc32(const char *data, uint32_t len){
+  uint32_t i;
+
+  for(i=0; i<len; i++) 
+  {
+    crc32_byte(data[i]);
+  }
+  return reg32 ^ 0xffffffff;
+}
+
 
 void generateEtag(WebserverFileInfo* file) {
 
 #ifndef WEBSERVER_USE_SSL
 
-	#ifdef _WIN32
-		#pragma message ( "etag generierung ohne ssl richtig implementieren" )
-	#elif defined (__GNUC__)
-		#warning "etag generierung ohne ssl richtig implementieren"
-	#else
-		#error "etag generierung ohne ssl richtig implementieren"
-	#endif
 
 	if (file->etag == 0) {
 		file->etag = (char *) WebserverMalloc( 100 );
 	}
-
-	file->etagLength = sprintf((char*) file->etag, "Test %s", file->Url);
-	file->etagLength = 100;
+	
+	uint32_t length = file->DataLenght;
+	uint32_t crc   = crc32(   file->Data, file->DataLenght );
+	uint32_t adler = adler32( file->Data, file->DataLenght );
+	
+	file->etagLength = sprintf((char*) file->etag, "%08X%08X%08X", length, crc, adler);
 
 #else
 
