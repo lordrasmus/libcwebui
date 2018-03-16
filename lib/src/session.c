@@ -160,28 +160,36 @@ char guid_cmp(const char* a, const char* b) {
 }
 
 int checkUserRegistered(http_request* s) {
-	bool got_normal;
-	bool true_normal, true_ssl, true_both, got_giud, got_guid_ssl, guid_match;
+
+	bool true_normal, got_giud;
 
 	ws_variable* var;
 	ws_variable* guid_var;
-#ifdef WEBSERVER_USE_SSL
-	ws_variable* guid_var_ssl;
-#endif
 
-	//got_normal = false;    // clang Dead store
-	//true_normal = false;   // clang Dead store
+#ifdef WEBSERVER_USE_SSL
+
+	bool true_ssl, got_normal, got_guid_ssl, true_both, guid_match;
+
+	ws_variable* guid_var_ssl;
+
 	true_ssl = false;
 	true_both = false;
-	//got_giud = false;      // clang Dead store
 	got_guid_ssl = false;
 	guid_match = false;
+	got_normal = false;   
+
+#endif
+
+	true_normal = false;
+	got_giud = false;
 
 	PlatformLockMutex( &session_mutex );
 
 	var = int_getSessionValue(s, SESSION_STORE, (char*) "registered");
 	if (var != 0) {
+#ifdef WEBSERVER_USE_SSL
 		got_normal = true;
+#endif
 		if (var->type == VAR_TYPE_STRING) {
 			if (0 == strcmp(var->val.value_string, "true")) {
 				true_normal = true;
