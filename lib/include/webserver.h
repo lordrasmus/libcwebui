@@ -26,6 +26,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define _WEBSERVER_H_
 
 
+#define MINIZ_NO_ZLIB_APIS
+
 #include <math.h>
 
 #ifdef USE_LIBEVENT
