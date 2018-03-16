@@ -42,9 +42,7 @@
 
 #include "WebserverConfig.h"
 
-#ifndef WEBSERVER_USE_OPENSSL_CRYPTO
-	#warning "OPENSSL Support Disabled"
-#else
+#ifdef WEBSERVER_USE_OPENSSL_CRYPTO
 
 #ifdef __GNUC__
 #include <openssl/md5.h>
