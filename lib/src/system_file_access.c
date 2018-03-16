@@ -22,8 +22,8 @@
 */
 
 #include "webserver.h"
+
 #include "miniz.h"
-#include "miniz_tinfl.h"
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -63,7 +63,7 @@ bool initFilesystem(void) {
 		return false;
 	}
 
-	LOG(FILESYSTEM_LOG,NOTICE_LEVEL,0,"using zlib : %s",ZLIB_VERSION);
+	LOG(FILESYSTEM_LOG,NOTICE_LEVEL,0,"using miniz : %s",MZ_VERSION);
 
 #ifdef WEBSERVER_USE_BINARY_FORMAT
 	LOG( FILESYSTEM_LOG, NOTICE_LEVEL, 0, "using binary filesystem", "");
