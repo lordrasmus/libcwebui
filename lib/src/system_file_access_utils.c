@@ -212,6 +212,8 @@ void setFileType(WebserverFileInfo* file) {
 	}
 }
 
+#ifndef WEBSERVER_USE_SSL
+
 static uint32_t adler32(const void *buf, uint32_t buflength) {
 
      const uint8_t *buffer = (const uint8_t*)buf;
@@ -253,6 +255,8 @@ static uint32_t crc32(const char *data, uint32_t len){
   }
   return reg32 ^ 0xffffffff;
 }
+
+#endif
 
 
 void generateEtag(WebserverFileInfo* file) {
