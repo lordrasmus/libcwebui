@@ -177,58 +177,7 @@ static const unsigned char* read_file( const char *alias, const unsigned char* d
 
 				case 2: 	// deflate compression
 
-					//printf("decompressing template ( deflate ) : %s\n",name);
-
 					new_size = tinfl_decompress_mem_to_mem( decomp_buffer, decomp_size, ret, compresed_size, 0 );
-					//printf("%d\n%s\n",new_size,decomp_buffer);
-					break;
-
-					//size_t s = uncompress(decomp_buffer, decomp_size, ret, compresed_size);
-					//printf("%d %s\n",s,decomp_buffer);
-
-				case 1:{		// gzip compression
-
-						//printf("decompressing template ( gzip ) : %s\n",name);
-
-						z_stream strm;
-						strm.next_in = (unsigned char*)ret;
-						strm.avail_in = compresed_size;
-
-						strm.next_out = decomp_buffer;
-						strm.avail_out = real_size;
-						strm.total_out = 0;
-
-						strm.zalloc = Z_NULL;
-						strm.zfree = Z_NULL;
-
-						if (inflateInit2(&strm, (16+MAX_WBITS) ) != Z_OK) {
-							printf("inflateInit2 Error\n");
-							exit(1);
-						}
-
-						int err = inflate (&strm, Z_SYNC_FLUSH);
-						switch(err){
-							case Z_OK: 	break;
-							case Z_STREAM_END: 	break;
-
-							case Z_NEED_DICT:      printf("Z_NEED_DICT\n"); exit( 1 );
-							case Z_STREAM_ERROR:   printf("Z_STREAM_ERROR\n"); exit( 1 );
-							case Z_DATA_ERROR:     printf("Z_DATA_ERROR\n"); exit( 1 );
-							case Z_MEM_ERROR:      printf("Z_MEM_ERROR\n"); exit( 1 );
-							case Z_BUF_ERROR:      printf("Z_BUF_ERROR\n"); exit( 1 );
-							case Z_VERSION_ERROR:  printf("Z_VERSION_ERROR\n"); exit( 1 );
-
-							case Z_ERRNO:          printf("Z_ERRNO: %m\n"); exit( 1 );
-
-
-
-							default:
-								printf("unknownerror %d \n",err);
-								exit(1);
-						}
-
-						new_size = strm.total_out;
-					}
 					break;
 			}
 
@@ -241,7 +190,7 @@ static const unsigned char* read_file( const char *alias, const unsigned char* d
 			file->DataLenght = real_size;
 			*compressed_p = 0;
 		}
-		//printf("zlib2 : %s\n",a);
+		
 
 	}else{
 
