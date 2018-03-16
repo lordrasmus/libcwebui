@@ -24,18 +24,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _DATATYPES_H_
 #define _DATATYPES_H_
 
-#include "platform_includes.h"
+#include "platform-defines.h"
 
-#ifdef _WIN32
-#include <ws2tcpip.h>
-#endif
 
 #ifdef WEBSERVER_USE_PYTHON
 	#include <Python.h>
 #endif
 
 #define FORCE_DOWNLOAD_NAME_LENGTH 200
-// TUDU diesen festen buffer entfernen
 
 static const char template_v1_header[] = { "TEMPLATE_V1" };
 

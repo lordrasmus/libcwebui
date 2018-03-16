@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define _PLATFORM_DEFINES_H_
 
 
+
 #ifndef bool
 	#define bool unsigned char
 	#define true 	1
@@ -33,15 +34,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 #ifdef WIN32
-#define WebServerPrintf printf
-#define snprintf sprintf_s
+	#include <ws2tcpip.h>
+	#define WebServerPrintf printf
+	#define snprintf sprintf_s
+	#define MUTEX_TYPE HANDLE
 #endif
 
 
 #ifdef LINUX
-#define WebServerPrintf printf
-#include <stdlib.h>
-#include <unistd.h>
+	#include "../linux/platform_includes.h"
 #endif
 
 #ifdef BSD
@@ -67,22 +68,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 	#define WDT_RESET
 #endif
 
-#ifdef _MSC_VER
-	HANDLE handle;
-#elif defined(__GNUC__)
-	#include <pthread.h>
-#endif
-
-
 
 typedef struct {
 	char locked;
-#ifdef _MSC_VER
-	HANDLE handle;
-#elif defined(__GNUC__)
-	pthread_mutex_t handle;
-#endif
-
+	WS_MUTEX_TYPE handle;
 }WS_MUTEX;
 
 

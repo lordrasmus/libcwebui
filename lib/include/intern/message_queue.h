@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 typedef struct {
 	WS_MUTEX lock;
 	list_t entry_list;
-	sem_t semid;
+	WS_SEMAPHORE_TYPE semid;
 }ws_MessageQueue;
 
 ws_MessageQueue* ws_createMessageQueue(void);
