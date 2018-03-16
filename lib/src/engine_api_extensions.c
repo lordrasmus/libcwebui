@@ -454,14 +454,14 @@ int (*get_webserver_api_version)(void);
 		strcpy(plugin->error, a);
 
 int loadPlugin(const char* name, const char* path) {
+	
+
+#ifdef LINUX
+
 	int version;
 	char *error_text;
 	char ldd_buffer[1000];
 	void *dl;
-
-#ifdef _WIN32
-#pragma message ( "loadPlugin not implemented on WIN32" )
-#elif defined( LINU )
 
 	plugin_s *plugin, *plugin_tmp;
 
@@ -574,11 +574,11 @@ int loadPlugin(const char* name, const char* path) {
 	plugin->dl = dl;
 
 	return 0;
-#else
-#warning "loadPlugin not implemented"
+#endif
+
 	printf("loadPlugin not implemented\n");
 	return 0;
-#endif
+
 }
 
 void RegisterPluginErrorHandler(plugin_error_handler f) {

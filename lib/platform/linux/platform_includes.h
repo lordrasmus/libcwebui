@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <limits.h>
-
+#include <dlfcn.h>
 #include <pthread.h>
 #include <semaphore.h>
 
@@ -15,9 +15,6 @@
 #include <sys/ioctl.h>
 
 
-/*
-#include <dlfcn.h>
-*/
 
 #define WS_MUTEX_TYPE pthread_mutex_t
 #define WS_SEMAPHORE_TYPE sem_t
