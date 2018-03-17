@@ -3,7 +3,7 @@
 import hashlib
 import argparse
 
-import os, sys, struct, gzip, zlib
+import os, sys, struct, gzip, zlib, datetime
 
 from pprint import pprint
 
@@ -190,7 +190,8 @@ def gen_c_file( path, alias, outname ):
 	
 	print("\nwriting : " + outname )
 	print("  Alias : " + info["ALIAS"] )
-	print("  Time  : " + str( int( info["TIME"] ) ))
+	#print("  Time  : " + str( int( info["TIME"] ) ))
+	print("  Time  : " +  datetime.datetime.utcfromtimestamp(int( info["TIME"] )).strftime('%Y-%m-%d %H:%M:%S') )
 	print("  Files : " + str (len (info["FILES"] ) ) )
 	
 	file_site_stats = {"compressed":0,"uncompressed":0}
