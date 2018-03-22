@@ -1,0 +1,381 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Quelldateien">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Headerdateien">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Ressourcendateien">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Quelldateien\lib">
+      <UniqueIdentifier>{89f6d2fe-2e28-4adb-9299-c79467ff32e8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\platform">
+      <UniqueIdentifier>{66099509-bf27-4330-935c-96062641cd3d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\third_party">
+      <UniqueIdentifier>{81752ddd-d055-47c0-9c83-c60da2018582}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headerdateien\intern">
+      <UniqueIdentifier>{382890a5-cf77-4551-beaf-03120c044632}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headerdateien\platform">
+      <UniqueIdentifier>{b3255d33-437b-4333-b659-669d6ba48086}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\buildins.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\builtinFunctions.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\convert.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\cookie.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\dataTypes.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\engine.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\engine_parser.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\files.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\globals.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\header.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\helper.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\JSON_parser.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\linked_list.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\list.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\message_queue.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\py_api_functions.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\py_plugin.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\py_utils.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\server.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\server_config.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\session.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\sock_info.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\system.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\system_file_access.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\system_file_access_binary.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\system_file_access_fs.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\system_file_access_utils.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\system_file_access_wnfs.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\system_file_cache.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\system_memory.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\system_sockets.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\system_sockets_container.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\system_sockets_events.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\websockets.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\variable.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\variable_render.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\variable_store.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\variables_globals.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\webserver_log.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\webserver_ssl.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\intern\webserver_utils.h">
+      <Filter>Headerdateien\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\platform\include\platform.h">
+      <Filter>Headerdateien\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\platform\win\platform_includes.h">
+      <Filter>Headerdateien\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\platform\include\platform-defines.h">
+      <Filter>Headerdateien\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\platform\include\platform-file-access.h">
+      <Filter>Headerdateien\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\platform\include\platform-sockets.h">
+      <Filter>Headerdateien\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\webserver.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\webserver_api_functions.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\lib\include\webserver_api_functions_macros.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="webserver.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\conditions.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\convert.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\cookie.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\engine.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\engine_api_extensions.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\engine_functions.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\engine_if.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\engine_parser.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\engine_tags.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\file_manager.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\file_manager_binary_format.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\globals.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\header.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\header_parser.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\header_send.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\third_party\src\is_utf8\is_utf8.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\JSON_parser.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\linked_list.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\log.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\message_queue.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\platform\win\platform-file-access.c">
+      <Filter>Quelldateien\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\platform\win\platform-sockets.c">
+      <Filter>Quelldateien\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\platform\win\platform-win.c">
+      <Filter>Quelldateien\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\third_party\src\miniz\miniz.c">
+      <Filter>Quelldateien\third_party</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\third_party\src\miniz\miniz_tdef.c">
+      <Filter>Quelldateien\third_party</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\third_party\src\miniz\miniz_tinfl.c">
+      <Filter>Quelldateien\third_party</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\third_party\src\rb_tree\misc.c">
+      <Filter>Quelldateien\third_party</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\third_party\src\rb_tree\red_black_tree.c">
+      <Filter>Quelldateien\third_party</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\server.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\server_chunk_functions.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\server_config.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\server_error_pages.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\session.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\third_party\src\rb_tree\stack.c">
+      <Filter>Quelldateien\third_party</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\system.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\system_file_access.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\system_file_access_binary.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\system_file_access_fs.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\system_file_access_nfs.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\system_file_access_utils.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\system_file_access_wnfs.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\system_file_cache.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\system_memory.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\system_memory_gcc.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\system_memory_msc.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\system_sockets.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\system_sockets_container.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\system_sockets_epoll.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\system_sockets_events.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\system_sockets_recv.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\system_sockets_select.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\system_sockets_send.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\utils.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\variable.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\variable_global.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\variable_render.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\variable_store.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\webserver_api_functions.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\websocket_handler.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\websockets.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\websockets_send_recv.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\builtinFunctions.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
