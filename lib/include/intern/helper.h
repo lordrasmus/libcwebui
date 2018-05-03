@@ -2,28 +2,32 @@
 #ifndef _WS_HELPER_H_
 #define _WS_HELPER_H_
 
-#include <signal.h>
 
-#define UNUSED_PARA __attribute__((unused))
 
 #if __GNUC__ > 2
+
+		#define VISIBLE_ATTR __attribute__ ((visibility("default")))
         #define NEED_RESUL_CHECK __attribute__((warn_unused_result))
+
+		#define likely(x)       __builtin_expect((x),1)
+		#define unlikely(x)     __builtin_expect((x),0)
+
+		#define UNUSED_PARA __attribute__((unused))
+
 #else
-        #define NEED_RESUL_CHECK
+        
+		#define VISIBLE_ATTR
+		#define NEED_RESUL_CHECK
+		
+		#define likely(x)      x
+		#define unlikely(x)    x
+
+		#define UNUSED_PARA
+
 #endif
 
-#if __GNUC__ > 2
-        #define VISIBLE_ATTR __attribute__ ((visibility("default")))
-#else
-       	#define VISIBLE_ATTR
-#endif
 
 
-#define likely(x)       __builtin_expect((x),1)
-#define unlikely(x)     __builtin_expect((x),0)
-
-
-#define FILE_OFFSET __off_t
 #define SIZE_TYPE size_t
 #define TIME_TYPE time_t
 
