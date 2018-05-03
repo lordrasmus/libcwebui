@@ -33,14 +33,14 @@ ws_MessageQueue* ws_createMessageQueue(){
 	ws_MessageQueue* mq = (ws_MessageQueue*)WebserverMalloc( sizeof(ws_MessageQueue) );
 	PlatformCreateMutex(&mq->lock);
 	ws_list_init(&mq->entry_list);
-	sem_init(&mq->semid, 0, 0);
+	PlatformCreateSem(&mq->semid, 0);
 	return mq;
 }
 
 
 void *ws_popQueue(ws_MessageQueue* mq){
 	void* ret;
-	sem_wait(&mq->semid);
+	PlatformWaitSem(&mq->semid);
 	PlatformLockMutex(&mq->lock);
 	ret = ws_list_extract_at(&mq->entry_list,0);
 	PlatformUnlockMutex(&mq->lock);
@@ -52,6 +52,6 @@ void ws_pushQueue(ws_MessageQueue* mq,void* element){
 	PlatformLockMutex(&mq->lock);
 	ws_list_append(&mq->entry_list,element);
 	PlatformUnlockMutex(&mq->lock);
-	sem_post(&mq->semid);
+	PlatformPostSem(&mq->semid);
 }
 

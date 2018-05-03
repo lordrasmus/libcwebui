@@ -145,7 +145,7 @@ void deleteAllSockets(void) {
 	ws_list_iterator_start(&sock_list);
 	while (ws_list_iterator_hasnext(&sock_list)) {
 		sock = (socket_info*) ws_list_iterator_next(&sock_list);
-		shutdown(sock->socket,SHUT_RDWR);
+		PlatformShutdown(sock->socket);
 		ws_list_append(&del_list, sock);
 	}
 	ws_list_iterator_stop(&sock_list);
@@ -205,9 +205,11 @@ void dumpSockets(http_request* s) {
 
 		printHTMLChunk(s->socket, "<td>%d<td>%d<td>", sock->port, getSocketInfoSize(sock));
 
+#ifdef WEBSERVER_USE_SSL
 		if (sock->use_ssl == 1) {
 			printHTMLChunk(s->socket, "active ");
 		}
+#endif
 
 
 		printHTMLChunk(s->socket, "<td>");

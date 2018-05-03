@@ -55,8 +55,8 @@
 #endif
 
 
-pthread_t websocket_input_thread;
-pthread_t websocket_output_thread;
+WS_THREAD websocket_input_thread;
+WS_THREAD websocket_output_thread;
 
 static ws_MessageQueue* websocket_input_queue;
 static ws_MessageQueue* websocket_output_queue;

@@ -33,7 +33,7 @@
 ws_variable* template_file_postfix;
 #endif
 
-inline global_vars* initWebserver(void) {
+global_vars* initWebserver(void) {
 	initMemoryManager();
 	memset(&globals, 0, sizeof(globals));
 
