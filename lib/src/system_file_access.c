@@ -256,12 +256,11 @@ WebserverFileInfo VISIBLE_ATTR *getFile( char *name)  {
 	}
 
 
+	ramCacheFile(file);
 
 #ifndef WEBSERVER_DISABLE_CACHE
-	generateEtag ( file );
+	generateEtag(file);
 #endif
-
-	ramCacheFile(file);
 
 
 	#ifdef WEBSERVER_USE_WNFS
