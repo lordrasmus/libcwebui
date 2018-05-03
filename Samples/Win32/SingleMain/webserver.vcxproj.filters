@@ -28,6 +28,9 @@
     <Filter Include="Headerdateien\platform">
       <UniqueIdentifier>{b3255d33-437b-4333-b659-669d6ba48086}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Headerdateien\webserver">
+      <UniqueIdentifier>{34988b7a-76be-4258-87f8-a43fbe2e04d9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -175,13 +178,13 @@
       <Filter>Headerdateien\platform</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\lib\include\webserver.h">
-      <Filter>Headerdateien</Filter>
+      <Filter>Headerdateien\webserver</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\lib\include\webserver_api_functions.h">
-      <Filter>Headerdateien</Filter>
+      <Filter>Headerdateien\webserver</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\lib\include\webserver_api_functions_macros.h">
-      <Filter>Headerdateien</Filter>
+      <Filter>Headerdateien\webserver</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
