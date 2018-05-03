@@ -27,9 +27,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <stdio.h>
 #include <winsock2.h>
 #include <strsafe.h>
-#include "system.h"
-#include "../WebserverConfig.h"
 
+#include "webserver.h"
 
 
 fd_set fds;  
@@ -81,7 +80,7 @@ int		PlatformSetBlocking(int socket){
 	return iMode;
 }
 
-int		PlatformGetSocket( int port,int connections)
+int		PlatformGetSocket(unsigned short port,int connections)
 {	
 	int on;
 	struct sockaddr_in *addr = malloc(sizeof(struct sockaddr_in));
@@ -114,7 +113,12 @@ int		PlatformGetSocket( int port,int connections)
 	return s;
 }
 
-
+int		PlatformClose(int socket) {
+	return _close(socket);
+}
+int		PlatformShutdown(int socket) {
+	return shutdown(socket, SD_BOTH);
+}
 
 void	PlatformInitSelect(void){
 	FD_ZERO(&fds); 
@@ -152,13 +156,14 @@ int		PlatformSelect(void){
 	return ret;
 }
 
-int		PlatformAccept(socket_info* sock,char* buffer,int* port){
+int		PlatformAccept(socket_info* sock, unsigned int *port)
+{
 	struct sockaddr_in addr;
 	int l = sizeof(struct sockaddr_in);
 	int ret;
 	
 	ret = accept(sock->socket, (struct sockaddr*)&addr,&l);
-	snprintf(buffer,256,"%s",inet_ntoa(addr.sin_addr));	
+	//snprintf(buffer,256,"%s",inet_ntoa(addr.sin_addr));	
 	*port = addr.sin_port;
 	
 	return ret;		
@@ -174,7 +179,7 @@ void PlatformGetPeerName(socket_info* sock){
 	//printf("Peer IP address: %s\n", inet_ntoa(m_addr.sin_addr));
 }
 
-int     PlatformSendSocket(int socket, unsigned char *buf, int len, int flags)
+int     PlatformSendSocket(int socket, const unsigned char *buf, SIZE_TYPE len, int flags)
 {
 	//return send(socket,buf,len,flags);
 	int ret,ret2;
@@ -195,7 +200,7 @@ int     PlatformSendSocket(int socket, unsigned char *buf, int len, int flags)
 	return ret;
 }
 
-int     PlatformSendSocketNonBlocking(int socket, unsigned char *buf, int len, int flags)
+int     PlatformSendSocketNonBlocking(int socket, const unsigned char *buf, SIZE_TYPE len, int flags)
 {
 	//return send(socket,buf,len,flags);
 	int ret,ret2;
@@ -221,12 +226,12 @@ int     PlatformSendSocketNonBlocking(int socket, unsigned char *buf, int len, i
 	return ret;
 }
 
-int     PlatformRecvSocket(int socket, unsigned char *buf, int len, int flags)
+int     PlatformRecvSocket(int socket, unsigned char *buf, SIZE_TYPE len, int flags)
 {
 	return recv(socket,buf,len,flags);
 }
 
-int     PlatformRecvSocketNonBlocking(int socket, unsigned char *buf, int len, int flags)
+int     PlatformRecvSocketNonBlocking(int socket, unsigned char *buf, SIZE_TYPE len, int flags)
 {
 	int len2 = 0;
 	int ret;
