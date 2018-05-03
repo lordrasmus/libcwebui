@@ -394,8 +394,12 @@ char waitEvents() {
 					handleer(sock3 , EVENT_READ , client_sock_info );
 
 				}
-
+#ifdef _MSC_VER
+				if (ioctlsocket(sock3, FIONREAD, &totalPending) == -1)
+#else
 				if( ioctl( sock3, FIONREAD, &totalPending) == -1 )
+#endif
+
 				{
 					if ( totalPending > 0 ){
 						/*#ifdef DEBUG_SELECT */

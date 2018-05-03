@@ -36,7 +36,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ********************************************************************/
 
 #ifdef _MSC_VER
-	#define WebserverMalloc(a) real_WebserverMalloc(a,__FUNCTION__,__FILE__, __LINE__)
+	#ifdef _WEBSERVER_MEMORY_DEBUG_
+		#define WebserverMalloc(a) real_WebserverMalloc(a,__FUNCTION__,__FILE__, __LINE__)
+	#else
+		#define WebserverMalloc(a) real_WebserverMalloc(a)
+	#endif
 #endif
 #ifdef __GNUC__
 
