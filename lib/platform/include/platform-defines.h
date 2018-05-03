@@ -34,10 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 #ifdef WIN32
-	#include <ws2tcpip.h>
-	#define WebServerPrintf printf
-	#define snprintf sprintf_s
-	#define MUTEX_TYPE HANDLE
+	#include "../win/platform_includes.h"
 #endif
 
 

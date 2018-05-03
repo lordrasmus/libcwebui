@@ -49,6 +49,7 @@ void	PlatformEndNetwork(void);
 
 int		PlatformSetNonBlocking(int socket);
 int		PlatformSetBlocking(int socket);
+int		PlatformClose(int socket);
 
 int		PlatformGetSocket( unsigned short port,int connections);
 
@@ -68,6 +69,7 @@ int     PlatformSendSocketNonBlocking(int socket, const unsigned char *buf, SIZE
 int   	PlatformRecvSocket(int socket, unsigned char *buf, SIZE_TYPE len, int flags);
 int     PlatformRecvSocketNonBlocking(int socket, unsigned char *buf, SIZE_TYPE len, int flags);
 int     PlatformCloseSocket(int socket);
+int		PlatformShutdown(int socket);
 
 
 #ifdef __cplusplus

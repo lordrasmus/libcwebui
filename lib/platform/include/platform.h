@@ -46,6 +46,7 @@ void	PlatformFree( void* mem );
 *																	*
 ********************************************************************/
 
+int				PlatformGetPid(void);
 void 			PlatformGetGUID(char* buf,SIZE_TYPE length);
 void 			PlatformGetIPv6(char* bytes);
 TIME_TYPE   	PlatformGetTick(void);
@@ -63,6 +64,10 @@ int PlatformCreateMutex(WS_MUTEX* m);
 int PlatformLockMutex(WS_MUTEX* m);
 int PlatformUnlockMutex(WS_MUTEX* m);
 int PlatformDestroyMutex(WS_MUTEX* m);
+
+int PlatformCreateSem(WS_SEMAPHORE_TYPE* sem, int init_value);
+int PlatformWaitSem(WS_SEMAPHORE_TYPE* sem);
+int PlatformPostSem(WS_SEMAPHORE_TYPE* sem);
 
 #endif
 
