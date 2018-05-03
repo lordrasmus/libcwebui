@@ -262,9 +262,10 @@ typedef struct {
 	char print_func_postfix[50];
 
 
-	char use_ssl;
+	
 
 #ifdef WEBSERVER_USE_SSL
+	char use_ssl;
 	char ssl_pending;
 	char ssl_block_event_flags;
 	uint32_t ssl_event_flags;
@@ -463,6 +464,7 @@ int checkCGIFunctions(http_request* s);
 #else
 	#define DEFINE_FUNCTION_INT( a ) 	void 				ws_ef_##a ( http_request *s,FUNCTION_PARAS* func )
 	#define REGISTER_FUNCTION_INT( a ) 	register_function ( #a,ws_ef_##a,"",0 );
+	#define REGISTER_LOCAL_FUNCTION_INT( a ) 	register_function ( #a,ws_ef_##a,"",0 );
 
 #endif
 

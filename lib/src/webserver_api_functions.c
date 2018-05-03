@@ -370,7 +370,11 @@ char *getRequestURL(dummy_handler* s) {
 }
 
 char isRequestSecure(dummy_handler *s) {
+#ifdef WEBSERVER_USE_SSL
 	return ((http_request*) s)->socket->use_ssl;
+#else
+	return 0;
+#endif
 }
 
 dummy_var* getURLParameter(dummy_handler* s,const char* name) {

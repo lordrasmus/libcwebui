@@ -22,16 +22,11 @@
 */
 
 
-#include <strings.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <unistd.h>
+
 
 #include "webserver.h"
 
-#ifdef LINUX
-#include <sys/sendfile.h>
-#endif
+
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -69,7 +64,11 @@ int WebserverStartConnectionManager(void) {
 	info = WebserverMallocSocketInfo();
 	PlatformCreateMutex(&info->socket_mutex);
 	info->active = 1;
+
+#ifdef WEBSERVER_USE_SSL
 	info->use_ssl = 0;
+#endif
+
 	info->port = getConfigInt("port");
 	info->socket = socket;
 	info->server = 1;
@@ -114,7 +113,7 @@ int WebserverStartConnectionManager(void) {
 	}
 #else
 	LOG( CONNECTION_LOG, NOTICE_LEVEL, 0, "webserver listening on port %d ( PID %d )",
-			getConfigText( "server_ip"), getConfigInt("port"), getpid());
+		getConfigInt("port"), PlatformGetPid());
 #endif
 
 #ifdef WEBSERVER_USE_WNFS
@@ -128,7 +127,9 @@ int WebserverStartConnectionManager(void) {
 	info = WebserverMallocSocketInfo();
 	PlatformCreateMutex(&info->socket_mutex);
 	info->active = 1;
+#ifdef WEBSERVER_USE_SSL
 	info->use_ssl = 0;
+#endif
 	info->port = 4444;
 	info->socket = socket;
 	info->server = 2;
@@ -150,7 +151,9 @@ socket_info* addClientSocket(int s, char ssl) {
 	if (info != 0) {
 		PlatformCreateMutex(&info->socket_mutex);
 		info->header = WebserverMallocHttpRequestHeader();
+#ifdef WEBSERVER_USE_SSL
 		info->use_ssl = ssl;
+#endif
 		info->client = 1;
 		info->server = 0;
 		info->active = 1;
@@ -658,8 +661,9 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendRamFile(socket_info* sock) {
 	return NO_MORE_DATA;
 }
 
+#ifdef LINUX
 CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendFileSystem_sendfile(socket_info* sock) {
-	off_t offset;
+	FILE_OFFSET offset;
 	int fd, diff, send;
 
 	offset = sock->file_infos.file_send_pos;
@@ -714,8 +718,10 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendFileSystem_sendfile(socket_inf
 
 	return CLIENT_DICONNECTED;
 }
+#endif
 
 CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCached(socket_info* sock) {
+#ifdef WEBSERVER_USE_SSL
 	if (sock->use_ssl == 1) {
 		return handleClientWriteDataNotCachedReadWrite(sock);
 	} else {
@@ -725,6 +731,15 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCached(socket_info* sock) {
 		return handleClientWriteDataNotCachedReadWrite(sock);
 #endif
 	}
+#else
+	
+#ifdef LINUX
+	return handleClientWriteDataSendFileSystem_sendfile(sock);
+#else
+	return handleClientWriteDataNotCachedReadWrite(sock);
+#endif
+	
+#endif
 }
 
 CLIENT_WRITE_DATA_STATUS handleClientWriteData(socket_info* sock) {
@@ -772,7 +787,7 @@ void handleServer(socket_info* sock) {
 #ifdef WEBSERVER_USE_WNFS
 		if (sock->server == 2) {
 			if ( wnfs_socket != 0 ){
-				close( wnfs_socket );
+				PlatformClose( wnfs_socket );
 			}
 			wnfs_socket = c;
 
@@ -785,8 +800,9 @@ void handleServer(socket_info* sock) {
 		}
 #endif
 
-		if (sock->use_ssl == 1) {
 #ifdef WEBSERVER_USE_SSL
+		if (sock->use_ssl == 1) {
+
 #if _WEBSERVER_CONNECTION_DEBUG_ > 1
 			LOG ( CONNECTION_LOG,NOTICE_LEVEL,c,"SSL Connection from %s",sock->client_ip_str );
 #endif
@@ -794,7 +810,7 @@ void handleServer(socket_info* sock) {
 			client_sock = addClientSocket(c, 1);
 			client_sock->run_ssl_accept = 1;
 			WebserverSSLInit(client_sock);
-#endif
+
 
 		} else {
 			PlatformSetNonBlocking(c);
@@ -803,6 +819,17 @@ void handleServer(socket_info* sock) {
 #endif
 			client_sock = addClientSocket(c, 0);
 		}
+#else
+
+		PlatformSetNonBlocking(c);
+#if _WEBSERVER_CONNECTION_DEBUG_ > 1
+		LOG(CONNECTION_LOG, NOTICE_LEVEL, c, "Normal Connection from %s", sock->client_ip_str);
+#endif
+		client_sock = addClientSocket(c, 0);
+
+#endif
+
+
 		strncpy(client_sock->client_ip_str, sock->client_ip_str, INET_ADDRSTRLEN);
 		client_sock->port = port;
 

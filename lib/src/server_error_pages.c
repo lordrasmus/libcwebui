@@ -31,11 +31,18 @@
 int printAddressInfo(socket_info *sock){
 	int length = 0;
 	length += printHTMLChunk(sock,"<address>%s at %s ",SERVER_NAME,SERVER_DOMAIN);
+
+#ifdef WEBSERVER_USE_SSL
 	if(sock->use_ssl == 1){
 		length += printHTMLChunk(sock,"Port %d</address></body></html>",getConfigInt("ssl_port"));
 	}else{
 		length += printHTMLChunk(sock,"Port %d</address></body></html>",getConfigInt("port"));
 	}
+#else
+	
+	length += printHTMLChunk(sock, "Port %d</address></body></html>", getConfigInt("port"));
+	
+#endif
 	return length;
 }
 
