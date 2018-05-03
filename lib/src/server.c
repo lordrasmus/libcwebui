@@ -355,7 +355,7 @@ int getHttpRequest(socket_info* sock) {
 	return 0;
 }
 
-void *WebserverHTMLChunkFree(const void *restrict free_element) {
+void *WebserverHTMLChunkFree(const void *free_element) {
 	WebserverFreeHtml_chunk((html_chunk*) free_element);
 	return 0;
 }
