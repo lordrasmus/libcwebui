@@ -542,8 +542,8 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 			}
 
 			header->boundary=(char*)WebserverMalloc( ( i - i2 )  + 3 ); /* + 2 für -- , +1 \0 */
-			strncpy(header->boundary,"--",2);		/* nach http://www.w3.org/Protocols/rfc1341/7_2_Multipart.html */
-			strncpy(header->boundary+2,&line[i2],i-i2);	/* kommt vor die boundary -- */
+			memcpy(header->boundary,"--",2);		/* nach http://www.w3.org/Protocols/rfc1341/7_2_Multipart.html */
+			memcpy(header->boundary+2,&line[i2],i-i2);	/* kommt vor die boundary -- */
 			header->boundary[i-i2+2]='\0';
 #ifdef ENABLE_DEVEL_WARNINGS
 			#warning Noch mehr Fehlerprüfungen
