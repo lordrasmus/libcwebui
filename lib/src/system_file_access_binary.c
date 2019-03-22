@@ -25,10 +25,10 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-#include <zlib.h>
+#include <miniz.h>
 
 #include "webserver.h"
-#include "miniz_tinfl.h"
+
 
 #include "intern/system_file_access.h"
 
@@ -192,7 +192,7 @@ static const unsigned char* read_file( const char *alias, const unsigned char* d
 
 						//printf("decompressing template ( gzip ) : %s\n",name);
 
-						z_stream strm;
+						mz_stream strm;
 						strm.next_in = (unsigned char*)ret;
 						strm.avail_in = compresed_size;
 
@@ -200,27 +200,27 @@ static const unsigned char* read_file( const char *alias, const unsigned char* d
 						strm.avail_out = real_size;
 						strm.total_out = 0;
 
-						strm.zalloc = Z_NULL;
-						strm.zfree = Z_NULL;
+						strm.zalloc = 0;
+						strm.zfree = 0;
 
-						if (inflateInit2(&strm, (16+MAX_WBITS) ) != Z_OK) {
+						if (mz_inflateInit2(&strm, (16+15) ) != MZ_OK) {
 							printf("inflateInit2 Error\n");
 							exit(1);
 						}
 
-						int err = inflate (&strm, Z_SYNC_FLUSH);
+						int err = mz_inflate (&strm, MZ_SYNC_FLUSH);
 						switch(err){
-							case Z_OK: 	break;
-							case Z_STREAM_END: 	break;
+							case MZ_OK: 	break;
+							case MZ_STREAM_END: 	break;
 
-							case Z_NEED_DICT:      printf("Z_NEED_DICT\n"); exit( 1 );
-							case Z_STREAM_ERROR:   printf("Z_STREAM_ERROR\n"); exit( 1 );
-							case Z_DATA_ERROR:     printf("Z_DATA_ERROR\n"); exit( 1 );
-							case Z_MEM_ERROR:      printf("Z_MEM_ERROR\n"); exit( 1 );
-							case Z_BUF_ERROR:      printf("Z_BUF_ERROR\n"); exit( 1 );
-							case Z_VERSION_ERROR:  printf("Z_VERSION_ERROR\n"); exit( 1 );
+							case MZ_NEED_DICT:      printf("Z_NEED_DICT\n"); exit( 1 );
+							case MZ_STREAM_ERROR:   printf("Z_STREAM_ERROR\n"); exit( 1 );
+							case MZ_DATA_ERROR:     printf("Z_DATA_ERROR\n"); exit( 1 );
+							case MZ_MEM_ERROR:      printf("Z_MEM_ERROR\n"); exit( 1 );
+							case MZ_BUF_ERROR:      printf("Z_BUF_ERROR\n"); exit( 1 );
+							case MZ_VERSION_ERROR:  printf("Z_VERSION_ERROR\n"); exit( 1 );
 
-							case Z_ERRNO:          printf("Z_ERRNO: %m\n"); exit( 1 );
+							case MZ_ERRNO:          printf("Z_ERRNO: %m\n"); exit( 1 );
 
 
 

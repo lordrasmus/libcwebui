@@ -14,7 +14,8 @@ PY_FLAGS = -I/usr/include/python2.7
 PY_LINK = -lpython2.7
 
 
-FLAGS= $(COMP_OPT) -Wall -fPIC -Wextra   -std=c99  -D_POSIX_SOURCE -DMINIZ_NO_ARCHIVE_APIS \
+FLAGS= $(COMP_OPT) -Wall -fPIC -Wextra   -std=c99  -D_POSIX_SOURCE \
+	-DMINIZ_NO_ARCHIVE_APIS -DMINIZ_NO_ZLIB_COMPATIBLE_NAMES \
 	-fdata-sections -ffunction-sections -fvisibility=hidden -Wpointer-arith \
 	$(SIZE_OPTS) $(PY_FLAGS) -DUSE_NEW_LIST \
 	-Wno-return-type -Wno-pointer-sign -Wno-variadic-macros  -Wno-unused-parameter \

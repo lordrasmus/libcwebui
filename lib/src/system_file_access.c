@@ -22,7 +22,7 @@
 */
 
 #include "webserver.h"
-#include "miniz_tinfl.h"
+#include <miniz.h>
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -53,7 +53,6 @@ void free_file_access( void ){
 	//free_local_file_system();
 
 }
-#include <zlib.h>
 
 bool initFilesystem(void) {
 
@@ -61,8 +60,6 @@ bool initFilesystem(void) {
 		LOG(FILESYSTEM_LOG, ERROR_LEVEL, 0, "WebserverInit must be called first","");
 		return false;
 	}
-
-	LOG(FILESYSTEM_LOG,NOTICE_LEVEL,0,"using zlib : %s",ZLIB_VERSION);
 
 #ifdef WEBSERVER_USE_BINARY_FORMAT
 	LOG( FILESYSTEM_LOG, NOTICE_LEVEL, 0, "using binary filesystem", "");
