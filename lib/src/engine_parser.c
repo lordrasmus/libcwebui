@@ -34,7 +34,7 @@ ws_variable* NEED_RESUL_CHECK parseVariable(http_request *s,char* buffer) {
 	int l;
 	int name_space = 0;
 	int offset = 0;
-	char error_buffer[100];
+	char error_buffer[130];
 	char error_index[100];
 
 	ws_variable *var,*tmp,*tmp2;
@@ -185,7 +185,7 @@ ws_variable* NEED_RESUL_CHECK parseVariable(http_request *s,char* buffer) {
                 
 
 				if(tmp2 == 0){
-					snprintf(error_buffer,100,"ARRAY %s INDEX %s not found",tmp->name,error_index);
+					snprintf(error_buffer,sizeof(error_buffer),"ARRAY %s INDEX %s not found",tmp->name,error_index);
 					setWSVariableString(var,error_buffer);
 					return var;
 				}else{

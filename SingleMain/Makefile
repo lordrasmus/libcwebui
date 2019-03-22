@@ -38,9 +38,7 @@ FILES= \
 	../lib/third_party/src/rb_tree/stack.c \
 	../lib/third_party/src/rb_tree/misc.c \
 	../lib/third_party/src/is_utf8/is_utf8.c \
-	../lib/third_party/src/miniz/miniz.c \
-	../lib/third_party/src/miniz/miniz_tdef.c \
-	../lib/third_party/src/miniz/miniz_tinfl.c
+	../lib/third_party/src/miniz/miniz.c 
 
 PY_FLAGS = -I/usr/include/python3.4
 PY_LINK = -lpython3.4
@@ -50,7 +48,8 @@ PY_LINK = -lpython2.7
 
 FLAGS=-I../lib/ -I../lib/include -I../lib/third_party/src/miniz/ -I../lib/third_party/src/rb_tree/ \
 	-I../lib/platform/include/ -I../lib/include/intern/  -I../lib/third_party/src/is_utf8/ \
-	-D_POSIX_SOURCE   -DLINUX -DSINGLE_MAIN -O3 -ggdb3 -flto=12 ${PY_FLAGS} -Wno-unused-result
+	-D_POSIX_SOURCE   -DLINUX -DSINGLE_MAIN -O3 -ggdb3 -flto=12 ${PY_FLAGS} -Wno-unused-result \
+	-DMINIZ_NO_ARCHIVE_APIS -DMINIZ_NO_ZLIB_COMPATIBLE_NAMES
 
 LIBS=-lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads -lz -lstdc++
 

@@ -278,7 +278,7 @@ static int check_post_header( socket_info* sock ){
 	#endif
 
 	if ( sock->header->contentlenght > WEBSERVER_MAX_POST_CONTENT_LENGTH ){
-		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"header->contentlenght > WEBSERVER_MAX_POST_CONTENT_LENGTH ( %d > %d ) ",sock->header->contentlenght, WEBSERVER_MAX_POST_CONTENT_LENGTH );
+		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"header->contentlenght > WEBSERVER_MAX_POST_CONTENT_LENGTH ( %" PRIu64 " > %d ) ",sock->header->contentlenght, WEBSERVER_MAX_POST_CONTENT_LENGTH );
 		return -1;
 	}
 

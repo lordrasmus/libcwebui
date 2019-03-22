@@ -103,7 +103,14 @@ matrix:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['libevent-dev', 'gcc-7']
       env: COMPILER=gcc-7  CC=gcc-7
-      
+     
+    - os: linux
+      compiler: gcc-8
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['libevent-dev', 'gcc-8']
+      env: COMPILER=gcc-8  CC=gcc-8
 
     - os: linux
       compiler: clang
@@ -170,6 +177,15 @@ matrix:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
           packages: ['libevent-dev', 'clang-5.0']
       env: COMPILER=clang-5.0 CC=clang-5.0
+    
+    - os: linux
+      dist: trusty
+      compiler: clang-6.0
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
+          packages: ['libevent-dev', 'clang-6.0']
+      env: COMPILER=clang-6.0 CC=clang-6.0
     
 #    - os: osx
 #      compiler: xcode9.1

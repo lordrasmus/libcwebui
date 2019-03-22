@@ -95,6 +95,7 @@ int main(int argc, char **argv) {
 
 		WebserverAddFileDir("", "../testSite/www");
 		WebserverAddFileDir("img", "../testSite/img");
+		WebserverAddFileDir("css", "../testSite/css");
 
 
 		WebserverLoadPlugin("TestPlugin", "../testSite/src/test_plugin.so");

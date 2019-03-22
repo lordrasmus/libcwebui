@@ -25,8 +25,10 @@
 #include <stdio.h>
 #include <inttypes.h>
 
+
+#include <miniz.h>
 #include "webserver.h"
-#include "miniz_tinfl.h"
+
 
 #include "intern/system_file_access.h"
 
@@ -178,6 +180,7 @@ static const unsigned char* read_file( const char *alias, const unsigned char* d
 				case 2: 	// deflate compression
 
 					new_size = tinfl_decompress_mem_to_mem( decomp_buffer, decomp_size, ret, compresed_size, 0 );
+
 					break;
 			}
 

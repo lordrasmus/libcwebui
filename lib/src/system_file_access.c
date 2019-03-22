@@ -22,8 +22,8 @@
 */
 
 #include "webserver.h"
+#include <miniz.h>
 
-#include "miniz.h"
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -55,15 +55,12 @@ void free_file_access( void ){
 
 }
 
-
 bool initFilesystem(void) {
 
 	if (globals.init_called != 0xAB) {
 		LOG(FILESYSTEM_LOG, ERROR_LEVEL, 0, "WebserverInit must be called first","");
 		return false;
 	}
-
-	LOG(FILESYSTEM_LOG,NOTICE_LEVEL,0,"using miniz : %s",MZ_VERSION);
 
 #ifdef WEBSERVER_USE_BINARY_FORMAT
 	LOG( FILESYSTEM_LOG, NOTICE_LEVEL, 0, "using binary filesystem", "");

@@ -1,55 +1,5 @@
 
 
-MBEDTLS := 	third_party/src/mbedtls-2.4.2/library/ssl_cookie.c \
-			third_party/src/mbedtls-2.4.2/library/md.c \
-			third_party/src/mbedtls-2.4.2/library/md_wrap.c \
-			third_party/src/mbedtls-2.4.2/library/ssl_tls.c \
-			third_party/src/mbedtls-2.4.2/library/entropy.c \
-			third_party/src/mbedtls-2.4.2/library/entropy_poll.c \
-			third_party/src/mbedtls-2.4.2/library/pk.c \
-			third_party/src/mbedtls-2.4.2/library/x509.c \
-			third_party/src/mbedtls-2.4.2/library/x509_crt.c \
-			third_party/src/mbedtls-2.4.2/library/sha512.c \
-			third_party/src/mbedtls-2.4.2/library/ctr_drbg.c \
-			third_party/src/mbedtls-2.4.2/library/timing.c \
-			third_party/src/mbedtls-2.4.2/library/certs.c \
-			third_party/src/mbedtls-2.4.2/library/asn1write.c \
-			third_party/src/mbedtls-2.4.2/library/asn1parse.c \
-			third_party/src/mbedtls-2.4.2/library/oid.c \
-			third_party/src/mbedtls-2.4.2/library/pem.c \
-			third_party/src/mbedtls-2.4.2/library/base64.c \
-			third_party/src/mbedtls-2.4.2/library/md5.c \
-			third_party/src/mbedtls-2.4.2/library/des.c \
-			third_party/src/mbedtls-2.4.2/library/aes.c \
-			third_party/src/mbedtls-2.4.2/library/aesni.c \
-			third_party/src/mbedtls-2.4.2/library/pkparse.c \
-			third_party/src/mbedtls-2.4.2/library/pk_wrap.c \
-			third_party/src/mbedtls-2.4.2/library/ecp.c \
-			third_party/src/mbedtls-2.4.2/library/ecp_curves.c \
-			third_party/src/mbedtls-2.4.2/library/bignum.c \
-			third_party/src/mbedtls-2.4.2/library/rsa.c \
-			third_party/src/mbedtls-2.4.2/library/ripemd160.c \
-			third_party/src/mbedtls-2.4.2/library/sha1.c \
-			third_party/src/mbedtls-2.4.2/library/sha256.c \
-			third_party/src/mbedtls-2.4.2/library/pkcs5.c \
-			third_party/src/mbedtls-2.4.2/library/pkcs12.c \
-			third_party/src/mbedtls-2.4.2/library/cipher.c \
-			third_party/src/mbedtls-2.4.2/library/arc4.c \
-			third_party/src/mbedtls-2.4.2/library/gcm.c \
-			third_party/src/mbedtls-2.4.2/library/ecdsa.c \
-			third_party/src/mbedtls-2.4.2/library/hmac_drbg.c \
-			third_party/src/mbedtls-2.4.2/library/cipher_wrap.c \
-			third_party/src/mbedtls-2.4.2/library/blowfish.c \
-			third_party/src/mbedtls-2.4.2/library/ccm.c \
-			third_party/src/mbedtls-2.4.2/library/camellia.c \
-			third_party/src/mbedtls-2.4.2/library/ssl_ciphersuites.c \
-			third_party/src/mbedtls-2.4.2/library/ecdh.c \
-			third_party/src/mbedtls-2.4.2/library/dhm.c \
-			third_party/src/mbedtls-2.4.2/library/ssl_srv.c \
-			third_party/src/mbedtls-2.4.2/library/debug.c \
-			third_party/src/mbedtls-2.4.2/library/net_sockets.c \
-			third_party/src/mbedtls-2.4.2/library/ssl_tls.c \
-			third_party/src/mbedtls-2.4.2/library/ssl_cli.c
 
 LIB_SOURCES := 	src/builtinFunctions.c \
 			src/cookie.c src/convert.c \
@@ -106,7 +56,7 @@ LIB_SOURCES := 	src/builtinFunctions.c \
 
 TP_SOURCES	:= 	third_party/src/rb_tree/red_black_tree.c third_party/src/rb_tree/misc.c third_party/src/rb_tree/stack.c \
 			third_party/src/is_utf8/is_utf8.c \
-			third_party/src/miniz/miniz_tdef.c third_party/src/miniz/miniz_tinfl.c third_party/src/miniz/miniz.c \
+			third_party/src/miniz/miniz.c
 
 
 
