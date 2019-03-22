@@ -193,6 +193,7 @@ static const unsigned char* read_file( const char *alias, const unsigned char* d
 						//printf("decompressing template ( gzip ) : %s\n",name);
 
 						mz_stream strm;
+						memset( &strm, 0 , sizeof( mz_stream ) );
 						strm.next_in = (unsigned char*)ret;
 						strm.avail_in = compresed_size;
 
