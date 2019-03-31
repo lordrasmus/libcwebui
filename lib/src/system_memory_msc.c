@@ -51,11 +51,8 @@ unsigned long allocated_max = 0;
 #define USE_MALLOC_CACHE
 */
 
-#ifdef _WEBSERVER_MEMORY_DEBUG_
-list_t block_list;
-#endif
 
-list_t chunk_cache;
+extern list_t chunk_cache;
 
 #ifdef USE_MALLOC_CACHE
 list_t malloc_cache[20];
