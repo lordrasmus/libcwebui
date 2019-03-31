@@ -175,6 +175,11 @@ def write_compressed_file( stats, f, path, f_data ):
 			
 def gen_c_file( path, alias, outname ):
 	
+	if not os.path.exists( path ):
+		print( "path not found : " + path )
+		sys.exit(1)
+
+
 	liste = list_files ( path, alias )
 	
 	info = { "ALIAS" : alias , "PATH": path , "TIME" : liste[0], "FILES" : liste[1] }
