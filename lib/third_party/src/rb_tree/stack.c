@@ -27,8 +27,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#warning "using external RB Tree"
 #else
 
-#include "stdafx.h"
-
 #include "stack.h"
 
 int StackNotEmpty(stk_stack * theStack) {

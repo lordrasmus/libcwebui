@@ -22,7 +22,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 
-#include "stdafx.h"
 
 #ifndef _VARIABLE_STORE_H_
 #define _VARIABLE_STORE_H_
