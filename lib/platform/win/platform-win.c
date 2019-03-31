@@ -24,6 +24,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "stdafx.h"
 
+#include <vld.h> 
+
+/*#define _CRTDBG_MAP_ALLOC  
+#include <stdlib.h>  
+#include <crtdbg.h> 
+*/
+
 #include <stdio.h>
 #include <winsock2.h>
 #include <strsafe.h>
