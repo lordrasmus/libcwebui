@@ -21,6 +21,8 @@
 
 */
 
+#include <ctype.h>
+
 #include "webserver.h"
 
 #include "intern/system_file_access_utils.h"

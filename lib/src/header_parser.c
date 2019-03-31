@@ -22,6 +22,8 @@
 */
 
 #include <stdarg.h>
+#include <ctype.h>
+
 #include "webserver.h"
 
 #ifdef DMALLOC
