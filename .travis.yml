@@ -18,7 +18,8 @@ matrix:
   
     
     - os: osx
-      compiler: xcode9.1
+      osx_image: xcode9.1
+      compiler: clang
       env: COMPILER=clang CC=clang
       
 
