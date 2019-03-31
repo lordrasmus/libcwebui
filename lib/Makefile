@@ -1,6 +1,13 @@
 SHELL=/bin/bash
 
-DEFS= -DLINUX
+
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+	DEFS = -D LINUX
+endif
+ifeq ($(UNAME_S),Darwin)
+	DEFS = -D OSX
+endif
 
 #
 #	WICHTIG muss beim compilieren UND linken gleich sein
