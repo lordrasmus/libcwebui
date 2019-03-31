@@ -49,7 +49,7 @@ unsigned long allocated_max = 0;
 list_t block_list;
 #endif
 
-
+extern list_t chunk_cache;
 
 #ifdef USE_MALLOC_CACHE
 list_t malloc_cache[20];

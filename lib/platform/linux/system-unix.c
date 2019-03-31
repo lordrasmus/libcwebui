@@ -220,3 +220,20 @@ int PlatformDestroyMutex(WS_MUTEX* m){
 
 
 
+int PlatformCreateSem(WS_SEMAPHORE_TYPE* sem, int init_value){
+	sem_init( sem, 0, init_value);
+}
+
+int PlatformPostSem(WS_SEMAPHORE_TYPE* sem) {
+	sem_post( sem );
+}
+
+int PlatformWaitSem(WS_SEMAPHORE_TYPE* sem) {
+	sem_wait( sem );
+}
+
+
+int		PlatformClose(int socket){
+	close( socket );
+}
+
