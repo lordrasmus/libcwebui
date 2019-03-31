@@ -70,7 +70,7 @@ DEFINE_FUNCTION ( setrvvar ) {
 
 DEFINE_FUNCTION ( cachemenustart ) {
     char buffer[1000];
-    char buffer2[1000];
+    char buffer2[3000];
     dummy_var *var;
 
     setRenderVar ( s, "ctmp1_class", "inaktive" );
@@ -91,10 +91,10 @@ DEFINE_FUNCTION ( cachemenustart ) {
     if ( var != 0 ) {
 		getVariableAsString(var,buffer,1000);
         if ( isRequestSecure(s) == 1 ) {
-            snprintf ( buffer2,1000, "ctmp%s%s_class",buffer,buffer );
+            snprintf ( buffer2,sizeof( buffer2 ), "ctmp%s%s_class",buffer,buffer );
             setRenderVar ( s,buffer2, "aktive" );
         }
-        snprintf ( buffer2,1000, "ctmp%s_class",buffer );
+        snprintf ( buffer2,sizeof( buffer2 ), "ctmp%s_class",buffer );
         setRenderVar ( s,buffer2, "aktive" );
     }
 

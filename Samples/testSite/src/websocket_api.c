@@ -54,7 +54,7 @@ pthread_mutex_t clock_mutex;
 void uhr_loop() {
 	char buffer[1000];
 
-	char buffer2[1000];
+	char buffer2[2000];
 	int ret;
 	char* guid;
 	char* remove;
