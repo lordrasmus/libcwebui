@@ -100,8 +100,7 @@ third_party/src/rb_tree/stack.c
 third_party/src/is_utf8/is_utf8.c
 
 third_party/src/miniz/miniz.c
-third_party/src/miniz/miniz_tdef.c
-third_party/src/miniz/miniz_tinfl.c
+
 )
 
 include_directories(include platform/include)

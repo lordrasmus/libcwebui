@@ -266,12 +266,6 @@
     <ClCompile Include="..\..\..\lib\third_party\src\miniz\miniz.c">
       <Filter>Quelldateien\third_party</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\lib\third_party\src\miniz\miniz_tdef.c">
-      <Filter>Quelldateien\third_party</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\lib\third_party\src\miniz\miniz_tinfl.c">
-      <Filter>Quelldateien\third_party</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\lib\third_party\src\rb_tree\misc.c">
       <Filter>Quelldateien\third_party</Filter>
     </ClCompile>
