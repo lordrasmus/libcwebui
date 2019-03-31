@@ -61,9 +61,15 @@ DEFINE_FUNCTION_INT( compiler ) {
 #endif
 #endif
 
+	 // https://en.wikipedia.org/wiki/Microsoft_Visual_C%2B%2B
+	 // https://dev.to/yumetodo/list-of-mscver-and-mscfullver-8nd
 
-
-
+#ifdef _MSC_FULL_VER
+#if _MSC_FULL_VER == 191627027
+	 printHTMLChunk(s->socket, "Microsoft Visual C++ 2017 (15.9.7)"); return;
+#endif
+	 printHTMLChunk(s->socket, "_MSC_FULL_VER %d", _MSC_FULL_VER);
+#endif
 
 #ifdef _MSC_VER
 #if _MSC_VER == 600
@@ -88,10 +94,14 @@ DEFINE_FUNCTION_INT( compiler ) {
     printHTMLChunk ( s->socket ,"Microsoft Visual C++ 2005 (8.0)" );
 #elif _MSC_VER == 1500
     printHTMLChunk ( s->socket ,"Microsoft Visual C++ 2008 (9.0)" );
-    return;
+#elif _MSC_VER == 1913
+	 printHTMLChunk(s->socket, "Microsoft Visual C++ 2017 (14.12)"); 
+#elif _MSC_VER == 1916
+	 printHTMLChunk(s->socket, "Visual Studio 2017 version ( 15.9 )"); return;
 #else
     printHTMLChunk ( s->socket ,"Microsoft %d",_MSC_VER );
 #endif
+	return;
 #endif
     printHTMLChunk ( s->socket ,"Unknown Compiler" );
 }
@@ -216,7 +226,9 @@ void getServerLink ( http_request* s ) {
         	printHTMLChunk ( s->socket,"http://%s:%d",mybuf,webserver_port );
     }
 #else
-    if ( s->socket->use_ssl == 1 ) {
+
+#ifdef WEBSERVER_USE_SSL
+	if ( s->socket->use_ssl == 1 ) {
         printHTMLChunk ( s->socket , "https://" );
     } else {
         printHTMLChunk ( s->socket , "http://" );
@@ -227,6 +239,13 @@ void getServerLink ( http_request* s ) {
     } else {
         printHTMLChunk ( s->socket ,":%d",getConfigInt("port") );
     }
+#else
+
+	printHTMLChunk(s->socket, "http://");
+	printHTMLChunk(s->socket, "%s", getConfigText("server_ip"));
+	printHTMLChunk(s->socket, ":%d", getConfigInt("port"));
+	
+#endif
 #endif
 
 }
@@ -328,7 +347,9 @@ DEFINE_FUNCTION_INT( server_ssl_port ){
 
 void register_internal_funcs( void ) {
 
+#ifndef _MSC_VER
 	REGISTER_FUNCTION_INT( dump_render_vars );
+#endif
 	REGISTER_LOCAL_FUNCTION_INT( compiler );
 	REGISTER_LOCAL_FUNCTION_INT( memoryInfos );
 /*	REGISTER_FUNCTION( ip ); */

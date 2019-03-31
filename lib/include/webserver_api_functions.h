@@ -40,21 +40,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define NORMAL_CHECK_OK			( 1 )
 #define SSL_CHECK_OK			( 2 )
 #define NOT_REGISTERED			( 0 )
-#define SESSION_MISMATCH_ERROR 		( -1 )
+#define SESSION_MISMATCH_ERROR 	( -1 )
 
 /* Session Status */
-#define NOT_REGISTERED 			( 0 )
-#define REGISTERED			( 1 )
+#define SESSION_NOT_REGISTERED 			( 0 )
+#define SESSION_REGISTERED			    ( 1 )
 
 
 /* Session Store Typen */
 #define STORE_NORMAL			( 1 )
-#define STORE_SSL			( 2 )
+#define STORE_SSL			    ( 2 )
 
 /* Condition Rückgabewerte */
-#define COND_TRUE			( 1 )
-#define COND_FALSE			( 2 )
-#define COND_ERROR			( 3 )
+#define COND_TRUE			    ( 1 )
+#define COND_FALSE		     	( 2 )
+#define COND_ERROR		     	( 3 )
 
 /* Websocket Signale */
 #define WEBSOCKET_CONNECT 		( 1 )
@@ -101,7 +101,11 @@ void sendHTMLVariable(dummy_handler* s,dummy_var* var);
 /*
 		printf Funktion die in der Ausgabe Buffer schreibt
 */
-void printHTML(dummy_handler* s,const char *fmt,...) __attribute__ ((format (printf, 2, 3)));
+#ifdef __GNUC__
+	void printHTML(dummy_handler* s,const char *fmt,...) __attribute__((format(printf, 2, 3)));
+#else
+	void printHTML(dummy_handler* s, const char *fmt, ...);
+#endif
 
 /*
 		Buffer in den Ausgabe Buffer kopieren
@@ -114,8 +118,12 @@ void sendHTML(dummy_handler* s, const char* text, const unsigned int length);
  	https://github.com/darwin/firelogger/wiki
 	 https://addons.mozilla.org/de/firefox/addon/firelogger/
 */
-#define FireLoggger( ARGS... ) addFireLogger(s,(char*)__BASE_FILE__, __LINE__, ARGS)
-void addFireLogger(dummy_handler* s, const char* filename, int fileline, const char* fmt, ... ) __attribute__ ((format (printf, 4, 5)));
+#define FireLoggger( ARGS ) addFireLogger(s,(char*)__BASE_FILE__, __LINE__, ARGS)
+#ifdef __GNUC__
+	void addFireLogger(dummy_handler* s, const char* filename, int fileline, const char* fmt, ... ) __attribute__((format(printf, 4, 5)));
+#else
+	void addFireLogger(dummy_handler* s, const char* filename, int fileline, const char* fmt, ...);
+#endif
 
 /*
 		Globalen Variablen locken / unlocken
@@ -162,7 +170,11 @@ dummy_var* getSessionVar(dummy_handler* s,int store,const char* name,WS_VAR_FLAG
 dummy_var* 	ws_get_render_var(dummy_handler* s,const char* name,WS_VAR_FLAGS flags);
 
 void 		ws_set_render_var(dummy_handler* s,char* name,char* text);
-void 		setRenderVar_v (dummy_handler* s, char* name, char* format,...) __attribute__ ((format (printf, 3, 4)));
+#ifdef __GNUC__
+	void 		setRenderVar_v (dummy_handler* s, char* name, char* format,...) __attribute__((format(printf, 3, 4)));
+#else
+	void 		setRenderVar_v(dummy_handler* s, char* name, char* format, ...);
+#endif
 
 
 

@@ -263,8 +263,6 @@
     <ClCompile Include="..\..\..\lib\src\websocket_handler.c" />
     <ClCompile Include="..\..\..\lib\third_party\src\is_utf8\is_utf8.c" />
     <ClCompile Include="..\..\..\lib\third_party\src\miniz\miniz.c" />
-    <ClCompile Include="..\..\..\lib\third_party\src\miniz\miniz_tdef.c" />
-    <ClCompile Include="..\..\..\lib\third_party\src\miniz\miniz_tinfl.c" />
     <ClCompile Include="..\..\..\lib\third_party\src\rb_tree\misc.c" />
     <ClCompile Include="..\..\..\lib\third_party\src\rb_tree\red_black_tree.c" />
     <ClCompile Include="..\..\..\lib\third_party\src\rb_tree\stack.c" />

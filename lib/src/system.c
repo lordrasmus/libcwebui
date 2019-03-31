@@ -68,7 +68,7 @@ global_vars* initWebserver(void) {
 	PlatformInitNetwork();
 
 	initEvents();
-	LOG(MESSAGE_LOG, NOTICE_LEVEL, 0, "miniz: %s ", mz_version() );
+	LOG(MESSAGE_LOG, NOTICE_LEVEL, 0, "miniz: %s ", MZ_VERSION );
 
 	if (!initFilesystem()) {
 		return 0;

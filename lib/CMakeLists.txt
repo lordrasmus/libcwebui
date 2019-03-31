@@ -19,12 +19,12 @@ ENDIF(NOT CMAKE_BUILD_TYPE)
 #SET(CMAKE_C_COMPILER "icc")
 
 #SET(CMAKE_C_FLAGS " -O3 -Wlogical-op -Wl,--version-script=webserver.map -fvisibility=hidden -g -Wall -DLINUX -Wc++-compat --std=c99 -D_GNU_SOURCE   "  ) # -pedantic
-SET(CMAKE_C_FLAGS " -O0 -Wlogical-op -Wl,--version-script=webserver.map -fvisibility=hidden -g -Wall -DLINUX -Wc++-compat --std=c99 -D_GNU_SOURCE   "  ) # -pedantic
+#SET(CMAKE_C_FLAGS " -O0 -Wlogical-op -Wl,--version-script=webserver.map -fvisibility=hidden -g -Wall -DLINUX -Wc++-compat --std=c99 -D_GNU_SOURCE   "  ) # -pedantic
 #SET(CMAKE_C_FLAGS "-g -Wall -DLINUX -D_GNU_SOURCE" ) #-pedantic
-SET(CMAKE_C_FLAGS_DEBUG -g3)
+#SET(CMAKE_C_FLAGS_DEBUG -g3)
 SET(CMAKE_C_FLAGS_RELEASE )
 
-SET(CMAKE_CXX_FLAGS "-pipe -Wall -DLINUX ")# -Wall  -Wextra -Wfatal-errors")# stehen bleiben bei error
+SET(CMAKE_CXX_FLAGS "-pipe -Wall -DWIN32 ")# -Wall  -Wextra -Wfatal-errors")# stehen bleiben bei error
 SET(CMAKE_CXX_FLAGS_DEBUG -ggdb3)
 SET(CMAKE_CXX_FLAGS_RELEASE -O2)
 SET(CMAKE_CXX_FLAGS_MYONE -My)
@@ -47,7 +47,7 @@ src/globals.c
 src/header.c
 src/header_parser.c
 src/header_send.c
-src/list.c
+src/linked_list.c
 src/log.c
 src/message_queue.c
 src/file_manager.c
@@ -58,11 +58,18 @@ src/server_error_pages.c
 src/session.c
 src/system.c
 src/system_file_access.c
+src/system_file_access_binary.c
+src/system_file_access_fs.c
+src/system_file_access_nfs.c
+src/system_file_access_utils.c
+src/system_file_access_wnfs.c
 src/system_file_cache.c
 src/system_memory.c
+src/system_memory_msc.c
 src/system_sockets.c
 src/system_sockets_container.c
 src/system_sockets_events.c
+src/system_sockets_select.c
 src/system_sockets_recv.c
 src/system_sockets_send.c
 src/utils.c
@@ -74,24 +81,34 @@ src/webserver_api_functions.c
 src/websockets.c
 src/websockets_send_recv.c
 src/websocket_handler.c
-platform/linux/platform-sockets.c
-platform/linux/system-unix.c
-platform/linux/platform-file-access.c
+#platform/linux/platform-sockets.c
+#platform/linux/system-unix.c
+#platform/linux/platform-file-access.c
+
+platform/win/platform-sockets.c
+platform/win/platform-win.c
+platform/win/platform-file-access.c
 
 ssl/openssl.c
 ssl/yassl.c
 ssl/gnutls.c
 
-third_party/src/simclist/simclist.c
 third_party/src/rb_tree/red_black_tree.c
 third_party/src/rb_tree/misc.c
 third_party/src/rb_tree/stack.c
+
+third_party/src/is_utf8/is_utf8.c
+
+third_party/src/miniz/miniz.c
+
 )
 
 include_directories(include platform/include)
+include_directories(include platform/win)
 include_directories(third_party/include)
 include_directories(third_party/src/rb_tree)
-include_directories(third_party/src/simclist)
+include_directories(third_party/src/is_utf8)
+include_directories(third_party/src/miniz)
 include_directories(../libevent/include)
 include_directories(.)
 
