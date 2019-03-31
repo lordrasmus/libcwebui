@@ -11,7 +11,7 @@ notifications:
 
 script:  
   - make -C lib rebuild
-  - make -C SingleMain/
+  - make -C Samples/Linux/SingleMain/
 
 matrix:
   include:
