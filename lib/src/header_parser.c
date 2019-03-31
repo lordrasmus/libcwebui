@@ -643,6 +643,7 @@ int ParseHeader(socket_info* sock, HttpRequestHeader* header, char* buffer, unsi
 			buffer[i - 1] = '\0';
 			line_length = &buffer[i - 1] - pos;
 			if ( analyseHeaderLine(sock, pos, line_length, header) < 0 ){
+				buffer[i - 1] = back;
 				return -4;
 			}
 			pos = &buffer[i + 1];
