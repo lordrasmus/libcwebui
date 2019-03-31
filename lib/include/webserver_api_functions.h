@@ -118,8 +118,9 @@ void sendHTML(dummy_handler* s, const char* text, const unsigned int length);
  	https://github.com/darwin/firelogger/wiki
 	 https://addons.mozilla.org/de/firefox/addon/firelogger/
 */
-#define FireLoggger( ARGS ) addFireLogger(s,(char*)__BASE_FILE__, __LINE__, ARGS)
+
 #ifdef __GNUC__
+	#define FireLoggger( ARGS... ) addFireLogger(s,(char*)__BASE_FILE__, __LINE__, ARGS)
 	void addFireLogger(dummy_handler* s, const char* filename, int fileline, const char* fmt, ... ) __attribute__((format(printf, 4, 5)));
 #else
 	void addFireLogger(dummy_handler* s, const char* filename, int fileline, const char* fmt, ...);
