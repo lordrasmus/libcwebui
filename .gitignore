@@ -83,6 +83,8 @@ lib/libWebserver.so
 
 
 
+Sample/libWebserver.so
+
 Samples/testSite/src/webserver_api_functions.c.list
 Samples/testSite/src/websocket_api.c.list
 Samples/testSite/src/test_plugin.so
@@ -95,6 +97,8 @@ Samples/testSite/img_data_img.c
 
 Samples/Linux/SingleMain/www_css.c
 Samples/Linux/SingleMain/www_data.c
+Samples/Linux/SingleMain/main
+Samples/Linux/SingleMain/main.o
 
 Samples/Linux/SharedMain/main.o
 
