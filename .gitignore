@@ -89,7 +89,7 @@ lib/.obj~/
 lib/Makefile.bbs
 lib/libWebserver.so
 
-SingleMain/www_css.c
+Samples/Linux/SingleMain/www_css.c
 SingleMain/www_data.c
 
 
