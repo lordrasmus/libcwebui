@@ -11,7 +11,7 @@ fuzzer:
 clean:
 	make -C lib clean
 	make -C Samples/Linux/SharedMain clean
-	make -C SingleMain clean
-	make -C testSite clean
+	make -C Samples/Linux/SingleMain clean
+	make -C Samples/testSite clean
 	make -C Docker clean
 	

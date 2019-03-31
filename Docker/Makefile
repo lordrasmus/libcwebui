@@ -26,5 +26,5 @@ main: main.cpp ../testSite/src/test_plugin.so
 
 clean:
 	${MAKE} -C ../lib clean
-	${MAKE} -C ../testSite clean
+	${MAKE} -C ../Samples/testSite clean
 	rm -f main libWebserver.so ../lib/lib/libWebserver.so
