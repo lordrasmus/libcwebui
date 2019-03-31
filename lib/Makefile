@@ -14,24 +14,25 @@ PY_FLAGS = -I/usr/include/python2.7
 PY_LINK = -lpython2.7
 
 
-DEFS= -DLINUX -DUSE_NEW_LIST
-
-
-FLAGS= $(COMP_OPT) -Wall -fPIC -Wextra  -std=c99   \
+FLAGS= $(COMP_OPT) -Wall -fPIC -Wextra   -std=c99  -D_POSIX_SOURCE \
+	-DMINIZ_NO_ARCHIVE_APIS -DMINIZ_NO_ZLIB_COMPATIBLE_NAMES \
 	-fdata-sections -ffunction-sections -fvisibility=hidden -Wpointer-arith \
-	$(SIZE_OPTS) $(PY_FLAGS)  \
+	$(SIZE_OPTS) $(PY_FLAGS) -DUSE_NEW_LIST \
 	-Wno-return-type -Wno-pointer-sign -Wno-variadic-macros  -Wno-unused-parameter \
 	-Werror=implicit-function-declaration
 
+ifneq ($(TRAVIS_BUILD),true)
+#	FLAGS += -fsanitize=address
+#	FLAGS += -fsanitize=thread
+#	FLAGS += -fsanitize=undefined
+endif
 	
-#-Wno-cpp
-#-pedantic  -save-temps
 
 SIZE_OPTS= -finline -fno-inline-functions
 
+#FLAGS+= -Wpedantic
 
-INCLUDES= -I. -Iinclude -Iplatform/include -Ithird_party/src/rb_tree/ -Ithird_party/src/is_utf8/ \
-			-Ithird_party/src/miniz/ -Ithird_party/src/mbedtls-2.4.2/include/
+INCLUDES= -I. -Iinclude -Iplatform/include -Ithird_party/src/rb_tree/ -Ithird_party/src/is_utf8/ -Ithird_party/src/miniz/
 LIBS=
 
 ifneq ($(TRAVIS_BUILD),true)
@@ -72,7 +73,6 @@ all:
 
 OBJ_LIST = 	obj/src/*.o obj/platform/linux/*.o obj/ssl/*.o obj/python/*.o obj/third_party/src/rb_tree/*.o \
 			obj/third_party/src/miniz/*.o obj/third_party/src/is_utf8/*.o 
-OBJ_LIST_LTO = obj/src/*.o.lto obj/platform/linux/*.o.lto obj/ssl/*.o.lto obj/third_party/src/rb_tree/*.o.lto 
 
 LINK_OPTS =  -shared -Wl,-O2 -Wl,--gc-sections $(PY_LINK) #-Wl,--strip-all
 
@@ -80,16 +80,17 @@ rebuild:
 	@$(MAKE) clean
 	@$(MAKE) all
 
-.SILENT:
 build: $(OBJ)
-	echo 'Building Lib : libWebserver.so'
+	@echo 'Building Lib : libWebserver.so'
+
 	$(COMPILER)  $(LINK_OPTS) -Wl,-soname,libWebserver.so  -o lib/libWebserver.so $(OBJ_LIST)
-	echo -e "\033[01;32mexported symbols : "$$(nm -C lib/libWebserver.so | grep " T " | wc -l)"\033[00m"
+
+	@echo -e "\033[01;32mexported symbols : "$$(nm -C lib/libWebserver.so | grep " T " | wc -l)"\033[00m"
 
 
 obj/%.o : %.c
-	echo 'Compiling File : $<'
-	$(COMPILER) $(INCLUDES) $(DEFS) $(FLAGS)  -c -o $@ $< #-save-temps
+	@echo 'Compiling File : $<'
+	@$(COMPILER) $(INCLUDES) $(DEFS) $(FLAGS)  -c -o $@ $<
 
 clean:
 	@echo 'Deleting Object Files'
@@ -110,8 +111,5 @@ tidy_file:
 		-Iplatform/include/ -Ithird_party/src/is_utf8/ -Ithird_party/src/miniz/
 format:
 	clang-format -style=file $(SOURCES)
-
-
-
 
 

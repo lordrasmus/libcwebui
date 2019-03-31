@@ -310,6 +310,10 @@ void freeFunction(engine_infos* engine) {
 	int i;
 	FUNCTION_PARAS* func = &engine->func;
 
+	if ( func == 0 ){
+		return;
+	}
+
 	for (i = 0; i < MAX_FUNC_PARAS; i++) {
 		if (func->parameter[i].text != 0){
 			WebserverFree(func->parameter[i].text);
