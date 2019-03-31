@@ -226,7 +226,9 @@ void getServerLink ( http_request* s ) {
         	printHTMLChunk ( s->socket,"http://%s:%d",mybuf,webserver_port );
     }
 #else
-    if ( s->socket->use_ssl == 1 ) {
+
+#ifdef WEBSERVER_USE_SSL
+	if ( s->socket->use_ssl == 1 ) {
         printHTMLChunk ( s->socket , "https://" );
     } else {
         printHTMLChunk ( s->socket , "http://" );
@@ -237,6 +239,13 @@ void getServerLink ( http_request* s ) {
     } else {
         printHTMLChunk ( s->socket ,":%d",getConfigInt("port") );
     }
+#else
+
+	printHTMLChunk(s->socket, "http://");
+	printHTMLChunk(s->socket, "%s", getConfigText("server_ip"));
+	printHTMLChunk(s->socket, ":%d", getConfigInt("port"));
+	
+#endif
 #endif
 
 }
