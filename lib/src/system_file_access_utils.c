@@ -212,25 +212,125 @@ void setFileType(WebserverFileInfo* file) {
 	}
 }
 
+#ifndef WEBSERVER_USE_SSL
+
+static uint32_t s1 = 1;
+static uint32_t s2 = 0;
+
+static void adler32_init(void) {
+	s1 = 1;
+	s2 = 0;
+}
+
+static void adler32_update(const void *buf, uint32_t buflength) {
+
+     const uint8_t *buffer = (const uint8_t*)buf;
+     
+     for (size_t n = 0; n < buflength; n++) {
+        s1 = (s1 + buffer[n]) % 65521;
+        s2 = (s2 + s1) % 65521;
+     }
+
+    
+}
+
+static uint32_t adler32_finish(void) {
+	return (s2 << 16) | s1;
+}
+
+static uint32_t reg32 = 0xffffffff;
+ 
+static void crc32_init(void) {
+	reg32 = 0xffffffff;
+}
+
+static void crc32_byte(char byte){
+	uint32_t i;
+	uint32_t polynom = 0xEDB88320;
+
+	for (i=0; i<8; ++i){
+		if ((reg32 & 1) != (byte & 1)){
+			reg32 = (reg32>>1) ^ polynom; 
+        }else{
+			reg32 >>= 1;
+		}
+		byte >>= 1;
+	}
+}
+
+static void crc32_update(const char *data, uint32_t len){
+  uint32_t i;
+
+  for(i=0; i<len; i++) 
+  {
+    crc32_byte(data[i]);
+  }
+  
+}
+
+static uint32_t crc32_finish(void) {
+	return reg32 ^ 0xffffffff;
+}
+
+#endif
+
 
 void generateEtag(WebserverFileInfo* file) {
 
 #ifndef WEBSERVER_USE_SSL
 
-	#ifdef _WIN32
-		#pragma message ( "etag generierung ohne ssl richtig implementieren" )
-	#elif defined (__GNUC__)
-		#warning "etag generierung ohne ssl richtig implementieren"
-	#else
-		#error "etag generierung ohne ssl richtig implementieren"
-	#endif
 
 	if (file->etag == 0) {
-		file->etag = (char *) WebserverMalloc( 100 );
+		file->etag = (char *) WebserverMalloc( 26 );
+		memset((void*)file->etag, 0, 26);
 	}
+	
+	if (file->RamCached == 1) {
+		uint32_t length = file->DataLenght;
+		crc32_init();
+		crc32_update(file->Data, file->DataLenght);
+		uint32_t crc = crc32_finish();
+		adler32_init();
+		adler32_update(file->Data, file->DataLenght);
+		uint32_t adler = adler32_finish();
 
-	file->etagLength = sprintf((char*) file->etag, "Test %s", file->Url);
-	file->etagLength = 100;
+		file->etagLength = sprintf((char*)file->etag, "%08X%08X%08X", length, crc, adler);
+	}
+	else {
+		if (!PlatformOpenDataReadStream(file->FilePath)) {
+			return;
+		}
+
+		char* data = (unsigned char*)WebserverMalloc(4096);
+
+		PlatformSeekToPosition(0);
+
+		FILE_OFFSET pos = 0;
+
+		crc32_init();
+		adler32_init();
+
+		while (pos < file->DataLenght) {
+		
+			FILE_OFFSET ret2 = PlatformReadBytes(data, 4096);
+
+			crc32_update(data, ret2);
+			adler32_update( data , ret2);
+			
+
+			pos += ret2;
+		}
+
+		uint32_t crc = crc32_finish(); 
+		uint32_t adler = adler32_finish();
+		
+		
+		file->etagLength = sprintf((char*)file->etag, "%08X%08X%08X", file->DataLenght, crc, adler);
+
+		PlatformCloseDataStream();
+		WebserverFree(data);
+
+	}
 
 #else
 

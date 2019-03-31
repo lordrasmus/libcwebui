@@ -74,7 +74,7 @@ typedef struct ws_variable_s ws_variable;
 extern "C" {
 #endif
 
-ALL_EXTRA int 			cmpVariableStoreName(void* var,char* name) ALL_ATTR;
+int 			cmpVariableStoreName(void* var,char* name);
 
 /**********************************************************
 *                                                         *
@@ -82,11 +82,11 @@ ALL_EXTRA int 			cmpVariableStoreName(void* var,char* name) ALL_ATTR;
 *                                                         *
 **********************************************************/
 
-ws_variable* 	newWSVariable(const char* name) ALL_ATTR;
-ws_variable*    newWSArray(const char* name) ALL_ATTR;
-void 			freeWSVariable(ws_variable* var) ALL_ATTR;
-void 			freeWSVariableValue(ws_variable* var) ALL_ATTR;
-SIZE_TYPE		getWSVariableSize(ws_variable* var) ALL_ATTR;
+ws_variable* 	newWSVariable(const char* name);
+ws_variable*    newWSArray(const char* name);
+void 			freeWSVariable(ws_variable* var);
+void 			freeWSVariableValue(ws_variable* var);
+SIZE_TYPE		getWSVariableSize(ws_variable* var);
 
 
 
@@ -96,17 +96,17 @@ SIZE_TYPE		getWSVariableSize(ws_variable* var) ALL_ATTR;
 *                                                         *
 **********************************************************/
 
-ALL_EXTRA void 			setWSVariableString(ws_variable* var, const char* text) ALL_ATTR;
-ALL_EXTRA int 			getWSVariableString(ws_variable* var, char* buffer,unsigned int buffer_length) ALL_ATTR;
+void		setWSVariableString(ws_variable* var, const char* text);
+int 		getWSVariableString(ws_variable* var, char* buffer,unsigned int buffer_length);
 
-ALL_EXTRA void          setWSVariableULong(ws_variable* var, uint64_t value) ALL_ATTR;
-ALL_EXTRA void 			setWSVariableInt(ws_variable* var, int value) ALL_ATTR;
-ALL_EXTRA uint64_t   	getWSVariableULong(ws_variable* var) ALL_ATTR;
-ALL_EXTRA int 			getWSVariableInt(ws_variable* var) ALL_ATTR;
+void		setWSVariableULong(ws_variable* var, uint64_t value);
+void		setWSVariableInt(ws_variable* var, int value);
+uint64_t   	getWSVariableULong(ws_variable* var);
+int			getWSVariableInt(ws_variable* var);
 
-ALL_EXTRA void			setWSVariableRef(ws_variable* var,ws_variable* ref) ALL_ATTR;
+void		setWSVariableRef(ws_variable* var,ws_variable* ref);
 
-ALL_EXTRA void 			setWSVariableCustomData(ws_variable* var, var_free_handler handle, void* data ) ALL_ATTR;
+void 		setWSVariableCustomData(ws_variable* var, var_free_handler handle, void* data );
 
 
 /**********************************************************
@@ -115,18 +115,18 @@ ALL_EXTRA void 			setWSVariableCustomData(ws_variable* var, var_free_handler han
 *                                                         *
 **********************************************************/
 
-ALL_EXTRA void 			setWSVariableArray(ws_variable* var) ALL_ATTR;
-ALL_EXTRA ws_variable*	getWSVariableArray(ws_variable* var, const char* name) ALL_ATTR;
-ALL_EXTRA ws_variable*	addWSVariableArray(ws_variable* var, const char* name) ALL_ATTR;
-ALL_EXTRA void			delWSVariableArray(ws_variable* var, const char* name) ALL_ATTR;
-ALL_EXTRA ws_variable*	refWSVariableArray(ws_variable* var, ws_variable* ref) ALL_ATTR;
+void 			setWSVariableArray(ws_variable* var);
+ws_variable*	getWSVariableArray(ws_variable* var, const char* name);
+ws_variable*	addWSVariableArray(ws_variable* var, const char* name);
+void			delWSVariableArray(ws_variable* var, const char* name);
+ws_variable*	refWSVariableArray(ws_variable* var, ws_variable* ref);
 
-ALL_EXTRA ws_variable*	getWSVariableArrayFirst(ws_variable* var) ALL_ATTR;
-ALL_EXTRA ws_variable*	getWSVariableArrayNext(ws_variable* var) ALL_ATTR;
-ALL_EXTRA void 			stopWSVariableArrayIterate(ws_variable* var) ALL_ATTR;
+ws_variable*	getWSVariableArrayFirst(ws_variable* var);
+ws_variable*	getWSVariableArrayNext(ws_variable* var);
+void 			stopWSVariableArrayIterate(ws_variable* var);
 
-ALL_EXTRA ws_variable*	getWSVariableArrayIndex(ws_variable* var, unsigned int index) ALL_ATTR;
-ALL_EXTRA ws_variable*	addWSVariableArrayIndex(ws_variable* var, unsigned int index) ALL_ATTR;
+ws_variable*	getWSVariableArrayIndex(ws_variable* var, unsigned int index);
+ws_variable*	addWSVariableArrayIndex(ws_variable* var, unsigned int index);
 
 
 

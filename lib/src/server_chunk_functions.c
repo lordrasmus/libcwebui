@@ -266,7 +266,7 @@ unsigned long writeChunksToBuffer(list_t* liste, char* out_buffer, int compress)
 	html_chunk* chunk;
 	unsigned long offset = 0;
 	tdefl_status status;
-	tdefl_compressor *deflator;
+	tdefl_compressor *deflator = 0;
 	
 	if ( compress == 1 ){
 		int level = 5;

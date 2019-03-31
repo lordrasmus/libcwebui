@@ -22,7 +22,7 @@
 */
 
 
-#include <dlfcn.h>
+
 #include "webserver.h"
 
 #ifdef DMALLOC

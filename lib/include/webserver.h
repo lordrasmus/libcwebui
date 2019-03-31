@@ -25,18 +25,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _WEBSERVER_H_
 #define _WEBSERVER_H_
 
-#ifndef ALL_EXTRA
-#define ALL_EXTRA
-#endif
 
-#ifndef ALL_ATTR
-#define ALL_ATTR
-#endif
-
-#ifndef ALL_SRC
-#define ALL_SRC
-#endif
-
+#define MINIZ_NO_ZLIB_APIS
 
 #include <math.h>
 

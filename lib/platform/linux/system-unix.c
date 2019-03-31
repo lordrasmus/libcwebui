@@ -167,7 +167,7 @@ void 	PlatformGetGUID ( char* buf,SIZE_TYPE length ) {
 *																	*
 ********************************************************************/
 
-ALL_SRC int PlatformCreateMutex(WS_MUTEX* m){
+int PlatformCreateMutex(WS_MUTEX* m){
 	pthread_mutexattr_t att;
 
 	if ( m == 0 ){
@@ -181,7 +181,7 @@ ALL_SRC int PlatformCreateMutex(WS_MUTEX* m){
 	return pthread_mutex_init(&m->handle,&att);
 }
 
-ALL_SRC int PlatformLockMutex(WS_MUTEX* m){
+int PlatformLockMutex(WS_MUTEX* m){
 	/*printf("Locking %X\n",m);*/
 	int ret;	
 	if ( m == 0 ){
@@ -196,7 +196,7 @@ ALL_SRC int PlatformLockMutex(WS_MUTEX* m){
 	return ret;
 }
 
-ALL_SRC int PlatformUnlockMutex(WS_MUTEX* m){
+int PlatformUnlockMutex(WS_MUTEX* m){
 	/*printf("Unlocking %X\n",m);*/
 	if ( m == 0 ){
 		printf("PlatformLockMutex wurde nicht initialisiert\n");
@@ -207,7 +207,7 @@ ALL_SRC int PlatformUnlockMutex(WS_MUTEX* m){
 	return pthread_mutex_unlock( &m->handle );
 }
 
-ALL_SRC int PlatformDestroyMutex(WS_MUTEX* m){
+int PlatformDestroyMutex(WS_MUTEX* m){
 	/*printf("Destroy Mutex\n");*/
 	if ( m == 0 ){
 		return EINVAL;

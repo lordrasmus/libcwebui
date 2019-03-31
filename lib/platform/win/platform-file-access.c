@@ -26,8 +26,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <stdio.h>
 
-//#include "system.h"
+#include "webserver.h"
 
+#pragma comment(lib, "Ws2_32.lib")
 
 FILE	*g_fp;
 unsigned short l;
@@ -41,23 +42,14 @@ void	ErrorExit(LPTSTR lpszFunction);
 **************************************************************/
 
 
+int PlatformOpenDataReadStream(const char* name) {
 
-char	PlatformOpenDataReadStream( char* name )
-{   
 	errno_t ret;
-/*	char d[1000];
-#ifndef WEBSERVER_USE_BINARY_FORMAT
-	strcpy_s(d,1000,file_dir);
-	strcat_s(d,1000,name);
-#else
-	strcpy_s(d,1000,name);
-#endif
-*/	
 	ret = fopen_s( &g_fp,name,"rb"); 
-	if(ret == 0)
-		return true;
-	else
+	if (ret != 0)
 		return false;
+
+	return _fileno(g_fp);
 }
 
 
@@ -81,9 +73,9 @@ void	PlatformResetDataStream( void )
     fseek(g_fp,0,SEEK_SET);		// Anfang der Datei
 }
 
-int PlatformReadBytes(unsigned char *data, unsigned int lenght)
+int PlatformReadBytes(unsigned char *data, SIZE_TYPE lenght)
 {
-    return fread(data,lenght,1,g_fp);
+    return fread(data,1,lenght,g_fp);
 }
 
 void	PlatformSeek(long offset){
@@ -101,17 +93,21 @@ unsigned long PlatformGetDataStreamPosition()
 }
 
 
-char	PlatformGetFileTime(WebserverFileInfo* file){
+int PlatformGetFileInfo(WebserverFileInfo* file, int* time_changed, int *new_size){
 	FILETIME cr,la,ftWrite;
 	SYSTEMTIME stUTC, stLocal;
-    DWORD dwRet;
-	HANDLE fh;
-	char bb[1000];
+    HANDLE fh;
+	char buffer[1000];
+
+	unsigned long int f_sec;
+	unsigned long int f_nsec;
 	
-	strcpy_s(bb,1000,file->FilePath);
+	size_t len;
+
+	strcpy_s(buffer,1000,file->FilePath);
 	//strcat_s(bb,1000,file->Name);
 
-	fh = CreateFileA((LPCSTR)bb,GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+	fh = CreateFileA((LPCSTR)buffer,GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
 	
 	if ( fh == INVALID_HANDLE_VALUE ){
 		//dwRet = GetLastError();
@@ -125,31 +121,59 @@ char	PlatformGetFileTime(WebserverFileInfo* file){
 		return false;
 	}
 
+	DWORD size = GetFileSize(fh, NULL );
+
 	CloseHandle(fh);
 	
     FileTimeToSystemTime(&ftWrite, &stUTC);
     SystemTimeToTzSpecificLocalTime(NULL, &stUTC, &stLocal);
 
-	dwRet = getHTMLDateFormat(bb,stLocal.wDay, stLocal.wMonth, stLocal.wYear, stLocal.wHour, stLocal.wMinute);
-    
-	if(file->lastmodified != 0){
-		if(0==strcmp(bb,file->lastmodified)) return true;
-		WebserverFree(file->lastmodified);
-		file->lastmodified=0;
+	*new_size = size;
+	*time_changed = 0;
+		
+	// Microseconds between 1601-01-01 00:00:00 UTC and 1970-01-01 00:00:00 UTC
+	static const uint64_t EPOCH_DIFFERENCE_MICROS = 11644473600000000ull;
+
+	// First convert 100-ns intervals to microseconds, then adjust for the
+	// epoch difference
+	uint64_t total_us = (((uint64_t)ftWrite.dwHighDateTime << 32) | (uint64_t)ftWrite.dwLowDateTime) / 10;
+	total_us -= EPOCH_DIFFERENCE_MICROS;
+
+	// Convert to (seconds, microseconds)
+	f_sec = (unsigned long int)(total_us / 1000000);
+	f_nsec = (unsigned long int)(total_us % 1000000);
+
+
+	if ((file->last_mod_sec != (unsigned long int)f_sec) || (file->last_mod_nsec != (unsigned long int)f_nsec)) {
+
+		*time_changed = 1;
+
+		file->last_mod_sec = f_sec;
+		file->last_mod_nsec = f_nsec;
+
+		len = getHTMLDateFormat(buffer, stLocal.wDay, stLocal.wMonth, stLocal.wYear, stLocal.wHour, stLocal.wMinute);
+
+		if (file->lastmodified == 0) {
+			file->lastmodified = (char *)WebserverMalloc(len + 1);
+			memcpy(file->lastmodified, buffer, len + 1);
+			file->lastmodifiedLength = len;
+			return true;
+		}
+		else {
+			if (0 != strcmp(file->lastmodified, buffer)) {
+				WebserverFree(file->lastmodified);
+				file->lastmodified = (char *)WebserverMalloc(len + 1);
+				memcpy(file->lastmodified, buffer, len + 1);
+				file->lastmodifiedLength = len;
+				return true;
+			}
+		}
+
 	}
-	file->lastmodifiedLength = (unsigned char)dwRet;
-	if(file->lastmodified != 0)
-		WebserverFree(file->lastmodified);
-	file->lastmodified = WebserverMalloc(dwRet+1,1);
 
-	strcpy_s(file->lastmodified,file->lastmodifiedLength+1,bb);
-	file->lastmodified[file->lastmodifiedLength] = '\0';
-
-
-	return false;
+	return true;
 
 }
-
 
 
 

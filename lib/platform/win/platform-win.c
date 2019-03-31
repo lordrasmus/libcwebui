@@ -29,8 +29,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <strsafe.h>
 #include <windows.h>
 #include <process.h>
-#include "system.h"
-#include "../WebserverConfig.h"
+
+#include "webserver.h"
 
 
 
@@ -40,7 +40,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 *                                                             *
 **************************************************************/
 
-void*	PlatformMalloc(int size){
+void*	PlatformMalloc(SIZE_TYPE size){
 	void* ret = malloc(size);
     return ret;
 }
@@ -61,7 +61,7 @@ void	PlatformFree( void* mem ){
 
 
 #include "time.h"
-unsigned long PlatformGetTick(void){
+TIME_TYPE  PlatformGetTick(void){
 	/*SYSTEMTIME systemTime;
 	FILETIME fileTime;
 	ULARGE_INTEGER uli;
@@ -93,9 +93,13 @@ unsigned long	PlatformGetTicksPerSeconde(void){
 	return 1;
 }
 
+int				PlatformGetPid(void) {
+	return _getpid();
+}
+
 #ifdef WEBSERVER_USE_SESSIONS
 static 	unsigned int guid;
-void 	PlatformGetGUID( char* buf,int length){	
+void 	PlatformGetGUID( char* buf,SIZE_TYPE length){	
 	int l=0;
 	l = sprintf_s(buf,length,"\"Test %d",guid++);
 	for(;l<length;l++){
@@ -118,7 +122,6 @@ void 	PlatformGetGUID( char* buf,int length){
 ********************************************************************/
 
 int PlatformCreateMutex(WS_MUTEX* m){
-	//HANDLE h = CreateMutex(0, FALSE, 0);
 	m->handle = CreateMutex(0, FALSE, 0);
 	m->locked = 0;
 	if (m->handle == NULL) 
@@ -135,7 +138,7 @@ int PlatformLockMutex(WS_MUTEX* m){
 	if(m->locked > 1)
 		printf("PlatformLockMutex doppel lock\n");
 	if( ret == WAIT_FAILED){
-		printf("Lock failed %X\n",m);
+		printf("Lock failed %p\n",(void*)m);
 		return -1;
 	}else{
 		//printf("Locked   %X\n",m);
@@ -153,4 +156,37 @@ int PlatformDestroyMutex(WS_MUTEX* m){
 	if(m->locked != 0)
 		printf("PlatformDestroyMutex ist noch gelocked\n");
 	return CloseHandle(m->handle);
+}
+
+int PlatformCreateSem(WS_SEMAPHORE_TYPE* sem, int init_value){
+	*sem = CreateSemaphore(
+		NULL,           // default security attributes
+		init_value,  // initial count
+		1000,  // maximum count
+		NULL);
+
+	return 0;
+}
+int PlatformWaitSem(WS_SEMAPHORE_TYPE* sem) {
+	WaitForSingleObject(
+		*sem,   // handle to semaphore
+		0L);           // zero-second time-out interval
+
+	return 0;
+}
+int PlatformPostSem(WS_SEMAPHORE_TYPE* sem) {
+	if (!ReleaseSemaphore(
+		*sem,  // handle to semaphore
+		1,            // increase count by one
+		NULL))       // not interested in previous count
+	{
+		printf("ReleaseSemaphore error: %d\n", GetLastError());
+		return -1;
+	}
+
+	return 0;
+}
+
+int strcasecmp(const char *s1, const char *s2) {
+	return _stricmp( s1, s2 );
 }

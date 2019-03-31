@@ -73,7 +73,7 @@ void freeSocketContainer(void) {
 }
 
 void deleteSocket(socket_info* sock) {
-	rb_red_blk_node* node;
+	
 	PlatformLockMutex(&socks_mutex);
 
 	PlatformLockMutex(&sock->socket_mutex);
@@ -84,6 +84,7 @@ void deleteSocket(socket_info* sock) {
 	ws_list_delete(&sock_list, sock);
 #ifdef WEBSERVER_USE_WEBSOCKETS
 	if (sock->isWebsocket == 1) {
+		rb_red_blk_node* node;
 		node = RBExactQuery(sock_tree, sock->websocket_guid);
 		if ( node != 0 ){
 			RBDelete(sock_tree, node);
@@ -144,7 +145,7 @@ void deleteAllSockets(void) {
 	ws_list_iterator_start(&sock_list);
 	while (ws_list_iterator_hasnext(&sock_list)) {
 		sock = (socket_info*) ws_list_iterator_next(&sock_list);
-		shutdown(sock->socket,SHUT_RDWR);
+		PlatformShutdown(sock->socket);
 		ws_list_append(&del_list, sock);
 	}
 	ws_list_iterator_stop(&sock_list);
@@ -204,9 +205,11 @@ void dumpSockets(http_request* s) {
 
 		printHTMLChunk(s->socket, "<td>%d<td>%d<td>", sock->port, getSocketInfoSize(sock));
 
+#ifdef WEBSERVER_USE_SSL
 		if (sock->use_ssl == 1) {
 			printHTMLChunk(s->socket, "active ");
 		}
+#endif
 
 
 		printHTMLChunk(s->socket, "<td>");

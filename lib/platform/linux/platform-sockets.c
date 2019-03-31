@@ -162,6 +162,10 @@ int		PlatformGetSocket ( unsigned short port,int connections )
     return s;
 }
 
+int		PlatformShutdown(int socket){
+	return shutdown(socket, SHUT_RDWR);
+}
+
 #ifdef SELECT_HELPER_FUNCS
 
 void	PlatformInitSelect ( void )

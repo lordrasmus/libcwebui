@@ -25,8 +25,8 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-#include <miniz.h>
 
+#include <miniz.h>
 #include "webserver.h"
 
 
@@ -179,59 +179,8 @@ static const unsigned char* read_file( const char *alias, const unsigned char* d
 
 				case 2: 	// deflate compression
 
-					//printf("decompressing template ( deflate ) : %s\n",name);
-
 					new_size = tinfl_decompress_mem_to_mem( decomp_buffer, decomp_size, ret, compresed_size, 0 );
-					//printf("%d\n%s\n",new_size,decomp_buffer);
-					break;
 
-					//size_t s = uncompress(decomp_buffer, decomp_size, ret, compresed_size);
-					//printf("%d %s\n",s,decomp_buffer);
-
-				case 1:{		// gzip compression
-
-						//printf("decompressing template ( gzip ) : %s\n",name);
-
-						mz_stream strm;
-						memset( &strm, 0 , sizeof( mz_stream ) );
-						strm.next_in = (unsigned char*)ret;
-						strm.avail_in = compresed_size;
-
-						strm.next_out = decomp_buffer;
-						strm.avail_out = real_size;
-						strm.total_out = 0;
-
-						strm.zalloc = 0;
-						strm.zfree = 0;
-
-						if (mz_inflateInit2(&strm, (16+15) ) != MZ_OK) {
-							printf("inflateInit2 Error\n");
-							exit(1);
-						}
-
-						int err = mz_inflate (&strm, MZ_SYNC_FLUSH);
-						switch(err){
-							case MZ_OK: 	break;
-							case MZ_STREAM_END: 	break;
-
-							case MZ_NEED_DICT:      printf("Z_NEED_DICT\n"); exit( 1 );
-							case MZ_STREAM_ERROR:   printf("Z_STREAM_ERROR\n"); exit( 1 );
-							case MZ_DATA_ERROR:     printf("Z_DATA_ERROR\n"); exit( 1 );
-							case MZ_MEM_ERROR:      printf("Z_MEM_ERROR\n"); exit( 1 );
-							case MZ_BUF_ERROR:      printf("Z_BUF_ERROR\n"); exit( 1 );
-							case MZ_VERSION_ERROR:  printf("Z_VERSION_ERROR\n"); exit( 1 );
-
-							case MZ_ERRNO:          printf("Z_ERRNO: %m\n"); exit( 1 );
-
-
-
-							default:
-								printf("unknownerror %d \n",err);
-								exit(1);
-						}
-
-						new_size = strm.total_out;
-					}
 					break;
 			}
 
@@ -244,7 +193,7 @@ static const unsigned char* read_file( const char *alias, const unsigned char* d
 			file->DataLenght = real_size;
 			*compressed_p = 0;
 		}
-		//printf("zlib2 : %s\n",a);
+		
 
 	}else{
 

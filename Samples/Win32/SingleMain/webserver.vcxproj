@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{FE43019C-0E49-4F6B-A824-E0DEA977D7AE}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>webserver</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalUsingDirectories>
+      </AdditionalUsingDirectories>
+      <AdditionalIncludeDirectories>.;..\..\..\lib\include;..\..\..\lib\include\intern;..\..\..\lib\platform\include;..\..\..\lib\third_party\src\rb_tree\;..\..\..\lib\third_party\src\miniz\;..\..\..\lib\third_party\src\is_utf8\;%(AdditionalUsingDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>..\..\..\lib\platform\include\;..\..\..\lib\third_party\src\rb_tree;..\..\..\lib\third_party\src\miniz\;..\..\..\lib\third_party\src\is_utf8\;..\..\..\lib\include\intern;..\..\..\lib\include;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\lib\include\intern\buildins.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\builtinFunctions.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\convert.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\cookie.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\dataTypes.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\engine.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\engine_parser.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\files.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\globals.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\header.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\helper.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\JSON_parser.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\linked_list.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\list.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\message_queue.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\py_api_functions.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\py_plugin.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\py_utils.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\server.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\server_config.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\session.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\sock_info.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\system.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\system_file_access.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\system_file_access_binary.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\system_file_access_fs.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\system_file_access_utils.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\system_file_access_wnfs.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\system_file_cache.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\system_memory.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\system_sockets.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\system_sockets_container.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\system_sockets_events.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\variable.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\variables_globals.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\variable_render.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\variable_store.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\webserver_log.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\webserver_ssl.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\webserver_utils.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\websockets.h" />
+    <ClInclude Include="..\..\..\lib\include\webserver.h" />
+    <ClInclude Include="..\..\..\lib\include\webserver_api_functions.h" />
+    <ClInclude Include="..\..\..\lib\include\webserver_api_functions_macros.h" />
+    <ClInclude Include="..\..\..\lib\platform\include\platform-defines.h" />
+    <ClInclude Include="..\..\..\lib\platform\include\platform-file-access.h" />
+    <ClInclude Include="..\..\..\lib\platform\include\platform-sockets.h" />
+    <ClInclude Include="..\..\..\lib\platform\include\platform.h" />
+    <ClInclude Include="..\..\..\lib\platform\win\platform_includes.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\lib\platform\win\platform-file-access.c" />
+    <ClCompile Include="..\..\..\lib\platform\win\platform-sockets.c" />
+    <ClCompile Include="..\..\..\lib\platform\win\platform-win.c" />
+    <ClCompile Include="..\..\..\lib\src\builtinFunctions.c" />
+    <ClCompile Include="..\..\..\lib\src\conditions.c" />
+    <ClCompile Include="..\..\..\lib\src\convert.c" />
+    <ClCompile Include="..\..\..\lib\src\cookie.c" />
+    <ClCompile Include="..\..\..\lib\src\engine.c" />
+    <ClCompile Include="..\..\..\lib\src\engine_api_extensions.c" />
+    <ClCompile Include="..\..\..\lib\src\engine_functions.c" />
+    <ClCompile Include="..\..\..\lib\src\engine_if.c" />
+    <ClCompile Include="..\..\..\lib\src\engine_parser.c" />
+    <ClCompile Include="..\..\..\lib\src\engine_tags.c" />
+    <ClCompile Include="..\..\..\lib\src\file_manager.c" />
+    <ClCompile Include="..\..\..\lib\src\file_manager_binary_format.c" />
+    <ClCompile Include="..\..\..\lib\src\globals.c" />
+    <ClCompile Include="..\..\..\lib\src\header.c" />
+    <ClCompile Include="..\..\..\lib\src\header_parser.c" />
+    <ClCompile Include="..\..\..\lib\src\header_send.c" />
+    <ClCompile Include="..\..\..\lib\src\JSON_parser.c" />
+    <ClCompile Include="..\..\..\lib\src\linked_list.c" />
+    <ClCompile Include="..\..\..\lib\src\log.c" />
+    <ClCompile Include="..\..\..\lib\src\message_queue.c" />
+    <ClCompile Include="..\..\..\lib\src\server.c" />
+    <ClCompile Include="..\..\..\lib\src\server_chunk_functions.c" />
+    <ClCompile Include="..\..\..\lib\src\server_config.c" />
+    <ClCompile Include="..\..\..\lib\src\server_error_pages.c" />
+    <ClCompile Include="..\..\..\lib\src\session.c" />
+    <ClCompile Include="..\..\..\lib\src\system.c" />
+    <ClCompile Include="..\..\..\lib\src\system_file_access.c" />
+    <ClCompile Include="..\..\..\lib\src\system_file_access_binary.c" />
+    <ClCompile Include="..\..\..\lib\src\system_file_access_fs.c" />
+    <ClCompile Include="..\..\..\lib\src\system_file_access_nfs.c" />
+    <ClCompile Include="..\..\..\lib\src\system_file_access_utils.c" />
+    <ClCompile Include="..\..\..\lib\src\system_file_access_wnfs.c" />
+    <ClCompile Include="..\..\..\lib\src\system_file_cache.c" />
+    <ClCompile Include="..\..\..\lib\src\system_memory.c" />
+    <ClCompile Include="..\..\..\lib\src\system_memory_gcc.c" />
+    <ClCompile Include="..\..\..\lib\src\system_memory_msc.c" />
+    <ClCompile Include="..\..\..\lib\src\system_sockets.c" />
+    <ClCompile Include="..\..\..\lib\src\system_sockets_container.c" />
+    <ClCompile Include="..\..\..\lib\src\system_sockets_epoll.c" />
+    <ClCompile Include="..\..\..\lib\src\system_sockets_events.c" />
+    <ClCompile Include="..\..\..\lib\src\system_sockets_recv.c" />
+    <ClCompile Include="..\..\..\lib\src\system_sockets_select.c" />
+    <ClCompile Include="..\..\..\lib\src\system_sockets_send.c" />
+    <ClCompile Include="..\..\..\lib\src\utils.c" />
+    <ClCompile Include="..\..\..\lib\src\variable.c" />
+    <ClCompile Include="..\..\..\lib\src\variable_global.c" />
+    <ClCompile Include="..\..\..\lib\src\variable_render.c" />
+    <ClCompile Include="..\..\..\lib\src\variable_store.c" />
+    <ClCompile Include="..\..\..\lib\src\webserver_api_functions.c" />
+    <ClCompile Include="..\..\..\lib\src\websockets.c" />
+    <ClCompile Include="..\..\..\lib\src\websockets_send_recv.c" />
+    <ClCompile Include="..\..\..\lib\src\websocket_handler.c" />
+    <ClCompile Include="..\..\..\lib\third_party\src\is_utf8\is_utf8.c" />
+    <ClCompile Include="..\..\..\lib\third_party\src\miniz\miniz.c" />
+    <ClCompile Include="..\..\..\lib\third_party\src\miniz\miniz_tdef.c" />
+    <ClCompile Include="..\..\..\lib\third_party\src\miniz\miniz_tinfl.c" />
+    <ClCompile Include="..\..\..\lib\third_party\src\rb_tree\misc.c" />
+    <ClCompile Include="..\..\..\lib\third_party\src\rb_tree\red_black_tree.c" />
+    <ClCompile Include="..\..\..\lib\third_party\src\rb_tree\stack.c" />
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="webserver.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

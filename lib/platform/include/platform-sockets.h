@@ -44,11 +44,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 extern "C" {
 #endif
 
-void	PlatformInitNetwork(void) ALL_ATTR;
-void	PlatformEndNetwork(void) ALL_ATTR;
+void	PlatformInitNetwork(void);
+void	PlatformEndNetwork(void);
 
-int		PlatformSetNonBlocking(int socket) ALL_ATTR;
-int		PlatformSetBlocking(int socket) ALL_ATTR;
+int		PlatformSetNonBlocking(int socket);
+int		PlatformSetBlocking(int socket);
+int		PlatformClose(int socket);
 
 int		PlatformGetSocket( unsigned short port,int connections);
 
@@ -64,10 +65,11 @@ void	PlatformGetPeerName(socket_info* sock);
 
 
 int   	PlatformSendSocket(int socket, const unsigned char *buf, SIZE_TYPE len, int flags);
-int     PlatformSendSocketNonBlocking(int socket, const unsigned char *buf, SIZE_TYPE len, int flags) ALL_ATTR;
+int     PlatformSendSocketNonBlocking(int socket, const unsigned char *buf, SIZE_TYPE len, int flags);
 int   	PlatformRecvSocket(int socket, unsigned char *buf, SIZE_TYPE len, int flags);
-int     PlatformRecvSocketNonBlocking(int socket, unsigned char *buf, SIZE_TYPE len, int flags) ALL_ATTR;
-int     PlatformCloseSocket(int socket) ALL_ATTR;
+int     PlatformRecvSocketNonBlocking(int socket, unsigned char *buf, SIZE_TYPE len, int flags);
+int     PlatformCloseSocket(int socket);
+int		PlatformShutdown(int socket);
 
 
 #ifdef __cplusplus

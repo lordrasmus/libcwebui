@@ -20,14 +20,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "WebserverConfig.h"
-
+#include "webserver.h"
 
 #ifdef USE_EXTERNAL_RBTREE
 	#warning "using external RB Tree"
 #else
 
-#include "stdafx.h"
 
 #include "red_black_tree.h"
 

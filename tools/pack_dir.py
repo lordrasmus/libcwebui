@@ -3,7 +3,7 @@
 import hashlib
 import argparse
 
-import os, sys, struct, gzip, zlib
+import os, sys, struct, gzip, zlib, datetime
 
 from pprint import pprint
 
@@ -113,46 +113,25 @@ def write_uncompressed_file( stats, f, path , f_data ):
 def compress_data( data ):
 	
 	strats = [ 
-		[ zlib.Z_DEFAULT_STRATEGY, 0 , None],
-		[ zlib.Z_FILTERED, 0 , None],
-		[ zlib.Z_HUFFMAN_ONLY, 0, None ],
+		{ "strategy": zlib.Z_DEFAULT_STRATEGY,	"size": 0, "data": None},
+		{ "strategy": zlib.Z_FILTERED, 			"size": 0, "data": None},
+		{ "strategy": zlib.Z_HUFFMAN_ONLY, 		"size": 0, "data": None},
 	]
 	outs = []
 	
 	for strat in strats:
-		if strat[2] == None:
-			compress = zlib.compressobj( level=9, method=zlib.DEFLATED, wbits=-15 ,memLevel=9, strategy=strat[0] )
-		else:
-			compress = zlib.compressobj( level=9, method=zlib.DEFLATED, wbits=-15 ,memLevel=9, strategy=strat[0] , zdict=strat[2] )
+		compress = zlib.compressobj( level=9, method=zlib.DEFLATED, wbits=-15 ,memLevel=9, strategy=strat["strategy"] )
 		deflated = compress.compress(data)
 		deflated += compress.flush()
-		outs.append( [ strat[0], deflated ] )
-		strat[1] = len( deflated )
+		strat["size"] = len( deflated )
+		strat["data"] = deflated
 	
-	ret = [ 0, len( data ) , None]
+	smalest = { "strategy": -1, 	"size": len( data ), "data": data}
 	for strat in strats:
-		if ret[1] > strat[1]:
-			ret = strat
+		if smalest["size"] > strat["size"]:
+			smalest = strat
 	
-	if ret[0] == zlib.Z_DEFAULT_STRATEGY:
-		t_out = "zlib.Z_DEFAULT "
-		
-	if ret[0] == zlib.Z_FILTERED:
-		t_out = "zlib.Z_FILTERED"
-		
-	if ret[0] == zlib.Z_HUFFMAN_ONLY:
-		t_out = "zlib.Z_HUFFMAN "
-		
-	if not ret[2] == None:
-		t_out += " ( dict ) "
-	
-	s_out = None
-	
-	for out in outs:
-		if out[0] == ret[0]:
-			s_out = out[1]
-	
-	return [ s_out, t_out ]
+	return smalest
 	
 
 def write_compressed_file( stats, f, path, f_data ):
@@ -165,31 +144,29 @@ def write_compressed_file( stats, f, path, f_data ):
 		h.update( s_in )
 		etag = h.hexdigest().upper()
 		
-		ret = compress_data( s_in )
-		s_out = ret[0]
-		t_out = ret[1]
+		compressed = compress_data( s_in )
 		
 		
-		if len (s_out) < f_data["SIZE"]:
+		if compressed["size"] < f_data["SIZE"]:
 			
-			write_uint32( f, 2 )  # komprimiert
+			write_uint32( f, 2 )  # komprimiert mit deflate
 			write_string( f, f_data["PATH"] )
 			write_string( f, etag )
 			tp = check_template( f, path, f_data )	# auf template prüfen
 			write_uint32( f, f_data["SIZE"] )
 			
-			text = "compressing ( " 
-			text += str ( int ( ( len (s_out) / f_data["SIZE"] ) * 100 ) ) + " % " 
-			text += " )  : " + f_data["PATH"] 
-			if  tp == 1 :
-				text += "  ( template )"
+			#text = "compressing ( " 
+			#text += str ( int ( ( compressed["size"] / f_data["SIZE"] ) * 100 ) ) + " % " 
+			#text += " )  : " + f_data["PATH"] 
+			#if  tp == 1 :
+			#	text += "  ( template )"
 			#sys.stdout.write( text + "\r")
 			
-			write_uint32( f, len (s_out))
-			for b in s_out:
+			write_uint32( f, compressed["size"])
+			for b in compressed["data"]:
 				f.write( "" + str( b ) + "," )
 			
-			stats["compressed"] += len (s_out)
+			stats["compressed"] += compressed["size"]
 			stats["uncompressed"] += f_data["SIZE"]
 				
 		else:
@@ -213,7 +190,8 @@ def gen_c_file( path, alias, outname ):
 	
 	print("\nwriting : " + outname )
 	print("  Alias : " + info["ALIAS"] )
-	print("  Time  : " + str( int( info["TIME"] ) ))
+	#print("  Time  : " + str( int( info["TIME"] ) ))
+	print("  Time  : " +  datetime.datetime.utcfromtimestamp(int( info["TIME"] )).strftime('%Y-%m-%d %H:%M:%S') )
 	print("  Files : " + str (len (info["FILES"] ) ) )
 	
 	file_site_stats = {"compressed":0,"uncompressed":0}
