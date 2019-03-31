@@ -30,10 +30,10 @@ FILES= \
 	../lib/python/py_utils.c \
 	../lib/python/py_plugin.c  \
 	../lib/python/py_api_functions.c  \
-	../testSite/src/testfunktions.c  \
-	../testSite/src/var_test.c  \
-	../testSite/src/websocket_api.c \
-	../testSite/src/webserver_api_functions.c  \
+	../Samples/testSite/src/testfunktions.c  \
+	../Samples/testSite/src/var_test.c  \
+	../Samples/testSite/src/websocket_api.c \
+	../Samples/testSite/src/webserver_api_functions.c  \
 	../lib/third_party/src/rb_tree/red_black_tree.c \
 	../lib/third_party/src/rb_tree/stack.c \
 	../lib/third_party/src/rb_tree/misc.c \
@@ -43,8 +43,8 @@ FILES= \
 PY_FLAGS = -I/usr/include/python3.4
 PY_LINK = -lpython3.4
 
-PY_FLAGS = -I/usr/include/python2.7
-PY_LINK = -lpython2.7
+#PY_FLAGS = -I/usr/include/python2.7
+#PY_LINK = -lpython2.7
 
 FLAGS=-I../lib/ -I../lib/include -I../lib/third_party/src/miniz/ -I../lib/third_party/src/rb_tree/ \
 	-I../lib/platform/include/ -I../lib/include/intern/  -I../lib/third_party/src/is_utf8/ \
@@ -64,10 +64,10 @@ all: testSite
 	
 testSite: 
 	echo "GEN  www_data.c "
-	../tools/pack_dir.py --dir ../testSite/www --alias=/ --out www_data.c
+	../tools/pack_dir.py --dir ../Samples/testSite/www --alias=/ --out www_data.c
 	
 	echo "GEN  www_css.c "
-	../tools/pack_dir.py --dir ../testSite/css --alias=/css/ --out www_css.c
+	../tools/pack_dir.py --dir ../Samples/testSite/css --alias=/css/ --out www_css.c
 
 	
 
