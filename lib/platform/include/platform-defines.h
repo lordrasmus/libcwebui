@@ -38,7 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 
-#ifdef LINUX
+#if defined( LINUX ) || defined ( OSX )
 	#include "../linux/platform_includes.h"
 #endif
 
