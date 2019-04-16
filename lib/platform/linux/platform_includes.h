@@ -15,13 +15,13 @@
 	#include <sys/sendfile.h>
 #endif
 
-#include <strings.h>
-#include <errno.h>
-#include <sys/types.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <errno.h>
+#include <strings.h>
 
+#include <sys/types.h>
 #include <netinet/in.h>
-
 #include <sys/select.h>
 #include <sys/ioctl.h>
 
