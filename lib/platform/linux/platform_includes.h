@@ -26,7 +26,15 @@
 #include <sys/ioctl.h>
 
 
-#define FILE_OFFSET __off_t
+#if defined( LINUX )
+	#define FILE_OFFSET __off_t
+#endif
+
+#if defined( OSX )
+	#define FILE_OFFSET __darwin_off_t
+#endif
+
+
 
 #define WS_MUTEX_TYPE		pthread_mutex_t
 #define WS_SEMAPHORE_TYPE	sem_t
