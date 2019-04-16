@@ -10,7 +10,10 @@
 #include <dlfcn.h>
 #include <pthread.h>
 #include <semaphore.h>
-#include <sys/sendfile.h>
+
+#if defined( LINUX )
+	#include <sys/sendfile.h>
+#endif
 
 #include <strings.h>
 #include <errno.h>
