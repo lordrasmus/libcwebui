@@ -2,7 +2,7 @@
 #ifndef _PLATFORM_INCLUDES_H_
 #define _PLATFORM_INCLUDES_H_
 
-#ifdef LINUX
+#if defined( LINUX ) || defined ( OSX )
 
 #include <stdlib.h>
 #include <unistd.h>
