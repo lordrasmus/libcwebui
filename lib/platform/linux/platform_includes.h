@@ -4,8 +4,11 @@
 
 #if defined( LINUX ) || defined ( OSX )
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
+#include <strings.h>
 #include <limits.h>
 #include <dlfcn.h>
 #include <pthread.h>
@@ -14,11 +17,6 @@
 #if defined( LINUX )
 	#include <sys/sendfile.h>
 #endif
-
-#include <unistd.h>
-#include <stdio.h>
-#include <errno.h>
-#include <strings.h>
 
 #include <sys/types.h>
 #include <netinet/in.h>
