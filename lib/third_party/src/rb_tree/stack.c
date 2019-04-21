@@ -53,7 +53,7 @@ stk_stack * StackJoin(stk_stack * stack1, stk_stack * stack2) {
 	}
 }
 
-stk_stack * StackCreate() {
+stk_stack * StackCreate( void ) {
 	stk_stack * newStack;
 
 	newStack = (stk_stack *) SafeMalloc(sizeof(stk_stack));
@@ -95,7 +95,8 @@ DATA_TYPE StackPop(stk_stack * theStack) {
 	return(popInfo);
 }
 
-void StackDestroy(stk_stack * theStack, void DestFunc(void * a)) {
+#if 0
+static void StackDestroy(stk_stack * theStack, void DestFunc(void * a)) {
 
 	stk_stack_node * y;
 
@@ -110,5 +111,6 @@ void StackDestroy(stk_stack * theStack, void DestFunc(void * a)) {
 		free(theStack);
 	}
 }
+#endif
 
 #endif /* USE_EXTERNAL_RBTREE */

@@ -34,15 +34,17 @@
 
 void WebserverPrintShortInfos(void);
 
-void freeHTMLChunk(void* var) {
+#if 0
+static void freeHTMLChunk(void* var) {
 	/*   html_chunk* chunk = ( html_chunk* ) var;
 	 WebserverFree ( chunk->text );
 	 WebserverFree ( chunk );
 	 */
 	WebserverFreeHtml_chunk((html_chunk*)var);
 }
+#endif
 
-void writeChunk(list_t* liste, const unsigned char* text, unsigned int length) {
+static void writeChunk(list_t* liste, const unsigned char* text, unsigned int length) {
 	html_chunk* chunk = 0, *tmp;
 	unsigned int to_write, diff, offset = 0;
 	if (ws_list_size(liste) == 0) {
@@ -90,7 +92,7 @@ void writeChunk(list_t* liste, const unsigned char* text, unsigned int length) {
 
 }
 
-void writeChunkVariable(list_t* liste, ws_variable* var) {
+static void writeChunkVariable(list_t* liste, ws_variable* var) {
 	char buffer[20];
 	ws_variable* it;
 	if (var == 0){
@@ -192,7 +194,7 @@ int isChunkListbigger(list_t* liste, int bytes){
 }
 
 
-void vprintHeaderChunk(socket_info* sock, const char *fmt, va_list argptr) {
+static void vprintHeaderChunk(socket_info* sock, const char *fmt, va_list argptr) {
 	int l;
 	char tmp[1000];
 	if (sock == 0){
@@ -262,7 +264,7 @@ static char* get_status( tdefl_status status ){
 	return "unknown";
 	
 }
-unsigned long writeChunksToBuffer(list_t* liste, char* out_buffer, int compress) {
+static unsigned long writeChunksToBuffer(list_t* liste, char* out_buffer, int compress) {
 	html_chunk* chunk;
 	unsigned long offset = 0;
 	tdefl_status status;

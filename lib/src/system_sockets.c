@@ -145,7 +145,7 @@ int WebserverStartConnectionManager(void) {
 }
 
 
-socket_info* addClientSocket(int s, char ssl) {
+static socket_info* addClientSocket(int s, char ssl) {
 	socket_info* info;
 	info = WebserverMallocSocketInfo();
 	if (info != 0) {
@@ -165,7 +165,7 @@ socket_info* addClientSocket(int s, char ssl) {
 	return 0;
 }
 
-void reCopyHeaderBuffer(socket_info* sock, unsigned int end) {
+static void reCopyHeaderBuffer(socket_info* sock, unsigned int end) {
 	unsigned int i, i2;
 	i2 = end; /* end ist das letzte geparste zeichen */
 	for (i = 0; i < sock->header_buffer_pos - end; i++, i2++) {
@@ -218,7 +218,7 @@ static void call_post_post_handler( socket_info* sock ){
 
 }
 
-int recv_post_payload( socket_info* sock, const char* buffer, uint32_t len){
+static int recv_post_payload( socket_info* sock, const char* buffer, uint32_t len){
 
 	/*
 	LOG(CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"POST Data %d of %d -> %d",sock->header->post_buffer_pos,sock->header->contentlenght, len);
@@ -307,7 +307,7 @@ static int check_post_header( socket_info* sock ){
  *
  */
 
-int handleClientHeaderData(socket_info* sock) {
+static int handleClientHeaderData(socket_info* sock) {
 	int len2;
 	unsigned int buffer_length = WEBSERVER_MAX_HEADER_LINE_LENGHT * 1;
 	unsigned int parsed;
@@ -427,7 +427,7 @@ int handleClientHeaderData(socket_info* sock) {
 	return -1;
 }
 
-int checkConnectionKeepAlive(socket_info *sock) {
+static int checkConnectionKeepAlive(socket_info *sock) {
 
 	if (sock->header->Connection != 0) {
 		if (strcasecmp(sock->header->Connection, "keep-alive") != 0) {
@@ -445,7 +445,7 @@ int checkConnectionKeepAlive(socket_info *sock) {
 	return -1;
 }
 
-int handleClient(socket_info* sock) {
+static int handleClient(socket_info* sock) {
 	int ret;
 
 #ifdef _WEBSERVER_SOCKET_DEBUG_
@@ -535,7 +535,7 @@ int handleClient(socket_info* sock) {
 }
 
 
-char sendData(socket_info* sock, const unsigned char* buffer, FILE_OFFSET length) {
+static char sendData(socket_info* sock, const unsigned char* buffer, FILE_OFFSET length) {
 	int ret;
 	int to_send;
 	SOCKET_SEND_STATUS status;
@@ -577,7 +577,7 @@ char sendData(socket_info* sock, const unsigned char* buffer, FILE_OFFSET length
 	return CLIENT_NO_MORE_DATA;
 }
 
-CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendOutputBuffer(socket_info* sock) {
+static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendOutputBuffer(socket_info* sock) {
 	int ret;
 
 #ifdef _WEBSERVER_CONNECTION_SEND_DEBUG_
@@ -637,7 +637,7 @@ client_diconnected_main:
 	return CLIENT_DICONNECTED;
 }
 
-CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendRamFile(socket_info* sock) {
+static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendRamFile(socket_info* sock) {
 	int ret;
 	ret = sendData(sock, sock->file_infos.file_info->Data, sock->file_infos.file_info->DataLenght);
 	switch (ret) {
@@ -720,7 +720,7 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendFileSystem_sendfile(socket_inf
 }
 #endif
 
-CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCached(socket_info* sock) {
+static CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCached(socket_info* sock) {
 #ifdef WEBSERVER_USE_SSL
 	if (sock->use_ssl == 1) {
 		return handleClientWriteDataNotCachedReadWrite(sock);

@@ -122,7 +122,8 @@ int handleWebRequest(socket_info* sock) {
 	return 0;
 }
 
-void noRamFree(socket_info* newsockfd) {
+#if 0
+static void noRamFree(socket_info* newsockfd) {
 	unsigned char buf[50];
 #ifdef _MSC_VER
 	int len = snprintf ( buf,50,"<html><body>Kein RAM verf&uuml;gbar</body></html>" );
@@ -133,6 +134,7 @@ void noRamFree(socket_info* newsockfd) {
 	WebserverSend(newsockfd, buf, len, 0, 0);
 	WebserverCloseSocket(newsockfd);
 }
+#endif
 
 void shutdownWebserverHandler(void) {
 	LOG(CONNECTION_LOG, NOTICE_LEVEL, 0, "Webserver Shutdown Handler Invoked", "");

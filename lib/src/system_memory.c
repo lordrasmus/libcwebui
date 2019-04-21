@@ -26,8 +26,8 @@
 
 list_t chunk_cache;
 
-
-void WebserverFreeMem(void) {
+#if 0
+static void WebserverFreeMem(void) {
 	/*    for (i=0;i<g_files.FileCount;i++)
 	{
 	WebserverFree(g_files.files[i]->Name);
@@ -37,7 +37,7 @@ void WebserverFreeMem(void) {
 	WebserverFree(g_files.files);*/
 	/* TODO: "freigeben der datai infos wieder einbauen" */
 }
-
+#endif
 
 
 
@@ -59,7 +59,7 @@ void WebserverFreeParameter(Parameter* para) {
 }
 
 
-void freeChunkList(list_t* liste) {
+static void freeChunkList(list_t* liste) {
 	html_chunk* chunk;
 	ws_list_iterator_start(liste);
 	while ((chunk = (html_chunk*)ws_list_iterator_next(liste))) {
@@ -183,7 +183,7 @@ void WebserverFreeSessionStore(sessionStore* store) {
 	WebserverFree(store);
 }
 
-void *WebserverFreeCookieFreer(const void *free_element) {
+static void *WebserverFreeCookieFreer(const void *free_element) {
 	WebserverFreeCookie((Cookie*)free_element);
 	return 0;
 }

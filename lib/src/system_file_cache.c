@@ -32,11 +32,11 @@
 
 rb_red_blk_tree* file_cache;
 
-void FileDest( UNUSED_PARA void* a) {
+static void FileDest( UNUSED_PARA void* a) {
 	/* free((int*) a); */
 }
 
-int FileComp(const void* a, const void* b) {
+static int FileComp(const void* a, const void* b) {
 	int ret;
 	char *p_a = (char*) a;
 	char *p_b = (char*) b;
@@ -50,14 +50,14 @@ int FileComp(const void* a, const void* b) {
 	return 0;
 }
 
-void FilePrint(const void* a) {
+static void FilePrint(const void* a) {
 	printf("%i", *(int*) a);
 }
 
-void InfoPrint( UNUSED_PARA void* a) {
+static void InfoPrint( UNUSED_PARA void* a) {
 }
 
-void InfoDest(void *a) {
+static void InfoDest(void *a) {
 	WebserverFileInfo* wfi = (WebserverFileInfo*) a;
 	if (wfi->Url != 0){
 		WebserverFree( (void*) wfi->Url);

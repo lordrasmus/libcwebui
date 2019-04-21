@@ -30,11 +30,11 @@
 #endif
 
 
-void StringDest( UNUSED_PARA void* a) {
+static void StringDest( UNUSED_PARA void* a) {
 	/* free((int*) a); */
 }
 
-int StringComp(const void* a, const void* b) {
+static int StringComp(const void* a, const void* b) {
 	int ret;
 	char *p_a = (char*) a;
 	char *p_b = (char*) b;
@@ -53,14 +53,14 @@ int StringComp(const void* a, const void* b) {
 	return 0;
 }
 
-void StringPrint(const void* a) {
+static void StringPrint(const void* a) {
 	printf("%s", (char*) a);
 }
 
-void StringInfoPrint( UNUSED_PARA void* a) {
+static void StringInfoPrint( UNUSED_PARA void* a) {
 }
 
-void StringInfoDest( UNUSED_PARA void *a) {
+static void StringInfoDest( UNUSED_PARA void *a) {
 }
 
 rb_red_blk_tree* initStringRBTree(void) {
@@ -172,7 +172,7 @@ unsigned long Webserver_strlen(char *text) {
 	return strlen(text);
 }
 
-void getHTMLMonth(unsigned char month, char* buffer, SIZE_TYPE size) {
+static void getHTMLMonth(unsigned char month, char* buffer, SIZE_TYPE size) {
 	switch (month) {
 	case 1:
 		snprintf( buffer, size, "Jan");
