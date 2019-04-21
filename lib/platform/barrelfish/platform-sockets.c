@@ -109,12 +109,12 @@ int		PlatformGetSocket ( unsigned short port,int connections )
 #else
     struct sockaddr_in *addr = ( struct sockaddr_in * ) WebserverMalloc ( sizeof ( struct sockaddr_in ) );
     memset( addr, 0 , sizeof( struct sockaddr_in ) );
-    int s = socket ( PF_INET, SOCK_STREAM, 0 );
+    int s = socket ( AF_INET, SOCK_STREAM, 0 );
 #endif
 
     if ( s == -1 )
     {
-        LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"socket() failed : %m","" );
+        LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"socket() failed : %d",s );
         WebserverFree( addr );
         return -1;
     }

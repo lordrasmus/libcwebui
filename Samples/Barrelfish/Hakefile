@@ -10,7 +10,7 @@
 					],
 					addCFlags = [ "-DBARRELFISH", "-Wno-missing-prototypes" ],
 					  
-                    cFiles = [ "main.c", 
+                    cFiles = [ "main.c", "www_data.c", "www_css.c",
 						"../../lib/src/builtinFunctions.c",
 						"../../lib/src/convert.c",
 						"../../lib/src/cookie.c",
@@ -71,7 +71,7 @@
 						"../../lib/platform/barrelfish/system-unix.c"
 						],
                       
-                    addLibraries = libDeps ["trace", "skb", "pci", "vfs", "acpi_client", "lwip", "octopus", "linenoise", "posixcompat" ],
+                    addLibraries = libDeps [ "posixcompat" ],
                     architectures = [ "x86_64", "x86_32" ]
                     }
 ]
