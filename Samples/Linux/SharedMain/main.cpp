@@ -93,12 +93,12 @@ int main(int argc, char **argv) {
 
 		WebserverConfigSetInt( "use_csp",0);
 
-		WebserverAddFileDir("", "../testSite/www");
-		WebserverAddFileDir("img", "../testSite/img");
-		WebserverAddFileDir("css", "../testSite/css");
+		WebserverAddFileDir("", "../../testSite/www");
+		WebserverAddFileDir("img", "../../testSite/img");
+		WebserverAddFileDir("css", "../../testSite/css");
 
 
-		WebserverLoadPlugin("TestPlugin", "../testSite/src/test_plugin.so");
+		WebserverLoadPlugin("TestPlugin", "../../testSite/src/test_plugin.so");
 
 		WebserverConfigSetInt("port",8080);
 		WebserverConfigSetInt("ssl_port",4443);
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
 
 	WebserverShutdown();
 	
-	printf("allocated : %d\n",allocated);
+	printf("allocated : %ld\n",allocated);
 
 	return 0;
 }

@@ -8,6 +8,8 @@ FLAGS=-I../../../lib -I../../../lib/include -Wswitch-enum
 
 all: ../../testSite/src/test_plugin.so
 	
+	cp ../../../lib/lib/libWebserver.so .
+	
 	$(CXX) $(FLAGS) -c main.cpp  -O0 -ggdb3 
 	$(CXX) $(FLAGS) main.o -O0 -ggdb3 -o main -lstdc++ -lWebserver -lssl -levent -levent_pthreads  -L../../../lib/lib/ -Wl,-rpath=.
 	
