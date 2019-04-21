@@ -226,7 +226,7 @@ void delEventSocketReadPersist(socket_info* sock) {
 }
 
 
-void delEventSocketWrite2( int socket ) {
+static void delEventSocketWrite2( int socket ) {
 	int i;
 	
     for( i=0; i< FD_SETSIZE; i++){
@@ -255,7 +255,7 @@ void delEventSocketWritePersist(socket_info* sock) {
 	 delEventSocketWrite2( sock->socket );
 }
 
-void delEventSocketRead2( int socket ) {
+static void delEventSocketRead2( int socket ) {
 	int i;
 	
     for( i=0; i< FD_SETSIZE; i++){
@@ -278,7 +278,7 @@ void delEventSocketRead2( int socket ) {
 }
 
 	
-void delEventSocketAll2( int socket ) {
+static void delEventSocketAll2( int socket ) {
 	
 	int i;
 	
@@ -312,7 +312,7 @@ void deleteEvent(socket_info* sock){
 	exit(1);
 }
 
-void initEvents() {
+void initEvents( void ) {
 	int i;
 	
 	for( i=0; i<FD_SETSIZE; i++){
@@ -324,7 +324,8 @@ void initEvents() {
 	FD_ZERO(&gesamt_schreibe_sockets);
 }
 
-int check_sock_exists( int socket ){
+#if 0
+static int check_sock_exists( int socket ){
 	int i;
 	
 	for( i=0; i< FD_SETSIZE; i++){
@@ -334,8 +335,9 @@ int check_sock_exists( int socket ){
 	}
 	return 0;
 }
+#endif
 
-char waitEvents() {
+char waitEvents( void ) {
 	int i;
 	int sock3;
 	int ready;
@@ -455,7 +457,7 @@ void breakEvents(void){
 	exit(1);
 }
 
-void freeEvents() {
+void freeEvents( void ) {
 		printf("freeEvents");
 	printf(" Nicht implementiert\n");
 	exit(1);
