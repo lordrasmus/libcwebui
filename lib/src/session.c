@@ -60,9 +60,7 @@ static void SessionFreerFunc(void* a){
 	WebserverFreeSessionStore(ss);
 }
 
-void DummyFunc( UNUSED_PARA void* a);
-void DummyFuncConst( UNUSED_PARA const void* a);
-int StrKeyComp( UNUSED_PARA const void* a, UNUSED_PARA const void* b);
+
 
 static ws_variable* int_getSessionValue(http_request* s, STORE_TYPES store, const char* name);
 static char int_setSessionValue(http_request* s, STORE_TYPES store, const char* name, const char* value);
