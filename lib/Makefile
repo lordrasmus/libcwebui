@@ -95,8 +95,9 @@ obj/%.o : %.c
 clean:
 	@echo 'Deleting Object Files'
 
-	@rm -rvf .lib/obj/*
-	@rm -rvf obj/*
+	@rm -rf .lib/obj/*
+	@rm -rf obj/*
+	@rm -rf lib/*
 
 # http://www.labri.fr/perso/fleury/posts/programming/using-clang-tidy-and-clang-format.html
 

@@ -23,6 +23,7 @@ LIB_SOURCES := 	src/builtinFunctions.c \
 			src/session.c \
 			src/system.c \
 			src/system_memory.c \
+			src/system_memory_gcc.c \
 			src/system_sockets.c \
 			src/system_sockets_recv.c \
 			src/system_sockets_send.c \
