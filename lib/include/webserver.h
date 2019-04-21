@@ -43,6 +43,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 	#endif
 #endif
 
+#if !defined( USE_LIBEVENT ) && !defined( USE_SELECT )
+	#error USE_LIBEVENT or USE_SELECT required
+#endif
+
 #include "platform-defines.h"
 
 #include "red_black_tree.h"
