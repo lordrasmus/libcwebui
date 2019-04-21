@@ -58,7 +58,7 @@ int checkCookie(char *name,char *value,HttpRequestHeader *header){
 	return 0;
 }
 
-void createCookie(HttpRequestHeader *header, char* name, unsigned int name_length, char* value, unsigned int value_length) {
+static void createCookie(HttpRequestHeader *header, char* name, unsigned int name_length, char* value, unsigned int value_length) {
 	
 	int len;
 

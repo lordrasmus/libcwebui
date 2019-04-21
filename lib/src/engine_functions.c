@@ -70,7 +70,7 @@ void engine_includeFile(http_request *s, const char* prefix, FUNCTION_PARAS* fun
 }
 
 
-
+#if 0
 void engine_printWSVar(http_request *s, ws_variable* var) {
 	ws_variable *tmp;
 	switch (var->type) {
@@ -92,6 +92,7 @@ void engine_printWSVar(http_request *s, ws_variable* var) {
 		break;
 	}
 }
+#endif
 
 void engine_getVariable(http_request *s, FUNCTION_PARAS* func) {
 	ws_variable* var = parseVariable(s, func->parameter[0].text);

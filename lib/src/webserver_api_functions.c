@@ -49,17 +49,17 @@
 
 
 
-void register_engine_function(const char* name, user_api_function f, const char* file, int line) {
+static void register_engine_function(const char* name, user_api_function f, const char* file, int line) {
 	/* void register_function(const char* name,user_function f,const char* file,int line) */
 	register_function(name, (user_function) f, file, line);
 }
 
-void register_engine_condition(const char* name, user_api_condition f,	const char* file, int line) {
+static void register_engine_condition(const char* name, user_api_condition f,	const char* file, int line) {
 	/* void register_condition(const char* name,user_condition f,const char* file,int line) */
 	register_condition(name, (user_condition) f, file, line);
 }
 
-void register_websocket_handler(const char* url, websocket_api_handler f, const char* file, int line) {
+static void register_websocket_handler(const char* url, websocket_api_handler f, const char* file, int line) {
 	/* void register_function_websocket_handler(const char* url,websocket_handler f,const char* file,int line) */
 	register_function_websocket_handler(url, (websocket_handler) f, file, line);
 }

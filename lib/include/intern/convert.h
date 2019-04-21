@@ -30,6 +30,8 @@ extern "C" {
 #endif
 
 unsigned int getInt(const unsigned char *buffer);
+unsigned char toHex(unsigned char in);
+
 void url_decode(char *line);
 
 #ifdef __cplusplus

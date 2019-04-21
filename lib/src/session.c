@@ -55,14 +55,12 @@ static WS_MUTEX session_mutex;
 static unsigned long last_timeout_check = 0;
 
 
-void SessionFreerFunc(void* a){
+static void SessionFreerFunc(void* a){
 	sessionStore* ss=(sessionStore*)a;
 	WebserverFreeSessionStore(ss);
 }
 
-void DummyFunc( UNUSED_PARA void* a);
-void DummyFuncConst( UNUSED_PARA const void* a);
-int StrKeyComp( UNUSED_PARA const void* a, UNUSED_PARA const void* b);
+
 
 static ws_variable* int_getSessionValue(http_request* s, STORE_TYPES store, const char* name);
 static char int_setSessionValue(http_request* s, STORE_TYPES store, const char* name, const char* value);
@@ -78,12 +76,13 @@ void freeSessions(void){
 	RBTreeDestroy(session_store_tree);
 }
 
-
-void DummFreeFunc( UNUSED_PARA void * a){
+#if 0
+static void DummFreeFunc( UNUSED_PARA void * a){
 
 }
+#endif
 
-void checkSessionTimeout(void) {
+static void checkSessionTimeout(void) {
 	sessionStore* ss;
 	unsigned long diff;
 	unsigned int deleted = 0;
@@ -146,7 +145,7 @@ void checkSessionTimeout(void) {
 
 }
 
-char guid_cmp(const char* a, const char* b) {
+static char guid_cmp(const char* a, const char* b) {
 	int i;
 	if (a[0] == 0){
 		return 0;
@@ -356,7 +355,7 @@ void createSession(http_request* s, unsigned char ssl_store) {
 
 }
 
-char findSessionStore(http_request* s, unsigned char ssl_store) {
+static char findSessionStore(http_request* s, unsigned char ssl_store) {
 	sessionStore* store;
 	rb_red_blk_node* node;
 
@@ -434,9 +433,11 @@ void restoreSession(http_request* s,int lock_stores, int create_session ) {
 
 }
 
-ws_variable* getSessionValueItem(sessionStore* ss, const char* name) {
+#if 0
+static ws_variable* getSessionValueItem(sessionStore* ss, const char* name) {
 	return getVariable(ss->vars, name);
 }
+#endif
 
 char setSessionValueByGUID(char* store_guid, STORE_TYPES store, const char* name, const char* value) {
 	sessionStore* ss;

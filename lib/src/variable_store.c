@@ -29,7 +29,7 @@
 #include <dmalloc/dmalloc.h>
 #endif
 
-int var_seeker(const void *el, const void *key) {
+static int var_seeker(const void *el, const void *key) {
 	/* let's assume el and key being always != NULL */
 	ws_variable *var = (ws_variable *) el;
 	if ( var == 0){

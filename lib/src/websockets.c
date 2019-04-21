@@ -61,7 +61,7 @@ WS_THREAD websocket_output_thread;
 static ws_MessageQueue* websocket_input_queue;
 static ws_MessageQueue* websocket_output_queue;
 
-void *websocket_input_thread_function( UNUSED_PARA void *ptr) {
+static void *websocket_input_thread_function( UNUSED_PARA void *ptr) {
 	websocket_queue_msg* msg;
 	while (1) {
 		msg = (websocket_queue_msg*) ws_popQueue(websocket_input_queue);
@@ -118,7 +118,7 @@ void insert_websocket_output_queue(websocket_queue_msg* msg){
 }
 
 
-void *websocket_output_thread_function( UNUSED_PARA void *ptr) {
+static void *websocket_output_thread_function( UNUSED_PARA void *ptr) {
 	websocket_queue_msg* msg;
 	while (1) {
 		msg = (websocket_queue_msg*) ws_popQueue(websocket_output_queue);
@@ -252,7 +252,7 @@ static void generateExpectedChallengeResponse(uint32_t number1, uint32_t number2
 	WebserverMD5(challenge, 16, (unsigned char*) expectedChallenge);
 }
 
-unsigned long calckey(char* buffer) {
+static unsigned long calckey(char* buffer) {
 	int offset;
 	unsigned long key = 0;
 	unsigned int spaces = 0;

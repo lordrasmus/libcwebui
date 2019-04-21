@@ -99,7 +99,7 @@ rb_red_blk_tree* RBTreeCreate( int (*CompFunc) (const void*,const void*),
 /*            accordingly. */
 /***********************************************************************/
 
-void LeftRotate(rb_red_blk_tree* tree, rb_red_blk_node* x) {
+static void LeftRotate(rb_red_blk_tree* tree, rb_red_blk_node* x) {
   rb_red_blk_node* y;
   rb_red_blk_node* nil=tree->nil;
 
@@ -154,7 +154,7 @@ void LeftRotate(rb_red_blk_tree* tree, rb_red_blk_node* x) {
 /*            accordingly. */
 /***********************************************************************/
 
-void RightRotate(rb_red_blk_tree* tree, rb_red_blk_node* y) {
+static void RightRotate(rb_red_blk_tree* tree, rb_red_blk_node* y) {
   rb_red_blk_node* x;
   rb_red_blk_node* nil=tree->nil;
 
@@ -205,7 +205,7 @@ void RightRotate(rb_red_blk_tree* tree, rb_red_blk_node* y) {
 /*            by the RBTreeInsert function and not by the user */
 /***********************************************************************/
 
-void TreeInsertHelp(rb_red_blk_tree* tree, rb_red_blk_node* z) {
+static void TreeInsertHelp(rb_red_blk_tree* tree, rb_red_blk_node* z) {
   /*  This function should only be called by InsertRBTree (see above) */
   rb_red_blk_node* x;
   rb_red_blk_node* y;
@@ -396,7 +396,7 @@ rb_red_blk_node* TreePredecessor(rb_red_blk_tree* tree, rb_red_blk_node* x) {
 /*    Note:    This function should only be called from RBTreePrint */
 /***********************************************************************/
 
-void InorderTreePrint(rb_red_blk_tree* tree, rb_red_blk_node* x) {
+static void InorderTreePrint(rb_red_blk_tree* tree, rb_red_blk_node* x) {
   rb_red_blk_node* nil=tree->nil;
   rb_red_blk_node* root=tree->root;
   if (x != tree->nil) {
@@ -432,7 +432,7 @@ void InorderTreePrint(rb_red_blk_tree* tree, rb_red_blk_node* x) {
 /*    Note:    This function should only be called by RBTreeDestroy */
 /***********************************************************************/
 
-void TreeDestHelper(rb_red_blk_tree* tree, rb_red_blk_node* x) {
+static void TreeDestHelper(rb_red_blk_tree* tree, rb_red_blk_node* x) {
   rb_red_blk_node* nil=tree->nil;
   if (x != nil) {
     TreeDestHelper(tree,x->left);
@@ -533,7 +533,7 @@ rb_red_blk_node* RBExactQuery(rb_red_blk_tree* tree, void* q) {
 /*    The algorithm from this function is from _Introduction_To_Algorithms_ */
 /***********************************************************************/
 
-void RBDeleteFixUp(rb_red_blk_tree* tree, rb_red_blk_node* x) {
+static void RBDeleteFixUp(rb_red_blk_tree* tree, rb_red_blk_node* x) {
   rb_red_blk_node* root=tree->root->left;
   rb_red_blk_node* w;
 

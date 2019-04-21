@@ -25,7 +25,8 @@
 #pragma warning(disable:4476) // warning C4476 : "printf" : Unbekanntes Typfeldzeichen "m" im Formatbezeichner.
 #pragma warning(disable:4477) // warning C4477 : "printf" : Die Formatzeichenfolge "%lu" erfordert ein Argument vom Typ "unsigned long", das variadic - Argument "1" weist aber den Typ "uint64_t" auf.
 
-
+#define SIZE_TYPE size_t
+#define TIME_TYPE time_t
 
 #define WS_MUTEX_TYPE		HANDLE
 #define WS_SEMAPHORE_TYPE	HANDLE 

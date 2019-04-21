@@ -58,7 +58,8 @@ list_t malloc_cache[20];
 
 WS_MUTEX mem_mutex;
 
-void *freeChunkCallBack(const void *restrict free_element) {
+#if 0
+static void *freeChunkCallBack(const void *restrict free_element) {
 	html_chunk* chunk = (html_chunk*)free_element;
 	if (chunk->text != 0){
 		WebserverFree(chunk->text);
@@ -66,6 +67,7 @@ void *freeChunkCallBack(const void *restrict free_element) {
 	WebserverFree(chunk);
 	return 0;
 }
+#endif
 
 void initMemoryManager(void) {
 

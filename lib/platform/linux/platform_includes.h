@@ -23,6 +23,8 @@
 #include <sys/select.h>
 #include <sys/ioctl.h>
 
+#define SIZE_TYPE size_t
+#define TIME_TYPE time_t
 
 #if defined( LINUX )
 	#define FILE_OFFSET __off_t

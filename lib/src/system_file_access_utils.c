@@ -290,7 +290,7 @@ void generateEtag(WebserverFileInfo* file) {
 	if (file->RamCached == 1) {
 		uint32_t length = file->DataLenght;
 		crc32_init();
-		crc32_update(file->Data, file->DataLenght);
+		crc32_update( (const char *) file->Data, file->DataLenght);
 		uint32_t crc = crc32_finish();
 		adler32_init();
 		adler32_update(file->Data, file->DataLenght);
@@ -303,7 +303,7 @@ void generateEtag(WebserverFileInfo* file) {
 			return;
 		}
 
-		char* data = (unsigned char*)WebserverMalloc(4096);
+		char* data = WebserverMalloc(4096);
 
 		PlatformSeekToPosition(0);
 
@@ -314,7 +314,7 @@ void generateEtag(WebserverFileInfo* file) {
 
 		while (pos < file->DataLenght) {
 		
-			FILE_OFFSET ret2 = PlatformReadBytes(data, 4096);
+			FILE_OFFSET ret2 = PlatformReadBytes( (unsigned char *)data, 4096);
 
 			crc32_update(data, ret2);
 			adler32_update( data , ret2);
@@ -327,7 +327,7 @@ void generateEtag(WebserverFileInfo* file) {
 		uint32_t adler = adler32_finish();
 		
 		
-		file->etagLength = sprintf((char*)file->etag, "%08X%08X%08X", file->DataLenght, crc, adler);
+		file->etagLength = sprintf((char*)file->etag, "%08lX%08X%08X", file->DataLenght, crc, adler);
 
 		PlatformCloseDataStream();
 		WebserverFree(data);

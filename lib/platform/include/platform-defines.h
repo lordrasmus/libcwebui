@@ -26,7 +26,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define _PLATFORM_DEFINES_H_
 
 
-
 #ifndef bool
 	#define bool unsigned char
 	#define true 	1
@@ -42,12 +41,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 	#include "../linux/platform_includes.h"
 #endif
 
+
+#ifdef BARRELFISH
+	#include "../barrelfish/platform_includes.h"
+#endif
+
 #ifdef BSD
 #define WebServerPrintf printf
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <unistd.h>
 #endif
+
 
 #ifdef DSTni
 #include "config.h"

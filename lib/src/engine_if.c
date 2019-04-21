@@ -33,7 +33,7 @@
 #define IF_DEBUG
 */
 
-int find_if_tags_pos ( const char *pagedata,const int datalenght,int* else_tag_pos,int* endif_tag_pos ) {
+static int find_if_tags_pos ( const char *pagedata,const int datalenght,int* else_tag_pos,int* endif_tag_pos ) {
     int pos_start=0,level=0,offset=0;
     TAG_IDS tag_id;
 

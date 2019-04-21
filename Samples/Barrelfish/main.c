@@ -1,5 +1,6 @@
-#include <iostream>
-#include <ifaddrs.h>
+
+#include <stdio.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -8,7 +9,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <time.h>
-#include <syslog.h>
 #include <dlfcn.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -25,21 +25,18 @@ static void sig_pipe_hanler(int signum) {
 }
 
 
-
-
 extern unsigned char data__[];
 extern unsigned char data__css_[];
-extern "C" void init_testsite( void );
+extern void init_testsite( void );
 
 int main(int argc, char **argv) {
 
+	printf("Hello Webserver\n");
 
 	if (signal(SIGINT, termination_handler) == SIG_IGN )  signal(SIGINT, SIG_IGN);
 	if (signal(SIGHUP, termination_handler) == SIG_IGN )  signal(SIGHUP, SIG_IGN);
 	if (signal(SIGTERM, termination_handler) == SIG_IGN ) signal(SIGTERM, SIG_IGN);
 	if (signal(SIGPIPE, sig_pipe_hanler) == SIG_IGN	)     signal(SIGPIPE, SIG_IGN);
-
-	openlog("webserver", LOG_CONS, LOG_LOCAL0);
 
 	if (0 == WebserverInit()) {
 
@@ -58,7 +55,7 @@ int main(int argc, char **argv) {
 
 		WebserverConfigSetInt( "use_csp",0);
 
-		init_testsite();
+		//init_testsite();
 
 		WebserverConfigSetInt("port",8080);
 		
@@ -77,6 +74,5 @@ int main(int argc, char **argv) {
 
 	return 0;
 }
-
 
 

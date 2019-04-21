@@ -29,7 +29,7 @@
 #endif
 
 
-ws_MessageQueue* ws_createMessageQueue(){
+ws_MessageQueue* ws_createMessageQueue( void ){
 	ws_MessageQueue* mq = (ws_MessageQueue*)WebserverMalloc( sizeof(ws_MessageQueue) );
 	PlatformCreateMutex(&mq->lock);
 	ws_list_init(&mq->entry_list);

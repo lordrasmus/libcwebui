@@ -253,6 +253,7 @@ DEFINE_FUNCTION( file_upload ){
 
 
 #ifdef SINGLE_MAIN
+void init_testsite( void );
 void init_testsite( void ){
 #else
 WEBSERVER_API_HOOK{	

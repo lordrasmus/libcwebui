@@ -26,7 +26,8 @@ FLAGS= $(COMP_OPT) -Wall -fPIC -Wextra   -std=c99  -D_POSIX_SOURCE \
 	-fdata-sections -ffunction-sections -fvisibility=hidden -Wpointer-arith \
 	$(SIZE_OPTS) $(PY_FLAGS) -DUSE_NEW_LIST \
 	-Wno-return-type -Wno-pointer-sign -Wno-variadic-macros  -Wno-unused-parameter \
-	-Werror=implicit-function-declaration
+	-Werror=implicit-function-declaration -Werror=return-type  -Werror=missing-declarations \
+	-Werror=old-style-definition -Werror=format
 
 ifneq ($(TRAVIS_BUILD),true)
 #	FLAGS += -fsanitize=address
@@ -102,8 +103,9 @@ obj/%.o : %.c
 clean:
 	@echo 'Deleting Object Files'
 
-	@rm -rvf .lib/obj/*
-	@rm -rvf obj/*
+	@rm -rf .lib/obj/*
+	@rm -rf obj/*
+	@rm -rf lib/*
 
 # http://www.labri.fr/perso/fleury/posts/programming/using-clang-tidy-and-clang-format.html
 

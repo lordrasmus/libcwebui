@@ -35,7 +35,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <linux/types.h>
 #include <netinet/in.h>
 #include <net/if.h>
 #include <arpa/inet.h>
@@ -48,9 +47,6 @@
 
 #include <stdio.h>
 #include <errno.h>
-#include <linux/unistd.h>       /* for _syscallX macros/related stuff */
-#include <linux/kernel.h>       /* for struct sysinfo */
-#include <sys/sysinfo.h>
 
 #ifdef WEBSERVER_USE_SSL
 #include <openssl/rand.h>
@@ -104,7 +100,7 @@ void	PlatformFree ( void *mem ) {
 #endif
 }
 
-// void	WebserverPrintMemInfo ( void ) {}			/* gibt auf dem DSTni verfuegbaren Arbeitspeicher aus */
+//void	WebserverPrintMemInfo ( void ) {}			/* gibt auf dem DSTni verfuegbaren Arbeitspeicher aus */
 
 
 
@@ -117,6 +113,7 @@ void	PlatformFree ( void *mem ) {
 
 
 TIME_TYPE PlatformGetTick ( void ) {
+	#if 0
 	struct sysinfo s_info;
 	int error;
 
@@ -125,6 +122,8 @@ TIME_TYPE PlatformGetTick ( void ) {
 		printf("code error = %d\n", error);
 	}
 	return s_info.uptime;
+	#endif
+	return 0;
 }
 
 unsigned long PlatformGetTicksPerSeconde ( void ) {
@@ -168,6 +167,7 @@ void 	PlatformGetGUID ( char* buf,SIZE_TYPE length ) {
 ********************************************************************/
 
 int PlatformCreateMutex(WS_MUTEX* m){
+	#if 0
 	pthread_mutexattr_t att;
 
 	if ( m == 0 ){
@@ -179,9 +179,12 @@ int PlatformCreateMutex(WS_MUTEX* m){
 /*	pthread_mutexattr_settype(&att,PTHREAD_MUTEX_ERRORCHECK_NP); */
 	m->locked = 0;
 	return pthread_mutex_init(&m->handle,&att);
+	#endif
+	return 0;
 }
 
 int PlatformLockMutex(WS_MUTEX* m){
+	#if 0
 	/*printf("Locking %X\n",m);*/
 	int ret;	
 	if ( m == 0 ){
@@ -194,9 +197,12 @@ int PlatformLockMutex(WS_MUTEX* m){
 		printf("PlatformLockMutex wurde doppelt gelocked\n");
 	}
 	return ret;
+	#endif
+	return 0;
 }
 
 int PlatformUnlockMutex(WS_MUTEX* m){
+	#if 0
 	/*printf("Unlocking %X\n",m);*/
 	if ( m == 0 ){
 		printf("PlatformLockMutex wurde nicht initialisiert\n");
@@ -205,9 +211,12 @@ int PlatformUnlockMutex(WS_MUTEX* m){
 
 	m->locked--;
 	return pthread_mutex_unlock( &m->handle );
+	#endif
+	return 0;
 }
 
 int PlatformDestroyMutex(WS_MUTEX* m){
+	#if 0
 	/*printf("Destroy Mutex\n");*/
 	if ( m == 0 ){
 		return EINVAL;
@@ -216,24 +225,27 @@ int PlatformDestroyMutex(WS_MUTEX* m){
 		printf("PlatformDestroyMutex Mutex ist gelocked\n");
 	}
 	return pthread_mutex_destroy(&m->handle);
+	#endif
+	return 0;
 }
 
 
 
 int PlatformCreateSem(WS_SEMAPHORE_TYPE* sem, int init_value){
-	return sem_init( sem, 0, init_value);
+	return 0;
 }
 
 int PlatformPostSem(WS_SEMAPHORE_TYPE* sem) {
-	return sem_post( sem );
+	return 0;
 }
 
 int PlatformWaitSem(WS_SEMAPHORE_TYPE* sem) {
-	return sem_wait( sem );
+	return 0;
 }
 
 
 int		PlatformClose(int socket){
-	return close( socket );
+	//close( socket );
+	return 0;
 }
 

@@ -28,7 +28,7 @@
 #endif
 
 
-int printAddressInfo(socket_info *sock){
+static int printAddressInfo(socket_info *sock){
 	int length = 0;
 	length += printHTMLChunk(sock,"<address>%s at %s ",SERVER_NAME,SERVER_DOMAIN);
 

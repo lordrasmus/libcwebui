@@ -106,7 +106,7 @@ DEFINE_FUNCTION_INT( compiler ) {
     printHTMLChunk ( s->socket ,"Unknown Compiler" );
 }
 
-int miniFunctions ( http_request* s,char* buffer ) {
+static int miniFunctions ( http_request* s,char* buffer ) {
     if ( !strncmp ( buffer,"ssl_avaible",11 ) ) {
 #ifdef WEBSERVER_USE_SSL
         printHTMLChunk ( s->socket ,"AVAILABLE" );
@@ -153,7 +153,7 @@ int miniFunctions ( http_request* s,char* buffer ) {
     return 0;
 }
 
-int sessionFunctions ( http_request* s,char* buffer ) {
+static int sessionFunctions ( http_request* s,char* buffer ) {
     if ( !strncmp ( buffer,"startSession",12 ) ) {
 #ifdef WEBSERVER_USE_SESSIONS
 #ifdef _WEBSERVER_SESSION_DEBUG_
@@ -177,7 +177,7 @@ DEFINE_FUNCTION_INT( memoryInfos ){
     printHTMLChunk ( s->socket,"</table>" );
 }
 
-int memoryInfosDetail ( http_request* s ) {
+static int memoryInfosDetail ( http_request* s ) {
     int all_file_size=0;
     int size=0;
     int session_store_count=0;
@@ -209,7 +209,7 @@ int memoryInfosDetail ( http_request* s ) {
 
 
 
-void getServerLink ( http_request* s ) {
+static void getServerLink ( http_request* s ) {
 #ifdef WEBSERVER_USE_IPV6
     char mybuf[INET6_ADDRSTRLEN];
     if ( s->socket->v6_client == 1 ) {
@@ -250,7 +250,7 @@ void getServerLink ( http_request* s ) {
 
 }
 
-void getServerLinkStd ( http_request* s ) {
+static void getServerLinkStd ( http_request* s ) {
 #ifdef WEBSERVER_USE_IPV6
     //char mybuf[INET6_ADDRSTRLEN];
     if ( s->sock->v6_client == 1 ) {
@@ -281,7 +281,7 @@ void getServerLinkStd ( http_request* s ) {
 #endif
 }
 
-void getServerLinkSSL ( http_request* s ) {
+static void getServerLinkSSL ( http_request* s ) {
 #ifdef WEBSERVER_USE_IPV6
     //static char mybuf[INET6_ADDRSTRLEN];
     if ( s->socket->v6_client == 1 ) {

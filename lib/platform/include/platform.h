@@ -46,7 +46,6 @@ void	PlatformFree( void* mem );
 *																	*
 ********************************************************************/
 
-int				PlatformGetPid(void);
 void 			PlatformGetGUID(char* buf,SIZE_TYPE length);
 void 			PlatformGetIPv6(char* bytes);
 TIME_TYPE   	PlatformGetTick(void);

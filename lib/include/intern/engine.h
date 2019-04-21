@@ -94,6 +94,10 @@ void printRegisteredPlugins ( http_request* s ) ;
 
 void RegisterPluginErrorHandler(plugin_error_handler f);
 
+void DummyFuncConst( UNUSED_PARA const void* a);
+void DummyFunc( UNUSED_PARA void* a);
+int StrKeyComp( UNUSED_PARA const void* a, UNUSED_PARA const void* b);
+
 #ifdef __cplusplus
 }
 #endif

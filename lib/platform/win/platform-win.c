@@ -99,9 +99,6 @@ unsigned long	PlatformGetTicksPerSeconde(void){
 	return 1;
 }
 
-int				PlatformGetPid(void) {
-	return _getpid();
-}
 
 #ifdef WEBSERVER_USE_SESSIONS
 static 	unsigned int guid;

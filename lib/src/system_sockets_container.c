@@ -34,17 +34,19 @@ static list_t sock_list;
 static rb_red_blk_tree *sock_tree;
 static WS_MUTEX socks_mutex;
 
-void SockPrint(const void* a) {
+static void SockPrint(const void* a) {
 	printf("%i", *(int*) a);
 }
-void SockInfoPrint( UNUSED_PARA void* a) {
+static void SockInfoPrint( UNUSED_PARA void* a) {
 }
-void SockInfoDest( UNUSED_PARA void *a) {
+#if 0
+static void SockInfoDest( UNUSED_PARA void *a) {
 }
-void SockDest( UNUSED_PARA void* a) {
+#endif
+static void SockDest( UNUSED_PARA void* a) {
 }
 
-int SockComp(const void* a, const void* b) {
+static int SockComp(const void* a, const void* b) {
 	int ret;
 	char *p_a = (char*) a;
 	char *p_b = (char*) b;

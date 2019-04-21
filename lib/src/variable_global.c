@@ -30,11 +30,11 @@
 
 static ws_variable_store *global_v_store;
 
-void initGlobalVariable() {
+void initGlobalVariable( void ) {
 	global_v_store = createVariableStore();
 }
 
-void freeGlobalVariable() {
+void freeGlobalVariable( void ) {
 	ws_variable_store *tmp = global_v_store;
 	if ( lockGlobals() == -1 ){
 		LOG ( HANDLER_LOG,ERROR_LEVEL,0, "Fatal Error locking Globals exiting", "" );
@@ -44,7 +44,7 @@ void freeGlobalVariable() {
 	deleteVariableStore(tmp);
 }
 
-int lockGlobals() {
+int lockGlobals( void ) {
 	if (global_v_store == 0) {
 		return -1;
 	}
@@ -52,7 +52,7 @@ int lockGlobals() {
 	return 0;
 }
 
-int unlockGlobals() {
+int unlockGlobals( void ) {
 	if (global_v_store == 0) {
 		return -1;
 	}

@@ -139,7 +139,7 @@ int sendWebsocketFrame(const Opcodes op_code, const char* guid,const  char* in, 
 	return 0;
 }
 
-void insert_websocket_output_chunk(socket_info *sock, const unsigned char* in, const WEBSOCK_LEN_T length){
+static void insert_websocket_output_chunk(socket_info *sock, const unsigned char* in, const WEBSOCK_LEN_T length){
 	int ret;
 	ret = ws_list_empty(&sock->websocket_chunk_list);
 
@@ -198,7 +198,7 @@ void sendCloseFrame(socket_info *sock) {
 	sendCloseFrame2(sock->websocket_guid);}
 
 
-int recFrameV8(socket_info *sock) {
+static int recFrameV8(socket_info *sock) {
 	int last_frame_start;
 	unsigned int offset = 0;
 	unsigned int offset2 = 0;

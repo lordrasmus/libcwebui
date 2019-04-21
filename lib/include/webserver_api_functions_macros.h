@@ -137,6 +137,7 @@ extern "C" {
 		const char*			ws_wh_##b##_df_url = a; \
 		const char*			ws_wh_##b##_df = __FILE__; \
 		const int 			ws_wh_##b##_dl = __LINE__; \
+		void 				ws_wh_##b ( const int signal, const char* guid, const char binary, const char* msg, const unsigned long long len ); \
 		void 				ws_wh_##b ( const int signal, const char* guid, const char binary, const char* msg, const unsigned long long len )
 
 #define REGISTER_WEBSOCKET_HANDLER( b  )	{ \
