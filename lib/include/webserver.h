@@ -43,20 +43,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 	#endif
 #endif
 
-#include "red_black_tree.h"
+#include "platform-defines.h"
 
+#include "red_black_tree.h"
 #include "intern/linked_list.h"
 #include "intern/helper.h"
 #include "intern/webserver_utils.h"
-
-
 #include "intern/variable.h"
 #include "intern/variable_store.h"
 #include "intern/list.h"
 #include "intern/dataTypes.h"
 #include "intern/globals.h"
 #include "intern/variables_globals.h"
-#include "platform-defines.h"
 #include "intern/message_queue.h"
 #include "intern/server.h"
 #include "intern/session.h"
