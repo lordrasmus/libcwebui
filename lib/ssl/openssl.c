@@ -650,7 +650,7 @@ int WebserverSHA1(const unsigned char* data, size_t len, unsigned char* md) {
 	return 1;
 }
 
-struct sha_context* WebserverSHA1Init() {
+struct sha_context* WebserverSHA1Init( void ) {
 	struct sha_context* sctx;
 
 	sctx = (struct sha_context*) WebserverMalloc ( sizeof ( struct sha_context ) );
