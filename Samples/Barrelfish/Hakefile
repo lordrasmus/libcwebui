@@ -1,0 +1,19 @@
+
+-- "../../lib/src/builtinFunctions.c"
+
+[
+  build application { target = "webserver",
+					addIncludes = [ 
+							"../../lib/include", "../../lib/include", "../../lib/third_party/src/miniz/", "../../lib/third_party/src/rb_tree/", 
+							"../../lib/platform/include/", "../../lib/include/intern/", "../../lib/third_party/src/is_utf8/"
+					],
+					addCFlags = [ "-DBARRELFISH", "-Wno-missing-prototypes" ],
+					  
+                    cFiles = [ "main.c", 
+						"../../lib/src/convert.c", "../../lib/src/cookie.c", "../../lib/src/conditions.c",
+						"../../lib/src/engine.c" ],
+                      
+                    addLibraries = libDeps ["trace", "skb", "pci", "vfs", "acpi_client", "lwip", "octopus", "linenoise", "posixcompat" ],
+                    architectures = [ "x86_64", "x86_32" ]
+                    }
+]
