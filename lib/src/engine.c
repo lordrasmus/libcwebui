@@ -34,11 +34,11 @@
 #warning "Optimierung fuer Engine Parser deaktiviert"
 */
 
-void template_engine_start(http_request *s) {
+static void template_engine_start(http_request *s) {
 	s->engine_current = &s->engine_list[s->engine_index++];
 }
 
-void template_engine_stop(http_request *s) {
+static void template_engine_stop(http_request *s) {
 	if (s->engine_index == 0) {
 		s->engine_current = 0;
 		return;
@@ -130,7 +130,7 @@ void engine_loop_array(http_request *s, const char* prefix, const char *pagename
 
 #define FUNC_CMP_OPTS(a,c) { int b = strlen(a); if ( ( 0 == strncmp((char*)&buffer2[1],a,b) ) && ( ( buffer2[b+1] == ':' ) || ( buffer2[b+1] == '}' ) ) ){ return c; }}
 
-ENGINE_FUNCTIONS func_cmp_extendet(const char *buffer, int length, const char*name, ENGINE_FUNCTIONS func) {
+static ENGINE_FUNCTIONS func_cmp_extendet(const char *buffer, int length, const char*name, ENGINE_FUNCTIONS func) {
 	int b = strlen(name);
 
 	if ( length < b ){
@@ -148,7 +148,7 @@ ENGINE_FUNCTIONS func_cmp_extendet(const char *buffer, int length, const char*na
 	return func;
 }
 
-ENGINE_FUNCTIONS getEngineFunctionCode(const char *buffer2, int length) {
+static ENGINE_FUNCTIONS getEngineFunctionCode(const char *buffer2, int length) {
 	ENGINE_FUNCTIONS ret;
 
 	if (buffer2[0] != '{') {
@@ -186,7 +186,7 @@ ENGINE_FUNCTIONS getEngineFunctionCode(const char *buffer2, int length) {
 	return TEMPLATE_UNKNOWN;
 }
 
-int checkParameterString(parameter_info* para) {
+static int checkParameterString(parameter_info* para) {
 	int i;
 	for (i = 0; i < para->length; i++) {
 		if (para->text[i] == '"'){
@@ -241,7 +241,7 @@ int checkParameterString(parameter_info* para) {
 	return 0;
 }
 
-void parseFunction(engine_infos* engine, const char* buffer, int length) {
+static void parseFunction(engine_infos* engine, const char* buffer, int length) {
 	int i2;
 	int i, para_start, para_ende;
 	FUNCTION_PARAS* func = &engine->func;
@@ -306,7 +306,7 @@ void parseFunction(engine_infos* engine, const char* buffer, int length) {
 
 }
 
-void freeFunction(engine_infos* engine) {
+static void freeFunction(engine_infos* engine) {
 	int i;
 	FUNCTION_PARAS* func = &engine->func;
 

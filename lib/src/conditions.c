@@ -28,7 +28,7 @@
 #include <dmalloc/dmalloc.h>
 #endif
 
-CONDITION_RETURN is_user_registered(http_request* s) {
+static CONDITION_RETURN is_user_registered(http_request* s) {
 	int i = checkUserRegistered(s);
 	if ((i == NORMAL_CHECK_OK) || (i == SSL_CHECK_OK)){
 		return CONDITION_TRUE;
@@ -36,7 +36,7 @@ CONDITION_RETURN is_user_registered(http_request* s) {
 	return CONDITION_FALSE;
 }
 
-CONDITION_RETURN is_user_not_registered(http_request* s) {
+static CONDITION_RETURN is_user_not_registered(http_request* s) {
 	int i = checkUserRegistered(s);
 	if ((i == NORMAL_CHECK_OK) || (i == SSL_CHECK_OK)){
 		return CONDITION_FALSE;
@@ -44,7 +44,7 @@ CONDITION_RETURN is_user_not_registered(http_request* s) {
 	return CONDITION_TRUE;
 }
 
-CONDITION_RETURN is_user_registered_ssl(http_request* s) {
+static CONDITION_RETURN is_user_registered_ssl(http_request* s) {
 #ifdef WEBSERVER_USE_SSL
 	int i = checkUserRegistered(s);
 	if (i == SSL_CHECK_OK ){
@@ -54,7 +54,7 @@ CONDITION_RETURN is_user_registered_ssl(http_request* s) {
 	return CONDITION_FALSE;
 }
 
-CONDITION_RETURN is_user_not_registered_ssl(http_request* s) {
+static CONDITION_RETURN is_user_not_registered_ssl(http_request* s) {
 #ifdef WEBSERVER_USE_SSL
 	int i = checkUserRegistered(s);
 	if (i == SSL_CHECK_OK ){
@@ -64,7 +64,7 @@ CONDITION_RETURN is_user_not_registered_ssl(http_request* s) {
 	return CONDITION_TRUE;
 }
 
-CONDITION_RETURN equal_condition(http_request* s, FUNCTION_PARAS* func) {
+static CONDITION_RETURN equal_condition(http_request* s, FUNCTION_PARAS* func) {
 	ws_variable *op1, *var1;
 	ws_variable *op2, *var2;
 	CONDITION_RETURN ret = CONDITION_FALSE;
