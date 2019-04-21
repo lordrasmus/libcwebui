@@ -32,7 +32,7 @@
 
 
 
-void createParameter(HttpRequestHeader *header, char* name, unsigned int name_length, char* value, unsigned int value_length) {
+static void createParameter(HttpRequestHeader *header, char* name, unsigned int name_length, char* value, unsigned int value_length) {
 	ws_variable *var;
 
 
@@ -52,7 +52,7 @@ enum ParameterParseStates{
 	PARSE_VALUE
 };
 
-void recieveParameterFromGet(char *line, HttpRequestHeader *header, int len) {
+static void recieveParameterFromGet(char *line, HttpRequestHeader *header, int len) {
 	int  i;
 
 	enum ParameterParseStates state = PARSE_NAME;

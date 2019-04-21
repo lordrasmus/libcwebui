@@ -35,7 +35,7 @@ unsigned char *g_lastmodified;
 
 void WebserverPrintShortInfos(void);
 
-void endHTTPRequest(http_request *s) {
+static void endHTTPRequest(http_request *s) {
 	upload_file_info * f_info;
 
 	clearRenderVariables(s);
@@ -58,7 +58,7 @@ void endHTTPRequest(http_request *s) {
 }
 
 
-void parsePostData(http_request *s){
+static void parsePostData(http_request *s){
 
 	char *pos, *pos2;
 	char *data = 0;
@@ -355,7 +355,7 @@ int getHttpRequest(socket_info* sock) {
 	return 0;
 }
 
-void *WebserverHTMLChunkFree(const void *free_element) {
+static void *WebserverHTMLChunkFree(const void *free_element) {
 	WebserverFreeHtml_chunk((html_chunk*) free_element);
 	return 0;
 }

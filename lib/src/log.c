@@ -68,7 +68,7 @@ void clearFirePHPLog ( HttpRequestHeader* header ) {
     }
 }*/
 
-void writeToLog ( char* buffer ) {
+static void writeToLog ( char* buffer ) {
 	#if defined (_WIN32)
 		printf ( "LOG : %s",buffer );
 	#elif defined ( __GNUC__ )

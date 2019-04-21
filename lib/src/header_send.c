@@ -39,7 +39,7 @@ void setCORS_Handler( cors_handler handler ){
 }
 
 
-int checkCORS( CORS_HEADER_TYPES type, socket_info* socket ){
+static int checkCORS( CORS_HEADER_TYPES type, socket_info* socket ){
 
 	if ( cors_handle_func == 0 ){
 		return COND_FALSE;
@@ -112,7 +112,7 @@ int sendHeaderWebsocket(socket_info* sock) {
 #endif
 
 
-void addConnectionStatusLines(socket_info* socket) {
+static void addConnectionStatusLines(socket_info* socket) {
 
 	if (socket->header->Connection != 0) {
 		if (strcmp(socket->header->Connection, "close") == 0) {
@@ -166,7 +166,7 @@ int sendPreflightAllowed(socket_info *sock) {
 	return 1;
 }
 
-void addCacheControlLines(http_request* s, WebserverFileInfo *info) {
+static void addCacheControlLines(http_request* s, WebserverFileInfo *info) {
 	/* Cache-Control: no-cache, no-store, must-revalidate, pre-check=0, post-check=0 */
 #ifndef WEBSERVER_DISABLE_CACHE
 	if ( ( info->FileType != FILE_TYPE_HTML ) && ( info->TemplateFile == 0   ) ) {
@@ -212,7 +212,7 @@ void sendHeaderError(socket_info* sock, char* ErrorMessage, int p_lenght) {
 	printHeaderChunk(sock, "\r\n");
 }
 
-void addContentTypeLines(http_request *s, WebserverFileInfo *info) {
+static void addContentTypeLines(http_request *s, WebserverFileInfo *info) {
 
 	switch ( info->Compressed ){
 		case 1 : printHeaderChunk(s->socket, "%s", "Content-Encoding: gzip\r\n"); break;
@@ -313,7 +313,7 @@ void addContentTypeLines(http_request *s, WebserverFileInfo *info) {
 	}
 }
 
-void addFirePHPHeaderLines(http_request* s) {
+static void addFirePHPHeaderLines(http_request* s) {
 #ifdef WEBSERVER_USE_SSL
 	int log_lines = 0, i;
 	int start_offset = 0, len = 0;
@@ -379,7 +379,7 @@ void addFirePHPHeaderLines(http_request* s) {
 	 }*/
 }
 
-void addCSPHeaderLines(http_request* s){
+static void addCSPHeaderLines(http_request* s){
 
 	char buff[1000];
 	int offset = 0;
@@ -426,7 +426,7 @@ void addCSPHeaderLines(http_request* s){
  *
  *********************************************************************************/
 
-void addSessionCookies(http_request* s,WebserverFileInfo *info){
+static void addSessionCookies(http_request* s,WebserverFileInfo *info){
 #ifdef WEBSERVER_USE_SESSIONS
 
 	#ifdef WEBSERVER_USE_SSL
