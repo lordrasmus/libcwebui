@@ -662,7 +662,7 @@ static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendRamFile(socket_info* so
 }
 
 #ifdef LINUX
-CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendFileSystem_sendfile(socket_info* sock) {
+static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendFileSystem_sendfile(socket_info* sock) {
 	FILE_OFFSET offset;
 	int fd, diff, send;
 

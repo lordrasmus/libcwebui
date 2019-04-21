@@ -233,7 +233,7 @@ int printHTMLChunk(socket_info* sock, const char *fmt, ... ) {
 
 #ifdef WEBSERVER_USE_WEBSOCKETS
 
-void vprintWebsocketChunk(socket_info* sock, const char *fmt, va_list argptr) {
+static void vprintWebsocketChunk(socket_info* sock, const char *fmt, va_list argptr) {
 	int l;
 	char tmp[1000];
 	if (sock == 0){

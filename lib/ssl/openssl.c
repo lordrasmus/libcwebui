@@ -304,9 +304,11 @@ SSL_CTX *initialize_ctx( char *keyfile, char* keyfile_backup, char* ca, char *pa
 	return ctx;
 }
 
-void destroy_ctx(SSL_CTX *ctx) {
+#if 0
+static void destroy_ctx(SSL_CTX *ctx) {
 	SSL_CTX_free(ctx);
 }
+#endif
 
 int WebserverSSLInit(socket_info* s) {
 	if (s->ssl_context == 0){
