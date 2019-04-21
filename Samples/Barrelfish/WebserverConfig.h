@@ -53,7 +53,7 @@
 *                                                                                   *
 ************************************************************************************/
 
-#define USE_LIBEVENT
+//#define USE_LIBEVENT
 //#define WEBSERVER_USE_WEBSOCKETS
 //#define WEBSERVER_USE_IPV6
 #define WEBSERVER_MAX_PENDING_CONNECTIONS	30
@@ -73,7 +73,7 @@
 //#define WEBSERVER_DISABLE_FILE_UPDATE					// deaktiviert den file update check
 
 
-#define WEBSERVER_USE_LOCAL_FILE_SYSTEM				// Das Normale File System aktivieren
+//#define WEBSERVER_USE_LOCAL_FILE_SYSTEM				// Das Normale File System aktivieren
 #define WEBSERVER_USE_BINARY_FORMAT					// Das Binary File System aktivieren
 #define WEBSERVER_USE_WNFS							// Das Webserver Network File System aktivieren
 
