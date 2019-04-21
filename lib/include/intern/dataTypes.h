@@ -451,6 +451,7 @@ int checkCGIFunctions(http_request* s);
 
 	#define DEFINE_FUNCTION_INT( a ) 	const char*			ws_ef_##a##_df = __FILE__; \
 										const int			ws_ef_##a##_dl = __LINE__; \
+										void 				ws_ef_##a ( http_request *s,FUNCTION_PARAS* func ); \
 										void 				ws_ef_##a ( http_request *s,FUNCTION_PARAS* func )
 
 	#define REGISTER_LOCAL_FUNCTION_INT( a ) 	register_function ( #a,ws_ef_##a,ws_ef_##a##_df,ws_ef_##a##_dl );

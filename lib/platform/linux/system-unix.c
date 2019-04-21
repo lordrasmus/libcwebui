@@ -104,7 +104,7 @@ void	PlatformFree ( void *mem ) {
 #endif
 }
 
-void	WebserverPrintMemInfo ( void ) {}			/* gibt auf dem DSTni verfuegbaren Arbeitspeicher aus */
+// void	WebserverPrintMemInfo ( void ) {}			/* gibt auf dem DSTni verfuegbaren Arbeitspeicher aus */
 
 
 
