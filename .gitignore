@@ -102,6 +102,7 @@ Samples/Linux/SingleMain/main.o
 
 Samples/Linux/SharedMain/main.o
 Samples/Linux/SharedMain/main
+Samples/Linux/SharedMain/libWebserver.so
 
 Samples/Win32/SingleMain/.vs
 Samples/Win32/SingleMain/x64
