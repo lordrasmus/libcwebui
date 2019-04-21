@@ -16,11 +16,11 @@
 
 #include "webserver_api_functions.h"
 
-void termination_handler(int signum) {
+static void termination_handler(int signum) {
 	WebserverShutdownHandler();
 }
 
-void sig_pipe_hanler(int signum) {
+static void sig_pipe_hanler(int signum) {
 	//printf("Sig Pipe\n");
 }
 

@@ -10,6 +10,7 @@
 #include <time.h>
 
 #include "webserver_api_functions.h"
+#include "websocket_api.h"
 
 
 #ifdef WEBSERVER_USE_WEBSOCKETS
@@ -25,7 +26,7 @@
  * 
  *******************************************************************/
 
-int getTime(char* buffer) {
+static int getTime(char* buffer) {
 	time_t rawtime;
 	struct tm * timeinfo;
 	time(&rawtime);
@@ -33,7 +34,7 @@ int getTime(char* buffer) {
 	return sprintf(buffer, "%02d:%02d:%02d", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
 }
 
-void mysleep(unsigned long ticks) {
+static void mysleep(unsigned long ticks) {
 	struct timespec req;
 	req.tv_sec = 0;
 	req.tv_nsec = 100000000;
@@ -51,7 +52,7 @@ list_t clock_clients;
 pthread_mutex_t clock_mutex;
 
 
-void uhr_loop() {
+static void uhr_loop() {
 	char buffer[1000];
 
 	char buffer2[2000];
@@ -108,7 +109,7 @@ void uhr_loop() {
 
 
 
-void handleCommandSocket(char *guid, const char *msg) {
+static void handleCommandSocket(char *guid, const char *msg) {
 	char* tmp;
 	if (0 == strcmp(msg, "connect_clock")) {
 		int ret = 0;
@@ -136,7 +137,7 @@ void handleCommandSocket(char *guid, const char *msg) {
 	}
 }
 
-void deleteClient(char* guid) {
+static void deleteClient(char* guid) {
 	char* tmp_guid;
 	int ret = 0;
 	ret = pthread_mutex_lock(&clock_mutex);
@@ -163,7 +164,7 @@ void deleteClient(char* guid) {
 }
 
 
-void simpleThread(void* p) {
+static void simpleThread(void* p) {
 	char buffer[1000];
 	int i, num = 1, len;
 	int ret = 0;
@@ -188,7 +189,7 @@ void simpleThread(void* p) {
 	return;
 }
 
-void *simple_function(void *ptr) {
+static void *simple_function(void *ptr) {
 	simpleThread(ptr);
 	return 0;
 }
@@ -230,12 +231,12 @@ DEFINE_WEBSOCKET_HANDLER( "CommandSocket" , CommandSocket_handler) {
 
 
 
-void *clock_start_helper(void *ptr) {
+static void *clock_start_helper(void *ptr) {
 	uhr_loop();
 	return 0;
 }
 
-void startApiThreads() {
+void startApiThreads( void ) {
 
 	ws_list_init(&clock_clients);
 	

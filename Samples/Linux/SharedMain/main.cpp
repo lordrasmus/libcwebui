@@ -17,7 +17,7 @@
 
 #include "webserver_api_functions.h"
 
-void termination_handler(int signum) {
+static void termination_handler(int signum) {
 	WebserverShutdownHandler();
 }
 
