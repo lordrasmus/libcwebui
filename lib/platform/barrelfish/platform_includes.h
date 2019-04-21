@@ -5,6 +5,9 @@
 #ifdef BARRELFISH
 
 #include <arpa/inet.h>
+#include <sys/select.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 #define FILE_OFFSET long unsigned int
 
