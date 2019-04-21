@@ -19,7 +19,8 @@ FLAGS= $(COMP_OPT) -Wall -fPIC -Wextra   -std=c99  -D_POSIX_SOURCE \
 	-fdata-sections -ffunction-sections -fvisibility=hidden -Wpointer-arith \
 	$(SIZE_OPTS) $(PY_FLAGS) -DUSE_NEW_LIST \
 	-Wno-return-type -Wno-pointer-sign -Wno-variadic-macros  -Wno-unused-parameter \
-	-Werror=implicit-function-declaration -Werror=return-type  -Werror=missing-declarations
+	-Werror=implicit-function-declaration -Werror=return-type  -Werror=missing-declarations \
+	-Werror=old-style-definition 
 
 ifneq ($(TRAVIS_BUILD),true)
 #	FLAGS += -fsanitize=address

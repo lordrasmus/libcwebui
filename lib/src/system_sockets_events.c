@@ -314,7 +314,7 @@ void deleteEvent(socket_info* sock){
 	sock->my_ev=0;
 }
 
-void initEvents() {
+void initEvents( void ) {
 	const char ** list;
 	char buffer[200];
 	int pos = 0, i = 0;
@@ -354,7 +354,7 @@ void initEvents() {
 
 }
 
-char waitEvents() {
+char waitEvents( void ) {
 	return event_base_dispatch(base);
 }
 
@@ -362,7 +362,7 @@ void breakEvents(void){
 	event_base_loopbreak(base);
 }
 
-void freeEvents() {
+void freeEvents( void ) {
 	event_base_free(base);
 }
 

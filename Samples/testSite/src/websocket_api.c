@@ -52,7 +52,7 @@ list_t clock_clients;
 pthread_mutex_t clock_mutex;
 
 
-static void uhr_loop() {
+static void uhr_loop( void ) {
 	char buffer[1000];
 
 	char buffer2[2000];
