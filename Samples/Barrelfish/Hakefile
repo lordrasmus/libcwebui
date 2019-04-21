@@ -1,5 +1,6 @@
 
--- "../../lib/src/builtinFunctions.c", "../../lib/src/engine_api_extensions.c", "../../lib/src/system_file_access_utils.c"
+-- "../../lib/src/builtinFunctions.c", "../../lib/src/engine_api_extensions.c", "../../lib/src/system_file_access_utils.c", "../../lib/src/variable_global.c",
+-- "../../lib/src/variable_render.c"
 
 [
   build application { target = "webserver",
@@ -38,7 +39,30 @@
 						"../../lib/src/system_file_access_binary.c",
 						"../../lib/src/system_sockets.c",
 						"../../lib/src/system_sockets_container.c",
-						"../../lib/src/system_sockets_events.c"
+						"../../lib/src/system_sockets_events.c",
+						"../../lib/src/system_sockets_epoll.c",
+						"../../lib/src/system_sockets_send.c",
+						"../../lib/src/system_sockets_recv.c",
+						"../../lib/src/system_memory.c",
+						"../../lib/src/system_memory_gcc.c",
+						"../../lib/src/utils.c",
+						"../../lib/src/variable.c",
+						"../../lib/src/variable_store.c",
+						"../../lib/src/webserver_api_functions.c",
+						"../../lib/src/websocket_handler.c",
+						"../../lib/src/websockets.c",
+						"../../lib/src/websockets_send_recv.c",
+						"../../lib/ssl/openssl.c",
+						
+						"../../lib/third_party/src/rb_tree/red_black_tree.c",
+						"../../lib/third_party/src/rb_tree/stack.c",
+						"../../lib/third_party/src/rb_tree/misc.c",
+						"../../lib/third_party/src/is_utf8/is_utf8.c",
+						"../../lib/third_party/src/miniz/miniz.c",
+						
+						"../../lib/platform/barrelfish/platform-file-access.c",
+						"../../lib/platform/barrelfish/platform-sockets.c",
+						"../../lib/platform/barrelfish/system-unix.c"
 						],
                       
                     addLibraries = libDeps ["trace", "skb", "pci", "vfs", "acpi_client", "lwip", "octopus", "linenoise", "posixcompat" ],

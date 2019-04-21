@@ -4,6 +4,8 @@
 
 #ifdef BARRELFISH
 
+#include <arpa/inet.h>
+
 #define FILE_OFFSET long unsigned int
 
 #define WS_MUTEX_TYPE int
@@ -13,7 +15,7 @@
 #define SIZE_TYPE long unsigned int
 
 
-#define INET_ADDRSTRLEN 15
+
 
 #endif
 #endif
