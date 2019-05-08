@@ -16,6 +16,7 @@ SPDX-License-Identifier: MPL-2.0
 
 
 #ifndef _WEBSERVER_PY_PLUGINS_H_
+#define _WEBSERVER_PY_PLUGINS_H_
 
 #ifdef WEBSERVER_USE_PYTHON
 
