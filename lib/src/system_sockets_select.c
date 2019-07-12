@@ -390,11 +390,16 @@ char waitEvents( void ) {
 					handleer(sock3 , EVENT_READ , client_sock_info );
 
 				}
+#ifdef __ZEPHYR__
+	#warning how to get pending bytes on the sockets ??
+#else
+	#warning ist das wirklich nötig mit dem pending ??
 #ifdef _MSC_VER
 				if (ioctlsocket(sock3, FIONREAD, &totalPending) == -1)
 #else
 				if( ioctl( sock3, FIONREAD, &totalPending) == -1 )
 #endif
+
 
 				{
 					if ( totalPending > 0 ){
@@ -406,7 +411,7 @@ char waitEvents( void ) {
 						handleer(sock3 , EVENT_READ , client_sock_info );
 					}
 				}
-				
+#endif
 				if( --ready <= 0 )
 					break;
 			}
