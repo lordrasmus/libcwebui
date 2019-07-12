@@ -128,6 +128,8 @@ unsigned long PlatformGetTicksPerSeconde ( void ) {
 #ifdef WEBSERVER_USE_SESSIONS
 static 	unsigned int guid;
 void 	PlatformGetGUID ( char* buf,SIZE_TYPE length ) {
+	
+	#warning nur eine testimplementierung
     SIZE_TYPE l=0;
 	int ret;
 
