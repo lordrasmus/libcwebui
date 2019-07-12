@@ -23,9 +23,13 @@ SPDX-License-Identifier: MPL-2.0
 #if __GNUC__ > 2
 		#define VISIBLE_ATTR __attribute__ ((visibility("default")))
         #define NEED_RESUL_CHECK __attribute__((warn_unused_result))
-
-		#define likely(x)       __builtin_expect((x),1)
-		#define unlikely(x)     __builtin_expect((x),0)
+	
+		#ifndef likely
+			#define likely(x)       __builtin_expect((x),1)
+		#endif
+		#ifndef unlikely
+			#define unlikely(x)     __builtin_expect((x),0)
+		#endif
 
 		#define UNUSED_PARA __attribute__((unused))
 #else
