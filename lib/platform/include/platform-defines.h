@@ -27,16 +27,24 @@ SPDX-License-Identifier: MPL-2.0
 
 #ifdef WIN32
 	#include "../win/platform_includes.h"
+	#define PLATFORM_DETECTED
 #endif
 
 
 #if defined( LINUX ) || defined ( OSX )
 	#include "../linux/platform_includes.h"
+	#define PLATFORM_DETECTED
 #endif
 
 
 #ifdef BARRELFISH
 	#include "../barrelfish/platform_includes.h"
+	#define PLATFORM_DETECTED
+#endif
+
+#ifdef __ZEPHYR__
+	#include "../zephyr/platform_includes.h"
+	#define PLATFORM_DETECTED
 #endif
 
 #ifdef BSD
@@ -56,6 +64,10 @@ SPDX-License-Identifier: MPL-2.0
 
 #ifdef NET_OS
 #define WebServerPrintf printf
+#endif
+
+#ifndef PLATFORM_DETECTED
+	#error build platform unknown
 #endif
 
 
