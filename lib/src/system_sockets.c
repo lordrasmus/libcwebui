@@ -277,13 +277,13 @@ static int check_post_header( socket_info* sock ){
 	}
 
 	if ( sock->header->contenttype == 0 ){
-		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"header->contenttype == 0 ","");
+		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s","header->contenttype == 0 ");
 		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s",sock->header_buffer);
 		return -1;
 	}
 
 	if ( ( sock->header->contenttype == MULTIPART_FORM_DATA ) && ( sock->header->boundary == 0 ) ){
-		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"header->boundary == 0 ","");
+		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s","header->boundary == 0 ");
 		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s",sock->header_buffer);
 		return -1;
 	}
@@ -373,7 +373,7 @@ static int handleClientHeaderData(socket_info* sock) {
 				if ( -1 == check_post_header( sock ) ){
 					sock->header->error = 1;
 					sendMethodBadRequest(sock);
-					LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"POST Method Header Error","" );
+					LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","POST Method Header Error" );
 					return -1;
 				}
 				if ( 1 == recv_post_payload( sock, &sock->header_buffer[parsed + 1], sock->header_buffer_pos - ( parsed + 1 ) )){
@@ -393,7 +393,7 @@ static int handleClientHeaderData(socket_info* sock) {
 				if ( -1 == check_post_header( sock ) ){
 					sock->header->error = 1;
 					sendMethodBadRequest(sock);
-					LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"POST Method Header Error","" );
+					LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","POST Method Header Error" );
 					return -1;
 				}
 
@@ -401,19 +401,19 @@ static int handleClientHeaderData(socket_info* sock) {
 				return 0;
 			}
 #if _WEBSERVER_CONNECTION_DEBUG_ > 4
-			LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"Client Header Complete","" );
+			LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","Client Header Complete" );
 #endif
 			return 1;
 		}
 		if (len2 == 0) {
 			sendMethodBadRequestLineToLong(sock);
-			LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"sendMethodBadRequestLineToLong","" );
+			LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","sendMethodBadRequestLineToLong" );
 			sock->closeSocket = 1;
 			return -1;
 		}
 		if (len2 == -4) {
 			sendMethodNotAllowed(sock);
-			LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"sendMethodNotAllowed","" );
+			LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","sendMethodNotAllowed" );
 			sock->closeSocket = 1;
 			return -1;
 		}
@@ -591,7 +591,7 @@ static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendOutputBuffer(socket_inf
 			case CLIENT_DICONNECTED:
 				goto client_diconnected_header;
 			default:
-				LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "unhandled send status output_header_buffer pos : %d status : %d",
+				LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "unhandled send status output_header_buffer pos : %"PRId64" status : %d",
 						sock->file_infos.file_send_pos, ret);
 				goto client_diconnected_header;
 		}
@@ -608,7 +608,7 @@ static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendOutputBuffer(socket_inf
 			case CLIENT_DICONNECTED:
 				goto client_diconnected_main;
 			default:
-				LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "unhandled send status output_main_buffer pos : %d status : %d",
+				LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "unhandled send status output_main_buffer pos : %"PRId64" status : %d",
 						sock->file_infos.file_send_pos, ret);
 				goto client_diconnected_main;
 		}
@@ -646,7 +646,7 @@ static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendRamFile(socket_info* so
 	default:
 		sock->file_infos.file_send_pos = 0;
 		sock->file_infos.file_info = 0;
-		LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "unhandled send status file ram pos : %d status : %d",
+		LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "unhandled send status file ram pos : %"PRId64" status : %d",
 				sock->file_infos.file_send_pos, ret);
 		return CLIENT_DICONNECTED;
 	}
@@ -917,7 +917,7 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* so
 			return DATA_PENDING;
 
 		default:
-			LOG(SOCKET_LOG, ERROR_LEVEL, sock->socket, "unhandled send status file file pos : %d status : %d",
+			LOG(SOCKET_LOG, ERROR_LEVEL, sock->socket, "unhandled send status file file pos : %"PRId64" status : %d",
 					sock->file_infos.file_send_pos, status);
 			ret_v = CLIENT_DICONNECTED;
 			goto send_ende;
@@ -944,7 +944,7 @@ void WebserverConnectionManagerStartLoop(void) {
 	while (1) {
 
 		if (WebserverStartConnectionManager() < 0) {
-			LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "Error : ConnectionManager konnte nicht gestartet werden", "");
+			LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "%s","Error : ConnectionManager konnte nicht gestartet werden");
 			return;
 		}
 
@@ -969,13 +969,13 @@ void handleer( int a, short b, void *t ) {
 #endif
 
 	if ( b == EVENT_SIGNAL ) {
-		LOG( MESSAGE_LOG, NOTICE_LEVEL,sock->socket,"EV_SIGNAL","" );
-		LOG( MESSAGE_LOG, ERROR_LEVEL, sock->socket,"EV_SIGNAL not handled","%d", b );
+		LOG( MESSAGE_LOG, NOTICE_LEVEL,sock->socket,"%s","EV_SIGNAL" );
+		LOG( MESSAGE_LOG, ERROR_LEVEL, sock->socket,"EV_SIGNAL not handled: %d", b );
 		return;
 	}
 
 	if ( a != sock->socket ){
-		LOG( MESSAGE_LOG, ERROR_LEVEL, sock->socket,"a != sock->socket","%d", b );
+		LOG( MESSAGE_LOG, ERROR_LEVEL, sock->socket,"a != sock->socket : %d", b );
 		return;
 	}
 
@@ -1094,13 +1094,13 @@ void handleer( int a, short b, void *t ) {
 				break;
 			case CLIENT_DICONNECTED:
 #ifdef _WEBSERVER_CONNECTION_DEBUG_
-				LOG ( CONNECTION_LOG,WARNING_LEVEL,sock->socket,"request finished client disconnected","" );
+				LOG ( CONNECTION_LOG,WARNING_LEVEL,sock->socket,"%d","request finished client disconnected" );
 #endif
 				delEventSocketWritePersist(sock);
 				WebserverConnectionManagerCloseRequest(sock);
 				return;
 			case UNDEFINED:
-				LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "UNDEFINED STATUS", "");
+				LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "%s","UNDEFINED STATUS");
 				return;
 			}
 		}

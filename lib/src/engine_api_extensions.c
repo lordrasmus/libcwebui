@@ -173,7 +173,7 @@ int check_platformFunction_exists(FUNCTION_PARAS* func) {
 	rb_red_blk_node* node;
 
 	if (func->parameter[0].text == 0){
-		LOG(TEMPLATE_LOG, INFO_LEVEL, 0, "Platform Function Parameter 0 == 0","");
+		LOG(TEMPLATE_LOG, INFO_LEVEL, 0, "%s","Platform Function Parameter 0 == 0");
 		return 1;
 	}
 

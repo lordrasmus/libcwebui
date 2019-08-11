@@ -31,7 +31,7 @@ void initGlobalVariable( void ) {
 void freeGlobalVariable( void ) {
 	ws_variable_store *tmp = global_v_store;
 	if ( lockGlobals() == -1 ){
-		LOG ( HANDLER_LOG,ERROR_LEVEL,0, "Fatal Error locking Globals exiting", "" );
+		LOG ( HANDLER_LOG,ERROR_LEVEL,0, "%s","Fatal Error locking Globals exiting" );
 		exit ( 1 );
 	}
 	global_v_store = 0;

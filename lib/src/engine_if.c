@@ -99,7 +99,7 @@ void engine_TemplateIF ( http_request *s,const char* prefix ,const char *pagenam
     int else_length=0;
 
     if ( 0>find_if_tags_pos ( pagedata,datalenght,&else_tag_pos,&endif_tag_pos ) ) {
-        LOG ( TEMPLATE_LOG,ERROR_LEVEL,s->socket->socket,"if tags nicht gefunden","" );
+        LOG ( TEMPLATE_LOG,ERROR_LEVEL,s->socket->socket,"%s","if tags nicht gefunden" );
 	return;
     }
 
@@ -145,7 +145,7 @@ void engine_TemplateIF ( http_request *s,const char* prefix ,const char *pagenam
             break;
 
         default:
-            LOG ( TEMPLATE_LOG,ERROR_LEVEL,0,"Condition Error","" );
+            LOG ( TEMPLATE_LOG,ERROR_LEVEL,0,"%s","Condition Error" );
             break;
 
         }
@@ -165,7 +165,7 @@ void engine_TemplateIF ( http_request *s,const char* prefix ,const char *pagenam
         case CONDITION_FALSE : /* kein else zweig vorhanden */
             break;
         default:
-            LOG ( TEMPLATE_LOG,ERROR_LEVEL,0,"Condition Error","" );
+            LOG ( TEMPLATE_LOG,ERROR_LEVEL,0,"%s","Condition Error");
             break;
         }
     }

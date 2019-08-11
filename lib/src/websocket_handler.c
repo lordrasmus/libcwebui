@@ -35,13 +35,13 @@ static int handleWebsocket(socket_info* sock, EVENT_TYPES type) {
 	switch (type) {
 
 		case EVENT_TIMEOUT:
-			LOG( WEBSOCKET_LOG, ERROR_LEVEL, 0, "Event Type EVENT_TIMEOUT not handled", "");
+			LOG( WEBSOCKET_LOG, ERROR_LEVEL, 0, "%s","Event Type EVENT_TIMEOUT not handled");
 			return -1;
 		case EVENT_SIGNAL:
-			LOG( WEBSOCKET_LOG, ERROR_LEVEL, 0, "Event Type EVENT_SIGNAL not handled", "");
+			LOG( WEBSOCKET_LOG, ERROR_LEVEL, 0,"%s", "Event Type EVENT_SIGNAL not handled");
 			return -1;
 		case EVENT_PERSIST:
-			LOG( WEBSOCKET_LOG, ERROR_LEVEL, 0, "Event Type EVENT_PERSIST not handled", "");
+			LOG( WEBSOCKET_LOG, ERROR_LEVEL, 0, "%s","Event Type EVENT_PERSIST not handled");
 			return -1;
 
 		case EVENT_READ: /* READ */

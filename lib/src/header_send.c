@@ -28,7 +28,7 @@ static cors_handler cors_handle_func = 0;
 
 void setCORS_Handler( cors_handler handler ){
 	cors_handle_func = handler;
-	LOG(HEADER_PARSER_LOG,NOTICE_LEVEL,0,"CORS Handler set","");
+	LOG(HEADER_PARSER_LOG,NOTICE_LEVEL,0,"%s","CORS Handler set");
 }
 
 

@@ -248,14 +248,14 @@ void delEventSocketWritePersist(socket_info* sock) {
 	if (sock->my_ev != 0) {
 		ret = event_del(sock->my_ev);
 		if (ret != 0) {
-			LOG(HANDLER_LOG, NOTICE_LEVEL, sock->socket, "Del Event Write Persist Failed", "");
+			LOG(HANDLER_LOG, NOTICE_LEVEL, sock->socket, "%s","Del Event Write Persist Failed");
 		}
 #if _WEBSERVER_HANDLER_DEBUG_ > 4
 		LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Del Event Write Persist","");
 #endif
 	} else {
 #if _WEBSERVER_HANDLER_DEBUG_ > 4
-		LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Del Event Write Persist  Error no ev structure","");
+		LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"%s","Del Event Write Persist  Error no ev structure");
 #endif
 	}
 }
@@ -282,17 +282,17 @@ void delEventSocketAll(socket_info* sock) {
 		ret = event_del(sock->my_ev);
 				
 		if ( event_pending(sock->my_ev, EV_TIMEOUT | EV_READ | EV_WRITE | EV_SIGNAL, NULL ) ){
-			LOG(HANDLER_LOG,ERROR_LEVEL,sock->socket,"Still pending events","");
+			LOG(HANDLER_LOG,ERROR_LEVEL,sock->socket,"%s","Still pending events");
 		}
 		
 		if (ret != 0) {
-			LOG(HANDLER_LOG, ERROR_LEVEL, sock->socket, "Del All Events Failed", "");
+			LOG(HANDLER_LOG, ERROR_LEVEL, sock->socket,"%s", "Del All Events Failed");
 		}
 #if _WEBSERVER_HANDLER_DEBUG_ > 4
-		LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Del All Events","");
+		LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"%s","Del All Events");
 #endif
 	} else {
-		LOG(HANDLER_LOG,ERROR_LEVEL,sock->socket,"Del All Events Failed  Error no ev structure","");
+		LOG(HANDLER_LOG,ERROR_LEVEL,sock->socket,"%s","Del All Events Failed  Error no ev structure");
 	}
 }
 
@@ -329,7 +329,7 @@ void initEvents( void ) {
 	base = event_base_new_with_config(config);
 	if (!base) {
 		/* There is no backend method that does what we want. */
-		LOG(MESSAGE_LOG, NOTICE_LEVEL, 0, "libEvent error creating base", "");
+		LOG(MESSAGE_LOG, NOTICE_LEVEL, 0, "%s","libEvent error creating base");
 		exit(1);
 	}
 	event_config_free(config);

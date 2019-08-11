@@ -108,7 +108,7 @@ int		PlatformGetSocket ( unsigned short port,int connections )
 
     if ( s == -1 )
     {
-        LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"socket() failed : %m","" );
+        LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"socket() failed : %m %s", " " );
         WebserverFree( addr );
         return -1;
     }
@@ -126,7 +126,7 @@ int		PlatformGetSocket ( unsigned short port,int connections )
     on = 1;
 
     if ( 0 != setsockopt ( s, SOL_SOCKET, SO_REUSEADDR, ( char* ) &on, sizeof ( on ) ) ){
-		LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"setsockopt() failed : %m","" );
+		LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"setsockopt() failed : %m %s"," " );
         WebserverFree( addr );
         close( s );
 		return -2;
@@ -139,7 +139,7 @@ int		PlatformGetSocket ( unsigned short port,int connections )
     if ( bind ( s, ( struct sockaddr* ) addr, sizeof ( struct sockaddr_in ) ) == -1 )
 #endif
     {
-        LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"bind() failed : %m","" );
+        LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"bind() failed : %m %s"," " );
         WebserverFree(addr);
         close( s );
         return -2;
@@ -147,7 +147,7 @@ int		PlatformGetSocket ( unsigned short port,int connections )
 
     if ( listen ( s, connections ) == -1 )
     {
-        LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"listen() failed : %m","" );
+        LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"listen() failed : %m %s", " " );
         WebserverFree(addr);
         close( s );
         return -3;
@@ -269,7 +269,7 @@ int     PlatformSendSocket ( int socket, const unsigned char *buf, SIZE_TYPE len
 	SIZE_TYPE send_bytes = 0;
 
 	if ( len > INT_MAX ){
-		LOG ( CONNECTION_LOG,ERROR_LEVEL,socket,"len > INT_MAX ( %d / %d ) ",len,INT_MAX );
+		LOG ( CONNECTION_LOG,ERROR_LEVEL,socket,"len > INT_MAX ( %"PRId64" / %d ) ",len,INT_MAX );
         return CLIENT_UNKNOWN_ERROR;
 	}
 
@@ -310,12 +310,12 @@ int     PlatformSendSocketNonBlocking ( int socket, const unsigned char *buf, SI
         }
         if ( errno == ECONNRESET )
         {
-            LOG ( CONNECTION_LOG,ERROR_LEVEL,socket,"ECONNRESET","" );
+            LOG ( CONNECTION_LOG,ERROR_LEVEL,socket,"%s","ECONNRESET" );
             return CLIENT_DISCONNECTED;
         }
         if ( errno == EPIPE )
         {
-            LOG ( CONNECTION_LOG,ERROR_LEVEL,socket,"EPIPE","" );
+            LOG ( CONNECTION_LOG,ERROR_LEVEL,socket,"%s","EPIPE" );
             return CLIENT_DISCONNECTED;
         }
 
@@ -336,7 +336,7 @@ int     PlatformRecvSocketNonBlocking ( int socket, unsigned char *buf, SIZE_TYP
     int ret;
 
     if ( len > INT_MAX ){
-		LOG ( CONNECTION_LOG,ERROR_LEVEL,socket,"len > INT_MAX ( %d / %d ) ",len,INT_MAX );
+		LOG ( CONNECTION_LOG,ERROR_LEVEL,socket,"len > INT_MAX ( %"PRId64" / %d ) ",len,INT_MAX );
         return CLIENT_UNKNOWN_ERROR;
 	}
 
@@ -366,7 +366,7 @@ int     PlatformRecvSocketNonBlocking ( int socket, unsigned char *buf, SIZE_TYP
                 return CLIENT_DISCONNECTED;
             }
 
-            LOG ( CONNECTION_LOG,ERROR_LEVEL,socket,"readSocket Error","" );
+            LOG ( CONNECTION_LOG,ERROR_LEVEL,socket,"%s","readSocket Error");
             LOG ( CONNECTION_LOG,ERROR_LEVEL,socket,"bytes : %d",ret );
             return CLIENT_UNKNOWN_ERROR;
         }

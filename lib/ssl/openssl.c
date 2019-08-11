@@ -95,7 +95,7 @@ int initOpenSSL(void) {
 	LOG( SSL_LOG, NOTICE_LEVEL, 0, "using openssl : %s ", vers);
 
 	if (0 == getConfigText("ssl_key_file")) {
-		LOG( SSL_LOG, ERROR_LEVEL, 0, "SSL fehler kein ssl_key_file gesetzt", "");
+		LOG( SSL_LOG, ERROR_LEVEL, 0,"%s", "SSL fehler kein ssl_key_file gesetzt");
 		file_error = 1;
 	}else{
 		LOG( SSL_LOG, NOTICE_LEVEL, 0, "SSL ssl_key_file %s", getConfigText("ssl_key_file") );
@@ -108,26 +108,26 @@ int initOpenSSL(void) {
 	}
 
 	if (0 == getConfigText("ssl_key_file_password")) {
-		LOG( SSL_LOG, ERROR_LEVEL, 0, "SSL fehler kein ssl_key_file_password gesetzt", "");
+		LOG( SSL_LOG, ERROR_LEVEL, 0, "%s","SSL fehler kein ssl_key_file_password gesetzt");
 		file_error = 1;
 	}
 
 	if (0 == getConfigText("ssl_dh_file")) {
-		LOG( SSL_LOG, ERROR_LEVEL, 0, "SSL fehler kein ssl_dh_file gesetzt", "");
+		LOG( SSL_LOG, ERROR_LEVEL, 0, "%s","SSL fehler kein ssl_dh_file gesetzt");
 		file_error = 1;
 	}else{
 		LOG( SSL_LOG, NOTICE_LEVEL, 0, "SSL ssl_dh_file %s", getConfigText("ssl_dh_file") );
 	}
 
 	if (0 == getConfigText("ssl_ca_list_file")) {
-		LOG( SSL_LOG, ERROR_LEVEL, 0, "SSL fehler kein ssl_ca_list_file gesetzt", "");
+		LOG( SSL_LOG, ERROR_LEVEL, 0, "%s","SSL fehler kein ssl_ca_list_file gesetzt");
 		file_error = 1;
 	}else{
 		LOG( SSL_LOG, NOTICE_LEVEL, 0, "SSL ssl_ca_list_file %s", getConfigText("ssl_ca_list_file") );
 	}
 
 	if ( file_error == 1){
-		LOG( SSL_LOG, ERROR_LEVEL, 0, "SSL Datei fehler", "");
+		LOG( SSL_LOG, ERROR_LEVEL, 0,"%s", "SSL Datei fehler");
 		return -1;
 	}
 
@@ -142,11 +142,11 @@ int initOpenSSL(void) {
 						);
 
 	if ( g_ctx == NULL ){
-		LOG( SSL_LOG, ERROR_LEVEL, 0, "SSL fehler init ctx, SSL disabled", "");
+		LOG( SSL_LOG, ERROR_LEVEL, 0, "%s","SSL fehler init ctx, SSL disabled");
 		return -1;
 	}
 	if (load_dh_params(g_ctx, getConfigText("ssl_dh_file") ) < 0) {
-		LOG( SSL_LOG, ERROR_LEVEL, 0, "SSL fehler dh_params", "");
+		LOG( SSL_LOG, ERROR_LEVEL, 0,"%s", "SSL fehler dh_params");
 		return -1;
 	}
 
@@ -181,14 +181,14 @@ int load_dh_params(SSL_CTX *ctx, char *file) {
 	BIO *bio;
 
 	if ((bio = BIO_new_file(file, "r")) == NULL) {
-		LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "Couldn't open DH file", "");
+		LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "%s","Couldn't open DH file");
 		return -1;
 	}
 
 	ret = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
 	BIO_free(bio);
 	if (SSL_CTX_set_tmp_dh(ctx, ret) < 0) {
-		LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "Couldn't set DH parameters", "");
+		LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "%s","Couldn't set DH parameters");
 		return -1;
 	}
 
@@ -311,7 +311,7 @@ int WebserverSSLInit(socket_info* s) {
 
 	s->ssl_context->ssl = SSL_new(g_ctx);
 	if (s->ssl_context->ssl == 0){
-		LOG(CONNECTION_LOG, ERROR_LEVEL, s->socket, "WebserverSSLInit fehler", "");
+		LOG(CONNECTION_LOG, ERROR_LEVEL, s->socket,"%s", "WebserverSSLInit fehler");
 	}
 
 	s->ssl_context->read_pending = 0;
@@ -403,7 +403,7 @@ int WebserverSSLAccept(socket_info* s) {
 				// SSL_read(), SSL_peek(), and SSL_write() will handle any pending handshakes.
 				printSSLErrorQueue(s);
 //#if _WEBSERVER_CONNECTION_DEBUG_ >= 4
-				LOG ( CONNECTION_LOG,ERROR_LEVEL,s->socket,"SSL_ERROR_WANT_WRITE","" );
+				LOG ( CONNECTION_LOG,ERROR_LEVEL,s->socket,"%s","SSL_ERROR_WANT_WRITE" );
 //#endif
 				return CLIENT_NO_MORE_DATA;
 				break;
@@ -429,11 +429,11 @@ int WebserverSSLAccept(socket_info* s) {
 				// If the error queue is empty (i.e. ERR_get_error() returns 0), ret can be used to find out more about the error:
 				// If ret == 0, an EOF was observed that violates the protocol. If ret == -1, the underlying BIO reported an I/O error
 				// (for socket I/O on Unix systems, consult errno for details).
-				LOG( CONNECTION_LOG, ERROR_LEVEL, s->socket, "SSL_ERROR_SYSCALL", "");
+				LOG( CONNECTION_LOG, ERROR_LEVEL, s->socket,"%s", "SSL_ERROR_SYSCALL");
 				printSSLErrorQueue(s);
 				return SSL_PROTOCOL_ERROR;
 			case SSL_ERROR_SSL:
-				LOG( CONNECTION_LOG, ERROR_LEVEL, s->socket, "SSL_ERROR_SSL", "");
+				LOG( CONNECTION_LOG, ERROR_LEVEL, s->socket, "%s","SSL_ERROR_SSL");
 				printSSLErrorQueue(s);
 				return SSL_PROTOCOL_ERROR;
 				break;
@@ -514,7 +514,7 @@ int WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, unsigned int
 			err_code = ERR_get_error();
 			ERR_error_string(err_code, buffer);
 //#ifdef _WEBSERVER_CONNECTION_DEBUG_
-			LOG ( CONNECTION_LOG,ERROR_LEVEL,s->socket,"SSL_ERROR_ZERO_RETURN","" );
+			LOG ( CONNECTION_LOG,ERROR_LEVEL,s->socket,"%s","SSL_ERROR_ZERO_RETURN" );
 //#endif
 			return CLIENT_DISCONNECTED;
 

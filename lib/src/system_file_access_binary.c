@@ -224,7 +224,7 @@ void read_binary_data( const unsigned char* data ){
 	time = read_uint64( data, &offset );
 	files = read_uint32( data, &offset );
 
-	LOG(FILESYSTEM_LOG,NOTICE_LEVEL,0,"loading binary data","");
+	LOG(FILESYSTEM_LOG,NOTICE_LEVEL,0,"%s","loading binary data");
 	LOG(FILESYSTEM_LOG,NOTICE_LEVEL,0,"Alias : %s",alias);
 	LOG(FILESYSTEM_LOG,NOTICE_LEVEL,0,"Time  : %" PRIu64 "",time);
 	LOG(FILESYSTEM_LOG,NOTICE_LEVEL,0,"Files : %" PRIu32 "",files);

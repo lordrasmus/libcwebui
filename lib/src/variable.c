@@ -216,7 +216,7 @@ int getWSVariableString(ws_variable* var, char* buffer,	unsigned int buffer_leng
 
 void setWSVariableInt(ws_variable* var, int value) {
 	if (var == 0){
-		LOG( VARIABLE_LOG,ERROR_LEVEL,0,"var pointer is 0" ,"");
+		LOG( VARIABLE_LOG,ERROR_LEVEL,0,"%s","var pointer is 0" );
 		return;
 	}
 	freeWSVariableValue(var);
@@ -226,7 +226,7 @@ void setWSVariableInt(ws_variable* var, int value) {
 
 void setWSVariableULong(ws_variable* var, uint64_t value) {
 	if (var == 0){
-		LOG( VARIABLE_LOG,ERROR_LEVEL,0,"var pointer is 0","" );
+		LOG( VARIABLE_LOG,ERROR_LEVEL,0,"%s","var pointer is 0");
 		return;
 	}
 	freeWSVariableValue(var);

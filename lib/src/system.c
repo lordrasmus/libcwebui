@@ -85,7 +85,7 @@ void startWebServer(void) {
 	int ssl_port = getConfigInt("ssl_port");
 
 	if ( ( ssl_port > 0 ) && (initOpenSSL() < 0) ) {
-		LOG( CONNECTION_LOG, ERROR_LEVEL, 0, "Error : SSL konnte nicht gestartet werden", "");
+		LOG( CONNECTION_LOG, ERROR_LEVEL, 0, "%s","Error : SSL konnte nicht gestartet werden");
 		return;
 	}
 #endif
@@ -131,12 +131,12 @@ static void noRamFree(socket_info* newsockfd) {
 #endif
 
 void shutdownWebserverHandler(void) {
-	LOG(CONNECTION_LOG, NOTICE_LEVEL, 0, "Webserver Shutdown Handler Invoked", "");
+	LOG(CONNECTION_LOG, NOTICE_LEVEL, 0, "%s","Webserver Shutdown Handler Invoked");
 	breakEvents();
 }
 
 void shutdownWebserver(void) {
-	LOG(CONNECTION_LOG, NOTICE_LEVEL, 0, "Webserver Shutdown", "");
+	LOG(CONNECTION_LOG, NOTICE_LEVEL, 0, "%s","Webserver Shutdown");
 	freeSocketContainer();
 
 	free_file_access();

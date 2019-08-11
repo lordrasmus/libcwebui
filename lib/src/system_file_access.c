@@ -52,21 +52,21 @@ void free_file_access( void ){
 bool initFilesystem(void) {
 
 	if (globals.init_called != 0xAB) {
-		LOG(FILESYSTEM_LOG, ERROR_LEVEL, 0, "WebserverInit must be called first","");
+		LOG(FILESYSTEM_LOG, ERROR_LEVEL, 0, "%s","WebserverInit must be called first");
 		return false;
 	}
 
 #ifdef WEBSERVER_USE_BINARY_FORMAT
-	LOG( FILESYSTEM_LOG, NOTICE_LEVEL, 0, "using binary filesystem", "");
+	LOG( FILESYSTEM_LOG, NOTICE_LEVEL, 0, "%s","using binary filesystem");
 #endif
 
 
 #ifdef WEBSERVER_USE_LOCAL_FILE_SYSTEM
-	LOG( FILESYSTEM_LOG, NOTICE_LEVEL, 0, "using local filesystem", "");
+	LOG( FILESYSTEM_LOG, NOTICE_LEVEL, 0, "%s","using local filesystem");
 #endif
 
 #ifdef WEBSERVER_USE_WNFS
-	LOG (FILESYSTEM_LOG,NOTICE_LEVEL,0, "using network filesystem","" );
+	LOG (FILESYSTEM_LOG,NOTICE_LEVEL,0, "%s","using network filesystem" );
 #endif
 
 

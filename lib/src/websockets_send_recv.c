@@ -499,7 +499,7 @@ int recFrame(socket_info *sock) {
 		return recFrameV8(sock);
 	}
 
-	LOG( WEBSOCKET_LOG, ERROR_LEVEL, sock->socket, "Websocket Frame < 7 not handled", "");
+	LOG( WEBSOCKET_LOG, ERROR_LEVEL, sock->socket,"%s", "Websocket Frame < 7 not handled");
 	return -1;
 }
 

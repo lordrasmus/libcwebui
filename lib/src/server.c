@@ -247,7 +247,7 @@ int getHttpRequest(socket_info* sock) {
 
 
 	if ( lockGlobals() == -1 ){
-		LOG ( CONNECTION_LOG,ERROR_LEVEL,s.socket->socket, "Fatal Error locking Globals exiting", "" );
+		LOG ( CONNECTION_LOG,ERROR_LEVEL,s.socket->socket, "%s","Fatal Error locking Globals exiting" );
 		exit ( 1 );
 	}
 
@@ -342,7 +342,7 @@ int getHttpRequest(socket_info* sock) {
 
 
 	if ( unlockGlobals() == -1 ){
-		LOG ( CONNECTION_LOG,ERROR_LEVEL,s.socket->socket, "Fatal Error locking Globals exiting", "" );
+		LOG ( CONNECTION_LOG,ERROR_LEVEL,s.socket->socket, "%s","Fatal Error locking Globals exiting");
 		exit ( 1 );
 	}
 
