@@ -192,7 +192,6 @@ static int memoryInfosDetail ( http_request* s ) {
     printHTMLChunk ( s->socket,"<tr><td>MemorySize<td>%d",size );
     printHTMLChunk ( s->socket,"<tr><td>AllocatedMemory<td>%ld",allocated );
     printHTMLChunk ( s->socket,"<tr><td>AllocatedMemory MAX<td>%ld",allocated_max );
-    printHTMLChunk ( s->socket,"" );
 #ifdef _WEBSERVER_MEMORY_DEBUG_
     print_blocks_now = 1;
 #endif

@@ -756,7 +756,7 @@ int dumpSession( http_request* s ) {
 		s2 = getVariableStoreSize(s->store_ssl->vars);
 	}
 
-	printHTMLChunk(s->socket, "<table border=1><tr><th>Store %d Byte<th>SSLStore %d Byte<tr valign=top><td>", s1, s2);
+	printHTMLChunk(s->socket, "<table border=1><tr><th>Store %"PRIu64" Byte<th>SSLStore %"PRIu64" Byte<tr valign=top><td>", s1, s2);
 
 	if (s->store != 0) {
 		dumpStore(s, s->store->vars);
@@ -800,7 +800,7 @@ void dumpSessions(http_request* s) {
 		ticks = (getConfigInt("session_timeout") * PlatformGetTicksPerSeconde()) - ticks;
 		ticks /= PlatformGetTicksPerSeconde();
 
-		printHTMLChunk(s->socket, "<tr><th>Timeout<th>%d s", ticks);
+		printHTMLChunk(s->socket, "<tr><th>Timeout<th>%"PRIu64" s", ticks);
 		printHTMLChunk(s->socket, "<tr><th>Name<th>Value");
 
 		var = getFirstVariable(ss->vars);
