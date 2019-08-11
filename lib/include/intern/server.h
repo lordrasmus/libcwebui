@@ -48,7 +48,7 @@ void sendHeaderChunk(socket_info* sock,const char* text,const unsigned int lengt
 void sendHeaderChunkEnd(socket_info* sock);
 void printHeaderChunk(socket_info* sock,const char *fmt,...);
 
-int  printHTMLChunk(socket_info* sock,const char *fmt,...);
+int  printHTMLChunk(socket_info* sock,const char *fmt,...) __attribute__ ((format (printf, 2, 3))) ;
 int vprintHTMLChunk(socket_info* sock, const char *fmt, va_list argptr);
 void sendHTMLChunk(socket_info* sock,const char* text,const unsigned int length);
 void sendHTMLChunkVariable(socket_info* sock,ws_variable* var);
