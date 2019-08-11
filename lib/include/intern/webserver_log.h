@@ -83,7 +83,7 @@ void vaddFirePHPLog ( http_request* s,const char* filename,int fileline,const ch
 
 
 
-void addLog(LogChannels channel,LogLevels level,char* filename,int fileline,const char* function,int socket,char* text,...);
+void addLog(LogChannels channel,LogLevels level,char* filename,int fileline,const char* function,int socket,char* text,...) __attribute__ ((format (printf, 7, 8)));
 
 #ifdef __cplusplus
 }
