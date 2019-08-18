@@ -451,6 +451,7 @@ int loadPlugin(const char* name, const char* path) {
 	
 
 #ifdef LINUX
+	#define PLUGIN_SUPPORT
 
 	int version;
 	char *error_text;
@@ -567,8 +568,10 @@ int loadPlugin(const char* name, const char* path) {
 	return 0;
 #endif
 
+#ifndef PLUGIN_SUPPORT
 	printf("loadPlugin not implemented\n");
 	return 0;
+#endif
 
 }
 
