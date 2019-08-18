@@ -345,7 +345,7 @@ void generateOutputBuffer(socket_info* sock) {
 #endif
 		
 		printHeaderChunk(sock, "Content-Encoding: deflate\r\n");
-		printHeaderChunk(sock, "Content-Length: %d\r\n", offset);
+		printHeaderChunk(sock, "Content-Length: %"PRIu64"\r\n", offset);
 		printHeaderChunk(sock, "\r\n"); /* HTTP Header beenden */
 		
 		unsigned long header_size = getChunkListSize(&sock->header_chunk_list);
