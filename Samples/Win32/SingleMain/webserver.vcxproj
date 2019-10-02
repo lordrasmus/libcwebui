@@ -225,7 +225,6 @@
     <ClCompile Include="..\..\..\lib\src\header.c" />
     <ClCompile Include="..\..\..\lib\src\header_parser.c" />
     <ClCompile Include="..\..\..\lib\src\header_send.c" />
-    <ClCompile Include="..\..\..\lib\src\JSON_parser.c" />
     <ClCompile Include="..\..\..\lib\src\linked_list.c" />
     <ClCompile Include="..\..\..\lib\src\log.c" />
     <ClCompile Include="..\..\..\lib\src\message_queue.c" />
@@ -273,6 +272,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="webserver.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\.travis.yml" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

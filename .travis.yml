@@ -17,7 +17,8 @@ script:
 
 matrix:
   include:
-  
+    - os: windows
+    
     - os: linux
       compiler: gcc
       env: COMPILER=gcc CC=gcc

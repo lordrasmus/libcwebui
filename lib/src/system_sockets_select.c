@@ -393,11 +393,12 @@ char waitEvents( void ) {
 #ifdef __ZEPHYR__
 	#warning how to get pending bytes on the sockets ??
 #else
-	#warning ist das wirklich nötig mit dem pending ??
+	
 #ifdef _MSC_VER
 				if (ioctlsocket(sock3, FIONREAD, &totalPending) == -1)
 #else
 				if( ioctl( sock3, FIONREAD, &totalPending) == -1 )
+				#warning ist das wirklich nötig mit dem pending ? ?
 #endif
 
 

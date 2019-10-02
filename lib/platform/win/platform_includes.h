@@ -29,6 +29,7 @@ SPDX-License-Identifier: MPL-2.0
 #include <winsock2.h>
 #include <strsafe.h>
 #include <io.h>
+#include <inttypes.h>
 
 #include "webserver.h"
 
@@ -50,3 +51,7 @@ SPDX-License-Identifier: MPL-2.0
 #define FILE_OFFSET			uint64_t
 
 int strcasecmp(const char *s1, const char *s2);
+
+#ifdef _MSC_VER
+#define __attribute__(x)
+#endif

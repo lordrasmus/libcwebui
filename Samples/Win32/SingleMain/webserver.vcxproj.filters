@@ -242,9 +242,6 @@
     <ClCompile Include="..\..\..\lib\third_party\src\is_utf8\is_utf8.c">
       <Filter>Quelldateien\lib</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\lib\src\JSON_parser.c">
-      <Filter>Quelldateien\lib</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\lib\src\linked_list.c">
       <Filter>Quelldateien\lib</Filter>
     </ClCompile>
@@ -374,5 +371,10 @@
     <ClCompile Include="..\..\..\lib\src\builtinFunctions.c">
       <Filter>Quelldateien\lib</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\.travis.yml">
+      <Filter>Ressourcendateien</Filter>
+    </None>
   </ItemGroup>
 </Project>
