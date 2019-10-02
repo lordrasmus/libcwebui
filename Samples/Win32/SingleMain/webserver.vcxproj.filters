@@ -379,5 +379,8 @@
     <None Include="..\..\..\appveyor.yml">
       <Filter>Ressourcendateien</Filter>
     </None>
+    <None Include="..\..\..\README.md">
+      <Filter>Ressourcendateien</Filter>
+    </None>
   </ItemGroup>
 </Project>

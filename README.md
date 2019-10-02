@@ -1,6 +1,7 @@
 # libcwebui
 
 [![Build Status](https://travis-ci.org/lordrasmus/libcwebui.svg?branch=master)](https://travis-ci.org/lordrasmus/libcwebui)
+[![Build Status](https://ci.appveyor.com/api/projects/status/github/lordrasmus/libcwebui?branch=master&svg=true)](https://ci.appveyor.com/project/lordrasmus/libcwebui)
 [![Scan Status](https://scan.coverity.com/projects/7148/badge.svg?flat=1)](https://scan.coverity.com/projects/lordrasmus-libcwebui)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/3c4b64df7ceb4bc895a0da5a63f21a9e)](https://www.codacy.com/app/ramin/libcwebui?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=lordrasmus/libcwebui&amp;utm_campaign=Badge_Grade)
 ![license](https://img.shields.io/badge/license-MPL2-orange.svg)
