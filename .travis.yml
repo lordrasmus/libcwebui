@@ -21,6 +21,8 @@ script:
 matrix:
   include:
     - os: windows
+		script:
+			test
     
     - os: linux
       compiler: gcc
