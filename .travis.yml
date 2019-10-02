@@ -19,10 +19,10 @@ script:
 #   - gcc 
 #   - clang
 
-addons:
-   apt:
-     sources: ['ubuntu-toolchain-r-test']
-     packages: ['gcc-4.5']
+#addons:
+#   apt:
+#      sources: ['ubuntu-toolchain-r-test']
+#      packages: ['gcc-4.5']
          
 matrix:
    include:
@@ -73,13 +73,13 @@ matrix:
    ##########################################################################################
 
    
-    - os: linux
+   - os: linux
       #compiler: gcc-4.4
 #      addons:
 #        apt:
 #          sources: ['ubuntu-toolchain-r-test']
 #          packages: ['libevent-dev', 'gcc-4.4']
-      env: COMPILER=gcc-4.4 CC=gcc-4.4
+     env: COMPILER=gcc-4.4 CC=gcc-4.4
     
    - os: linux
      #compiler: gcc-4.5
