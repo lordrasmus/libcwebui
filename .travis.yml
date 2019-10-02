@@ -22,9 +22,9 @@ matrix:
 #			test
 #		compiler: gcc
  
-	- os: windows
-      install: choco install mingw
-      script: mingw32-make travis
+#	- os: windows
+#      install: choco install mingw
+#      script: mingw32-make travis
 
     - os: linux
       compiler: gcc
