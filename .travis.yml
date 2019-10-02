@@ -25,7 +25,7 @@ matrix:
 #	- os: windows
 #      install: choco install mingw
 #      script: mingw32-make travis
-
+    - os: windows
     - os: linux
       compiler: gcc
       env: COMPILER=gcc CC=gcc
