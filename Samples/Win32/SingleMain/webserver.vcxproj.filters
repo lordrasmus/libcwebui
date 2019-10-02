@@ -376,5 +376,8 @@
     <None Include="..\..\..\.travis.yml">
       <Filter>Ressourcendateien</Filter>
     </None>
+    <None Include="..\..\..\appveyor.yml">
+      <Filter>Ressourcendateien</Filter>
+    </None>
   </ItemGroup>
 </Project>
