@@ -92,53 +92,53 @@ matrix:
 #          packages: ['libevent-dev', 'gcc-4.9']
 #      env: COMPILER=gcc-4.9 CC=gcc-4.9
 
-    - os: linux
-      compiler: gcc-5
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['libevent-dev', 'gcc-5']
-      env: COMPILER=gcc-5 CC=gcc-5
+    # - os: linux
+      # compiler: gcc-5
+      # addons:
+        # apt:
+          # sources: ['ubuntu-toolchain-r-test']
+          # packages: ['libevent-dev', 'gcc-5']
+      # env: COMPILER=gcc-5 CC=gcc-5
 
-    - os: linux
-      compiler: gcc-6
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['libevent-dev', 'gcc-6']
-      env: COMPILER=gcc-6  CC=gcc-6
+    # - os: linux
+      # compiler: gcc-6
+      # addons:
+        # apt:
+          # sources: ['ubuntu-toolchain-r-test']
+          # packages: ['libevent-dev', 'gcc-6']
+      # env: COMPILER=gcc-6  CC=gcc-6
     
-    - os: linux
-      compiler: gcc-7
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['libevent-dev', 'gcc-7']
-      env: COMPILER=gcc-7  CC=gcc-7
+    # - os: linux
+      # compiler: gcc-7
+      # addons:
+        # apt:
+          # sources: ['ubuntu-toolchain-r-test']
+          # packages: ['libevent-dev', 'gcc-7']
+      # env: COMPILER=gcc-7  CC=gcc-7
      
-    - os: linux
-      compiler: gcc-8
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['libevent-dev', 'gcc-8']
-      env: COMPILER=gcc-8  CC=gcc-8
+    # - os: linux
+      # compiler: gcc-8
+      # addons:
+        # apt:
+          # sources: ['ubuntu-toolchain-r-test']
+          # packages: ['libevent-dev', 'gcc-8']
+      # env: COMPILER=gcc-8  CC=gcc-8
 
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['libevent-dev', 'clang']
-      env: COMPILER=clang CC=clang
+    # - os: linux
+      # compiler: clang
+      # addons:
+        # apt:
+          # sources: ['ubuntu-toolchain-r-test']
+          # packages: ['libevent-dev', 'clang']
+      # env: COMPILER=clang CC=clang
 
-    - os: linux
-      compiler: clang-3.5
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.5']
-          packages: ['libevent-dev', 'clang-3.5']
-      env: COMPILER=clang-3.5  CC=clang-3.5
+    # - os: linux
+      # compiler: clang-3.5
+      # addons:
+        # apt:
+          # sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.5']
+          # packages: ['libevent-dev', 'clang-3.5']
+      # env: COMPILER=clang-3.5  CC=clang-3.5
 
 #    - os: linux
 #      compiler: clang-3.6
@@ -172,32 +172,32 @@ matrix:
 #          packages: ['libevent-dev', 'clang-3.9']
 #      env: COMPILER=clang-3.9 CC=clang-3.9
          
-    - os: linux
-      dist: trusty
-      compiler: clang-4.0
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-4.0']
-          packages: ['libevent-dev', 'clang-4.0']
-      env: COMPILER=clang-4.0 CC=clang-4.0
+    # - os: linux
+      # dist: trusty
+      # compiler: clang-4.0
+      # addons:
+        # apt:
+          # sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-4.0']
+          # packages: ['libevent-dev', 'clang-4.0']
+      # env: COMPILER=clang-4.0 CC=clang-4.0
     
-    - os: linux
-      dist: trusty
-      compiler: clang-5.0
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
-          packages: ['libevent-dev', 'clang-5.0']
-      env: COMPILER=clang-5.0 CC=clang-5.0
+    # - os: linux
+      # dist: trusty
+      # compiler: clang-5.0
+      # addons:
+        # apt:
+          # sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
+          # packages: ['libevent-dev', 'clang-5.0']
+      # env: COMPILER=clang-5.0 CC=clang-5.0
     
-    - os: linux
-      dist: trusty
-      compiler: clang-6.0
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
-          packages: ['libevent-dev', 'clang-6.0']
-      env: COMPILER=clang-6.0 CC=clang-6.0
+    # - os: linux
+      # dist: trusty
+      # compiler: clang-6.0
+      # addons:
+        # apt:
+          # sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
+          # packages: ['libevent-dev', 'clang-6.0']
+      # env: COMPILER=clang-6.0 CC=clang-6.0
     
     - os: osx
       compiler: xcode9.1
