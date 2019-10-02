@@ -99,13 +99,13 @@ matrix:
      env: COMPILER=gcc-4.9 CC=gcc-4.9 CXX=g++-4.9
 
    - os: linux
-     env: COMPILER=gcc-5 CC=gcc-5 CXX=g++-8
+     env: COMPILER=gcc-5 CC=gcc-5 CXX=g++-5
 
    - os: linux
-     env: COMPILER=gcc-6 CC=gcc-6 CXX=g++-8
+     env: COMPILER=gcc-6 CC=gcc-6 CXX=g++-6
 
    - os: linux
-     env: COMPILER=gcc-7 CC=gcc-7 CXX=g++-8
+     env: COMPILER=gcc-7 CC=gcc-7 CXX=g++-7
 
    - os: linux
      env: COMPILER=gcc-8 CC=gcc-8 CXX=g++-8
