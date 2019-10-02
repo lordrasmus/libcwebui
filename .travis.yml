@@ -27,7 +27,8 @@ matrix:
 #      script: mingw32-make travis
     - os: windows
       install: choco install mingw
-      script: test
+      script: mingw32-make travis
+
     - os: linux
       compiler: gcc
       env: COMPILER=gcc CC=gcc
@@ -200,7 +201,8 @@ matrix:
       # env: COMPILER=clang-6.0 CC=clang-6.0
     
     - os: osx
-      compiler: xcode9.1
+	  osx_image: xcode10
+#      compiler: xcode9.1
       env: COMPILER=clang CC=clang
       
 
