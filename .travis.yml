@@ -17,11 +17,15 @@ script:
 
 matrix:
   include:
-    - os: windows
-		script:
-			test
-		compiler: gcc
-    
+#    - os: windows
+#		script:
+#			test
+#		compiler: gcc
+ 
+	- os: windows
+      install: choco install mingw
+      script: mingw32-make travis
+
     - os: linux
       compiler: gcc
       env: COMPILER=gcc CC=gcc
