@@ -10,13 +10,10 @@ notifications:
       - lordrasmus@gmail.com
 
 script:
-	- os: linux
-	  - make clean
-	  - make
-	  - make -C Samples/Linux/SingleMain/
-	  - make -C Samples/Linux/SingleMainPython/
-	- os: windows
-		- test
+	- make clean
+	- make
+	- make -C Samples/Linux/SingleMain/
+	- make -C Samples/Linux/SingleMainPython/
 
 matrix:
   include:
