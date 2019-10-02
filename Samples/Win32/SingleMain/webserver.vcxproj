@@ -278,6 +278,7 @@
     <None Include="..\..\..\appveyor.yml" />
     <None Include="..\..\..\Makefile" />
     <None Include="..\..\..\README.md" />
+    <None Include="..\..\Linux\SingleMain\Makefile" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

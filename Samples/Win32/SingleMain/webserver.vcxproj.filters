@@ -385,5 +385,8 @@
     <None Include="..\..\..\Makefile">
       <Filter>Ressourcendateien</Filter>
     </None>
+    <None Include="..\..\Linux\SingleMain\Makefile">
+      <Filter>Ressourcendateien</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -45,11 +45,6 @@ FILES= \
 PY_FLAGS = $(shell python-config --includes)
 PY_LINK = $(shell python-config --libs)
 
-#PY_FLAGS = -I/usr/include/python3.4
-#PY_LINK = -lpython3.4
-
-#PY_FLAGS = -I/usr/include/python2.7
-#PY_LINK = -lpython2.7
 
 FLAGS= -I . -I../../../lib/include -I../../../lib/third_party/src/miniz/ -I../../../lib/third_party/src/rb_tree/ \
 	-I../../../lib/platform/include/ -I../../../lib/include/intern/  -I../../../lib/third_party/src/is_utf8/ \
@@ -63,9 +58,9 @@ LIBS=-lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads -lz -lstdc++
 .SILENT:
 all: testSite
 	echo "C++  main.cpp"
-	g++ $(FLAGS) -c main.cpp  -o main.o
+	$(CXX) $(FLAGS) -c main.cpp  -o main.o
 	echo "CC   www_css.c www_data.c ../lib/*.c"
-	gcc $(FLAGS) -std=gnu99 $(FILES) main.o  www_css.c www_data.c -o main $(LIBS) ${PY_LINK}
+	$(CC) $(FLAGS) -std=gnu99 $(FILES) main.o  www_css.c www_data.c -o main $(LIBS) ${PY_LINK}
 	echo "LINK main"
 
 	
