@@ -19,10 +19,11 @@ script:
 #   - gcc 
 #   - clang
 
-#addons:
-#   apt:
-#      sources: ['ubuntu-toolchain-r-test']
-#      packages: ['gcc-4.5']
+
+addons:
+   apt:
+      sources: ['ubuntu-toolchain-r-test']
+      packages: ['gcc-4.5']
          
 matrix:
    include:
