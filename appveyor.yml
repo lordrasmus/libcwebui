@@ -1,0 +1,6 @@
+branches:
+  # whitelist
+  only:
+    - master
+    
+image: Visual Studio 2017    
