@@ -2,8 +2,8 @@
 
 all:
 	$(MAKE) -C lib
-	make -C Samples/Linux/SharedMain
-	make -C Samples/testSite
+	$(MAKE) -C Samples/Linux/SharedMain
+	$(MAKE) -C Samples/testSite
 	
 	@echo ""
 	@echo "run -> make run"
@@ -13,13 +13,13 @@ run: all
 	( cd Samples/Linux/SharedMain/; ./main )
 
 fuzzer:
-	make -C oss_fuzz
+	$(MAKE) -C oss_fuzz
 
 clean:
 	$(MAKE) -C lib clean
-	make -C Samples/Linux/SharedMain clean
-	make -C Samples/Linux/SingleMain clean
-	make -C Samples/Linux/SingleMainPython clean
-	make -C Samples/testSite clean
-	make -C Docker clean
+	$(MAKE) -C Samples/Linux/SharedMain clean
+	$(MAKE) -C Samples/Linux/SingleMain clean
+	$(MAKE) -C Samples/Linux/SingleMainPython clean
+	$(MAKE) -C Samples/testSite clean
+	$(MAKE) -C Docker clean
 	
