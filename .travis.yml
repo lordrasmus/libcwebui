@@ -23,6 +23,7 @@ matrix:
     - os: windows
 		script:
 			test
+		compiler: gcc
     
     - os: linux
       compiler: gcc
