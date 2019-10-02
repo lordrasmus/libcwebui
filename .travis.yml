@@ -15,28 +15,36 @@ script:
    - make -C Samples/Linux/SingleMain/
    - make -C Samples/Linux/SingleMainPython/
 
+compiler: gcc clang
+
 matrix:
    include:
-#      - os: windows
-#	     script:
-#	        test
-#      compiler: gcc
- 
-#	- os: windows
-#      install: choco install mingw
-#      script: mingw32-make travis
-    - os: windows
-      install: choco install mingw
-      script: 
-        - mingw32-make clean
-        - mingw32-make
 
+   ########################################################################################## 
+   #     Windows Test ( basiert auf mingw gcc )                                             #
+   ##########################################################################################
+   
+    # - os: windows
+      # install: choco install mingw
+      # script: 
+        # - mingw32-make clean
+        # - mingw32-make
+
+   ##########################################################################################
+   #     OSX Test                                                                           #
+   ##########################################################################################
+   
     # - os: osx
       # osx_image: xcode10
       # compiler: clang
       # env: COMPILER=clang CC=clang
       
-    # - os: linux
+      
+   ##########################################################################################
+   #     Linux Test ( Coveriry )                                                            #
+   ##########################################################################################
+
+   # - os: linux
       # compiler: gcc
       # env: COMPILER=gcc CC=gcc
       # addons:
@@ -52,14 +60,19 @@ matrix:
 
             # build_command: make -C lib rebuild
             # branch_pattern: master
+
+   ##########################################################################################
+   #     Linux Test                                                                         #
+   ##########################################################################################
+
    
-    # - os: linux
-      # compiler: gcc-4.4
-      # addons:
-        # apt:
-          # sources: ['ubuntu-toolchain-r-test']
-          # packages: ['libevent-dev', 'gcc-4.4']
-      # env: COMPILER=gcc-4.4 CC=gcc-4.4
+    - os: linux
+      #compiler: gcc-4.4
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['libevent-dev', 'gcc-4.4']
+      env: COMPILER=gcc-4.4 CC=gcc-4.4
     
 #    - os: linux
 #      compiler: gcc-4.5
