@@ -27,32 +27,38 @@ matrix:
 #      script: mingw32-make travis
     - os: windows
       install: choco install mingw
-      script: mingw32-make travis
+      script: 
+        mingw32-make clean
+        mingw32-make
 
-    - os: linux
-      compiler: gcc
-      env: COMPILER=gcc CC=gcc
-      addons:
-        apt:
-            packages: ['libevent-dev']
+    - os: osx
+      osx_image: xcode10
+      env: COMPILER=clang CC=clang
+      
+    # - os: linux
+      # compiler: gcc
+      # env: COMPILER=gcc CC=gcc
+      # addons:
+        # apt:
+            # packages: ['libevent-dev']
             
-        coverity_scan:
-            project:
-                name: lordrasmus/libcwebui
+        # coverity_scan:
+            # project:
+                # name: lordrasmus/libcwebui
 
-            notification_email: 
-                - lordrasmus@gmail.com
+            # notification_email: 
+                # - lordrasmus@gmail.com
 
-            build_command: make -C lib rebuild
-            branch_pattern: master
+            # build_command: make -C lib rebuild
+            # branch_pattern: master
    
-    - os: linux
-      compiler: gcc-4.4
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['libevent-dev', 'gcc-4.4']
-      env: COMPILER=gcc-4.4 CC=gcc-4.4
+    # - os: linux
+      # compiler: gcc-4.4
+      # addons:
+        # apt:
+          # sources: ['ubuntu-toolchain-r-test']
+          # packages: ['libevent-dev', 'gcc-4.4']
+      # env: COMPILER=gcc-4.4 CC=gcc-4.4
     
 #    - os: linux
 #      compiler: gcc-4.5
@@ -200,8 +206,5 @@ matrix:
           # packages: ['libevent-dev', 'clang-6.0']
       # env: COMPILER=clang-6.0 CC=clang-6.0
     
-    - os: osx
-      osx_image: xcode10
-      env: COMPILER=clang CC=clang
-      
+
 
