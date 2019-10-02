@@ -9,8 +9,8 @@ notifications:
    email: 
       - lordrasmus@gmail.com
 
-- os: linux
-	script:  
+script:
+	- os: linux
 	  - make clean
 	  - make
 	  - make -C Samples/Linux/SingleMain/
