@@ -17,7 +17,7 @@ SPDX-License-Identifier: MPL-2.0
 
 #ifdef _MSC_VER
 
-#include <vld.h> 
+//#include <vld.h> 
 
 /*#define _CRTDBG_MAP_ALLOC  
 #include <stdlib.h>  
