@@ -16,11 +16,11 @@ script:
    - make -C Samples/Linux/SingleMainPython/
 
 matrix:
-  include:
-#    - os: windows
-#		script:
-#			test
-#		compiler: gcc
+   include:
+#      - os: windows
+#	     script:
+#	        test
+#      compiler: gcc
  
 #	- os: windows
 #      install: choco install mingw
