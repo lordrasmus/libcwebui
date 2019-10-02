@@ -23,7 +23,7 @@ script:
 addons:
    apt:
       sources: ['ubuntu-toolchain-r-test']
-      packages: ['libevent-dev','gcc-4.4','gcc-4.6']
+      packages: ['libevent-dev','gcc-4.4','gcc-4.5','gcc-4.6']
          
 matrix:
    include:
