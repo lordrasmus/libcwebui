@@ -19,6 +19,7 @@ script:
 #   - gcc 
 #   - clang
 
+dist: bionic
 
 addons:
    apt:
