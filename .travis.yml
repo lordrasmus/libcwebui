@@ -28,12 +28,13 @@ matrix:
     - os: windows
       install: choco install mingw
       script: 
-        mingw32-make clean
-        mingw32-make
+        - mingw32-make clean
+        - mingw32-make
 
-    - os: osx
-      osx_image: xcode10
-      env: COMPILER=clang CC=clang
+    # - os: osx
+      # osx_image: xcode10
+      # compiler: clang
+      # env: COMPILER=clang CC=clang
       
     # - os: linux
       # compiler: gcc
