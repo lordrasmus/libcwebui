@@ -19,7 +19,8 @@ script:
 #   - gcc 
 #   - clang
 
-dist: bionic
+#dist: bionic
+dist: xenial
 
 addons:
    apt:
@@ -89,14 +90,14 @@ matrix:
 #   - os: linux
 #     env: COMPILER=gcc-4.6 CC=gcc-4.6
 
-   - os: linux
-     env: COMPILER=gcc-4.7 CC=gcc-4.7 CXX=g++-4.7
+#   - os: linux
+#     env: COMPILER=gcc-4.7 CC=gcc-4.7 CXX=g++-4.7
 
    - os: linux
      env: COMPILER=gcc-4.8 CC=gcc-4.8 CXX=g++-4.8  
 
-   - os: linux
-     env: COMPILER=gcc-4.9 CC=gcc-4.9 CXX=g++-4.9
+#   - os: linux
+#     env: COMPILER=gcc-4.9 CC=gcc-4.9 CXX=g++-4.9
 
    - os: linux
      env: COMPILER=gcc-5 CC=gcc-5 CXX=g++-5
