@@ -196,8 +196,8 @@ matrix:
           packages: ['libevent-dev', 'clang-6.0']
       env: COMPILER=clang-6.0 CC=clang-6.0
     
-#    - os: osx
-#      compiler: xcode9.1
-#      env: COMPILER=clang CC=clang
+    - os: osx
+      compiler: xcode9.1
+      env: COMPILER=clang CC=clang
       
 
