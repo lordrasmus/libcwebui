@@ -37,10 +37,6 @@ SIZE_OPTS= -finline -fno-inline-functions
 INCLUDES= -I. -Iinclude -Iplatform/include -Ithird_party/src/rb_tree/ -Ithird_party/src/is_utf8/ -Ithird_party/src/miniz/
 LIBS=
 
-ifneq ($(TRAVIS_BUILD),true)
-	COMPILER=$(CC)
-endif
-
 include Makefile.files
 
 OBJ_T := $(patsubst %.c,%.o,$(SOURCES))
@@ -50,7 +46,7 @@ all:
 	@echo '------------------------------------------------'
 	@echo 'Includes : ' $(INCLUDES)
 	@echo '------------------------------------------------'
-	@echo 'Compiler : ' $(COMPILER)
+	@echo 'Compiler : ' $(CC)
 	@echo '------------------------------------------------'
 	@echo 'Defs     : ' $(DEFS)
 	@echo '------------------------------------------------'
@@ -85,14 +81,14 @@ rebuild:
 build: $(OBJ)
 	@echo 'Building Lib : libWebserver.so'
 
-	$(COMPILER)  $(LINK_OPTS) -Wl,-soname,libWebserver.so  -o lib/libWebserver.so $(OBJ_LIST)
+	$(CC)  $(LINK_OPTS) -Wl,-soname,libWebserver.so  -o lib/libWebserver.so $(OBJ_LIST)
 
 	@echo -e "\033[01;32mexported symbols : "$$(nm -C lib/libWebserver.so | grep " T " | wc -l)"\033[00m"
 
 
 obj/%.o : %.c
 	@echo 'Compiling File : $<'
-	@$(COMPILER) $(INCLUDES) $(DEFS) $(FLAGS)  -c -o $@ $<
+	@$(CC) $(INCLUDES) $(DEFS) $(FLAGS)  -c -o $@ $<
 
 clean:
 	@echo 'Deleting Object Files'

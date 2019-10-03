@@ -276,6 +276,7 @@
   <ItemGroup>
     <None Include="..\..\..\.travis.yml" />
     <None Include="..\..\..\appveyor.yml" />
+    <None Include="..\..\..\lib\Makefile" />
     <None Include="..\..\..\Makefile" />
     <None Include="..\..\..\README.md" />
     <None Include="..\..\Linux\SingleMain\Makefile" />
