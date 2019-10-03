@@ -18,6 +18,13 @@ SPDX-License-Identifier: MPL-2.0
 #ifndef _PLATFORM_INCLUDES_H_
 #define _PLATFORM_INCLUDES_H_
 
+#ifdef __linux__
+    #define LINUX
+#endif
+
+#ifdef __APPLE__
+    #define OSX 
+#endif
 
 #include <ctype.h>
 #include <dlfcn.h>
@@ -33,7 +40,7 @@ SPDX-License-Identifier: MPL-2.0
 #include <semaphore.h>
 #include <stdlib.h>
 
-#ifndef __APPLE__
+#ifdef __linux__
     #include <sys/sendfile.h>
 #endif
 
@@ -52,7 +59,13 @@ SPDX-License-Identifier: MPL-2.0
 #define SIZE_TYPE size_t
 #define TIME_TYPE time_t
 
-#define FILE_OFFSET __off_t
+#ifdef __linux__
+    #define FILE_OFFSET __off_t
+#endif
+
+#ifdef __APPLE__
+    #define FILE_OFFSET __darwin_off_t          
+#endif
 
 #define WS_MUTEX_TYPE		pthread_mutex_t
 #define WS_SEMAPHORE_TYPE	sem_t

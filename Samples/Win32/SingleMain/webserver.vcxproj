@@ -201,11 +201,15 @@
     <ClInclude Include="..\..\..\lib\platform\include\platform-file-access.h" />
     <ClInclude Include="..\..\..\lib\platform\include\platform-sockets.h" />
     <ClInclude Include="..\..\..\lib\platform\include\platform.h" />
+    <ClInclude Include="..\..\..\lib\platform\linux\platform_includes.h" />
     <ClInclude Include="..\..\..\lib\platform\win\platform_includes.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\lib\platform\linux\platform-file-access.c" />
+    <ClCompile Include="..\..\..\lib\platform\linux\platform-sockets.c" />
+    <ClCompile Include="..\..\..\lib\platform\linux\system-unix.c" />
     <ClCompile Include="..\..\..\lib\platform\win\platform-file-access.c" />
     <ClCompile Include="..\..\..\lib\platform\win\platform-sockets.c" />
     <ClCompile Include="..\..\..\lib\platform\win\platform-win.c" />
