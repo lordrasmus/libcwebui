@@ -73,6 +73,8 @@ jobs:
       osx_image: xcode10
       compiler: clang
       env: CC=clang CXX=clang++
+      #python: 3.6
+      before_script:
       
       
    ##########################################################################################
