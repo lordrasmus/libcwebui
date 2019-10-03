@@ -18,8 +18,6 @@ SPDX-License-Identifier: MPL-2.0
 #ifndef _PLATFORM_INCLUDES_H_
 #define _PLATFORM_INCLUDES_H_
 
-#ifdef LINUX
-
 
 #include <ctype.h>
 #include <dlfcn.h>
@@ -34,7 +32,10 @@ SPDX-License-Identifier: MPL-2.0
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdlib.h>
-#include <sys/sendfile.h>
+
+#ifndef __APPLE__
+    #include <sys/sendfile.h>
+#endif
 
 #include <string.h>
 #include <strings.h>
@@ -59,6 +60,6 @@ SPDX-License-Identifier: MPL-2.0
 
 #define WebServerPrintf printf
 
-#endif
+
 
 #endif

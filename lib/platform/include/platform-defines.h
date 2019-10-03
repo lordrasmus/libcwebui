@@ -25,13 +25,13 @@ SPDX-License-Identifier: MPL-2.0
 	#define false	0
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 	#include "../win/platform_includes.h"
 	#define PLATFORM_DETECTED
 #endif
 
 
-#if defined( LINUX ) || defined ( OSX )
+#if defined( __linux__ ) || defined ( __APPLE__ )
 	#include "../linux/platform_includes.h"
 	#define PLATFORM_DETECTED
 #endif
