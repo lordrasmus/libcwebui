@@ -82,6 +82,8 @@ jobs:
     - os: linux
       env: CC=gcc CXX=g++
       addons:
+        apt:
+            packages: ['libevent-dev']
         coverity_scan:
             project:
                 name: lordrasmus/libcwebui
