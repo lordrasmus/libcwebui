@@ -79,7 +79,7 @@ jobs:
    #     Linux Test ( Coveriry )                                                            #
    ##########################################################################################
 
-   - os: linux
+    - os: linux
       env: CC=gcc CXX=g++
       addons:
         coverity_scan:
