@@ -31,6 +31,8 @@ before_script:
   - sudo apt-get update -qq
 #  - sudo apt-get install clang-3.8 clang++-3.8 clang-3.9 clang++-3.9 clang-4.0 clang++-4.0 clang-5.0 clang++-5.0 clang-6.0 clang++-6.0 clang-7 clang++-7 clang-8 clang++-8 clang-9 clang++-9 clang-10 clang++-10
   - sudo apt-get install clang-3.8 clang-3.9 clang-4.0 clang-5.0 clang-6.0 clang-7 clang-8 clang-9 clang-10
+  - echo $CC
+  - echo $CXX
 compiler: gcc 
 
 #dist: bionic
@@ -100,32 +102,32 @@ jobs:
 #   - os: linux
 #     env: COMPILER=gcc-4.5 CC=gcc-4.5 CXX=g++-4.5
 
-   - os: linux
-     env: COMPILER=gcc-4.6 CC=gcc-4.6 CXX=g++-4.6
+   # - os: linux
+     # env: COMPILER=gcc-4.6 CC=gcc-4.6 CXX=g++-4.6
 
-   - os: linux
-     env: COMPILER=gcc-4.7 CC=gcc-4.7 CXX=g++-4.7
+   # - os: linux
+     # env: COMPILER=gcc-4.7 CC=gcc-4.7 CXX=g++-4.7
 
-   - os: linux
-     env: COMPILER=gcc-4.8 CC=gcc-4.8 CXX=g++-4.8  
+   # - os: linux
+     # env: COMPILER=gcc-4.8 CC=gcc-4.8 CXX=g++-4.8  
 
-   - os: linux
-     env: COMPILER=gcc-4.9 CC=gcc-4.9 CXX=g++-4.9
+   # - os: linux
+     # env: COMPILER=gcc-4.9 CC=gcc-4.9 CXX=g++-4.9
 
-   - os: linux
-     env: COMPILER=gcc-5 CC=gcc-5 CXX=g++-5
+   # - os: linux
+     # env: COMPILER=gcc-5 CC=gcc-5 CXX=g++-5
 
-   - os: linux
-     env: COMPILER=gcc-6 CC=gcc-6 CXX=g++-6
+   # - os: linux
+     # env: COMPILER=gcc-6 CC=gcc-6 CXX=g++-6
 
-   - os: linux
-     env: COMPILER=gcc-7 CC=gcc-7 CXX=g++-7
+   # - os: linux
+     # env: COMPILER=gcc-7 CC=gcc-7 CXX=g++-7
 
-   - os: linux
-     env: COMPILER=gcc-8 CC=gcc-8 CXX=g++-8
+   # - os: linux
+     # env: COMPILER=gcc-8 CC=gcc-8 CXX=g++-8
 
-   - os: linux
-     env: COMPILER=gcc-9 CC=gcc-9 CXX=g++-9
+   # - os: linux
+     # env: COMPILER=gcc-9 CC=gcc-9 CXX=g++-9
 
    - os: linux
      compiler: clang
@@ -139,13 +141,13 @@ jobs:
      compiler: clang
      env: COMPILER=clang-3.7  CC=clang-3.7 CXX=clang++-3.7
 
-   - os: linux
-     compiler: clang
-     env: COMPILER=clang-3.8  CC=clang-3.8 CXX=clang++-3.8
+   # - os: linux
+     # compiler: clang
+     # env: COMPILER=clang-3.8  CC=clang-3.8 CXX=clang++-3.8
 
-   - os: linux
-     compiler: clang
-     env: COMPILER=clang-3.9  CC=clang-3.9 CXX=clang++-3.9
+   # - os: linux
+     # compiler: clang
+     # env: COMPILER=clang-3.9  CC=clang-3.9 CXX=clang++-3.9
 
    - os: linux
      compiler: clang
@@ -159,21 +161,21 @@ jobs:
      compiler: clang
      env: COMPILER=clang-6  CC=clang-6 CXX=clang++-6     
 
-   - os: linux
-     compiler: clang
-     env: COMPILER=clang-7  CC=clang-7 CXX=clang++-7
+   # - os: linux
+     # compiler: clang
+     # env: COMPILER=clang-7  CC=clang-7 CXX=clang++-7
 
-   - os: linux
-     compiler: clang
-     env: COMPILER=clang-8  CC=clang-8 CXX=clang++-8
+   # - os: linux
+     # compiler: clang
+     # env: COMPILER=clang-8  CC=clang-8 CXX=clang++-8
 
-   - os: linux
-     compiler: clang
-     env: COMPILER=clang-9  CC=clang-9 CXX=clang++-9
+   # - os: linux
+     # compiler: clang
+     # env: COMPILER=clang-9  CC=clang-9 CXX=clang++-9
 
-   - os: linux
-     compiler: clang
-     env: COMPILER=clang-10  CC=clang-10 CXX=clang++-10
+   # - os: linux
+     # compiler: clang
+     # env: COMPILER=clang-10  CC=clang-10 CXX=clang++-10
      
 
     
