@@ -164,7 +164,7 @@ jobs:
 
    - os: linux
      compiler: clang
-     env: CC=clang-6 CXX=clang++-6     
+     env: CC=clang-6.0 CXX=clang++-6.0     
 
    # - os: linux
      # compiler: clang
