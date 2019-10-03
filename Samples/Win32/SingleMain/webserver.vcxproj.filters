@@ -31,8 +31,8 @@
     <Filter Include="Headerdateien\webserver">
       <UniqueIdentifier>{34988b7a-76be-4258-87f8-a43fbe2e04d9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Headerdateien\Linux">
-      <UniqueIdentifier>{a0b8555a-da5a-4f99-a2a2-23ac8218f47e}</UniqueIdentifier>
+    <Filter Include="Headerdateien\LInux">
+      <UniqueIdentifier>{05f0e29a-9c2d-4973-8c1c-22ece61a30c5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -190,7 +190,7 @@
       <Filter>Headerdateien\webserver</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\lib\platform\linux\platform_includes.h">
-      <Filter>Headerdateien\Linux</Filter>
+      <Filter>Headerdateien\LInux</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -376,15 +376,6 @@
     </ClCompile>
     <ClCompile Include="..\..\..\lib\src\builtinFunctions.c">
       <Filter>Quelldateien\lib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\lib\platform\linux\platform-file-access.c">
-      <Filter>Headerdateien\Linux</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\lib\platform\linux\platform-sockets.c">
-      <Filter>Headerdateien\Linux</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\lib\platform\linux\system-unix.c">
-      <Filter>Headerdateien\Linux</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

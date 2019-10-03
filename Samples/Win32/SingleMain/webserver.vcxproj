@@ -207,9 +207,6 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\lib\platform\linux\platform-file-access.c" />
-    <ClCompile Include="..\..\..\lib\platform\linux\platform-sockets.c" />
-    <ClCompile Include="..\..\..\lib\platform\linux\system-unix.c" />
     <ClCompile Include="..\..\..\lib\platform\win\platform-file-access.c" />
     <ClCompile Include="..\..\..\lib\platform\win\platform-sockets.c" />
     <ClCompile Include="..\..\..\lib\platform\win\platform-win.c" />
