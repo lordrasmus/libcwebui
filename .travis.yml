@@ -10,7 +10,7 @@ notifications:
       - lordrasmus@gmail.com
 
 script:
-   - cat ${TRAVIS_ROOT}/etc/apt/sources.list
+#   - cat ${TRAVIS_ROOT}/etc/apt/sources.list
 #   - echo $CC
 #   - echo $CXX
 #   - echo ${CC}
@@ -75,6 +75,7 @@ jobs:
       env: CC=clang CXX=clang++
       #python: 3.6
       before_script:
+      script: make
       
       
    ##########################################################################################
