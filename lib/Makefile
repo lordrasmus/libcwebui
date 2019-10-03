@@ -1,6 +1,10 @@
 SHELL=/bin/bash
 
-DEFS= -DLINUX
+ifeq ($(TRAVIS_BUILD),true)
+    DEFS= -D${TRAVIS_OS_NAME}
+else
+    DEFS= -DLINUX
+endif
 
 #
 #	WICHTIG muss beim compilieren UND linken gleich sein
