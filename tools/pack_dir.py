@@ -6,7 +6,7 @@ import argparse
 
 import os, sys, struct, zlib, datetime
 
-#from pprint import pprint
+from pprint import pprint
 
 def sizeof_fmt(num, suffix='B'):
     for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
@@ -62,12 +62,12 @@ def write_string( f, value ):
 	f.write( "'\\0'," )
 
 def bytes_from_file(filename):
-    with open(filename, "rb") as f:
-        while True:
-            byte = f.read(1)
-            if not byte:
-                break
-            yield(ord(byte))
+	with open(filename, "rb") as f:
+		while True:
+			byte = f.read(1)
+			if not byte:
+				break
+			yield(ord(byte))
 
 
 def check_template( f,  path , f_data ):
@@ -109,8 +109,14 @@ def write_uncompressed_file( stats, f, path , f_data ):
 	stats["compressed"] += f_data["SIZE"]
 	stats["uncompressed"] += f_data["SIZE"]
 	
-	for b in bytes_from_file( path + f_data["PATH"]):
-		f.write( "" + str( b ) + "," )
+	if sys.version_info[0] == 2:
+		for b in data:
+			pprint( b )
+			#f.write( "" + str( struct.unpack('>B', b)[0] )  + "," )
+			f.write( "" + b  + "," )
+	else:
+		for b in bytes_from_file( path + f_data["PATH"]):
+			f.write( "" + str( b ) + "," )
 	f.write( "'\\0'," )
 
 def compress_data( data ):
@@ -169,8 +175,12 @@ def write_compressed_file( stats, f, path, f_data ):
 			#sys.stdout.write( text + "\r")
 			
 			write_uint32( f, compressed["size"])
+			#pprint( type( compressed["data"] ))
 			for b in compressed["data"]:
-				f.write( "" + str( b ) + "," )
+				if sys.version_info[0] == 2:
+					f.write( "" + str( struct.unpack('>B', b)[0] )  + "," )
+				else:
+					f.write( "" + str( b ) + "," )
 			
 			stats["compressed"] += compressed["size"]
 			stats["uncompressed"] += f_data["SIZE"]
