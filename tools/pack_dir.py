@@ -44,13 +44,21 @@ def write_uint32( f, value ):
 	#print( int ( value ) )
 	data = struct.pack( 'I', int ( value ) )
 	for a in data:
-		f.write( "" + str( a ) + "," )
+		if sys.version_info[0] == 2:
+			f.write( "" + str( ord(a) ) + "," )
+		else:
+			f.write( "" + str( a ) + "," )
 
 def write_uint64( f, value ):
 	#print( int ( value ) )
 	data = struct.pack( 'L', int ( value ) )
+	#pprint(data)
 	for a in data:
-		f.write( "" + str( a ) + "," )		
+		if sys.version_info[0] == 2:
+			f.write( "" + str( ord(a) ) + "," )		
+		else:
+			f.write( "" + str( a ) + "," )		
+		
 
 def write_string( f, value ):
 	
