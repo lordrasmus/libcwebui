@@ -111,9 +111,7 @@ def write_uncompressed_file( stats, f, path , f_data ):
 	
 	if sys.version_info[0] == 2:
 		for b in data:
-			pprint( b )
-			#f.write( "" + str( struct.unpack('>B', b)[0] )  + "," )
-			f.write( "" + b  + "," )
+			f.write( "" + str(ord(b))  + "," )
 	else:
 		for b in bytes_from_file( path + f_data["PATH"]):
 			f.write( "" + str( b ) + "," )
