@@ -51,23 +51,24 @@ FLAGS= -I . -I../../../lib/include -I../../../lib/third_party/src/miniz/ -I../..
 	-D_POSIX_SOURCE   -DLINUX -DSINGLE_MAIN -O3 -ggdb3 ${PY_FLAGS} -Wno-unused-result \
 	-Werror=return-type -Werror=missing-declarations -Werror=old-style-definition \
 	-Werror=format \
-	-DMINIZ_NO_ARCHIVE_APIS -DMINIZ_NO_ZLIB_COMPATIBLE_NAMES
+	-DMINIZ_NO_ARCHIVE_APIS -DMINIZ_NO_ZLIB_COMPATIBLE_NAMES -DENABLE_LAUNCHER=OFF -DENABLE_EDITOR=OFF
 
 LIBS=-lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads -lz -lstdc++
 
 .SILENT:
 
-check:
-	bash check_installation.sh
+
 
 all: check testSite
 	echo "C++  main.cpp"
-	$(CXX) $(FLAGS) -c main.cpp  -o main.o
+	$(CC) $(FLAGS) -c main.cpp  -o main.o
 	echo "CC   www_css.c www_data.c ../lib/*.c"
-	$(CC) $(FLAGS) -std=gnu99 $(FILES) main.o  www_css.c www_data.c -o main $(LIBS) ${PY_LINK}
+	$(CC) $(FLAGS) -std=gnu99 $(FILES) main.o   -o main $(LIBS) ${PY_LINK} #www_css.c www_data.c
 	echo "LINK main"
 
-	
+check:
+	bash check_installation.sh
+		
 testSite: 
 	echo "GEN  www_data.c "
 	../../../tools/pack_dir.py --dir ../../testSite/www --alias=/ --out www_data.c
