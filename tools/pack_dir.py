@@ -1,4 +1,5 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import hashlib
 import argparse
@@ -122,7 +123,10 @@ def compress_data( data ):
 	outs = []
 	
 	for strat in strats:
-		compress = zlib.compressobj( level=9, method=zlib.DEFLATED, wbits=-15 ,memLevel=9, strategy=strat["strategy"] )
+		if sys.version_info[0] == 2:
+			compress = zlib.compressobj( 9, zlib.DEFLATED, -15 ,9, strat["strategy"] )
+		else:
+			compress = zlib.compressobj( level=9, method=zlib.DEFLATED, wbits=-15 ,memLevel=9, strategy=strat["strategy"] )
 		deflated = compress.compress(data)
 		deflated += compress.flush()
 		strat["size"] = len( deflated )
