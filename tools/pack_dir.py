@@ -184,7 +184,7 @@ def write_compressed_file( stats, f, path, f_data ):
 			#pprint( type( compressed["data"] ))
 			for b in compressed["data"]:
 				if sys.version_info[0] == 2:
-					f.write( "" + str( struct.unpack('>B', b)[0] )  + "," )
+					f.write( "" + str( ord( b ))  + "," )
 				else:
 					f.write( "" + str( b ) + "," )
 			
