@@ -51,9 +51,9 @@ LIB_SOURCES := 	src/builtinFunctions.c \
 			python/py_utils.c \
 			python/py_plugin.c \
 			python/py_api_functions.c \
-			platform/linux/platform-file-access.c \
-			platform/linux/platform-sockets.c \
-			platform/linux/system-unix.c 
+			platform/platform-file-access.c \
+			platform/platform-sockets.c \
+			platform/platform.c 
 
 TP_SOURCES	:= 	third_party/src/rb_tree/red_black_tree.c third_party/src/rb_tree/misc.c third_party/src/rb_tree/stack.c \
 			third_party/src/is_utf8/is_utf8.c \
