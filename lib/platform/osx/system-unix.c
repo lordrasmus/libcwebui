@@ -43,11 +43,6 @@ SPDX-License-Identifier: MPL-2.0
 #include <stdio.h>
 #include <errno.h>
 
-#include <linux/unistd.h>       /* for _syscallX macros/related stuff */
-#include <linux/kernel.h>       /* for struct sysinfo */
-#include <linux/types.h>
-#include <sys/sysinfo.h>
-
 
 
 
@@ -116,14 +111,9 @@ void	PlatformFree ( void *mem ) {
 
 
 TIME_TYPE PlatformGetTick ( void ) {
-	struct sysinfo s_info;
-	int error;
 
-	error = sysinfo(&s_info);
-	if(error != 0){
-		printf("code error = %d\n", error);
-	}
-	return s_info.uptime;
+#warning implementieren
+	return 1;
 }
 
 unsigned long PlatformGetTicksPerSeconde ( void ) {

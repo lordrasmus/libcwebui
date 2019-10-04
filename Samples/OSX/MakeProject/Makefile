@@ -25,9 +25,9 @@ FILES= \
 	../../../lib/src/variable_store.c               ../../../lib/src/webserver_api_functions.c \
 	../../../lib/src/websocket_handler.c            ../../../lib/src/websockets.c \
 	../../../lib/src/websockets_send_recv.c         ../../../lib/ssl/openssl.c \
-	../../../lib/platform/linux/platform-file-access.c \
-	../../../lib/platform/linux/platform-sockets.c \
-	../../../lib/platform/linux/system-unix.c \
+	../../../lib/platform/osx/platform-file-access.c \
+	../../../lib/platform/osx/platform-sockets.c \
+	../../../lib/platform/osx/system-unix.c \
 	../../../lib/python/py_utils.c \
 	../../../lib/python/py_plugin.c  \
 	../../../lib/python/py_api_functions.c  \

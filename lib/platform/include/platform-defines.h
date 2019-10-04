@@ -31,11 +31,15 @@ SPDX-License-Identifier: MPL-2.0
 #endif
 
 
-#if defined( __linux__ ) || defined ( __APPLE__ )
+#if defined( __linux__ )
 	#include "../linux/platform_includes.h"
 	#define PLATFORM_DETECTED
 #endif
 
+#if defined ( __APPLE__ )
+	#include "../osx/platform_includes.h"
+	#define PLATFORM_DETECTED
+#endif
 
 #ifdef BARRELFISH
 	#include "../barrelfish/platform_includes.h"
