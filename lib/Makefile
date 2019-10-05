@@ -76,7 +76,7 @@ all:
 OBJ_LIST = 	obj/src/*.o obj/platform/*.o obj/ssl/*.o obj/python/*.o obj/third_party/src/rb_tree/*.o \
 			obj/third_party/src/miniz/*.o obj/third_party/src/is_utf8/*.o 
 
-LINK_OPTS =  -shared -Wl,-O2 -Wl,--gc-sections $(PY_LINK) #-Wl,--strip-all
+LINK_OPTS =  -shared   $(PY_LINK) #-Wl,--strip-all -Wl,-O2 -Wl,--gc-sections -Wl,-soname,libWebserver.so
 
 rebuild:
 	@$(MAKE) clean
@@ -85,7 +85,7 @@ rebuild:
 build: $(OBJ)
 	@echo 'Building Lib : libWebserver.so'
 
-	$(CC)  $(LINK_OPTS) -Wl,-soname,libWebserver.so  -o lib/libWebserver.so $(OBJ_LIST)
+	$(CC)  $(LINK_OPTS) -o lib/libWebserver.so $(OBJ_LIST)
 
 	@echo -e "\033[01;32mexported symbols : "$$(nm -C lib/libWebserver.so | grep " T " | wc -l)"\033[00m"
 
@@ -106,12 +106,12 @@ clean:
 
 tidy:
 	clang-tidy -config=''  $(LIB_SOURCES) -- \
-		-std=c99 -DLINUX -Iinclude/ -I. -Iinclude/intern -Ithird_party/src/rb_tree/ \
+		-std=c99 -Iinclude/ -I. -Iinclude/intern -Ithird_party/src/rb_tree/ \
 		-Iplatform/include/ -Ithird_party/src/is_utf8/ -Ithird_party/src/miniz/
 
 tidy_file:
 	clang-tidy -config=''  $(TIDY_FILE) -- \
-		-std=c99 -DLINUX -Iinclude/ -I. -Iinclude/intern -Ithird_party/src/rb_tree/ \
+		-std=c99 -Iinclude/ -I. -Iinclude/intern -Ithird_party/src/rb_tree/ \
 		-Iplatform/include/ -Ithird_party/src/is_utf8/ -Ithird_party/src/miniz/
 format:
 	clang-format -style=file $(SOURCES)

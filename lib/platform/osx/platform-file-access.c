@@ -117,8 +117,8 @@ int PlatformGetFileInfo(WebserverFileInfo* file, int* time_changed, int *new_siz
 	struct tm *ts;
 	size_t len;
 	char* buffer;
-	__time_t f_sec;
-	__time_t f_nsec;
+	time_t f_sec;
+	time_t f_nsec;
 
 	if ( 0 > stat( (char*) file->FilePath, &st) ){
 		return 0;

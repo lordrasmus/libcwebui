@@ -56,7 +56,9 @@ SPDX-License-Identifier: MPL-2.0
 #define SIZE_TYPE size_t
 #define TIME_TYPE time_t
 
-#define FILE_OFFSET __darwin_off_t          
+#define FILE_OFFSET __darwin_off_t
+#define FILE_OFF_PRINT_HEX "llX"
+#define FILE_OFF_PRINT_INT "lld"
 
 #define WS_MUTEX_TYPE		pthread_mutex_t
 #define WS_SEMAPHORE_TYPE	sem_t
