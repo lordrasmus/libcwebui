@@ -53,7 +53,7 @@ FLAGS= -I . -I../../../lib/include -I../../../lib/third_party/src/miniz/ -I../..
 	-Werror=format \
 	-DMINIZ_NO_ARCHIVE_APIS -DMINIZ_NO_ZLIB_COMPATIBLE_NAMES -DENABLE_LAUNCHER=OFF -DENABLE_EDITOR=OFF 
 
-LIBS=-lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads -lz -lstdc++
+LIBS=-lc  -ldl -lpthread -levent -levent_pthreads -lz -lstdc++ # -lssl -lcrypto
 
 .SILENT:
 
@@ -63,7 +63,7 @@ all: check testSite
 	echo "C++  main.cpp"
 	$(CC) $(FLAGS) -c main.cpp  -o main.o
 	echo "CC   www_css.c www_data.c ../lib/*.c"
-	$(CC) $(FLAGS) -std=gnu99 $(FILES) main.o   -o main $(LIBS) ${PY_LINK} #www_css.c www_data.c
+	$(CC) $(FLAGS) -std=gnu99 $(FILES) main.o www_css.c www_data.c -o main $(LIBS) ${PY_LINK} 
 	echo "LINK main"
 
 check:

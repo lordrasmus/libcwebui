@@ -76,7 +76,7 @@ jobs:
       #python: 3.6
       before_script:
       script: 
-         - Samples/OSX/MakeProject/WebserverConfig.h lib
+         - cp Samples/OSX/MakeProject/WebserverConfig.h lib
          - make -C lib
          - make -C Samples/OSX/MakeProject
       
