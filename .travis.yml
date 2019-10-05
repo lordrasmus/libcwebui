@@ -75,7 +75,10 @@ jobs:
       env: CC=clang CXX=clang++
       #python: 3.6
       before_script:
-      script: make
+      script: 
+         - Samples/OSX/MakeProject/WebserverConfig.h lib
+         - make -C lib
+         - make -C Samples/OSX/MakeProject
       
       
    ##########################################################################################

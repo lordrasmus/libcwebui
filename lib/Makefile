@@ -76,7 +76,7 @@ all:
 OBJ_LIST = 	obj/src/*.o obj/platform/*.o obj/ssl/*.o obj/python/*.o obj/third_party/src/rb_tree/*.o \
 			obj/third_party/src/miniz/*.o obj/third_party/src/is_utf8/*.o 
 
-LINK_OPTS =  -shared   $(PY_LINK) #-Wl,--strip-all -Wl,-O2 -Wl,--gc-sections -Wl,-soname,libWebserver.so
+LINK_OPTS =  -shared  -levent -levent_pthreads $(PY_LINK) #-Wl,--strip-all -Wl,-O2 -Wl,--gc-sections -Wl,-soname,libWebserver.so
 
 rebuild:
 	@$(MAKE) clean

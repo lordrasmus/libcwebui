@@ -30,6 +30,7 @@ LIB_SOURCES := 	src/builtinFunctions.c \
 			src/system_sockets_container.c \
 			src/system_sockets_events.c \
 			src/system_sockets_select.c \
+			src/system_sockets_epoll.c \
 			src/system_file_access.c \
 			src/system_file_access_utils.c \
 			src/system_file_access_fs.c \
