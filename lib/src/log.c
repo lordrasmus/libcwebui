@@ -25,7 +25,7 @@ SPDX-License-Identifier: MPL-2.0
 
 /* http://www.campin.net/newlogcheck.html */
 
-
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
 void vaddFirePHPLog ( http_request* s,const char* filename,int fileline,const char* text, va_list ap ) {
     static char buff[450];
     int len=0;
@@ -41,6 +41,7 @@ void vaddFirePHPLog ( http_request* s,const char* filename,int fileline,const ch
 
 	ws_list_append(&s->socket->firephplogs,fl);
 }
+#pragma GCC diagnostic warning "-Wformat-nonliteral"
 
 void addFirePHPLog ( http_request* s,char* filename,int fileline,char* text,... ) {
 	va_list ap;

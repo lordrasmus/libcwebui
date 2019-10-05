@@ -187,24 +187,27 @@ int isChunkListbigger(list_t* liste, int bytes){
 	return bigger;
 }
 
-
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
 static void vprintHeaderChunk(socket_info* sock, const char *fmt, va_list argptr) {
 	int l;
 	char tmp[1000];
-	if (sock == 0){
-		return;
-	}
 	l = vsnprintf(tmp, 1000, fmt, argptr);
 	writeChunk(&sock->header_chunk_list, (unsigned char*) tmp, l);
 }
+#pragma GCC diagnostic warning "-Wformat-nonliteral"
 
 void printHeaderChunk(socket_info* sock, const char *fmt, ... ) {
 	va_list argptr;
+	if (sock == 0){
+		return;
+	}
+	
 	va_start ( argptr, fmt );
 	vprintHeaderChunk(sock,fmt,argptr);
 	va_end ( argptr );
 }
 
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
 int vprintHTMLChunk(socket_info* sock, const char *fmt, va_list argptr) {
 	int l;
 	char tmp[1000];
@@ -215,6 +218,7 @@ int vprintHTMLChunk(socket_info* sock, const char *fmt, va_list argptr) {
 	writeChunk(&sock->html_chunk_list, (unsigned char*) tmp, l);
 	return l;
 }
+#pragma GCC diagnostic warning "-Wformat-nonliteral"
 
 int printHTMLChunk(socket_info* sock, const char *fmt, ... ) {
 	int ret=0;

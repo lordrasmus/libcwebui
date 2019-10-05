@@ -51,7 +51,7 @@ DEFINE_FUNCTION ( unregister ) {
 
 DEFINE_FUNCTION ( setrvvar ) {
 
-	dummy_var *var;
+	//dummy_var *var;
 	dummy_var *var_array;
 
     setGlobalVar("g_test1","G_t1");

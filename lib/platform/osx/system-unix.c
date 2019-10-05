@@ -103,14 +103,13 @@ unsigned long PlatformGetTicksPerSeconde ( void ) {
 }
 
 #ifdef WEBSERVER_USE_SESSIONS
-static 	unsigned int guid;
 void 	PlatformGetGUID ( char* buf,SIZE_TYPE length ) {
 	
 	if ( buf == 0 ){
     	return;
     }
     
-    CFAllocatorRef alloc_def = CFAllocatorGetDefault();
+    //CFAllocatorRef alloc_def = CFAllocatorGetDefault();
 
 	CFUUIDRef uuid = CFUUIDCreate( 0 );
 	CFStringRef uuid_str = CFUUIDCreateString( 0, uuid);
