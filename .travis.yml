@@ -182,9 +182,9 @@ jobs:
      # compiler: clang
      # env: CC=clang-9 CXX=clang++-9
 
-   # - os: linux
-     # compiler: clang
-     # env: CC=clang-10 CXX=clang++-10
+    - os: linux
+      compiler: clang
+      env: CC=clang-10 CXX=clang++-10
      
 
     
