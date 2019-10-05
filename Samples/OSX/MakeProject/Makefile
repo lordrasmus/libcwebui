@@ -79,5 +79,5 @@ testSite:
 	
 
 clean:
-	rm -f *.o main	www_data.c
+	rm -f *.o main	www_data.c *.i *.bc *.s
 	

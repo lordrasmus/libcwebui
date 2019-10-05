@@ -114,6 +114,28 @@ static int miniFunctions ( http_request* s,char* buffer ) {
 #endif
         return 1;
     }
+    
+    if ( !strncmp ( buffer,"websocket_avaible",17 ) ) {
+#ifdef WEBSERVER_USE_WEBSOCKETS
+		printHTMLChunk ( s->socket ,"AVAILABLE" );
+#else
+        printHTMLChunk ( s->socket ,"NOT AVAIBLE" );
+#endif
+		return 1;
+	}
+	
+	if ( !strncmp ( buffer,"build_os",8 ) ) {
+		// https://sourceforge.net/p/predef/wiki/OperatingSystems/
+	
+#ifdef OSX
+		printHTMLChunk ( s->socket ,"macOS" );
+        return 1;
+#endif
+        
+		printHTMLChunk ( s->socket ,"Unknown" );
+        return 1;
+	}
+	
     if ( !strncmp ( buffer,"64bit_avaible",13 ) ) {
 #ifdef __INTEL_COMPILER
 #ifdef _WIN64
@@ -133,8 +155,10 @@ static int miniFunctions ( http_request* s,char* buffer ) {
 #ifdef __GNUC__
 #ifdef __LP64__
         printHTMLChunk ( s->socket ,"AVAILABLE" );
+        return 1;
 #else
         printHTMLChunk ( s->socket ,"NOT AVAILABLE" );
+        return 1;
 #endif
 #endif
 
@@ -143,8 +167,10 @@ static int miniFunctions ( http_request* s,char* buffer ) {
 #ifdef _MSC_VER
 #ifdef _WIN64
         printHTMLChunk ( s->socket ,"AVAILABLE" );
+        return 1;
 #else
         printHTMLChunk ( s->socket ,"NOT AVAILABLE" );
+        return 1;
 #endif
 #endif
         return 1;
