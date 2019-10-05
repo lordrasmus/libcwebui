@@ -1,5 +1,9 @@
 
 
+#if defined ( __APPLE__ )
+	#define _C99_SOURCE // needed for snprintf
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <time.h>

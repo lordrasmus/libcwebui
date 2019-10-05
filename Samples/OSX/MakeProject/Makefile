@@ -48,9 +48,9 @@ PY_LINK = $(shell python-config --libs)
 
 FLAGS= -I . -I../../../lib/include -I../../../lib/third_party/src/miniz/ -I../../../lib/third_party/src/rb_tree/ \
 	-I../../../lib/platform/include/ -I../../../lib/include/intern/  -I../../../lib/third_party/src/is_utf8/ \
-	-D_POSIX_SOURCE  -DSINGLE_MAIN -O3 -ggdb3 ${PY_FLAGS} -Wno-unused-result \
+	-D_POSIX_SOURCE  -DSINGLE_MAIN -O3 -ggdb3 ${PY_FLAGS} -Wall -Wno-unused-result \
 	-Werror=return-type -Werror=missing-declarations -Werror=old-style-definition \
-	-Werror=format \
+	-Werror=format -Wformat-nonliteral \
 	-DMINIZ_NO_ARCHIVE_APIS -DMINIZ_NO_ZLIB_COMPATIBLE_NAMES -DENABLE_LAUNCHER=OFF -DENABLE_EDITOR=OFF 
 
 LIBS=-lc  -ldl -lpthread -levent -levent_pthreads -lz -lstdc++ # -lssl -lcrypto
