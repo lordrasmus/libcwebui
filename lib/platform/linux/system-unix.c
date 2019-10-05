@@ -135,7 +135,8 @@ unsigned long PlatformGetTicksPerSeconde ( void ) {
 static 	unsigned int guid;
 void 	PlatformGetGUID ( char* buf,SIZE_TYPE length ) {
 	
-	#warning nur eine testimplementierung
+	
+	#warning nur eine testimplementierung , osx version funktioniert wohl korrekt
     SIZE_TYPE l=0;
 	int ret;
 

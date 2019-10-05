@@ -26,6 +26,7 @@ SPDX-License-Identifier: MPL-2.0
 
 #include <MacTypes.h>
 #include <mach/mach_time.h>
+#include <CoreFoundation/CFUUID.h>
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -105,26 +106,25 @@ unsigned long PlatformGetTicksPerSeconde ( void ) {
 static 	unsigned int guid;
 void 	PlatformGetGUID ( char* buf,SIZE_TYPE length ) {
 	
-	#warning nur eine testimplementierung
-    SIZE_TYPE l=0;
-	int ret;
-
-    if ( buf == 0 ){
+	if ( buf == 0 ){
     	return;
     }
 
-    ret = snprintf ( buf, length, "\"Test %d", guid++ );
-    if ( ret < 0 ){
-		buf[0]='\0';
-		perror("PlatformGetGUID: snprintf failed\n");
-		return;
-	}
-	l = (SIZE_TYPE)ret;
-    for ( ; l < length ; l++ ) {
-        buf[l]='+';
-    }
-    buf[length-2]='\"';
+	CFUUIDRef uuid = CFUUIDCreate( 0 );
+	CFStringRef uuid_str = CFUUIDCreateString( 0, uuid);
+	
+	CFStringEncoding encodingMethod = CFStringGetSystemEncoding();
+	const char *uuid_c = CFStringGetCStringPtr( uuid_str, encodingMethod);
+	
+	int ret;
+    
+	memset( buf, 0 , length);
+    ret = snprintf ( buf, length, "%s", uuid_c );
     buf[length-1]='\0';
+    
+    
+    free( uuid_str );
+    free( uuid );
 }
 #endif
 
