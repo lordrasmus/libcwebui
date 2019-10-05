@@ -131,7 +131,11 @@ static int miniFunctions ( http_request* s,char* buffer ) {
 		printHTMLChunk ( s->socket ,"macOS" );
         return 1;
 #endif
-        
+
+#ifdef LINUX
+		printHTMLChunk ( s->socket ,"Linux" );
+        return 1;
+#endif        
 		printHTMLChunk ( s->socket ,"Unknown" );
         return 1;
 	}

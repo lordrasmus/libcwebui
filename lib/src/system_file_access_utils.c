@@ -319,7 +319,10 @@ void generateEtag(WebserverFileInfo* file) {
 
 		uint32_t crc = crc32_finish(); 
 		uint32_t adler = adler32_finish();
-		
+
+#ifndef FILE_OFF_PRINT_HEX
+	#error FILE_OFF_PRINT_HEX not defined for platform
+#endif
 		
 		file->etagLength = sprintf((char*)file->etag, "%08"FILE_OFF_PRINT_HEX"%08X%08X", file->DataLenght, crc, adler);
 
