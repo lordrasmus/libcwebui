@@ -113,6 +113,7 @@ Samples/.DS_Store
 Samples/OSX/MakeProject/main.o
 Samples/OSX/MakeProject/www_css.c
 Samples/OSX/MakeProject/www_data.c
+Samples/OSX/MakeProject/main*
 
 tests/tscan/TscanCodeV2.14.24*
 tests/infer/infer-*
