@@ -15,6 +15,7 @@ SPDX-License-Identifier: MPL-2.0
 */
 
 
+#include "platform_includes.h"
 
 
 #include <stdio.h>

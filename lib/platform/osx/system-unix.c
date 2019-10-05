@@ -15,36 +15,7 @@ SPDX-License-Identifier: MPL-2.0
 */
 
 
-
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <time.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
-
-#include <netinet/in.h>
-#include <net/if.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <pthread.h>
-
-#include <stdio.h>
-#include <errno.h>
-
-
-
+#include "platform_includes.h"
 
 #ifdef WEBSERVER_USE_SSL
 #include <openssl/rand.h>
@@ -52,6 +23,9 @@ SPDX-License-Identifier: MPL-2.0
 
 #include "webserver.h"
 
+
+#include <MacTypes.h>
+#include <mach/mach_time.h>
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -98,8 +72,6 @@ void	PlatformFree ( void *mem ) {
 #endif
 }
 
-// void	WebserverPrintMemInfo ( void ) {}			/* gibt auf dem DSTni verfuegbaren Arbeitspeicher aus */
-
 
 
 /*********************************************************************
@@ -109,15 +81,24 @@ void	PlatformFree ( void *mem ) {
 *********************************************************************/
 
 
-
 TIME_TYPE PlatformGetTick ( void ) {
-
-#warning implementieren
-	return 1;
+	enum { NANOSECONDS_IN_SEC = 1000 * 1000 * 1000 };
+    static double multiply = 0;
+    if (multiply == 0)
+    {
+        mach_timebase_info_data_t s_timebase_info;
+        kern_return_t result = mach_timebase_info(&s_timebase_info);
+        assert(result == noErr);
+        // multiply to get value in the nano seconds
+        multiply = (double)s_timebase_info.numer / (double)s_timebase_info.denom;
+        // multiply to get value in the seconds
+        multiply /= NANOSECONDS_IN_SEC;
+    }
+    return mach_absolute_time() * multiply;
 }
 
 unsigned long PlatformGetTicksPerSeconde ( void ) {
-    return (unsigned long)1; /* Konstante HZ benutzen ?? */
+    return (unsigned long)1;
 }
 
 #ifdef WEBSERVER_USE_SESSIONS
