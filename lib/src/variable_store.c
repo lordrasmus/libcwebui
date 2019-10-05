@@ -227,7 +227,7 @@ void dumpStore(http_request* s, ws_variable_store* store) {
 		while (var != 0) {
 			printHTMLChunk(s->socket, "<tr><td>%s<td>", var->name);
 			sendHTMLChunkVariable(s->socket, var);
-			printHTMLChunk(s->socket, "<td>%"PRIu64"", getWSVariableSize(var));
+			printHTMLChunk(s->socket, "<td>%zu", getWSVariableSize(var));
 			var = getNextVariable(store);
 		}
 		printHTMLChunk(s->socket, "</table>");

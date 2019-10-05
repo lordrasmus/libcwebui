@@ -346,8 +346,8 @@ void generateEtag(WebserverFileInfo* file) {
 		#warning hier noch das fs handling einbauen
 #endif
 		struct sha_context* sha_context;
-		unsigned int to_read;
-		unsigned long diff;
+		uint32_t to_read;
+		uint64_t diff;
 		FILE_OFFSET pos;
 		unsigned char *data;
 
@@ -373,7 +373,7 @@ void generateEtag(WebserverFileInfo* file) {
 
 			FILE_OFFSET ret2 = PlatformReadBytes(data, to_read);
 			if ( ret2 != to_read ){
-				printf("Error: read mismatch %jd != %d\n",ret2,to_read);
+				printf("Error: read mismatch %"PRIu64" != %"PRIu32"\n",ret2,to_read);
 			}
 
 			WebserverSHA1Update(sha_context, data, to_read);

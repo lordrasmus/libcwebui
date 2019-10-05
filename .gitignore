@@ -74,7 +74,9 @@ LinuxMain/.settings/
 lib/.obj~/
 lib/Makefile.bbs
 lib/libWebserver.so
-
+lib/*.bc
+lib/*.i
+lib/*.s
 
 Sample/main
 Sample/libWebserver.so

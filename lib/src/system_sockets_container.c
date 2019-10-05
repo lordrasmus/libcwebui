@@ -199,7 +199,7 @@ void dumpSockets(http_request* s) {
 			printHTMLChunk(s->socket, "Client Socket %s", sock->client_ip_str);
 		}
 
-		printHTMLChunk(s->socket, "<td>%d<td>%"PRIu64"<td>", sock->port, getSocketInfoSize(sock));
+		printHTMLChunk(s->socket, "<td>%d<td>%"PRIu32"<td>", sock->port, getSocketInfoSize(sock));
 
 #ifdef WEBSERVER_USE_SSL
 		if (sock->use_ssl == 1) {

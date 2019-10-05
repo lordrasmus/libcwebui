@@ -745,8 +745,8 @@ void checkSessionCookie(http_request* s) {
 
 
 int dumpSession( http_request* s ) {
-	unsigned long s1 = 0;
-	unsigned long s2 = 0;
+	uint32_t s1 = 0;
+	uint32_t s2 = 0;
 
 	if (s->store != 0) {
 		s1 = getVariableStoreSize(s->store->vars);
@@ -756,7 +756,7 @@ int dumpSession( http_request* s ) {
 		s2 = getVariableStoreSize(s->store_ssl->vars);
 	}
 
-	printHTMLChunk(s->socket, "<table border=1><tr><th>Store %"PRIu64" Byte<th>SSLStore %"PRIu64" Byte<tr valign=top><td>", s1, s2);
+	printHTMLChunk(s->socket, "<table border=1><tr><th>Store %"PRIu32" Byte<th>SSLStore %"PRIu32" Byte<tr valign=top><td>", s1, s2);
 
 	if (s->store != 0) {
 		dumpStore(s, s->store->vars);
@@ -779,7 +779,7 @@ int dumpSession( http_request* s ) {
 
 void dumpSessions(http_request* s) {
 	sessionStore* ss;
-	unsigned long size, ticks;
+	uint32_t size, ticks;
 	ws_variable *var;
 	stk_stack* stack;
 	rb_red_blk_node* node;
@@ -794,13 +794,13 @@ void dumpSessions(http_request* s) {
 		/* size -= sizeof(ws_variable_store); // ist in getVariableStoreSize schon mit drin */
 
 		printHTMLChunk(s->socket, "<table border=1>");
-		printHTMLChunk(s->socket, "<tr><th>Store %ld Byte<th>%s", size, ss->guid);
+		printHTMLChunk(s->socket, "<tr><th>Store %"PRIu32" Byte<th>%s", size, ss->guid);
 
 		ticks = PlatformGetTick() - ss->last_use;
 		ticks = (getConfigInt("session_timeout") * PlatformGetTicksPerSeconde()) - ticks;
 		ticks /= PlatformGetTicksPerSeconde();
 
-		printHTMLChunk(s->socket, "<tr><th>Timeout<th>%"PRIu64" s", ticks);
+		printHTMLChunk(s->socket, "<tr><th>Timeout<th>%"PRIu32" s", ticks);
 		printHTMLChunk(s->socket, "<tr><th>Name<th>Value");
 
 		var = getFirstVariable(ss->vars);

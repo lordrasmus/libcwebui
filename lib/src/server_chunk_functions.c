@@ -322,7 +322,7 @@ static unsigned long writeChunksToBuffer(list_t* liste, char* out_buffer, int co
 
 void generateOutputBuffer(socket_info* sock) {
 	char* buffer;
-	unsigned long offset = 0;
+	uint32_t offset = 0;
 	
 	sock->file_infos.file_send_pos = 0;
 	
@@ -345,7 +345,7 @@ void generateOutputBuffer(socket_info* sock) {
 #endif
 		
 		printHeaderChunk(sock, "Content-Encoding: deflate\r\n");
-		printHeaderChunk(sock, "Content-Length: %"PRIu64"\r\n", offset);
+		printHeaderChunk(sock, "Content-Length: %"PRIu32"\r\n", offset);
 		printHeaderChunk(sock, "\r\n"); /* HTTP Header beenden */
 		
 		unsigned long header_size = getChunkListSize(&sock->header_chunk_list);

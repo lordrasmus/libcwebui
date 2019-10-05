@@ -100,6 +100,7 @@ clean:
 	@rm -rf .lib/obj/*
 	@rm -rf obj/*
 	@rm -rf lib/*
+	@rm -rf *.i *.s *.bc
 
 # http://www.labri.fr/perso/fleury/posts/programming/using-clang-tidy-and-clang-format.html
 

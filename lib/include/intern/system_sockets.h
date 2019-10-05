@@ -35,7 +35,7 @@ extern "C" {
 
 	unsigned long dumpSocketsSize(int *count);
 	void	dumpSockets(http_request* s);
-	unsigned long getSocketInfoSize(socket_info* sock);
+	uint32_t getSocketInfoSize(socket_info* sock);
 
 	void	handleServer(socket_info* sock);
 

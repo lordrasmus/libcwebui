@@ -866,7 +866,7 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* so
 	int ret;
 	CLIENT_WRITE_DATA_STATUS ret_v;
 	SOCKET_SEND_STATUS status;
-	unsigned int to_read, diff;
+	uint32_t to_read, diff;
 	unsigned char *buffer;
 
 #ifdef _WEBSERVER_FILESYSTEM_DEBUG_
@@ -888,7 +888,7 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* so
 
 		FILE_OFFSET ret2 = PlatformReadBytes(buffer, to_read);
 		if ( ret2 != to_read ){
-			printf("Error: read mismatch %jd != %d\n",ret2,to_read);
+			printf("Error: read mismatch %"PRIu64" != %d\n",ret2,to_read);
 		}
 
 		status = WebserverSend(sock, buffer, to_read, 0, &ret);
@@ -1108,8 +1108,8 @@ void handleer( int a, short b, void *t ) {
 	}
 }
 
-unsigned long getSocketInfoSize(socket_info* sock) {
-	unsigned long ret = sizeof(socket_info);
+uint32_t getSocketInfoSize(socket_info* sock) {
+	uint32_t ret = sizeof(socket_info);
 
 	if (sock->header_buffer != 0){
 		ret += WEBSERVER_MAX_HEADER_LINE_LENGHT + 1; /* header_buffer */
