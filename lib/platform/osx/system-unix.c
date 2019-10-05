@@ -109,6 +109,8 @@ void 	PlatformGetGUID ( char* buf,SIZE_TYPE length ) {
 	if ( buf == 0 ){
     	return;
     }
+    
+    CFAllocatorRef alloc_def = CFAllocatorGetDefault();
 
 	CFUUIDRef uuid = CFUUIDCreate( 0 );
 	CFStringRef uuid_str = CFUUIDCreateString( 0, uuid);
@@ -122,9 +124,9 @@ void 	PlatformGetGUID ( char* buf,SIZE_TYPE length ) {
     ret = snprintf ( buf, length, "%s", uuid_c );
     buf[length-1]='\0';
     
-    
-    free( uuid_str );
-    free( uuid );
+    #warning is free correct ?
+    free( (void *)uuid_str );
+    free( (void *)uuid );
 }
 #endif
 
@@ -193,15 +195,18 @@ int PlatformDestroyMutex(WS_MUTEX* m){
 
 
 int PlatformCreateSem(WS_SEMAPHORE_TYPE* sem, int init_value){
-	return sem_init( sem, 0, init_value);
+	*sem = dispatch_semaphore_create( init_value );
+	return 0;
 }
 
 int PlatformPostSem(WS_SEMAPHORE_TYPE* sem) {
-	return sem_post( sem );
+	dispatch_semaphore_signal( *sem );
+	return 0;
 }
 
 int PlatformWaitSem(WS_SEMAPHORE_TYPE* sem) {
-	return sem_wait( sem );
+	dispatch_semaphore_wait( *sem, DISPATCH_TIME_FOREVER );
+	return 0;
 }
 
 

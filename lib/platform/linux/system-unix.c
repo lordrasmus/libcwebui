@@ -232,7 +232,13 @@ int PlatformPostSem(WS_SEMAPHORE_TYPE* sem) {
 }
 
 int PlatformWaitSem(WS_SEMAPHORE_TYPE* sem) {
-	return sem_wait( sem );
+	int r;
+
+    do {
+            r = sem_wait( sem );
+    } while (r == -1 && errno == EINTR);
+    
+	return r;
 }
 
 

@@ -51,6 +51,7 @@ SPDX-License-Identifier: MPL-2.0
 
 #include <sys/ioctl.h>
 #include <sys/select.h>
+#include <dispatch/dispatch.h>
 
 
 #define SIZE_TYPE size_t
@@ -61,7 +62,7 @@ SPDX-License-Identifier: MPL-2.0
 #define FILE_OFF_PRINT_INT "lld"
 
 #define WS_MUTEX_TYPE		pthread_mutex_t
-#define WS_SEMAPHORE_TYPE	sem_t
+#define WS_SEMAPHORE_TYPE	dispatch_semaphore_t
 #define WS_THREAD			pthread_t
 
 #define WebServerPrintf printf
