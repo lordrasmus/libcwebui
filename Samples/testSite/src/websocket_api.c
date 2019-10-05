@@ -271,4 +271,10 @@ return 0;
 
 #endif
 
+#else // WEBSERVER_USE_WEBSOCKETS
+
+void startApiThreads( void ) {
+	// Dummy
+}
+
 #endif // WEBSERVER_USE_WEBSOCKETS
