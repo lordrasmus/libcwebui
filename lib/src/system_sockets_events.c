@@ -316,9 +316,11 @@ void initEvents( void ) {
 
 	event_enable_debug_mode();
 
-#ifdef __GNUC__
+#ifdef EVTHREAD_USE_PTHREADS_IMPLEMENTED
 	evthread_use_pthreads();
-#else
+#endif
+
+#ifdef EVTHREAD_USE_WINDOWS_THREADS_IMPLEMENTED 
 	evthread_use_windows_threads();
 #endif
 
