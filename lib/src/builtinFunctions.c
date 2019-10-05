@@ -45,6 +45,11 @@ DEFINE_FUNCTION_INT( compiler ) {
     return;
 #endif
 
+#ifdef __clang__
+	printHTMLChunk ( s->socket ,"clang %s",__clang_version__);
+    return;
+#endif
+
 #ifdef __GNUC__
 #if __GNUC__ > 2
     printHTMLChunk ( s->socket ,"GCC %d.%d.%d",__GNUC__,__GNUC_MINOR__,__GNUC_PATCHLEVEL__ );
