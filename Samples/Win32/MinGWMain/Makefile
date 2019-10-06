@@ -28,16 +28,16 @@ FILES= \
 	../../../lib/platform/platform-file-access.c \
 	../../../lib/platform/platform-sockets.c \
 	../../../lib/platform/platform.c \
-	../../testSite/src/testfunktions.c  \
-	../../testSite/src/var_test.c  \
-	../../testSite/src/websocket_api.c \
-	../../testSite/src/webserver_api_functions.c  \
 	../../../lib/third_party/src/rb_tree/red_black_tree.c \
 	../../../lib/third_party/src/rb_tree/stack.c \
 	../../../lib/third_party/src/rb_tree/misc.c \
 	../../../lib/third_party/src/is_utf8/is_utf8.c \
 	../../../lib/third_party/src/miniz/miniz.c 
-
+    
+#    ../../testSite/src/testfunktions.c  \
+#	../../testSite/src/var_test.c  \
+#	../../testSite/src/websocket_api.c \
+#	../../testSite/src/webserver_api_functions.c  \
 #    	../../../lib/python/py_utils.c \
 #	../../../lib/python/py_plugin.c  \
 #	../../../lib/python/py_api_functions.c  \
@@ -55,7 +55,8 @@ FLAGS= -I . -I../../../lib/include -I../../../lib/third_party/src/miniz/ -I../..
 	-Werror=format \
 	-DMINIZ_NO_ARCHIVE_APIS -DMINIZ_NO_ZLIB_COMPATIBLE_NAMES
 
-LIBS=-lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads -lz -lstdc++
+LIBS= 
+#-lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads -lz -lstdc++
 
 .SILENT:
 all: #testSite

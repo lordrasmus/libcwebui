@@ -15,7 +15,7 @@ SPDX-License-Identifier: MPL-2.0
 */
 
 
-#pragma once
+//#pragma once
 
 
 #include <ws2tcpip.h>
@@ -33,7 +33,7 @@ SPDX-License-Identifier: MPL-2.0
 #include <io.h>
 #include <inttypes.h>
 
-#include "webserver.h"
+//#include "webserver.h"
 
 
 #pragma warning(disable:4996) // warning C4996: strncpy': This function or variable may be unsafe. Consider using strncpy_s instead.
@@ -44,13 +44,17 @@ SPDX-License-Identifier: MPL-2.0
 #pragma warning(disable:4477) // warning C4477 : "printf" : Die Formatzeichenfolge "%lu" erfordert ein Argument vom Typ "unsigned long", das variadic - Argument "1" weist aber den Typ "uint64_t" auf.
 
 #define SIZE_TYPE size_t
+#define SIZE_TYPE_PRINT_DEZ "u"
+
 #define TIME_TYPE time_t
 
 #define WS_MUTEX_TYPE		HANDLE
 #define WS_SEMAPHORE_TYPE	HANDLE 
 #define WS_THREAD			HANDLE
 #define WebServerPrintf		printf
+
 #define FILE_OFFSET			uint64_t
+#define FILE_OFF_PRINT_HEX  "lX"
 
 int strcasecmp(const char *s1, const char *s2);
 

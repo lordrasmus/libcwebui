@@ -220,6 +220,10 @@ void stopIterateVariable(ws_variable_store* store) {
 }
 
 void dumpStore(http_request* s, ws_variable_store* store) {
+    #ifndef SIZE_TYPE_PRINT_DEZ
+        #error SIZE_TYPE_PRINT_DEZ nor defined for platform
+    #endif
+    
 	ws_variable *var;
 	if (store != 0) {
 		printHTMLChunk(s->socket, "<table border=1><tr><th>Name<th>Value<th>Size");
@@ -227,7 +231,7 @@ void dumpStore(http_request* s, ws_variable_store* store) {
 		while (var != 0) {
 			printHTMLChunk(s->socket, "<tr><td>%s<td>", var->name);
 			sendHTMLChunkVariable(s->socket, var);
-			printHTMLChunk(s->socket, "<td>%zu", getWSVariableSize(var));
+			printHTMLChunk(s->socket, "<td>%"SIZE_TYPE_PRINT_DEZ, getWSVariableSize(var));
 			var = getNextVariable(store);
 		}
 		printHTMLChunk(s->socket, "</table>");

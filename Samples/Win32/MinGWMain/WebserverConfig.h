@@ -30,9 +30,9 @@
 
 //#define WEBSERVER_USE_PYTHON							// Python Support
 
-#define WEBSERVER_USE_SSL							// HTTPS ( SSL ) Support
+//#define WEBSERVER_USE_SSL							// HTTPS ( SSL ) Support
 //#define WEBSERVER_USE_YASSL_CRYPTO					// SSL mit yaSSL
-#define WEBSERVER_USE_OPENSSL_CRYPTO				// SSL mit openssl
+//#define WEBSERVER_USE_OPENSSL_CRYPTO				// SSL mit openssl
 //#define WEBSERVER_USE_MBEDTLS_CRYPTO				// SSL mit mbed tls
 
 
@@ -55,7 +55,7 @@
 
 //#define USE_LIBEVENT
 #define USE_SELECT
-#define WEBSERVER_USE_WEBSOCKETS
+//#define WEBSERVER_USE_WEBSOCKETS
 //#define WEBSERVER_USE_IPV6
 #define WEBSERVER_MAX_PENDING_CONNECTIONS	30
 

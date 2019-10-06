@@ -8,3 +8,7 @@
 #ifdef OSX
 	#include "osx/platform-file-access.c"
 #endif
+
+#ifdef _WIN32
+	#include "win/platform-file-access.c"
+#endif
