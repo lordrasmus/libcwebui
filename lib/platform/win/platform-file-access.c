@@ -39,13 +39,14 @@ int PlatformOpenDataReadStream(const char* name) {
 
 #ifdef _MSC_VER
 	errno_t ret;
-#else
-    errno ret;
-#endif
-
-	ret = fopen_s( &g_fp,name,"rb"); 
-	if (ret != 0)
+    ret = fopen_s( &g_fp,name,"rb"); 
+    if (ret != 0)
 		return false;
+#else
+    g_fp = fopen( name,"rb"); 
+    if( g_fp == 0 )
+        return false;
+#endif
 
 	return _fileno(g_fp);
 }
@@ -102,7 +103,11 @@ int PlatformGetFileInfo(WebserverFileInfo* file, int* time_changed, int *new_siz
 	
 	size_t len;
 
+#ifdef _MSC_VER
 	strcpy_s(buffer,1000,file->FilePath);
+#else
+    strncpy(buffer,file->FilePath,1000);
+#endif
 	//strcat_s(bb,1000,file->Name);
 
 	fh = CreateFileA((LPCSTR)buffer,GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
@@ -209,38 +214,5 @@ void	ErrorExit(LPTSTR lpszFunction)
     //ExitProcess(dw); 
 }
 
-#ifdef jo
 
-
-bool	WebserverOpenDataReadStream( void )
-{   
-	errno_t ret = fopen_s( &g_fp,"data.bin","rb"); 
-	if(ret == 0)
-		return true;
-	else
-		return false;
-}
-bool	WebserverOpenDataWriteStream2(  char* name )
-{    
-	errno_t ret = fopen_s( &g_fp,name,"wb"); 
-	if(ret == 0)
-		return true;
-	else
-		return false;
-}
-
-bool	WebserverOpenDataWriteStream( void )
-{    
-	errno_t ret = fopen_s( &g_fp,"data.bin","wb"); 
-	if(ret == 0)
-		return true;
-	else
-		return false;
-}
-
-void	WebserverWriteBytes(unsigned char *data,unsigned int lenght)
-{
-    fwrite(data,lenght,1,g_fp);
-}
-#endif
 

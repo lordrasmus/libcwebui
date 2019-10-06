@@ -15,8 +15,6 @@ SPDX-License-Identifier: MPL-2.0
 */
 
 
-//#pragma once
-
 
 #include <ws2tcpip.h>
 #include <tchar.h>
@@ -27,14 +25,13 @@ SPDX-License-Identifier: MPL-2.0
 #include <string.h>
 #include <ctype.h>
 #include <winsock2.h>
-#ifdef _MSC_VER
-    #include <strsafe.h>
-#endif
 #include <io.h>
 #include <inttypes.h>
 
-//#include "webserver.h"
-
+#ifdef _MSC_VER
+    #include <strsafe.h>
+    #define __attribute__(x)
+#endif
 
 #pragma warning(disable:4996) // warning C4996: strncpy': This function or variable may be unsafe. Consider using strncpy_s instead.
 
@@ -58,6 +55,3 @@ SPDX-License-Identifier: MPL-2.0
 
 int strcasecmp(const char *s1, const char *s2);
 
-#ifdef _MSC_VER
-#define __attribute__(x)
-#endif
