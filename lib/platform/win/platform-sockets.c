@@ -16,14 +16,9 @@ SPDX-License-Identifier: MPL-2.0
 
 
 
-
-#include <stdio.h>
-#include <winsock2.h>
-#ifdef _MSC_VER
-    #include <strsafe.h>
-#endif
-
 #include "webserver.h"
+
+#include "platform-sockets.h"
 
 
 fd_set fds;  

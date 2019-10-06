@@ -37,7 +37,12 @@ void	ErrorExit(LPTSTR lpszFunction);
 
 int PlatformOpenDataReadStream(const char* name) {
 
+#ifdef _MSC_VER
 	errno_t ret;
+#else
+    errno ret;
+#endif
+
 	ret = fopen_s( &g_fp,name,"rb"); 
 	if (ret != 0)
 		return false;
@@ -66,7 +71,7 @@ void	PlatformResetDataStream( void )
     fseek(g_fp,0,SEEK_SET);		// Anfang der Datei
 }
 
-int PlatformReadBytes(unsigned char *data, SIZE_TYPE lenght)
+int PlatformReadBytes(unsigned char *data, FILE_OFFSET lenght)
 {
     return fread(data,1,lenght,g_fp);
 }
@@ -80,7 +85,7 @@ void	PlatformSeekToPosition( long position )
     fseek(g_fp,position,SEEK_SET);
 }
 
-unsigned long PlatformGetDataStreamPosition()
+unsigned long PlatformGetDataStreamPosition( void )
 {
     return ftell(g_fp);
 }

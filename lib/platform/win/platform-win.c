@@ -19,16 +19,6 @@ SPDX-License-Identifier: MPL-2.0
 
 // #include <vld.h> 
 
-/*#define _CRTDBG_MAP_ALLOC  
-#include <stdlib.h>  
-#include <crtdbg.h> 
-*/
-
-#include <stdio.h>
-#include <winsock2.h>
-#include <strsafe.h>
-#include <windows.h>
-#include <process.h>
 
 #include "webserver.h"
 
@@ -98,7 +88,12 @@ unsigned long	PlatformGetTicksPerSeconde(void){
 static 	unsigned int guid;
 void 	PlatformGetGUID( char* buf,SIZE_TYPE length){	
 	int l=0;
+#ifdef _MSC_VER
 	l = sprintf_s(buf,length,"\"Test %d",guid++);
+#else
+    l = snprintf(buf,length,"\"Test %d",guid++);
+#endif
+    
 	for(;l<length;l++){
 		buf[l]='+';
 	}

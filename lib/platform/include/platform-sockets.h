@@ -31,6 +31,9 @@ SPDX-License-Identifier: MPL-2.0
 #define CLIENT_UNKNOWN_ERROR 	( -2 )
 #define CLIENT_SEND_BUFFER_FULL ( -3 )
 
+#ifdef USE_SELECT
+    #define SELECT_HELPER_FUNCS
+#endif
 
 
 #ifdef __cplusplus
