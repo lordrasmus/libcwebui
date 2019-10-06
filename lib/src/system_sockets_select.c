@@ -394,7 +394,7 @@ char waitEvents( void ) {
 	#warning how to get pending bytes on the sockets ??
 #else
 	
-#ifdef _MSC_VER
+#ifdef _WIN32
 				if (ioctlsocket(sock3, FIONREAD, &totalPending) == -1)
 #else
 				if( ioctl( sock3, FIONREAD, &totalPending) == -1 )

@@ -185,6 +185,8 @@ void	ErrorExit(LPTSTR lpszFunction)
 { 
     // Retrieve the system error message for the last-error code
 
+#ifdef _MSC_VER
+ 
     LPVOID lpMsgBuf;
     LPVOID lpDisplayBuf;
     DWORD dw = GetLastError(); 
@@ -212,6 +214,9 @@ void	ErrorExit(LPTSTR lpszFunction)
     LocalFree(lpMsgBuf);
     LocalFree(lpDisplayBuf);
     //ExitProcess(dw); 
+#else
+    #warning implementieren
+#endif
 }
 
 

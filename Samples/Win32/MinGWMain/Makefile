@@ -16,6 +16,7 @@ FILES= \
     ../../../lib/src/system_file_access_fs.c        ../../../lib/src/system_file_access_wnfs.c \
     ../../../lib/src/system_file_cache.c            ../../../lib/src/system_file_access_utils.c \
     ../../../lib/src/system_file_access_binary.c    ../../../lib/src/system_sockets.c \
+    ../../../lib/src/system_sockets_select.c \
 	../../../lib/src/system_sockets_container.c     ../../../lib/src/system_sockets_events.c \
 	../../../lib/src/system_sockets_epoll.c         ../../../lib/src/system_sockets_send.c \
 	../../../lib/src/system_sockets_recv.c          ../../../lib/src/system_memory.c \
@@ -55,16 +56,14 @@ FLAGS= -I . -I../../../lib/include -I../../../lib/third_party/src/miniz/ -I../..
 	-Werror=format \
 	-DMINIZ_NO_ARCHIVE_APIS -DMINIZ_NO_ZLIB_COMPATIBLE_NAMES
 
-LIBS= 
+LIBS= -lwsock32
 #-lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads -lz -lstdc++
 
 .SILENT:
 all: #testSite
-	echo "C++  main.cpp"
-#	$(CXX) $(FLAGS) -c main.cpp  -o main.o
-	echo "CC    ../lib/*.c" #www_css.c www_data.c
-	$(CC) $(FLAGS) -std=gnu99 $(FILES)   -o main $(LIBS) ${PY_LINK} 
-#www_css.c www_data.c  main.o
+	echo "CC main.c ../lib/*.c" #www_css.c www_data.c
+	$(CC) $(FLAGS) -std=gnu99 $(FILES) main.c  -o main $(LIBS) ${PY_LINK} 
+#www_css.c www_data.c 
 	echo "LINK main"
 
 	
