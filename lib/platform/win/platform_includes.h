@@ -27,7 +27,9 @@ SPDX-License-Identifier: MPL-2.0
 #include <string.h>
 #include <ctype.h>
 #include <winsock2.h>
-#include <strsafe.h>
+#ifdef _MSC_VER
+    #include <strsafe.h>
+#endif
 #include <io.h>
 #include <inttypes.h>
 
