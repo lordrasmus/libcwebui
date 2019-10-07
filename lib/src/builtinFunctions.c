@@ -67,7 +67,7 @@ DEFINE_FUNCTION_INT( compiler ) {
 #if _MSC_FULL_VER == 191627027
 	 printHTMLChunk(s->socket, "Microsoft Visual C++ 2017 (15.9.7)"); return;
 #endif
-	 printHTMLChunk(s->socket, "_MSC_FULL_VER %d", _MSC_FULL_VER);
+	 //printHTMLChunk(s->socket, "_MSC_FULL_VER %d", _MSC_FULL_VER);
 #endif
 
 #ifdef _MSC_VER
@@ -136,6 +136,12 @@ static int miniFunctions ( http_request* s,char* buffer ) {
 		printHTMLChunk ( s->socket ,"Linux" );
         return 1;
 #endif        
+
+#ifdef _WIN32
+		printHTMLChunk(s->socket, "Win32");
+		return 1;
+#endif  
+
 		printHTMLChunk ( s->socket ,"Unknown" );
         return 1;
 	}
