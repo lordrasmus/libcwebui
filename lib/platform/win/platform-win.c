@@ -22,7 +22,8 @@ SPDX-License-Identifier: MPL-2.0
 
 #include "webserver.h"
 
-
+#include <Rpc.h>
+#pragma comment(lib, "Rpcrt4.lib")
 
 /**************************************************************
 *                                                             *
@@ -88,6 +89,26 @@ unsigned long	PlatformGetTicksPerSeconde(void){
 static 	unsigned int guid;
 void 	PlatformGetGUID( char* buf,SIZE_TYPE length){	
 	int l=0;
+
+	UUID uuid_tmp;
+	WCHAR* wszUuid = NULL;
+
+	ZeroMemory(&uuid_tmp, sizeof(UUID));
+	RPC_STATUS status = UuidCreate(&uuid_tmp);
+	if (status == RPC_S_OK) {
+		UuidToStringW(&uuid_tmp, &wszUuid);
+		if (wszUuid != NULL)
+		{
+			size_t   i;
+			// Conversion
+			wcstombs_s(&i, buf, (size_t)length, wszUuid, (size_t)length);
+
+			RpcStringFree(&wszUuid);
+			wszUuid = NULL;
+			return;
+		}
+	}
+
 #ifdef _MSC_VER
 	l = sprintf_s(buf,length,"\"Test %d",guid++);
 #else
