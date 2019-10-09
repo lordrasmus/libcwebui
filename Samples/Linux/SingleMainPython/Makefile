@@ -52,7 +52,7 @@ PY_LINK = $(shell python3-config --libs)
 
 FLAGS= -I . -I../../../lib/include -I../../../lib/third_party/src/miniz/ -I../../../lib/third_party/src/rb_tree/ \
 	-I../../../lib/platform/include/ -I../../../lib/include/intern/  -I../../../lib/third_party/src/is_utf8/ \
-	-D_POSIX_SOURCE   -DLINUX -DSINGLE_MAIN -O3 -ggdb3 ${PY_FLAGS} -Wno-unused-result \
+	-D_POSIX_SOURCE  -DSINGLE_MAIN -O3 -ggdb3 ${PY_FLAGS} -Wno-unused-result \
 	-Werror=return-type -Werror=missing-declarations -Werror=old-style-definition \
 	-Werror=format \
 	-DMINIZ_NO_ARCHIVE_APIS -DMINIZ_NO_ZLIB_COMPATIBLE_NAMES
