@@ -24,6 +24,7 @@ SPDX-License-Identifier: MPL-2.0
 
 
 #include "WebserverConfig.h"
+#include "platform-defines.h"
 
 #ifdef WEBSERVER_USE_WEBSOCKETS
 	#ifndef WEBSERVER_USE_SSL
@@ -31,11 +32,21 @@ SPDX-License-Identifier: MPL-2.0
 	#endif
 #endif
 
-#if !defined( USE_LIBEVENT ) && !defined( USE_SELECT )
-	#error USE_LIBEVENT or USE_SELECT required
+
+#ifdef LINUX
+	#if !defined( USE_LIBEVENT ) && !defined( USE_SELECT ) && !defined( USE_EPOLL )
+		#error USE_LIBEVENT or USE_SELECT or USE_EPOLL required
+	#endif
+	#define EVENT_CHECKED
 #endif
 
-#include "platform-defines.h"
+#ifndef EVENT_CHECKED
+	#if !defined( USE_LIBEVENT ) && !defined( USE_SELECT )
+		#error USE_LIBEVENT or USE_SELECT required
+	#endif
+#endif
+
+
 
 #include "red_black_tree.h"
 
