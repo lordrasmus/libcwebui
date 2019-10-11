@@ -39,6 +39,7 @@ tests/parse_header/main.gcc
 tests/url_decode/main.gcc
 tests/config_variants/LinuxWebsocketNoSSL/a.out
 tests/config_variants/LinuxWebsocketNoSSL/main.o
+tests/config_variants/LinuxWebsocketNoSSL/main
 
 Docker/*.pem
 Docker/libWebserver.so
