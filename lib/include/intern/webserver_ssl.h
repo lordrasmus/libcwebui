@@ -19,20 +19,11 @@ SPDX-License-Identifier: MPL-2.0
 #define _WEBSERVER_SSL_H_
 
 
-#include "webserver.h"
-
-
-
-#define SSL_SHA_DIG_LEN 20
-
-struct sha_context;
-
-
-
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 
 #ifdef WEBSERVER_USE_SSL
 
@@ -47,20 +38,9 @@ SOCKET_SEND_STATUS	WebserverSSLSendNonBlocking(socket_info* s, const unsigned ch
 int					WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, unsigned len, int flags);
 int					WebserverSSLCloseSockets(socket_info *s);
 
-
-
-
-int                 WebserverSHA1(const unsigned char* data,size_t len,unsigned char* md);
-struct sha_context* WebserverSHA1Init(void);
-int                 WebserverSHA1Update(struct sha_context* sha_ctx,const void* data,size_t len);
-int                 WebserverSHA1Final(struct sha_context* sha_ctx,unsigned char* data);
-void                WebserverSHA1Free(struct sha_context* sha_ctx );
-
-int                 WebserverMD5(const unsigned char* data,size_t len,unsigned char* md);
-int                 WebserverRANDBytes(unsigned char *buf, int num);
-void                WebserverBase64Encode(const unsigned char *input, int length,unsigned char *output,SIZE_TYPE out_length);
-
 #endif
+
+
 
 #ifdef __cplusplus
 }

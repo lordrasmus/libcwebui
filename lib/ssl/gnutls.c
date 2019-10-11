@@ -28,9 +28,7 @@ SPDX-License-Identifier: MPL-2.0
 
 #ifdef WEBSERVER_USE_GNUTLS_CRYPTO
 
-#if SHA_DIGEST_LENGTH != SSL_SHA_DIG_LEN
-#warning "SHA Digest Length mismatch ( noch vom gnutls abrufen )"
-#endif
+
 
 #if (OPENSSL_VERSION_NUMBER < 0x00905100L)
 #warning "GnuTLS Version auch prüfen"
@@ -51,9 +49,7 @@ struct ssl_store_s {
 	gnutls_session_t session;
 };
 
-struct sha_context {
-	gnutls_hash_hd_t dig;
-};
+
 
 static gnutls_anon_server_credentials_t anoncred;
 static gnutls_dh_params_t dh_params;
@@ -195,53 +191,7 @@ SOCKET_SEND_STATUS WebserverSLLSendNonBlocking(socket_info* s, unsigned char *bu
 	//return SOCKET_SEND_SSL_ERROR;
 }
 
-int WebserverSHA1(const unsigned char* data, size_t len, unsigned char* md) {
-	return gnutls_hash_fast(GNUTLS_DIG_SHA1, data, len, md);
-}
 
-int WebserverMD5(const unsigned char* data, size_t len, unsigned char* md) {
-	return gnutls_hash_fast(GNUTLS_DIG_MD5, data, len, md);
-}
-
-struct sha_context* WebserverSHA1Init() {
-	struct sha_context* sctx;
-
-	sctx = (struct sha_context*) WebserverMalloc(sizeof(struct sha_context), 0);
-
-	gnutls_hash_init(&sctx->dig, GNUTLS_DIG_SHA1);
-
-	return sctx;
-}
-
-int WebserverSHA1Update(struct sha_context* sha_ctx, const void* data, size_t len) {
-	return gnutls_hash(sha_ctx->dig, data, len);
-}
-
-int WebserverSHA1Final(struct sha_context* sha_ctx, unsigned char* data) {
-	gnutls_hash_deinit(sha_ctx->dig, data);
-	return 0;
-}
-
-int zahl = 0;
-int WebserverRANDBytes(unsigned char *buf, int num) {
-	//return gnutls_rnd(GNUTLS_RND_RANDOM, buf, num);
-	return zahl++;
-#warning "GnuTLS Rand finden"
-}
-
-void WebserverBase64Encode(const unsigned char *input, int length, unsigned char *output, int out_length) {
-	gnutls_datum_t gnu_input;
-	gnutls_datum_t gnu_output;
-	size_t enc_length;
-#warning "Wie funktionieren diese Buffer?"
-	gnutls_pem_base64_encode_alloc("", &gnu_input, &gnu_output);
-	if (enc_length > out_length) {
-#warning "Handling wenn output buffer zu klein einbauen"
-	}
-	gnutls_free(&gnu_output);
-
-	//return buff;
-}
 
 #endif // WEBSERVER_USE_OPENSSL_CRYPTO
 #ifdef OPENSSL_CODE

@@ -438,50 +438,6 @@ SOCKET_SEND_STATUS WebserverSLLSendNonBlocking(socket_info* s, unsigned char *bu
 	return SOCKET_SEND_SSL_ERROR;
 }
 
-unsigned char* WebserverSHA1(const unsigned char* data, size_t len, unsigned char* md) {
-	Sha sha;
-	InitSha(&sha);
-	ShaUpdate(&sha, buffer, sizeof(buffer)); // can be called again and	
-	ShaFinal(&sha, shaSum);
-}
-
-struct sha_context* WebserverSHA1Init() {
-	struct sha_context* sctx;	
-	sctx = (struct sha_context*) WebserverMalloc ( sizeof ( struct sha_context ),0 );
-	sctx->sha_ctx = (Sha*) WebserverMalloc ( sizeof ( Sha ),0 );
-	InitSha(sctx->sha_ctx);	
-	return sctx;
-}
-
-int WebserverSHA1Update(struct sha_context* sha_ctx, const void* data, size_t len) {
-	ShaUpdate(sha_ctx->sha_ctx, (const byte*)data, len);
-	return 0;
-}
-
-int WebserverSHA1Final(struct sha_context* sha_ctx, unsigned char* data) {
-	ShaFinal(sha_ctx->sha_ctx,data);
-	return 0;
-}
-
-unsigned char* WebserverMD5(const unsigned char* data, size_t len, unsigned char* md) {
-	Md5 md5;
-	InitMd5(&md5);
-	Md5Update(&md5, data, len); // can be called again and
-	Md5Final(&md5, md);
-	return 0;
-}
-
-int WebserverRANDBytes(unsigned char *buf, int num) {
-	return RAND_bytes(buf, num);
-}
-
-void WebserverBase64(const unsigned char *input, int length, unsigned char *output, int out_length) {
-	word32 outLen;
-	Base64Encode(input, length, output,  &outLen);
-	if ( outLen > out_length)
-		printf("-------- WARNING ----------- Ausgabe Buffer für Base64 zu kein\n");
-
-}
 
 #endif // WEBSERVER_USE_SSL
 

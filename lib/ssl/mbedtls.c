@@ -67,13 +67,6 @@ struct ssl_store_s {
 
 const char *pers = "dtls_server";
 
-#if 0
-
-struct sha_context {
-	SHA_CTX *sha_ctx;
-};
-
-#endif
 
 static void my_debug( void *ctx, int level, const char *file, int line, const char *str ){
     ((void) level);
@@ -770,76 +763,5 @@ SOCKET_SEND_STATUS WebserverSSLSendNonBlocking(socket_info* s, const unsigned ch
 	return SOCKET_SEND_SSL_ERROR;
 }
 
-int WebserverSHA1(const unsigned char* data, size_t len, unsigned char* md) {
-	//SHA1(data, len, md);
-	return 1;
-}
-
-struct sha_context* WebserverSHA1Init() {
-	#if 0
-	struct sha_context* sctx;
-
-	sctx = (struct sha_context*) WebserverMalloc ( sizeof ( struct sha_context ) );
-	sctx->sha_ctx = (SHA_CTX*) WebserverMalloc ( sizeof ( SHA_CTX ) );
-
-	SHA1_Init(sctx->sha_ctx);
-
-	return sctx;
-	#endif
-}
-
-int WebserverSHA1Update(struct sha_context* sha_ctx, const void* data, size_t len) {
-	//return SHA1_Update(sha_ctx->sha_ctx, data, len);
-}
-
-int WebserverSHA1Final(struct sha_context* sha_ctx, unsigned char* data) {
-	//return SHA1_Final(data, sha_ctx->sha_ctx);
-}
-
-void WebserverSHA1Free(struct sha_context* sha_ctx ){
-	#if 0
-	WebserverFree( sha_ctx->sha_ctx );
-	WebserverFree( sha_ctx );
-	#endif
-}
-
-int WebserverMD5(const unsigned char* data, size_t len, unsigned char* md) {
-	//MD5(data, len, md);
-	return 1;
-}
-
-int WebserverRANDBytes(unsigned char *buf, int num) {
-	//return RAND_bytes(buf, num);
-}
-
-void WebserverBase64Encode(const unsigned char *input, int length, unsigned char *output, SIZE_TYPE out_length) {
-#if 0
-	BIO *bmem, *b64;
-	BUF_MEM *bptr;
-	int ret;
-
-	b64 = BIO_new(BIO_f_base64());
-	bmem = BIO_new(BIO_s_mem());
-	b64 = BIO_push(b64, bmem);
-	BIO_write(b64, input, length);
-	// ret gibts nur wegen compiler warnings
-	ret = BIO_flush(b64);
-	ret++;
-	BIO_get_mem_ptr(b64, &bptr);
-
-	//char *buff = (char *)malloc(bptr->length);
-	if (bptr->length < out_length) {
-		memcpy(output, bptr->data, bptr->length - 1);
-		output[bptr->length - 1] = 0;
-	} else {
-		printf("WebserverBase64 ausgabe buffer zu klein\n");
-	}
-
-	//buff[bptr->length-1] = 0;
-
-	BIO_free_all(b64);
-#endif
-	//return buff;
-}
 
 #endif // WEBSERVER_USE_OPENSSL_CRYPTO
