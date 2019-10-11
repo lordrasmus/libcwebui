@@ -241,20 +241,6 @@ void convertBinToHexString(const unsigned char* bin, int bin_length, char* text,
 }
 
 void generateGUID(char* buf, int length) {
-#ifdef WEBSERVER_USE_SSL
-	int l;
-	unsigned char *tmp = (unsigned char*) WebserverMalloc ( length / 2 );
-	if (0 != WebserverRANDBytes(tmp, length / 2)) {
-		convertBinToHexString(tmp, length / 2, buf, length);
-		l = strlen(buf);
-		if (l != length){
-			LOG( PLATFORM_LOG, NOTICE_LEVEL, 0, "error generating Data %d->%d %s",length,l, buf);
-		}
-		WebserverFree(tmp);
-		return;
-	}
-	WebserverFree(tmp);
-#endif
 
 	PlatformGetGUID(buf, length);
 }
