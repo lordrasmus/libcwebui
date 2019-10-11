@@ -25,43 +25,6 @@ SPDX-License-Identifier: MPL-2.0
 
 /* http://www.campin.net/newlogcheck.html */
 
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
-void vaddFirePHPLog ( http_request* s,const char* filename,int fileline,const char* text, va_list ap ) {
-    static char buff[450];
-    int len=0;
-    FireLogger *fl=0;
-
-    len+= vsnprintf ( ( char* ) buff ,450, ( char* ) text, ap );
-
-	fl = (FireLogger*) WebserverMalloc( sizeof(FireLogger) );
-	fl->file = filename;
-	fl->line = fileline;
-	fl->text = ( char* ) WebserverMalloc ( len + 1 );
-	Webserver_strncpy ( fl->text,len+1,buff,len );
-
-	ws_list_append(&s->socket->firephplogs,fl);
-}
-#pragma GCC diagnostic warning "-Wformat-nonliteral"
-
-void addFirePHPLog ( http_request* s,char* filename,int fileline,char* text,... ) {
-	va_list ap;
-	va_start ( ap, text );
-	vaddFirePHPLog(s,filename,fileline,text,ap);
-	va_end ( ap );
-}
-
-/*
-void clearFirePHPLogElement ( void* p ) {
-    WebserverFree ( p );
-}
-
-void clearFirePHPLog ( HttpRequestHeader* header ) {
-    if ( header->firephplogs!=0 ) {
-        //freeList(header->firephplogs,clearFirePHPLogElement);
-        deleteList ( header->firephplogs,clearFirePHPLogElement );
-        header->firephplogs=0;
-    }
-}*/
 
 static void writeToLog ( char* buffer ) {
 	#if defined (_WIN32)

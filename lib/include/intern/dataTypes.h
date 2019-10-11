@@ -284,7 +284,6 @@ typedef struct {
 	char *header_buffer;
 	unsigned int header_buffer_pos;
 
-	list_t firephplogs;
 	list_t header_chunk_list;
 	list_t html_chunk_list;
 

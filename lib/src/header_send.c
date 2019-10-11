@@ -306,72 +306,6 @@ static void addContentTypeLines(http_request *s, WebserverFileInfo *info) {
 	}
 }
 
-static void addFirePHPHeaderLines(http_request* s) {
-#ifdef WEBSERVER_USE_SSL
-	int log_lines = 0, i;
-	int start_offset = 0, len = 0;
-	FireLogger *fl;
-	static char buffer[10000];
-	static char buffer2[10000];
-	int input_offset = 0;
-
-	if (ws_list_empty(&s->socket->firephplogs) == 0) {
-		input_offset += sprintf(&buffer2[input_offset], "{\"logs\":[");
-		ws_list_iterator_start(&s->socket->firephplogs);
-		while ( ( fl = (FireLogger*)ws_list_iterator_next(&s->socket->firephplogs) ) ) {
-			input_offset += sprintf(&buffer2[input_offset], "{\"name\":\"miniWebserver\",\"args\":[],\"level\":\"debug\"");
-			input_offset += sprintf(&buffer2[input_offset], ",\"timestamp\":1314144541.89,\"order\":0,\"time\":\"00:09:01.890\"");
-			input_offset += sprintf(&buffer2[input_offset], ",\"template\":\"%s\",\"message\":\"%s\"", fl->text, fl->text);
-			input_offset += sprintf(&buffer2[input_offset], ",\"style\":\"background-color: #767ab6\"");
-			input_offset += sprintf(&buffer2[input_offset], ",\"pathname\":\"%s\",\"lineno\":%d},", fl->file, fl->line);
-			WebserverFree(fl->text);
-			WebserverFree(fl);
-		}
-		ws_list_iterator_stop(&s->socket->firephplogs);
-		ws_list_clear(&s->socket->firephplogs);
-		input_offset--;
-		sprintf(&buffer2[input_offset], "]}");
-
-		WebserverBase64Encode((const unsigned char *) buffer2, strlen(buffer2), (unsigned char *) buffer, 10000);
-
-		len = strlen(buffer);
-		for (i = 0; i < len; i++) {
-			if (buffer[i] == '\n') {
-				buffer[i] = '\0';
-				printHeaderChunk(s->socket, "FireLogger-fe618963-%d: %s\r\n", log_lines++, &buffer[start_offset]);
-				start_offset = i + 1;
-			}
-		}
-		printHeaderChunk(s->socket, "FireLogger-fe618963-%d: %s\r\n", log_lines++, &buffer[start_offset]);
-	}
-#endif
-
-	/*
-	 * 	FireLogger-7ff46714-0	eyJsb2dzIjpbeyJuYW1lIjoicGhwIiwiYXJncyI6W10sImxldmVsIjoiZGVidWciLCJ0aW1lc3Rh
-	 FireLogger-7ff46714-1	bXAiOjEzMTQxNDQ1NDEuODksIm9yZGVyIjowLCJ0aW1lIjoiMDA6MDk6MDEuODkwIiwidGVtcGxh
-	 FireLogger-7ff46714-2	dGUiOiJIZWxsbyB3b3JsZCEiLCJtZXNzYWdlIjoiSGVsbG8gd29ybGQhIiwic3R5bGUiOiJiYWNr
-	 FireLogger-7ff46714-3	Z3JvdW5kLWNvbG9yOiAjNzY3YWI2IiwicGF0aG5hbWUiOiJcL3Zhclwvd3d3XC90ZXN0XC9pbmRl
-	 FireLogger-7ff46714-4	eC5waHAiLCJsaW5lbm8iOjN9XX0=
-	 */
-
-	/*len = snprintf ( buff, 450,"[{\"Type\":\"LOG\",\"File\":\"%s\",\"Line\":%d},\"",filename,fileline );
-	len+= snprintf ( buff+len,450-len,"\"]" );
-	len = snprintf(buff,200,"[{\"Type\":\"LOG\",\"File\":\"%s\",\"Line\":%d},\"%s\"]",filename,fileline,text);
-	 http://www.firephp.org/Wiki/Reference/Protocol
-	 http://wildfirehq.org/
-	*/
-	/*printHeaderChunk ( s->socket,"FireLogger: http://meta.wildfirehq.org/Protocol/JsonStream/0.2\r\n" );
-	 printHeaderChunk ( s->socket,"X-Wf-Protocol-1: http://meta.wildfirehq.org/Protocol/JsonStream/0.2\r\n" );
-	 printHeaderChunk ( s->socket,"X-Wf-1-Plugin-1: http://meta.firephp.org/Wildfire/Plugin/FirePHP/Library-FirePHPCore/0.3\r\n" );
-	 printHeaderChunk ( s->socket,"X-Wf-1-Structure-1: http://meta.firephp.org/Wildfire/Structure/FirePHP/FirebugConsole/0.1\r\n" );
-
-	 liste = getFirstListNode ( s->header->firephplogs );
-	 while ( liste != 0 ) {
-	 printHeaderChunk ( s->socket,"X-Wf-1-1-1-%d: %d|%s|\r\n",log_lines++, ( int ) strlen ( ( char* ) liste->value ), ( char* ) liste->value );
-	 liste = getNextListNode ( liste );
-	 }*/
-}
-
 static void addCSPHeaderLines(http_request* s){
 
 	char buff[1000];
@@ -480,10 +414,6 @@ int sendHeader(http_request* s, WebserverFileInfo *info, int p_lenght) {
 	addContentTypeLines(s, info);
 	addCacheControlLines(s, info);
 	addConnectionStatusLines(s->socket);
-
-	if (info->FileType == FILE_TYPE_HTML) {
-		addFirePHPHeaderLines(s);
-	}
 
 	if ( info->ForceDownload == 1){
 		printHeaderChunk(s->socket, "Content-Description: File Transfer\r\n");

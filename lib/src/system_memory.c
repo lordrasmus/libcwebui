@@ -73,7 +73,6 @@ socket_info* WebserverMallocSocketInfo(void) {
 	ws_list_init(&sock->websocket_chunk_list);
 	ws_list_init(&sock->websocket_fragments);
 #endif
-	ws_list_init(&sock->firephplogs);
 	return sock;
 }
 
@@ -114,7 +113,6 @@ void WebserverFreeSocketInfo(socket_info* sock) {
 	#warning "ssl strukturen freigeben"
 #endif
 
-		ws_list_destroy(&sock->firephplogs);
 
 	PlatformDestroyMutex(&sock->socket_mutex);
 

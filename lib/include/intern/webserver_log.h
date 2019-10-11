@@ -43,31 +43,10 @@ typedef enum {
 	ERROR_LEVEL
 }LogLevels;
 
-typedef struct{
-	const char* file;
-	int line;
-	char* text;
-} FireLogger;
-
-#ifdef _MSC_VER
-	#define FireLog(a,b,...) addFirePHPLog(a,__FILE__, __LINE__,b, __VA_ARGS__)
-#else
-
-	#ifdef __GNUC__
-		#define FireLog(a,ARGS...) addFirePHPLog(a,(char*)__FILE__, __LINE__, ARGS)
-	#else
-		#error "Compiler nicht erkannt"
-	#endif
-
-#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-void addFirePHPLog(http_request* s,char* filename,int fileline,char* text,...);
-void vaddFirePHPLog ( http_request* s,const char* filename,int fileline,const char* text, va_list ap );
-
 
 
 #ifdef _MSC_VER

@@ -82,15 +82,6 @@ void sendHTML(dummy_handler* s, const char* text, const unsigned int length){
 }
 
 
-void addFireLogger(dummy_handler* s, const char* filename, int fileline, const char* fmt, ... ) {
-	/* void addFirePHPLog ( http_request* s,char* filename,int fileline,char* text,... ) */
-	va_list arg;
-	va_start ( arg, fmt );
-	vaddFirePHPLog((http_request*) s,filename,fileline,fmt,arg);
-	va_end ( arg );
-
-}
-
 /*****************************************************************************
  *
  *						Variablen
