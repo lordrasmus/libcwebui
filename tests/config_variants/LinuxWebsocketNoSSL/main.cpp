@@ -12,7 +12,7 @@
 #include <dlfcn.h>
 #include <sys/socket.h>
 #include <netdb.h>
-
+#include <string.h>
 
 #include "webserver_api_functions.h"
 
@@ -25,11 +25,22 @@ static void sig_pipe_hanler(int signum) {
 }
 
 
-
-
-extern unsigned char data__[];
-extern unsigned char data__css_[];
-extern "C" void init_testsite( void );
+DEFINE_WEBSOCKET_HANDLER( "TestSocket" , TestSocket ) {
+	
+	switch (signal) {
+		case WEBSOCKET_CONNECT:
+			printf("Websocket API  Connect TestSocket    : %s \n", guid);
+			break;
+		case WEBSOCKET_DISCONNECT:
+			printf("Websocket API  Disconnect TestSocket : %s \n", guid);
+			break;
+		
+		case WEBSOCKET_MSG:
+			printf("Websocket API  TestSocket Msg 1 %s\n", msg);
+			WebsocketSendTextFrame(guid, msg, strlen(msg));
+			break;
+	}
+}
 
 int main(int argc, char **argv) {
 
@@ -39,36 +50,14 @@ int main(int argc, char **argv) {
 	if (signal(SIGTERM, termination_handler) == SIG_IGN ) signal(SIGTERM, SIG_IGN);
 	if (signal(SIGPIPE, sig_pipe_hanler) == SIG_IGN	)     signal(SIGPIPE, SIG_IGN);
 
-	openlog("webserver", LOG_CONS, LOG_LOCAL0);
-
+	
 	if (0 == WebserverInit()) {
-
-		WebserverAddBinaryData( data__ );
-		WebserverAddBinaryData( data__css_ );
 		
-		#ifdef WEBSERVER_USE_PYTHON
-
-		WebserverInitPython();
-		WebserverLoadPyPlugin( "../testSite/test.py" );
-		WebserverLoadPyPlugin( "../testSite/test2.py" );
-
-		WebserverConfigSetInt( "reload_py_modules",1);
-
-		#endif
-
-		WebserverConfigSetInt( "use_csp",0);
-
-		init_testsite();
-
+		WebserverAddFileDir("", "www");
+		
 		WebserverConfigSetInt("port",8080);
 		
-		WebserverConfigSetInt("ssl_port",4443);
-		WebserverConfigSetText("ssl_file_path", "./");
-		WebserverConfigSetText("ssl_key_file", "server.pem");
-		WebserverConfigSetText("ssl_key_file_password", "password");
-		WebserverConfigSetText("ssl_dh_file", "dh1024.pem");
-		WebserverConfigSetText("ssl_ca_list_file", "root.pem");
-		
+		REGISTER_WEBSOCKET_HANDLER ( TestSocket );
 
 		WebserverStart();
 	}

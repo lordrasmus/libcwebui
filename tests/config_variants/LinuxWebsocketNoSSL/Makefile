@@ -1,6 +1,7 @@
 
 
 FILES= \
+    ../../../lib/src/base64.c \
     ../../../lib/src/builtinFunctions.c             ../../../lib/src/convert.c \
     ../../../lib/src/cookie.c                       ../../../lib/src/conditions.c \
     ../../../lib/src/engine.c                       ../../../lib/src/engine_api_extensions.c \
@@ -19,7 +20,7 @@ FILES= \
 	../../../lib/src/system_sockets_container.c     ../../../lib/src/system_sockets_events.c \
 	../../../lib/src/system_sockets_epoll.c         ../../../lib/src/system_sockets_send.c \
 	../../../lib/src/system_sockets_recv.c          ../../../lib/src/system_memory.c \
-	../../../lib/src/system_memory_gcc.c \
+	../../../lib/src/system_memory_gcc.c            ../../../lib/src/sha1.c \
 	../../../lib/src/utils.c                        ../../../lib/src/variable.c \
 	../../../lib/src/variable_global.c              ../../../lib/src/variable_render.c \
 	../../../lib/src/variable_store.c               ../../../lib/src/webserver_api_functions.c \
@@ -44,7 +45,7 @@ PY_LINK = $(shell python-config --libs)
 
 FLAGS= -I . -I../../../lib/include -I../../../lib/third_party/src/miniz/ -I../../../lib/third_party/src/rb_tree/ \
 	-I../../../lib/platform/include/ -I../../../lib/include/intern/  -I../../../lib/third_party/src/is_utf8/ \
-	-D_POSIX_SOURCE   -DLINUX -DSINGLE_MAIN -O3 -ggdb3 ${PY_FLAGS} -Wno-unused-result \
+	-D_POSIX_SOURCE   -DSINGLE_MAIN -O3 -ggdb3 ${PY_FLAGS} -Wno-unused-result \
 	-Werror=return-type -Werror=missing-declarations -Werror=old-style-definition \
 	-Werror=format \
 	-DMINIZ_NO_ARCHIVE_APIS -DMINIZ_NO_ZLIB_COMPATIBLE_NAMES
