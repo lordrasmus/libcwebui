@@ -49,7 +49,9 @@ SPDX-License-Identifier: MPL-2.0
 #include <linux/types.h>
 #include <sys/sysinfo.h>
 
-
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 
 #ifdef WEBSERVER_USE_SSL
@@ -131,37 +133,39 @@ unsigned long PlatformGetTicksPerSeconde ( void ) {
     return (unsigned long)1; /* Konstante HZ benutzen ?? */
 }
 
-#ifdef WEBSERVER_USE_SESSIONS
-static 	unsigned int guid;
+
 void 	PlatformGetGUID ( char* buf,SIZE_TYPE length ) {
-	
-	
-	#warning nur eine testimplementierung , osx version funktioniert wohl korrekt
-    SIZE_TYPE l=0;
-	int ret;
 
-    if ( buf == 0 ){
-    	return;
-    }
+	int i,off=0;
+	unsigned char uuid[16];
 
-    ret = snprintf ( buf, length, "\"Test %d", guid++ );
-    if ( ret < 0 ){
-		buf[0]='\0';
-		perror("PlatformGetGUID: snprintf failed\n");
-		return;
-	}
-	l = (SIZE_TYPE)ret;
-    for ( ; l < length ; l++ ) {
-        buf[l]='+';
-    }
-    buf[length-2]='\"';
-    buf[length-1]='\0';
+	memset( buf, 0 , length);
+
+	int fd = open("/dev/urandom",O_RDONLY);
+	read( fd, uuid, 16 );
+	close( fd );
+
+	// UUID Version 4
+	uuid[6] = (uuid[6] & 0x0F) | 0x40;
+
+	// UUID Variant DCE
+	uuid[8] = (uuid[8] & 0x3F) | 0x80;
+	
+	for( i = 0 ; i < 4; i++ ){ off += sprintf( &buf[off],"%02X", uuid[i]); }
+	off += sprintf( &buf[off],"-");
+
+	for( ; i < 6; i++ ){ off += sprintf( &buf[off],"%02X", uuid[i]); }
+	off += sprintf( &buf[off],"-");
+
+	for( ; i < 8; i++ ){ off += sprintf( &buf[off],"%02X", uuid[i]); }
+	off += sprintf( &buf[off],"-");
+
+	for( ; i < 10; i++ ){ off += sprintf( &buf[off],"%02X", uuid[i]); }
+	off += sprintf( &buf[off],"-");
+
+	for( ; i < 16; i++ ){ off += sprintf( &buf[off],"%02X", uuid[i]); }
+
 }
-#endif
-
-
-
-
 
 
 /********************************************************************
