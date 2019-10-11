@@ -125,9 +125,6 @@ DEFINE_FUNCTION ( sessionmenustart ) {
 
 DEFINE_FUNCTION ( menustart ) {
 
-    FireLoggger (  "menustart from FireLogger" );
-
-
 
     setRenderVar ( s, ( char* ) "mp1_class", ( char* ) "inaktive" );
     setRenderVar ( s, ( char* ) "mp2_class", ( char* ) "inaktive" );

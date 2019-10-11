@@ -18,12 +18,10 @@ DEFINE_FUNCTION( testfunction1 ) {
 	char buffer[100];
 	dummy_var *var,*var2;
 
-    FireLoggger ( "testfunction1" );
     var = getURLParameter ( s, (char*) "testpara1" );
     if ( var != 0 ) {
 		getVariableAsString(var,buffer,100);
-		FireLoggger (  "Para testpara1 : %s", buffer );
-
+		
         setSessionVar ( s,STORE_NORMAL, ( char* ) "test1",buffer );
         var2 = getURLParameter ( s, ( char* ) "testpara2" );
 		if ( var2!=0 ){
@@ -39,7 +37,7 @@ DEFINE_FUNCTION( testfunction1 ) {
 DEFINE_FUNCTION( testfunction2 ) {
 	dummy_var *var;
 	char buffer[100];
-    FireLoggger ( "testfunction2" );
+    
     var = getURLParameter ( s, ( char* ) "testpara2" );
     if ( var != 0 ) {
 		getVariableAsString(var,buffer,100);
@@ -85,21 +83,6 @@ DEFINE_FUNCTION( testfunction4 ) {
 		setSessionVar ( s,STORE_SSL, "test2",buffer );
     }
 
-    var = getSessionVar ( s,STORE_NORMAL, "test2", NO_FLAGS);
-    if ( var != 0 ) {
-    	getVariableAsString(var,buffer,1000);
-        FireLoggger ( "ssl test2 : %s",buffer );
-    } else {
-        FireLoggger ( "ssl test2 not found" );
-    }
-
-    var = getSessionVar ( s,STORE_NORMAL, "test2", NO_FLAGS);
-    if ( var != 0 ) {
-    	getVariableAsString(var,buffer,1000);
-        FireLoggger ( "test2 : %s",buffer );
-    } else {
-        FireLoggger ( "test2 not found" );
-    }
 }
 
 DEFINE_FUNCTION( if_test_function1 ){
