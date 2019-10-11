@@ -300,7 +300,7 @@ static int check_post_header( socket_info* sock ){
  *	   -1 = Fehler beim Header empfangen
  *
  */
-
+#warning websocket  handling überarbeiten
 static int handleClientHeaderData(socket_info* sock) {
 	int len2;
 	unsigned int buffer_length = WEBSERVER_MAX_HEADER_LINE_LENGHT * 1;
@@ -411,6 +411,12 @@ static int handleClientHeaderData(socket_info* sock) {
 			sock->closeSocket = 1;
 			return -1;
 		}
+		if (len2 == -5) {
+			LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","Websocket handshake Error" );
+			sock->closeSocket = 1;
+			return -1;
+		}
+			
 		if (len2 == -4) {
 			sendMethodNotAllowed(sock);
 			LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","sendMethodNotAllowed" );

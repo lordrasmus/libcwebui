@@ -39,15 +39,14 @@ SPDX-License-Identifier: MPL-2.0
 
 #ifdef WEBSERVER_USE_WEBSOCKETS
 
-#ifndef WEBSERVER_USE_SSL
-	#error "Webockets nur mit SSL support"
-#endif
+#warning was macht das nochmal ?? WEBSOCKET_INIT_INBUFFER_SIZE
 
 #ifndef WEBSOCKET_INIT_INBUFFER_SIZE
 	#define WEBSOCKET_INIT_INBUFFER_SIZE 50
 	#warning WEBSOCKET_INIT_INBUFFER_SIZE not defined, defaults to 50
 #endif
 
+#warning handshake nochmal prüfen
 
 WS_THREAD websocket_input_thread;
 WS_THREAD websocket_output_thread;
@@ -153,9 +152,11 @@ int checkIskWebsocketConnection(socket_info* sock,HttpRequestHeader* header) {
 
 					if ( header->SecWebSocketVersion < 13 ){
 						printHeaderChunk(sock,"HTTP/1.1 400 Bad Request\r\n");
-						printHeaderChunk(sock,"Sec-WebSocket-Version: 13\r\n");
+						//printHeaderChunk(sock,"Sec-WebSocket-Version: 13\r\n");
 						printHeaderChunk(sock,"\r\n");
-						printf("Error Connection Websocket: Version ( %d ) is < 13 \n",header->SecWebSocketVersion);
+						#ifdef _WEBSERVER_HEADER_DEBUG_
+						LOG(HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"Websocket Handshake Error: Version ( %d ) is < 13",header->SecWebSocketVersion);
+						#endif
 						header->isWebsocket = 2;
 						return 3;
 					}
@@ -163,10 +164,7 @@ int checkIskWebsocketConnection(socket_info* sock,HttpRequestHeader* header) {
 					if (header->SecWebSocketKey != 0){
 						return 2;
 					}
-					if (header->SecWebSocketKey1 != 0){
-						return 2;
-					}
-
+					
 					return 1;
 				}
 			}
@@ -181,17 +179,12 @@ int startWebsocketConnection(socket_info* sock) {
 	http_request *s;
 	sock->active = 0;
 
-	if (sock->header->SecWebSocketVersion < 7) {
-		if (sock->header->SecWebSocketKey1 != 0) {
-			calcWebsocketSecKeys(sock);
-		}
-	} else {
-		if (sock->header->SecWebSocketKey != 0) {
-			strncpy( buffer, sock->header->SecWebSocketKey, 100 );
-			strcat(buffer, "258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
-			WebserverSHA1((unsigned char*) buffer, strlen(buffer), (unsigned char*) buffer2);
-			WebserverBase64Encode((unsigned char*) buffer2, 20, sock->header->WebSocketOutHash, 40);
-		}
+	
+	if (sock->header->SecWebSocketKey != 0) {
+		strncpy( buffer, sock->header->SecWebSocketKey, 100 );
+		strcat(buffer, "258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
+		WebserverSHA1((unsigned char*) buffer, strlen(buffer), (unsigned char*) buffer2);
+		WebserverBase64Encode((unsigned char*) buffer2, 20, sock->header->WebSocketOutHash, 40);
 	}
 
 	sendHeaderWebsocket(sock);
@@ -236,16 +229,6 @@ static void setChallengeNumber(unsigned char* buf, uint32_t number) {
 	}
 }
 
-static void generateExpectedChallengeResponse(uint32_t number1, uint32_t number2, char key3[8], char expectedChallenge[16]) {
-	unsigned char challenge[16];
-
-	setChallengeNumber(&challenge[0], number1);
-	setChallengeNumber(&challenge[4], number2);
-	memcpy(&challenge[8], key3, 8);
-
-	WebserverMD5(challenge, 16, (unsigned char*) expectedChallenge);
-}
-
 static unsigned long calckey(char* buffer) {
 	int offset;
 	unsigned long key = 0;
@@ -277,27 +260,6 @@ static unsigned long calckey(char* buffer) {
 		key /= spaces;
 	}
 	return key;
-}
-
-void calcWebsocketSecKeys(socket_info* request) {
-	unsigned int k1, k2;
-	unsigned char google[16];
-
-	if (request->header->SecWebSocketKey1 == 0){ /* Alte (BETA) Protokoll Version */
-		return;
-	}
-
-	if (request->header->SecWebSocketKey2 == 0){
-		return;
-	}
-
-	k1 = calckey(request->header->SecWebSocketKey1);
-	k2 = calckey(request->header->SecWebSocketKey2);
-
-	generateExpectedChallengeResponse(k1, k2, request->header->WebSocketKey3, (char*) google);
-
-	memcpy(request->header->WebSocketOutHash, google, 16);
-
 }
 
 

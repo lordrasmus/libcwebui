@@ -500,13 +500,7 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 
 #ifdef WEBSERVER_USE_WEBSOCKETS
 
-	CHECK_HEADER_LINE("Sec-WebSocket-Key1: ",SecWebSocketKey1)
-
-	CHECK_HEADER_LINE("Sec-WebSocket-Key2: ",SecWebSocketKey2)
-
 	CHECK_HEADER_LINE("Sec-WebSocket-Key: ",SecWebSocketKey)
-
-	CHECK_HEADER_LINE("Sec-WebSocket-Origin: ",SecWebSocketOrigin)
 
 	CHECK_HEADER_LINE("Sec-WebSocket-Protocol: ",SecWebSocketProtocol)
 
@@ -561,13 +555,16 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
  *
  *		>0  = Header nicht zuende weiter Daten lesen
  * 		 0  = Fehler beim Parsen
+ * 
+ *		-5  = Websocket Handshake Error
+ *		-4  = ??
  *		-3  = Header zuende aber noch weitere daten vorhanden
  * 		-2  = Header ist zuende und keine weiteren Daten vorhanden
  *
  *
  *
  */
-
+#warning websocket handling überarbeiten
 int ParseHeader(socket_info* sock, HttpRequestHeader* header, char* buffer, unsigned int length, unsigned int* bytes_parsed) {
 	unsigned int i = 0;
 	unsigned int last_line_end = 0;
@@ -587,15 +584,12 @@ int ParseHeader(socket_info* sock, HttpRequestHeader* header, char* buffer, unsi
 		if ((buffer[0] == '\r') && (buffer[1] == '\n')) {
 #ifdef WEBSERVER_USE_WEBSOCKETS
 			ret = checkIskWebsocketConnection(sock,header);
+			if ( ret == 3 ){ // Error in Websocket Handshake
+				return -5;
+			}
+			
 			if( ret > 1) {
-				diff = length -i;
-				if( diff == 9) {
-					memcpy(header->WebSocketKey3,&buffer[i+1],8);
-					return -2;
-				} else {
-					/* TODO: Behandlung wenn der Teil nach dem Websocket header nicht vollstaendig ist */
-					printf("Fehlt noch \n");
-				}
+				#warning noch richtig behandeln
 			}
 #endif
 			return -2;
@@ -606,17 +600,12 @@ int ParseHeader(socket_info* sock, HttpRequestHeader* header, char* buffer, unsi
 
 #ifdef WEBSERVER_USE_WEBSOCKETS
 			ret = checkIskWebsocketConnection(sock,header);
+			if ( ret == 3 ){ // Error in Websocket Handshake
+				return -5;
+			}
+			
 			if( ret > 1) {
-				if ( header->SecWebSocketVersion < 13 ) {
-					printf("Warning SecWebSocketVersion < 13\n");
-					diff = length -i;
-					if( diff == 9) {
-						memcpy(header->WebSocketKey3,&buffer[i+1],8);
-					} else {
-						printf("Fehlt noch \n");
-						/* TODO: Behandlung wenn der Teil nach dem Websocket header nicht vollstaendig ist */
-					}
-				}
+				#warning noch richtig behandeln
 			}
 #endif
 
