@@ -1,6 +1,7 @@
 
 
 FILES= \
+    ../../../lib/src/base64.c                       ../../../lib/src/sha1.c \
     ../../../lib/src/builtinFunctions.c             ../../../lib/src/convert.c \
     ../../../lib/src/cookie.c                       ../../../lib/src/conditions.c \
     ../../../lib/src/engine.c                       ../../../lib/src/engine_api_extensions.c \
