@@ -2,6 +2,7 @@
 
 
 LIB_SOURCES := 	src/builtinFunctions.c \
+			src/base64.c \
 			src/cookie.c src/convert.c \
 			src/conditions.c src/engine.c \
 			src/engine_parser.c \
@@ -21,6 +22,7 @@ LIB_SOURCES := 	src/builtinFunctions.c \
 			src/server_config.c \
 			src/server_error_pages.c \
 			src/session.c \
+			src/sha1.c \
 			src/system.c \
 			src/system_memory.c \
 			src/system_memory_gcc.c \
