@@ -26,11 +26,6 @@ SPDX-License-Identifier: MPL-2.0
 #include "WebserverConfig.h"
 #include "platform-defines.h"
 
-#ifdef WEBSERVER_USE_WEBSOCKETS
-	#ifndef WEBSERVER_USE_SSL
-		#error "Webockets nur mit SSL support"
-	#endif
-#endif
 
 
 #ifdef LINUX
@@ -51,6 +46,7 @@ SPDX-License-Identifier: MPL-2.0
 #include "red_black_tree.h"
 
 #include "intern/builtinFunctions.h"
+#include "intern/base64.h"
 #include "intern/convert.h"
 #include "intern/cookie.h"
 #include "intern/dataTypes.h"
@@ -64,6 +60,7 @@ SPDX-License-Identifier: MPL-2.0
 #include "intern/server.h"
 #include "intern/server_config.h"
 #include "intern/session.h"
+#include "intern/sha1.h"
 #include "intern/system.h"
 #include "intern/system_file_access_binary.h"
 #include "intern/system_file_access_utils.h"
