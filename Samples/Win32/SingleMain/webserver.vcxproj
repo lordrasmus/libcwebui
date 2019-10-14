@@ -210,6 +210,7 @@
     <ClCompile Include="..\..\..\lib\platform\win\platform-file-access.c" />
     <ClCompile Include="..\..\..\lib\platform\win\platform-sockets.c" />
     <ClCompile Include="..\..\..\lib\platform\win\platform-win.c" />
+    <ClCompile Include="..\..\..\lib\src\base64.c" />
     <ClCompile Include="..\..\..\lib\src\builtinFunctions.c" />
     <ClCompile Include="..\..\..\lib\src\conditions.c" />
     <ClCompile Include="..\..\..\lib\src\convert.c" />
@@ -234,6 +235,7 @@
     <ClCompile Include="..\..\..\lib\src\server_config.c" />
     <ClCompile Include="..\..\..\lib\src\server_error_pages.c" />
     <ClCompile Include="..\..\..\lib\src\session.c" />
+    <ClCompile Include="..\..\..\lib\src\sha1.c" />
     <ClCompile Include="..\..\..\lib\src\system.c" />
     <ClCompile Include="..\..\..\lib\src\system_file_access.c" />
     <ClCompile Include="..\..\..\lib\src\system_file_access_binary.c" />

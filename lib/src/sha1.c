@@ -319,7 +319,6 @@ void SHA1(
 
 int                 WebserverSHA1(const unsigned char* data,size_t len,unsigned char* md){
 	SHA1_CTX ctx;
-    int i;
     
     SHA1Init(&ctx);
     SHA1Update(&ctx, (unsigned char*)data, len);

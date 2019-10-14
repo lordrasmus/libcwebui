@@ -377,6 +377,12 @@
     <ClCompile Include="..\..\..\lib\src\builtinFunctions.c">
       <Filter>Quelldateien\lib</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\base64.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\lib\src\sha1.c">
+      <Filter>Quelldateien\lib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\.travis.yml">
