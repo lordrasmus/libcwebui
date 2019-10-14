@@ -300,7 +300,7 @@ static int check_post_header( socket_info* sock ){
  *	   -1 = Fehler beim Header empfangen
  *
  */
-#warning websocket  handling überarbeiten
+
 static int handleClientHeaderData(socket_info* sock) {
 	int len2;
 	unsigned int buffer_length = WEBSERVER_MAX_HEADER_LINE_LENGHT * 1;
@@ -367,6 +367,39 @@ static int handleClientHeaderData(socket_info* sock) {
 			continue;
 		}
 
+		/* Keine Zeile erkannt weiter Daten lesen */
+		if (len2 == -6) {
+			return 0;
+		}
+
+		/* Header Zeile zu lang */
+		if (len2 == 0) {
+			sendMethodBadRequestLineToLong(sock);
+			LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"sendMethodBadRequestLineToLong > %d",WEBSERVER_MAX_HEADER_LINE_LENGHT );
+			sock->closeSocket = 1;
+			return -1;
+		}
+
+		/* methode nicht erlaubt */
+		if (len2 == -4) {
+			if ( sock->header->no_websocket_support == 1 ){
+				LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","Websocket Support disabled" );
+			}else{
+				sendMethodNotAllowed(sock);
+				LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"methodNotAllowed -> %s",sock->header->error_method );
+			}
+			sock->closeSocket = 1;
+			return -1;
+		}
+#ifdef WEBSERVER_USE_WEBSOCKETS
+		if ( 1 == checkIskWebsocketConnection(sock) ){
+		/*if ( sock->header->isWebsocket != 0){
+			return 0;
+		}*/
+			printf("Websocket\n");
+		}
+#endif
+
 		/* Header zuende aber noch weitere daten vorhanden */
 		if (len2 == -3) {
 			if ( sock->header->method == HTTP_POST ){
@@ -405,24 +438,16 @@ static int handleClientHeaderData(socket_info* sock) {
 #endif
 			return 1;
 		}
-		if (len2 == 0) {
-			sendMethodBadRequestLineToLong(sock);
-			LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","sendMethodBadRequestLineToLong" );
-			sock->closeSocket = 1;
-			return -1;
-		}
+
 		if (len2 == -5) {
 			LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","Websocket handshake Error" );
 			sock->closeSocket = 1;
 			return -1;
 		}
 			
-		if (len2 == -4) {
-			sendMethodNotAllowed(sock);
-			LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","sendMethodNotAllowed" );
-			sock->closeSocket = 1;
-			return -1;
-		}
+
+
+
 	}
 	return -1;
 }

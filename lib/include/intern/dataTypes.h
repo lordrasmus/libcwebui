@@ -168,10 +168,11 @@ typedef struct {
 
 
 
-
+#define MAX_ERROR_METHOD 30
 typedef struct {
 	char *url;
 	short method;
+	char error_method[MAX_ERROR_METHOD];
 	short error;
 	short gzip;
 	short deflate;
@@ -194,9 +195,10 @@ typedef struct {
 	char *SecWebSocketProtocol;
 	char *SecWebSocketKey;
 	int  SecWebSocketVersion;
-
 	char isWebsocket;
 #endif
+
+	char no_websocket_support;
 
 	char* post_buffer;
 	uint32_t post_buffer_pos;

@@ -67,7 +67,7 @@ int sendWebsocketTextFrame(const char* guid, const char* in, const WEBSOCK_LEN_T
 int sendWebsocketBinaryFrame(const char* guid, const unsigned char* in, const WEBSOCK_LEN_T length);
 
 
-int checkIskWebsocketConnection(socket_info* sock,HttpRequestHeader* header);
+int checkIskWebsocketConnection(socket_info* sock);
 int startWebsocketConnection(socket_info* sock);
 void calcWebsocketSecKeys(socket_info* request);
 

@@ -286,6 +286,17 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 
 	if ( ( header->method == 0 ) && (!strncmp( line, "GET ", 4)) ) {
 		header->method = HTTP_GET;
+		header->no_websocket_support = 0;
+#ifndef WEBSERVER_USE_WEBSOCKETS
+		if( memcmp( &line[4], "ws://", 5 ) == 0 ){
+			header->no_websocket_support = 1;
+			return -1;
+		}
+		if( memcmp( &line[4], "wss://", 6 ) == 0 ){
+			header->no_websocket_support = 1;
+			return -1;
+		}
+#endif
 
 		pos = stringfind(&line[5], "?");
 		if (pos == 0) /* keine parameter */
@@ -407,6 +418,18 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 	}
 
 	if ( header->method == 0 ){
+		for ( int i = 0 ; i < length; i++ ){
+			if ( line[i] == ' ' ){
+				int max = i;
+				if ( max > ( MAX_ERROR_METHOD -1 )  )
+					max = MAX_ERROR_METHOD - 1 ;
+
+			    memset( header->error_method, 0 , MAX_ERROR_METHOD );
+				memcpy( header->error_method, line, max);
+				header->error_method[max] = '\0';
+				break;
+			}
+		}
 		header->error = 1;
 		return -1;
 	}
@@ -556,70 +579,42 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
  *		>0  = Header nicht zuende weiter Daten lesen
  * 		 0  = Fehler beim Parsen
  * 
- *		-5  = Websocket Handshake Error
- *		-4  = ??
+ *		-6  = Keine Zeile erkannt weiter Daten lesen
+ *		-4  = Methode nicht erlaubt
  *		-3  = Header zuende aber noch weitere daten vorhanden
  * 		-2  = Header ist zuende und keine weiteren Daten vorhanden
  *
  *
  *
  */
-#warning websocket handling überarbeiten
+
 int ParseHeader(socket_info* sock, HttpRequestHeader* header, char* buffer, unsigned int length, unsigned int* bytes_parsed) {
 	unsigned int i = 0;
 	unsigned int last_line_end = 0;
 	char* pos = buffer;
 	char back;
-#ifdef WEBSERVER_USE_WEBSOCKETS
-	int diff,ret;
-#endif
 	unsigned int line_length;
 
+	if ( length >= WEBSERVER_MAX_HEADER_LINE_LENGHT) {
+		return 0;
+	}
 
 	if (length < 2){
-		return length;
+		*bytes_parsed = 0;
+		return -6;
 	}
 
 	if (length < 4) {
 		if ((buffer[0] == '\r') && (buffer[1] == '\n')) {
-#ifdef WEBSERVER_USE_WEBSOCKETS
-			ret = checkIskWebsocketConnection(sock,header);
-			if ( ret == 3 ){ // Error in Websocket Handshake
-				return -5;
-			}
-			
-			if( ret > 1) {
-				#warning noch richtig behandeln
-			}
-#endif
 			return -2;
 		}
 	}
 	for (i = 3; i < length; i++) {
-		if ((buffer[i - 3] == '\r') && (buffer[i - 2] == '\n') && (buffer[i - 1] == '\r') && (buffer[i - 0] == '\n')) { /* Ende des HTTP Headers ( \r\n\r\n ) */
 
-#ifdef WEBSERVER_USE_WEBSOCKETS
-			ret = checkIskWebsocketConnection(sock,header);
-			if ( ret == 3 ){ // Error in Websocket Handshake
-				return -5;
-			}
-			
-			if( ret > 1) {
-				#warning noch richtig behandeln
-			}
-#endif
 
-			*bytes_parsed = i;
-			/* es ist ein weiterer header im datenstrom gewesen */
-			if ( (i + 1 ) < length){
-				return -3;
-			}
-			return -2;
+		 /* Am Ende der Zeile steht bei http immer \r\n */
+		if ((buffer[i] == '\n') && (buffer[i - 1] == '\r')){
 
-		}
-
-		if ((buffer[i] == '\n') && (buffer[i - 1] == '\r')) /* Am Ende der Zeile steht bei http immer \r\n */
-				{
 			back = buffer[i - 1];
 			buffer[i - 1] = '\0';
 			line_length = &buffer[i - 1] - pos;
@@ -630,11 +625,25 @@ int ParseHeader(socket_info* sock, HttpRequestHeader* header, char* buffer, unsi
 			pos = &buffer[i + 1];
 			last_line_end = i + 1;
 			buffer[i - 1] = back;
+			*bytes_parsed = last_line_end;
+			return last_line_end;
+		}
+
+		/* Ende des HTTP Headers ( \r\n\r\n ) */
+		if ((buffer[i - 3] == '\r') && (buffer[i - 2] == '\n') && (buffer[i - 1] == '\r') && (buffer[i - 0] == '\n')) {
+
+			*bytes_parsed = i;
+			/* es ist ein weiterer header im datenstrom gewesen */
+			if ( (i + 1 ) < length){
+				return -3;
+			}
+			return -2;
+
 		}
 
 	}
-	*bytes_parsed = last_line_end;
-	return last_line_end;
+
+	return -6;
 }
 
 void clearHeader(http_request *s) {

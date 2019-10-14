@@ -39,14 +39,11 @@ SPDX-License-Identifier: MPL-2.0
 
 #ifdef WEBSERVER_USE_WEBSOCKETS
 
-#warning was macht das nochmal ?? WEBSOCKET_INIT_INBUFFER_SIZE
-
 #ifndef WEBSOCKET_INIT_INBUFFER_SIZE
 	#define WEBSOCKET_INIT_INBUFFER_SIZE 50
 	#warning WEBSOCKET_INIT_INBUFFER_SIZE not defined, defaults to 50
 #endif
 
-#warning handshake nochmal prüfen
 
 WS_THREAD websocket_input_thread;
 WS_THREAD websocket_output_thread;
@@ -139,38 +136,45 @@ void initWebsocketStructures(socket_info* sock) {
 
 }
 
-int checkIskWebsocketConnection(socket_info* sock,HttpRequestHeader* header) {
+int checkIskWebsocketConnection(socket_info* sock) {
+	HttpRequestHeader* header = sock->header;
+
+	header->isWebsocket = 0;
+
 	if (header == 0) {
-		return -1;
+		return 0;
 	}
 
-	if (header->Connection != 0) {
-		if (0 != strstr(header->Connection, "Upgrade")) { /* Firefox sendet keep-alive, Upgrade */
-			if (header->Upgrade != 0) {
-				if ((0 == strcmp(header->Upgrade, "websocket")) || (0 == strcmp(header->Upgrade, "WebSocket")) || (0 == strcmp(header->Upgrade, "Websocket"))  ) {
-					header->isWebsocket = 1;
+	if (header->SecWebSocketKey == 0){
+		return 0;
+	}
 
-					if ( header->SecWebSocketVersion < 13 ){
-						printHeaderChunk(sock,"HTTP/1.1 400 Bad Request\r\n");
-						//printHeaderChunk(sock,"Sec-WebSocket-Version: 13\r\n");
-						printHeaderChunk(sock,"\r\n");
-						#ifdef _WEBSERVER_HEADER_DEBUG_
-						LOG(HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"Websocket Handshake Error: Version ( %d ) is < 13",header->SecWebSocketVersion);
-						#endif
-						header->isWebsocket = 2;
-						return 3;
-					}
+	if (header->Connection == 0) {
+		return 0;
+	}
 
-					if (header->SecWebSocketKey != 0){
-						return 2;
-					}
-					
-					return 1;
-				}
+	if (header->Upgrade == 0) {
+		return 0;
+	}
+
+	if (0 != strstr(header->Connection, "Upgrade")) { /* Firefox sendet keep-alive, Upgrade */
+		if ((0 == strcmp(header->Upgrade, "websocket")) || (0 == strcmp(header->Upgrade, "WebSocket")) || (0 == strcmp(header->Upgrade, "Websocket"))  ) {
+
+			if ( header->SecWebSocketVersion < 13 ){
+				printHeaderChunk(sock,"HTTP/1.1 400 Bad Request Websocket Version < 13\r\n");
+				printHeaderChunk(sock,"\r\n");
+				#ifdef _WEBSERVER_HEADER_DEBUG_
+				LOG(HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"Websocket Handshake Error: Version ( %d ) is < 13",header->SecWebSocketVersion);
+				#endif
+				header->isWebsocket = 2; // falsche websocket version
+				return 1;
 			}
+
+			header->isWebsocket = 1; // websocket ok
+			return 1;
 		}
 	}
-	return -1;
+	return 0;
 }
 
 int startWebsocketConnection(socket_info* sock) {
@@ -219,48 +223,7 @@ int startWebsocketConnection(socket_info* sock) {
 	return 0;
 }
 
-static void setChallengeNumber(unsigned char* buf, uint32_t number) {
-	int i;
-	unsigned char* p = buf + 3;
-	for (i = 0; i < 4; i++) {
-		*p = number & 0xFF;
-		--p;
-		number >>= 8;
-	}
-}
 
-static unsigned long calckey(char* buffer) {
-	int offset;
-	unsigned long key = 0;
-	unsigned int spaces = 0;
-	int i;
-	unsigned long multi = 1;
-	char data;
-	SIZE_TYPE tmp;
-
-	tmp = strlen(buffer) - 1;
-	if ( tmp > INT_MAX ){
-		perror("calckey: tmp > INT_MAX");
-		offset = INT_MAX;
-	}else{
-		offset = (int)tmp;
-	}
-
-	for ( i = offset; i >= 0; i--) {
-		data = buffer[i];
-		if ((data >= '0') && (data <= '9')) {
-			key += ((unsigned long) (data) - '0') * multi;
-			multi *= 10;
-		}
-		if (data == ' ') {
-			spaces++;
-		}
-	}
-	if ( spaces > 0 ){
-		key /= spaces;
-	}
-	return key;
-}
 
 
 char* getWebsocketStoreGUID(char* guid) {
