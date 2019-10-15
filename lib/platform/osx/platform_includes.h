@@ -55,6 +55,8 @@ SPDX-License-Identifier: MPL-2.0
 
 
 #define SIZE_TYPE size_t
+#define SIZE_TYPE_PRINT_DEZ "zu"
+
 #define TIME_TYPE time_t
 
 #define FILE_OFFSET __darwin_off_t
