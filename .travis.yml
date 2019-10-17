@@ -85,20 +85,20 @@ jobs:
    #     Linux Test ( Coveriry )                                                            #
    ##########################################################################################
 
-    # - os: linux
-      # env: CC=gcc CXX=g++
-      # addons:
-        # apt:
-            # packages: ['libevent-dev']
-        # coverity_scan:
-            # project:
-                # name: lordrasmus/libcwebui
+     - os: linux
+       env: CC=gcc CXX=g++
+       addons:
+         apt:
+             packages: ['libevent-dev']
+         coverity_scan:
+             project:
+                 name: lordrasmus/libcwebui
 
-            # notification_email: 
-                # - lordrasmus@gmail.com
+             notification_email: 
+                 - lordrasmus@gmail.com
 
-            # build_command: make -C lib rebuild
-            # branch_pattern: master
+             build_command: make -C lib rebuild
+             branch_pattern: master
 
    ##########################################################################################
    #     Linux Test                                                                         #
@@ -166,9 +166,9 @@ jobs:
      # compiler: clang
      # env: CC=clang-5.0 CXX=clang++-5.0
 
-   # - os: linux
-     # compiler: clang
-     # env: CC=clang-6.0 CXX=clang++-6.0     
+    - os: linux
+      compiler: clang
+      env: CC=clang-6.0 CXX=clang++-6.0     
 
    # - os: linux
      # compiler: clang
