@@ -44,6 +44,7 @@ void 			PlatformGetGUID(char* buf,SIZE_TYPE length);
 void 			PlatformGetIPv6(char* bytes);
 TIME_TYPE   	PlatformGetTick(void);
 unsigned long	PlatformGetTicksPerSeconde(void);
+int             PlatformGetPID(void);
 
 
 /********************************************************************

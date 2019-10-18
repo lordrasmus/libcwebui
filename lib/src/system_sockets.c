@@ -107,7 +107,7 @@ int WebserverStartConnectionManager(void) {
 	}
 #else
 	LOG( CONNECTION_LOG, NOTICE_LEVEL, 0, "webserver listening on port %d ( PID %d )",
-		getConfigInt("port"), getpid());
+		getConfigInt("port"), PlatformGetPID());
 #endif
 
 #ifdef WEBSERVER_USE_WNFS
