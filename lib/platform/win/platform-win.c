@@ -156,7 +156,7 @@ int PlatformCreateSem(WS_SEMAPHORE_TYPE* sem, int init_value){
 int PlatformWaitSem(WS_SEMAPHORE_TYPE* sem) {
 	WaitForSingleObject(
 		*sem,   // handle to semaphore
-		0L);           // zero-second time-out interval
+		INFINITE);           // zero-second time-out interval
 
 	return 0;
 }
