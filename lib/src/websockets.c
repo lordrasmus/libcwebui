@@ -137,13 +137,19 @@ void initWebsocketStructures(socket_info* sock) {
 }
 
 int checkIskWebsocketConnection(socket_info* sock) {
-	HttpRequestHeader* header = sock->header;
+	HttpRequestHeader* header;
+		
+	if (sock == 0) {
+		return 0;
+	}
 
-	header->isWebsocket = 0;
+	header = sock->header;
 
 	if (header == 0) {
 		return 0;
 	}
+
+	header->isWebsocket = 0;
 
 	if (header->SecWebSocketKey == 0){
 		return 0;
