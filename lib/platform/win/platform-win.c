@@ -15,7 +15,7 @@ SPDX-License-Identifier: MPL-2.0
 */
 
 
-
+#include <process.h>
 
 // #include <vld.h> 
 
@@ -53,31 +53,12 @@ void	PlatformFree( void* mem ){
 
 #include "time.h"
 TIME_TYPE  PlatformGetTick(void){
-	/*SYSTEMTIME systemTime;
-	FILETIME fileTime;
-	ULARGE_INTEGER uli;
-	ULONGLONG systemTimeIn_ms;*/
 
 	time_t seconds;
 
 	seconds = time (NULL);
 
 	return (unsigned long)seconds;
-
-	// GetSystemTimeAsFileTime()
-
-	/*GetSystemTime( &systemTime );
-	SystemTimeToFileTime( &systemTime, &fileTime );
-
-	
-	
-	uli.LowPart = fileTime.dwLowDateTime; // could use memcpy here!
-	uli.HighPart = fileTime.dwHighDateTime;
-
-	systemTimeIn_ms = ( uli.QuadPart/10000 );
-	while(systemTimeIn_ms > ULONG_MAX)
-		systemTimeIn_ms -= ULONG_MAX;
-	return (unsigned long)systemTimeIn_ms;*/
 }
 
 unsigned long	PlatformGetTicksPerSeconde(void){
@@ -85,8 +66,7 @@ unsigned long	PlatformGetTicksPerSeconde(void){
 }
 
 
-#ifdef WEBSERVER_USE_SESSIONS
-static 	unsigned int guid;
+
 void 	PlatformGetGUID( char* buf,SIZE_TYPE length){	
 	int l=0;
 
@@ -95,37 +75,29 @@ void 	PlatformGetGUID( char* buf,SIZE_TYPE length){
 
 	ZeroMemory(&uuid_tmp, sizeof(UUID));
 	RPC_STATUS status = UuidCreate(&uuid_tmp);
-	if (status == RPC_S_OK) {
-		UuidToStringW(&uuid_tmp, &wszUuid);
-		if (wszUuid != NULL)
-		{
-			size_t   i;
-			// Conversion
-			wcstombs_s(&i, buf, (size_t)length, wszUuid, (size_t)length);
-
-			RpcStringFree(&wszUuid);
-			wszUuid = NULL;
-			return;
-		}
+	if (status != RPC_S_OK) {
+		printf("Error generating GUID\n"); 
+		exit(1);
 	}
 
-#ifdef _MSC_VER
-	l = sprintf_s(buf,length,"\"Test %d",guid++);
-#else
-    l = snprintf(buf,length,"\"Test %d",guid++);
-#endif
-    
-	for(;l<length;l++){
-		buf[l]='+';
+	UuidToStringW(&uuid_tmp, &wszUuid);
+	if (wszUuid == NULL) {
+		printf("Error generating GUID\n");
+		exit(1);
 	}
-	buf[length-5]='1';
-	buf[length-4]='2';
-	buf[length-3]='3';
-	buf[length-2]='\"';
-	buf[length-1]='\0';
+	
+	size_t   i;
+	// Conversion
+	wcstombs_s(&i, buf, (size_t)length, wszUuid, (size_t)length);
+
+	RpcStringFree(&wszUuid);
+	wszUuid = NULL;
+
 }
-#endif
 
+int PlatformGetPID(void) {
+	return _getpid();
+}
 
 
 /********************************************************************
