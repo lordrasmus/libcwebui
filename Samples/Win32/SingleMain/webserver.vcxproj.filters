@@ -383,6 +383,18 @@
     <ClCompile Include="..\..\..\lib\src\sha1.c">
       <Filter>Quelldateien\lib</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\testSite\src\testfunktions.c">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\testSite\src\var_test.c">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\testSite\src\websocket_api.c">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\testSite\src\webserver_api.c">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\.travis.yml">

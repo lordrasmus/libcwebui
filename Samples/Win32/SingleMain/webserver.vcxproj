@@ -106,7 +106,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);SINGLE_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\..\..\lib\platform\include\;..\..\..\lib\third_party\src\rb_tree;..\..\..\lib\third_party\src\miniz\;..\..\..\lib\third_party\src\is_utf8\;..\..\..\lib\include\intern;..\..\..\lib\include;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -268,6 +268,10 @@
     <ClCompile Include="..\..\..\lib\third_party\src\rb_tree\misc.c" />
     <ClCompile Include="..\..\..\lib\third_party\src\rb_tree\red_black_tree.c" />
     <ClCompile Include="..\..\..\lib\third_party\src\rb_tree\stack.c" />
+    <ClCompile Include="..\..\testSite\src\testfunktions.c" />
+    <ClCompile Include="..\..\testSite\src\var_test.c" />
+    <ClCompile Include="..\..\testSite\src\webserver_api.c" />
+    <ClCompile Include="..\..\testSite\src\websocket_api.c" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
