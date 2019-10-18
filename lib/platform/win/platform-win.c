@@ -100,6 +100,7 @@ int PlatformGetPID(void) {
 }
 
 
+
 /********************************************************************
 *																	*
 *					Thread Lock ( Mutex )							*
@@ -171,6 +172,26 @@ int PlatformPostSem(WS_SEMAPHORE_TYPE* sem) {
 
 	return 0;
 }
+
+static DWORD WINAPI MyThreadFunction(LPVOID lpParam) {
+	platform_thread_function func = (platform_thread_function)lpParam;
+	func();
+	return 0;
+}
+
+
+void PlatformCreateThread(WS_THREAD* handle, platform_thread_function func) {
+	DWORD   dwThreadIdArray;
+
+	*handle = CreateThread(
+		NULL,                   // default security attributes
+		0,                      // use default stack size  
+		MyThreadFunction,       // thread function name
+		func,          // argument to thread function 
+		0,                      // use default creation flags 
+		&dwThreadIdArray);   // returns the thread identifier 
+}
+
 
 int strcasecmp(const char *s1, const char *s2) {
 	return _stricmp( s1, s2 );

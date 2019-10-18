@@ -51,7 +51,7 @@ WS_THREAD websocket_output_thread;
 static ws_MessageQueue* websocket_input_queue;
 static ws_MessageQueue* websocket_output_queue;
 
-static void *websocket_input_thread_function( UNUSED_PARA void *ptr) {
+static void websocket_input_thread_function( void ) {
 	websocket_queue_msg* msg;
 	while (1) {
 		msg = (websocket_queue_msg*) ws_popQueue(websocket_input_queue);
@@ -63,7 +63,7 @@ static void *websocket_input_thread_function( UNUSED_PARA void *ptr) {
 		WebserverFree(msg->url);
 		WebserverFree(msg);
 	}
-	return 0;
+	
 }
 
 
@@ -108,7 +108,7 @@ void insert_websocket_output_queue(websocket_queue_msg* msg){
 }
 
 
-static void *websocket_output_thread_function( UNUSED_PARA void *ptr) {
+static void websocket_output_thread_function( void ) {
 	websocket_queue_msg* msg;
 	while (1) {
 		msg = (websocket_queue_msg*) ws_popQueue(websocket_output_queue);
@@ -119,14 +119,14 @@ static void *websocket_output_thread_function( UNUSED_PARA void *ptr) {
 		WebserverFree(msg->msg);
 		WebserverFree(msg);
 	}
-	return 0;
+	
 }
 
 void initWebsocketApi(void) {
 	websocket_input_queue = ws_createMessageQueue();
 	websocket_output_queue = ws_createMessageQueue();
-	pthread_create(&websocket_input_thread, NULL, websocket_input_thread_function, 0);
-	pthread_create(&websocket_output_thread, NULL, websocket_output_thread_function, 0);
+	PlatformCreateThread(&websocket_input_thread, websocket_input_thread_function);
+	PlatformCreateThread(&websocket_output_thread, websocket_output_thread_function);
 
 }
 

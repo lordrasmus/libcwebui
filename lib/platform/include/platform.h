@@ -63,5 +63,9 @@ int PlatformCreateSem(WS_SEMAPHORE_TYPE* sem, int init_value);
 int PlatformWaitSem(WS_SEMAPHORE_TYPE* sem);
 int PlatformPostSem(WS_SEMAPHORE_TYPE* sem);
 
+typedef void (*platform_thread_function)(void);
+
+void PlatformCreateThread( WS_THREAD* handle, platform_thread_function func );
+
 #endif
 
