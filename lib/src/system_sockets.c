@@ -393,10 +393,7 @@ static int handleClientHeaderData(socket_info* sock) {
 		}
 #ifdef WEBSERVER_USE_WEBSOCKETS
 		if ( 1 == checkIskWebsocketConnection(sock) ){
-		/*if ( sock->header->isWebsocket != 0){
-			return 0;
-		}*/
-			printf("Websocket\n");
+			return 1;
 		}
 #endif
 
