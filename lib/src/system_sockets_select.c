@@ -170,9 +170,42 @@ void addEventSocketWritePersist(socket_info* sock) {
 
 void addEventSocketReadWritePersist(socket_info* sock) {
 	
-	printf("addEventSocketReadWritePersist ");
-	printf("Nicht implementiert\n");
-	exit(1);
+	int i;
+
+#ifdef WEBSERVER_USE_SSL
+	if (sock->ssl_block_event_flags == 1) {
+		sock->ssl_event_flags = EV_WRITE | EV_READ | EV_PERSIST;
+		return;
+	}
+#endif
+
+	for (i = 0; i < FD_SETSIZE; i++) {
+		if (client_sock[i].socket < 0) {
+			client_sock[i].socket = sock->socket;
+			client_sock[i].sock = sock;
+			client_sock[i].flags = EVENT_WRITE | EVENT_READ | EVENT_PERSIST;
+			break;
+		}
+	}
+
+	if (i == FD_SETSIZE) {
+		printf("Maximale Anzahl an Sockets erreicht");
+		exit(1);
+	}
+
+	if (sock->socket > sock_max)
+		sock_max = sock->socket;
+
+	if (i > max)
+		max = i;
+
+	FD_SET(sock->socket, &gesamt_schreibe_sockets);
+	FD_SET(sock->socket, &gesamt_lese_sockets);
+
+#ifdef DEBUG_SELECT
+	printf("\naddEventSocketWritePersist : %d\n\n", sock->socket);
+#endif
+
 
 }
 
