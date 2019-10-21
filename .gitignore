@@ -91,6 +91,7 @@ Samples/testSite/src/testfunktions.o
 Samples/testSite/src/var_test.o
 Samples/testSite/src/webserver_api_functions.o
 Samples/testSite/src/websocket_api.o
+Samples/testSite/src/webserver_api.o
 Samples/testSite/img_data__img.c
 Samples/testSite/img_data_img.c
 
