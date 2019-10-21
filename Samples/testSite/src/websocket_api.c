@@ -68,6 +68,17 @@ void pthread_mutex_init(pthread_mutex_t* mutex, int init) {
 #endif
 
 
+#ifdef __linux__
+
+
+void run_thread(thread_function func , void* arg) {
+
+	pthread_t * handle = malloc( sizeof( pthread_t ) );
+	pthread_create( handle, NULL, func, arg); 
+}
+
+#endif
+
 #include <linked_list.h>
 
 #define OUT_BUFFER_SIZE 10000
@@ -86,15 +97,15 @@ static int getTime(char* buffer) {
 	return sprintf(buffer, "%02d:%02d:%02d", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
 }
 
-static void mysleep(unsigned long seconds) {
-	/*struct timespec req;
+static void mysleep(unsigned long ms) {
+
+#ifdef _MSC_VER
+	Sleep(seconds);
+#else
+	struct timespec req;
 	req.tv_sec = 0;
 	req.tv_nsec = 100000000;
-	nanosleep(&req, 0);*/
-#ifdef _MSC_VER
-	Sleep(seconds * 1000);
-#else
-	sleep(seconds);
+	nanosleep(&req, 0);
 #endif
 
 }
@@ -162,7 +173,7 @@ static void uhr_loop( void ) {
 
 		pthread_mutex_unlock(&clock_mutex);
 
-		mysleep(1);
+		mysleep(1000);
 	}
 }
 
@@ -238,7 +249,7 @@ static void simpleThread(void* p) {
 			WebserverFree(guid);
 			return;
 		}
-		mysleep(1);
+		mysleep(100);
 	}
 	
 
