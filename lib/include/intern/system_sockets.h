@@ -39,6 +39,8 @@ extern "C" {
 
 	void	handleServer(socket_info* sock);
 
+	void    _set_main_thread( void ); // special function for select socket handling
+
 	int		WebserverStartConnectionManager( void );
 	void	WebserverConnectionManagerStartLoop( void );
 	void	WebserverConnectionManagerCloseRequest(socket_info* sock);

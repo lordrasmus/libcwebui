@@ -967,6 +967,8 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* so
 
 void WebserverConnectionManagerStartLoop(void) {
 
+	_set_main_thread();
+
 	initSocketContainer();
 
 	while (1) {

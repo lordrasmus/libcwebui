@@ -46,6 +46,40 @@ static int sock_max = 0,max = 0;
 
 
 
+static __thread int main_thread = 0;
+
+void _set_main_thread( void ){
+	main_thread = 1;
+}
+
+static int select_signal_pipe[2] = { 0 , 0 };
+
+static void _check_select_pipe( void ){
+	if ( select_signal_pipe[0] == 0 ){
+		pipe( select_signal_pipe );
+	}
+}
+
+static void _signal_pipe( void ){
+
+	_check_select_pipe();
+
+	if ( main_thread == 0 ){
+		char t = 1;
+		write( select_signal_pipe[1] , &t , 1 );
+	}
+}
+
+
+static void _read_select_pipe( void ){
+	char t;
+	read( select_signal_pipe[0] , &t , 1 );
+}
+
+
+
+
+
 void addEventSocketRead(socket_info* sock) {
 	int i;
 	
@@ -201,6 +235,8 @@ void addEventSocketReadWritePersist(socket_info* sock) {
 
 	FD_SET(sock->socket, &gesamt_schreibe_sockets);
 	FD_SET(sock->socket, &gesamt_lese_sockets);
+
+	_signal_pipe();
 
 #ifdef DEBUG_SELECT
 	printf("\naddEventSocketWritePersist : %d\n\n", sock->socket);
@@ -364,32 +400,42 @@ static int check_sock_exists( int socket ){
 }
 #endif
 
+
+
 char waitEvents( void ) {
 	int i;
 	int sock3;
 	int ready;
 	fd_set lese_sock;
 	fd_set send_sock;
-	
+
+	_check_select_pipe();
+
 	while( 1 ){
 		#ifdef DEBUG_SELECT
 			printf("select max : %d  sock_max : %d\n", max,  sock_max);
 			fflush(stdout);
-		#endif
 		
-		lese_sock = gesamt_lese_sockets;
-		send_sock = gesamt_schreibe_sockets;
-		
-		#ifdef DEBUG_SELECT
 			for(i=0; i<=max; i++) {
 				if ( client_sock[i].socket > -1 ){
 					printf("Sock %d : %d 0x%X ( %p )\n",i,client_sock[i].socket, client_sock[i].flags, client_sock[i].sock);
 				}
 			}
 		#endif
-		
-		ready = select( sock_max+1, &lese_sock, &send_sock, NULL, NULL );
-		
+
+		while(1){
+
+			lese_sock = gesamt_lese_sockets;
+			send_sock = gesamt_schreibe_sockets;
+
+			FD_SET( select_signal_pipe[0], &lese_sock );
+
+			ready = select( sock_max+1, &lese_sock, &send_sock, NULL, NULL );
+			if ( ready != EINTR )
+				break;
+		}
+
+
 		#ifdef DEBUG_SELECT
 			printf("select ret : %d\n",ready);
 			fflush(stdout);
@@ -399,6 +445,8 @@ char waitEvents( void ) {
 			
 			if(( sock3 = client_sock[i].socket) < 0)
 				continue;
+
+
 
 			if(FD_ISSET(sock3, &lese_sock)){
 				int totalPending; 
@@ -423,31 +471,36 @@ char waitEvents( void ) {
 					handleer(sock3 , EVENT_READ , client_sock_info );
 
 				}
-#ifdef __ZEPHYR__
-	#warning how to get pending bytes on the sockets ??
-#else
-	
-#ifdef _WIN32
-				if (ioctlsocket(sock3, FIONREAD, &totalPending) == -1)
-#else
-				if( ioctl( sock3, FIONREAD, &totalPending) == -1 )
-				#warning ist das wirklich nötig mit dem pending ? ?
-#endif
 
+#if 0 // Das Pending sollte nicht notwendig sein wenn select wirklich level trigged arbeitet
 
-				{
-					if ( totalPending > 0 ){
-						/*#ifdef DEBUG_SELECT */
-							printf("\nPending ( %d ): %d\n\n", sock3, totalPending);
-							fflush(stdout);
-						/*#endif */
+	#ifdef __ZEPHYR__
+		#warning how to get pending bytes on the sockets ??
+	#else
 
-						handleer(sock3 , EVENT_READ , client_sock_info );
+				if ( sock3 != select_signal_pipe[0] ){
+
+	#ifdef _WIN32
+					if (ioctlsocket(sock3, FIONREAD, &totalPending) == -1)
+	#else
+					if( ioctl( sock3, FIONREAD, &totalPending) == -1 )
+					#warning ist das wirklich nötig mit dem pending ? ?
+	#endif
+					{
+						if ( totalPending > 0 ){
+							/*#ifdef DEBUG_SELECT */
+								printf("\nPending ( %d ): %d\n\n", sock3, totalPending);
+								fflush(stdout);
+							/*#endif */
+
+							handleer(sock3 , EVENT_READ , client_sock_info );
+						}
 					}
+	#endif
+					if( --ready <= 0 )
+						break;
 				}
-#endif
-				if( --ready <= 0 )
-					break;
+#endif // PENDING
 			}
 
 			if(FD_ISSET(sock3, &send_sock)){
@@ -478,6 +531,9 @@ char waitEvents( void ) {
 			
 		}
 
+		if(FD_ISSET(select_signal_pipe[0], &lese_sock)){
+			_read_select_pipe();
+		}
 	}
     
     return 0;
