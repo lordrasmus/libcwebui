@@ -37,6 +37,7 @@ static fd_set gesamt_schreibe_sockets;
 static int sock_max = 0,max = 0;
 
 
+void _set_main_thread( void ){}
 
 
 void eventHandler(int a, short b, void *t) {

@@ -43,6 +43,8 @@ typedef unsigned char u_char;
 
 struct event_base* base;
 
+void _set_main_thread( void ){}
+
 void eventHandler(int a, short b, void *t) {
 	char pers = 0;
 
