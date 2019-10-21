@@ -1,7 +1,7 @@
 
 CFLAGS=-fPIC -I../../../lib/include/ -I../../../lib/include/intern/ -I../../../lib/ 
 
-OBJ=testfunktions.o  var_test.o  webserver_api_functions.o  websocket_api.o
+OBJ=testfunktions.o  var_test.o  webserver_api.o  websocket_api.o
 
 
 all: $(OBJ)
