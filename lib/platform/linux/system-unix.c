@@ -260,3 +260,8 @@ int		PlatformClose(int socket){
 	return close( socket );
 }
 
+
+int PlatformGetPID( void ){
+	return getpid();
+}
+
