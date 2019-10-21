@@ -70,8 +70,7 @@ void pthread_mutex_init(pthread_mutex_t* mutex, int init) {
 
 #ifdef __linux__
 
-
-void run_thread(thread_function func , void* arg) {
+static void run_thread(thread_function func , void* arg) {
 
 	pthread_t * handle = malloc( sizeof( pthread_t ) );
 	pthread_create( handle, NULL, func, arg); 
