@@ -34,7 +34,7 @@ FILES= \
 	../../testSite/src/testfunktions.c  \
 	../../testSite/src/var_test.c  \
 	../../testSite/src/websocket_api.c \
-	../../testSite/src/webserver_api_functions.c  \
+	../../testSite/src/webserver_api.c  \
 	../../../lib/third_party/src/rb_tree/red_black_tree.c \
 	../../../lib/third_party/src/rb_tree/stack.c \
 	../../../lib/third_party/src/rb_tree/misc.c \
