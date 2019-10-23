@@ -54,7 +54,7 @@
 ************************************************************************************/
 
 #define USE_LIBEVENT
-//#define WEBSERVER_USE_WEBSOCKETS
+#define WEBSERVER_USE_WEBSOCKETS
 //#define WEBSERVER_USE_IPV6
 #define WEBSERVER_MAX_PENDING_CONNECTIONS	30
 
