@@ -17,9 +17,7 @@ script:
 #   - echo ${CXX}
    - sudo apt-get install ${CC} ${CXX}
    - make clean
-   - make
-   - make -C Samples/Linux/SingleMain/
-   - make -C Samples/Linux/SingleMainPython/
+   - make linux_tests
 
 
 before_script:
