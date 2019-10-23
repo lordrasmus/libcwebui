@@ -23,3 +23,9 @@ clean:
 	$(MAKE) -C Samples/testSite clean
 	$(MAKE) -C Docker clean
 	
+
+osx_tests:
+	$(MAKE) -C Samples/OSX/MakeProject
+	$(MAKE) -C tests/config_variants/LinuxWebsocketSelect
+	$(MAKE) -C tests/config_variants/LinuxWebsocketNoSSL
+	
