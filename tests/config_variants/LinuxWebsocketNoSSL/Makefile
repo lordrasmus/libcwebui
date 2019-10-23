@@ -26,9 +26,9 @@ FILES= \
 	../../../lib/src/variable_store.c               ../../../lib/src/webserver_api_functions.c \
 	../../../lib/src/websocket_handler.c            ../../../lib/src/websockets.c \
 	../../../lib/src/websockets_send_recv.c         ../../../lib/ssl/openssl.c \
-	../../../lib/platform/linux/platform-file-access.c \
-	../../../lib/platform/linux/platform-sockets.c \
-	../../../lib/platform/linux/system-unix.c \
+	../../../lib/platform/platform-file-access.c \
+	../../../lib/platform/platform-sockets.c \
+	../../../lib/platform/platform.c \
 	../../../lib/python/py_utils.c \
 	../../../lib/python/py_plugin.c  \
 	../../../lib/python/py_api_functions.c  \
@@ -50,7 +50,7 @@ FLAGS= -I . -I../../../lib/include -I../../../lib/third_party/src/miniz/ -I../..
 	-Werror=format \
 	-DMINIZ_NO_ARCHIVE_APIS -DMINIZ_NO_ZLIB_COMPATIBLE_NAMES
 
-LIBS=-lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads -lz -lstdc++
+LIBS=-lc -ldl -lpthread -levent -levent_pthreads -lz -lstdc++
 
 .SILENT:
 all: 
