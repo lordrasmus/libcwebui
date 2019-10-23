@@ -78,7 +78,7 @@ jobs:
       script: 
          - cp Samples/OSX/MakeProject/WebserverConfig.h lib
          - make -C lib
-         - make -C osx_tests
+         - make osx_tests
       
       
    ##########################################################################################
