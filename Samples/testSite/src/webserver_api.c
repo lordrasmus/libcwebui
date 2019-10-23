@@ -294,7 +294,9 @@ WEBSERVER_API_HOOK{
     REGISTER_WEBSOCKET_HANDLER ( CommandSocket_handler );
 #endif
 
+#ifdef WEBSERVER_USE_WEBSOCKETS
     startApiThreads();
+#endif
 
 #ifndef SINGLE_MAIN
     return "test_site";

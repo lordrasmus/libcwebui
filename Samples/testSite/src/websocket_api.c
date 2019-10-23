@@ -12,20 +12,17 @@
 #include <stdlib.h>
 #include <time.h>
 
-#ifdef __linux__
+#if defined (  __linux__ ) || defined ( __APPLE__ )
 	#include <unistd.h>
 	#include <pthread.h>
 #endif
-
-
-
-#include <time.h>
 
 #include "webserver_api_functions.h"
 #include "websocket_api.h"
 
 
 #ifdef WEBSERVER_USE_WEBSOCKETS
+
 
 typedef void*(*thread_function)(void*);
 
@@ -68,7 +65,7 @@ void pthread_mutex_init(pthread_mutex_t* mutex, int init) {
 #endif
 
 
-#ifdef __linux__
+#if defined (  __linux__ ) || defined ( __APPLE__ ) 
 
 static void run_thread(thread_function func , void* arg) {
 
