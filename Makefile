@@ -24,13 +24,15 @@ clean:
 	$(MAKE) -C Docker clean
 
 linux_tests:
-    $(MAKE) -C lib
-    $(MAKE) -C Samples/testSite
-    $(MAKE) -C Samples/Linux/SharedMain
-    $(MAKE) -C Samples/Linux/SingleMain
-    $(MAKE) -C Samples/Linux/SingleMainPython
-    $(MAKE) -C tests/config_variants/LinuxWebsocketSelect
+	$(MAKE) -C lib
+	$(MAKE) -C Samples/testSite
+	$(MAKE) -C Samples/Linux/SharedMain
+	$(MAKE) -C Samples/Linux/SingleMain
+	$(MAKE) -C Samples/Linux/SingleMainPython
+	$(MAKE) -C tests/config_variants/LinuxWebsocketSelect
 	$(MAKE) -C tests/config_variants/LinuxWebsocketNoSSL
+	$(MAKE) -C tests/config_variants/LinuxSelect
+#	$(MAKE) -C tests/config_variants/LinuxEpoll
 
 osx_tests:
 	$(MAKE) -C Samples/OSX/MakeProject
