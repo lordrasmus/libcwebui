@@ -208,8 +208,21 @@ int PlatformWaitSem(WS_SEMAPHORE_TYPE* sem) {
 	return 0;
 }
 
+static void* run_thread( void* ptr ){
+	 platform_thread_function func = (platform_thread_function) ptr;
+	 func();
+	 return 0;
+}
+
+void PlatformCreateThread( WS_THREAD* handle, platform_thread_function func ){
+	 pthread_create( handle, NULL, run_thread, func);
+}
+
 
 int		PlatformClose(int socket){
 	return close( socket );
 }
 
+int PlatformGetPID( void ){
+	return getpid();
+}
