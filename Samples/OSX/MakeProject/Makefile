@@ -2,6 +2,7 @@
 
 FILES= \
     ../../../lib/src/builtinFunctions.c             ../../../lib/src/convert.c \
+    ../../../lib/src/base64.c                       ../../../lib/src/sha1.c \
     ../../../lib/src/cookie.c                       ../../../lib/src/conditions.c \
     ../../../lib/src/engine.c                       ../../../lib/src/engine_api_extensions.c \
     ../../../lib/src/engine_functions.c             ../../../lib/src/engine_if.c \
@@ -63,7 +64,7 @@ all: check testSite
 	echo "C++  main.cpp"
 	$(CC) $(FLAGS) -c main.cpp  -o main.o
 	echo "CC   www_css.c www_data.c ../lib/*.c"
-	$(CC) $(FLAGS) -std=gnu99 $(FILES) main.o www_css.c www_data.c -o main $(LIBS) ${PY_LINK} 
+	$(CC) $(FLAGS) -std=gnu99 $(FILES) -flto main.o www_css.c www_data.c -o main $(LIBS) ${PY_LINK} 
 	echo "LINK main"
 
 check:
