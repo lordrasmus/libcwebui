@@ -11,8 +11,9 @@ TEMPLATE_V1
 <a href=memory_info.html?menu=2 class={if:eq:2:parameter;"menu"}aktive{else}inaktive{endif}>Sockets</a>
 <a href=memory_info.html?menu=3 class={if:eq:3:parameter;"menu"}aktive{else}inaktive{endif}>Files</a>
 <a href=memory_info.html?menu=4 class={if:eq:4:parameter;"menu"}aktive{else}inaktive{endif}>Functions</a>
-<a href=memory_info.html?menu=5 class={if:eq:5:parameter;"menu"}aktive{else}inaktive{endif}>Plugins</a>
-<a href=memory_info.html?menu=6 class={if:eq:6:parameter;"menu"}aktive{else}inaktive{endif}>Globals</a>
+<a href=memory_info.html?menu=5 class={if:eq:5:parameter;"menu"}aktive{else}inaktive{endif}>Conditions</a>
+<a href=memory_info.html?menu=6 class={if:eq:6:parameter;"menu"}aktive{else}inaktive{endif}>Plugins</a>
+<a href=memory_info.html?menu=7 class={if:eq:7:parameter;"menu"}aktive{else}inaktive{endif}>Globals</a>
 <br>
 
 
@@ -20,14 +21,14 @@ TEMPLATE_V1
 	<div style="margin:0 10px 10px 0">
 	<table>
 	<tr><th>Type<th>Count<th>Size
-	{b:memoryInfosDetail}
+	{f:memoryInfosDetail}
 	</table>
 	</div><br>
 {endif}
 
 {if:eq:parameter;"menu":1}
 	<div style="margin:0 10px 10px 0">
-	{b:dumpSessions}
+	{f:dumpSessions}
 	</div><br>
 {endif}
 
@@ -35,7 +36,7 @@ TEMPLATE_V1
 	<div style="margin:0 10px 10px 0">
 	<table>
 	<tr><th>Type<th>Port<th>Size<th>SSL<th>closed<th>Websocket</th>
-	{b:dumpSockets}
+	{f:dumpSockets}
 	</table>
 	</div><br>
 {endif}
@@ -44,7 +45,7 @@ TEMPLATE_V1
 	<div style="margin:0 10px 10px 0;float:left">
 	<table>
 	<tr><th>File<th>Bytes<th>File Sys<th>Ram Cached<th>Auth Only<th>Compressed<th>Template</th>
-	{b:printLoadedFiles}
+	{f:printLoadedFiles}
 	</table>
 	</div>
 {endif}
@@ -52,8 +53,8 @@ TEMPLATE_V1
 {if:eq:4:parameter;"menu"}
 	<div style="margin:0 10px 10px 0;float:left">
 	<table>
-	<tr><th>Plugin</th><th>User Function<th>Type</th><th>File<th>Line<th>Status</th>
-	{b:registeredFunctionsDetail}
+	<tr><th>Plugin</th><th>Function<th>Type</th><th>File<th>Line<th>Status</th>
+	{f:printRegisteredFunctions}
 	</table>
 	</div>
 {endif}
@@ -61,15 +62,24 @@ TEMPLATE_V1
 {if:eq:5:parameter;"menu"}
 	<div style="margin:0 10px 10px 0;float:left">
 	<table>
-	<tr><th>Plugins<th>File<th>Type</th><th>Status
-	{b:registeredPlugins}
+	<tr><th>Plugin</th><th>Condition<th>Type</th><th>File<th>Line<th>Status</th>
+	{f:printRegisteredConditions}
 	</table>
 	</div>
 {endif}
 
 {if:eq:6:parameter;"menu"}
 	<div style="margin:0 10px 10px 0;float:left">
-	{b:dumpGlobals}
+	<table>
+	<tr><th>Plugins<th>File<th>Type</th><th>Status
+	{f:printRegisteredPlugins}
+	</table>
+	</div>
+{endif}
+
+{if:eq:7:parameter;"menu"}
+	<div style="margin:0 10px 10px 0;float:left">
+	{f:dumpGlobals}
 	<table>
 	<tr><th>Key<th>Value
 	{loop:render;"globals_dump":"value":"key"}

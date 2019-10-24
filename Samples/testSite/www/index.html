@@ -10,30 +10,10 @@ TEMPLATE_V1
 <h1>Hallo Webserver!</h1>
 
 
-
->{get:global;"gtest1"}<<br>
-
-<script type="text/javascript">
-
-/*function test(){
-	document.write("Test aus Javascript :{b:host}: <br>");
-}*/
-
-//test();
-
-</script>
-Echo Test : <{echo_off}Taucht nicht auf{echo_on}>
-
-<a href="http://192.168.2.207/Desinfect-2010.nrg">gross</a><br>
-
-
-<input type=button onclick=test() value="Button 1"><br>
-<input type=button onclick=templateTest() value="Button C"><br>
-
 <h2>{f:checkregister}</h2><br>
-{b:dumpSessionStore}<br>
+{f:dumpSessionStore}<br>
 
-{b:startSession}
+{f:startSession}
 &#123;b:startSession} aufrufen um Session Variablen benutzen zu k&ouml;nnen
 
 
