@@ -146,7 +146,3 @@ void engine_setVariable(http_request *s, FUNCTION_PARAS* func) {
 	}
 }
 
-void engine_builtinFunction(http_request *s, FUNCTION_PARAS* func) {
-	builtinFunction(s, func);
-}
-

@@ -67,7 +67,6 @@ int loadPlugin(const char* name,const char* path);
 
 void register_internal_funcs( void );
 
-void engine_builtinFunction(http_request *s,FUNCTION_PARAS* func);
 int check_platformFunction_exists(FUNCTION_PARAS* func);
 void engine_platformFunction(http_request *s,FUNCTION_PARAS* func);
 void engine_includeFile(http_request *s,const char* prefix,FUNCTION_PARAS* func);

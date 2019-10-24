@@ -289,13 +289,14 @@ static void parseFunction(engine_infos* engine, const char* buffer, int length) 
 	}
 
 	switch (func->function) {
-	case TEMPLATE_PLATFORM_FUNCTION:
-		if ( 0 != check_platformFunction_exists(func)){
-			func->function = TEMPLATE_UNKNOWN;
-		}
-		break;
-	default:
-		break;
+		case TEMPLATE_PLATFORM_FUNCTION:
+		case TEMPLATE_BUILDIN_FUNCTION:
+			if ( 0 != check_platformFunction_exists(func)){
+				func->function = TEMPLATE_UNKNOWN;
+			}
+			break;
+		default:
+			break;
 	}
 
 }
@@ -430,7 +431,7 @@ int processHTML(http_request* s, const char* prefix, const char *pagename, const
 			switch (s->engine_current->func.function) {
 
 			case TEMPLATE_BUILDIN_FUNCTION:
-				engine_builtinFunction(s, &s->engine_current->func);
+				engine_platformFunction(s, &s->engine_current->func);
 				last_chunk_send_pos = i + 1;
 				break;
 			case TEMPLATE_PLATFORM_FUNCTION:

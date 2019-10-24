@@ -353,23 +353,6 @@ void register_internal_funcs( void ) {
 
 
 
-#define CheckFunktion(a) if(0==strncmp((char*)func->parameter[0].text,a,strlen(a))) if(func->parameter[0].text[strlen(a)]=='\0')
-int builtinFunction ( http_request* s,FUNCTION_PARAS* func ) {
-
-#ifdef WEBSERVER_USE_IPV6
-    CheckFunktion ( "ipv6" ) {
-		char mybuf[200];
-        PlatformGetIPv6 ( ( char* ) mybuf );
-        printHTMLChunk(s->socket, "[%s]",mybuf );
-        return 0;
-    }
-#endif
-
-
-
-    printHTMLChunk ( s->socket ,"Unbekannt :%s\n",func->parameter[0].text );
-    return 0;
-}
 
 static void print_compiler ( http_request* s ) {
 

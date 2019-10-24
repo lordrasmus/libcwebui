@@ -196,11 +196,16 @@ void engine_platformFunction(http_request *s, FUNCTION_PARAS* func) {
 	if (func->parameter[0].text == 0){
 		return;
 	}
+
+	if ( func->platform_function == 0 ){
+		LOG( TEMPLATE_LOG, ERROR_LEVEL, s->socket->socket, "Error platform_function not set %s",func->parameter[0].text);
+		return;
+	}
 	node = func->platform_function;
 
 	tmp = (user_func_s*) node->info;
 #ifdef _WEBSERVER_ENGINE_PLUGINS_DEBUG_
-	LOG( TEMPLATE_LOG, NOTICE_LEVEL, s->socket->socket, "Calling Plugin Function %s enter", func->para[0]);
+	LOG( TEMPLATE_LOG, NOTICE_LEVEL, s->socket->socket, "Calling Plugin Function %s enter", func->parameter[0].text);
 #endif
 
 	if ((error_handler != 0) && (tmp->plugin != 0)){
