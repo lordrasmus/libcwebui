@@ -68,6 +68,17 @@ jobs:
    ##########################################################################################
    
     - os: osx
+      osx_image: xcode9
+      compiler: clang
+      env: CC=clang CXX=clang++
+      #python: 3.6
+      before_script:
+      script: 
+         - cp Samples/OSX/MakeProject/WebserverConfig.h lib
+         - make -C lib
+         - make osx_tests
+         
+    - os: osx
       osx_image: xcode10
       compiler: clang
       env: CC=clang CXX=clang++
