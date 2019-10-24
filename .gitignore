@@ -44,6 +44,7 @@ tests/config_variants/LinuxWebsocketNoSSL/main.dSYM/
 tests/config_variants/LinuxWebsocketSelect/main
 tests/config_variants/LinuxWebsocketSelect/main.dSYM/
 tests/config_variants/LinuxWebsocketSelect/main.o
+tests/config_variants/LinuxSelect/main*
 
 Docker/*.pem
 Docker/libWebserver.so
