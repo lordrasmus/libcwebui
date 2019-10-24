@@ -794,7 +794,12 @@ void dumpSessions(http_request* s) {
 		/* size -= sizeof(ws_variable_store); // ist in getVariableStoreSize schon mit drin */
 
 		printHTMLChunk(s->socket, "<table border=1>");
-		printHTMLChunk(s->socket, "<tr><th>Store %"PRIu32" Byte<th>%s", size, ss->guid);
+		char guid[25];
+		memcpy(guid,ss->guid,15);
+		guid[14]='.';
+		guid[15]='.';
+		guid[16]='\0';
+		printHTMLChunk(s->socket, "<tr><th>Store %"PRIu32" Byte<th>%s", size, guid);
 
 		ticks = PlatformGetTick() - ss->last_use;
 		ticks = (getConfigInt("session_timeout") * PlatformGetTicksPerSeconde()) - ticks;
