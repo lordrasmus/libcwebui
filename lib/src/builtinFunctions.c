@@ -31,186 +31,39 @@ extern unsigned long allocated;
 extern unsigned long allocated_max;
 
 
-DEFINE_FUNCTION_INT( compiler ) {
-#ifdef __INTEL_COMPILER
-    unsigned int t1,patch,sversion,version;
-    t1 =  __INTEL_COMPILER;
-    patch = t1 % 10;
-    t1 = t1 / 10;
-    sversion = t1 % 10;
-    t1 = t1 / 10;
-    version = t1 ;
+/**************************************************************************
+ *             Conditions 
+ *************************************************************************/
 
-    printHTMLChunk ( s->socket ,"Intel Compiler %d.%d.%d",version,sversion,patch );
-    return;
-#endif
 
-#ifdef __clang__
-	printHTMLChunk ( s->socket ,"clang %s",__clang_version__);
-    return;
-#endif
-
-#ifdef __GNUC__
-#if __GNUC__ > 2
-    printHTMLChunk ( s->socket ,"GCC %d.%d.%d",__GNUC__,__GNUC_MINOR__,__GNUC_PATCHLEVEL__ );
-    return;
-#else
-     printHTMLChunk ( s->socket ,"GCC %d.%d",__GNUC__,__GNUC_MINOR__ );
-     return;
-#endif
-#endif
-
-	 // https://en.wikipedia.org/wiki/Microsoft_Visual_C%2B%2B
-	 // https://dev.to/yumetodo/list-of-mscver-and-mscfullver-8nd
-
-#ifdef _MSC_FULL_VER
-#if _MSC_FULL_VER == 191627027
-	 printHTMLChunk(s->socket, "Microsoft Visual C++ 2017 (15.9.7)"); return;
-#endif
-	 //printHTMLChunk(s->socket, "_MSC_FULL_VER %d", _MSC_FULL_VER);
-#endif
-
-#ifdef _MSC_VER
-#if _MSC_VER == 600
-    printHTMLChunk ( s->socket ,"Microsoft C Compiler version 6.0" );
-#elif _MSC_VER == 700
-    printHTMLChunk ( s->socket ,"Microsoft C/C++ compiler version 7.0" );
-#elif _MSC_VER == 800
-    printHTMLChunk ( s->socket ,"Microsoft Visual C++, 32-bit, version 1.0" );
-#elif _MSC_VER == 900
-    printHTMLChunk ( s->socket ,"Microsoft Visual C++, 32-bit, version 2.0" );
-#elif _MSC_VER == 1000
-    printHTMLChunk ( s->socket ,"Microsoft Visual C++, 32-bit, version 4.0" );
-#elif _MSC_VER == 1100
-    printHTMLChunk ( s->socket ,"Microsoft Visual C++, 32-bit, version 5.0" );
-#elif _MSC_VER == 1200
-    printHTMLChunk ( s->socket ,"Microsoft Visual C++, 32-bit, version 6.0" );
-#elif _MSC_VER == 1300
-    printHTMLChunk ( s->socket ,"Microsoft Visual C++ 2002 (7.0)" );
-#elif _MSC_VER == 1310
-    printHTMLChunk ( s->socket ,"Microsoft Visual C++ 2003 (7.1)" );
-#elif _MSC_VER == 1400
-    printHTMLChunk ( s->socket ,"Microsoft Visual C++ 2005 (8.0)" );
-#elif _MSC_VER == 1500
-    printHTMLChunk ( s->socket ,"Microsoft Visual C++ 2008 (9.0)" );
-#elif _MSC_VER == 1913
-	 printHTMLChunk(s->socket, "Microsoft Visual C++ 2017 (14.12)"); 
-#elif _MSC_VER == 1916
-	 printHTMLChunk(s->socket, "Visual Studio 2017 version ( 15.9 )"); return;
-#else
-    printHTMLChunk ( s->socket ,"Microsoft %d",_MSC_VER );
-#endif
-	return;
-#endif
-    printHTMLChunk ( s->socket ,"Unknown Compiler" );
+DEFINE_CONDITION( ssl_supported ) {
+	#ifdef WEBSERVER_USE_SSL
+		return COND_TRUE;
+	#else
+		return COND_FALSE;
+	#endif
 }
 
-static int miniFunctions ( http_request* s,char* buffer ) {
-    if ( !strncmp ( buffer,"ssl_avaible",11 ) ) {
-#ifdef WEBSERVER_USE_SSL
-        printHTMLChunk ( s->socket ,"AVAILABLE" );
-#else
-        printHTMLChunk ( s->socket ,"NOT AVAIBLE" );
-#endif
-        return 1;
-    }
-    
-    if ( !strncmp ( buffer,"websocket_avaible",17 ) ) {
-#ifdef WEBSERVER_USE_WEBSOCKETS
-		printHTMLChunk ( s->socket ,"AVAILABLE" );
-#else
-        printHTMLChunk ( s->socket ,"NOT AVAIBLE" );
-#endif
-		return 1;
-	}
-	
-	if ( !strncmp ( buffer,"build_os",8 ) ) {
-		// https://sourceforge.net/p/predef/wiki/OperatingSystems/
-	
-#ifdef OSX
-		printHTMLChunk ( s->socket ,"macOS" );
-        return 1;
-#endif
-
-#ifdef LINUX
-		printHTMLChunk ( s->socket ,"Linux" );
-        return 1;
-#endif        
-
-#ifdef _WIN32
-		printHTMLChunk(s->socket, "Win32");
-		return 1;
-#endif  
-
-		printHTMLChunk ( s->socket ,"Unknown" );
-        return 1;
-	}
-	
-    if ( !strncmp ( buffer,"64bit_avaible",13 ) ) {
-#ifdef __INTEL_COMPILER
-#ifdef _WIN64
-        printHTMLChunk ( s->socket ,"AVAILABLE" );
-        return 1;
-#else
-#ifdef __LP64__
-        printHTMLChunk ( s->socket ,"AVAILABLE" );
-        return 1;
-#else
-        printHTMLChunk ( s->socket ,"NOT AVAILABLE" );
-        return 1;
-#endif
-#endif
-#endif
-
-#ifdef __GNUC__
-#ifdef __LP64__
-        printHTMLChunk ( s->socket ,"AVAILABLE" );
-        return 1;
-#else
-        printHTMLChunk ( s->socket ,"NOT AVAILABLE" );
-        return 1;
-#endif
-#endif
-
-
-
-#ifdef _MSC_VER
-#ifdef _WIN64
-        printHTMLChunk ( s->socket ,"AVAILABLE" );
-        return 1;
-#else
-        printHTMLChunk ( s->socket ,"NOT AVAILABLE" );
-        return 1;
-#endif
-#endif
-        return 1;
-    }
-    return 0;
+DEFINE_CONDITION( webockets_supported ) {
+	#ifdef WEBSERVER_USE_WEBSOCKETS
+		return COND_TRUE;
+	#else
+		return COND_FALSE;
+	#endif
 }
 
-static int sessionFunctions ( http_request* s,char* buffer ) {
-    if ( !strncmp ( buffer,"startSession",12 ) ) {
-#ifdef WEBSERVER_USE_SESSIONS
-#ifdef _WEBSERVER_SESSION_DEBUG_
-        WebServerPrintf ( "builtinFunction: Start Session\r\n" );
-#endif
-        restoreSession ( s ,1, 1 );
+static void register_internal_conditions( void ){
 
-#else
-        WebServerPrintf ( "builtinFunction: Start Session not AVAILABLE\r\n" );
-#endif
-        return 1;
-    }
-    return 0;
+	REGISTER_LOCAL_CONDITION( ssl_supported );
+	REGISTER_LOCAL_CONDITION( webockets_supported );
 }
 
-DEFINE_FUNCTION_INT( memoryInfos ){
-    printHTMLChunk ( s->socket,"<font bold size=3>Allocated Memory</font>" );
-    printHTMLChunk ( s->socket,"<table><th>Typ<th>Bytes" );
-    printHTMLChunk ( s->socket,"<tr><td>CUR<td>%ld",allocated );
-    printHTMLChunk ( s->socket,"<tr><td>MAX<td>%ld",allocated_max );
-    printHTMLChunk ( s->socket,"</table>" );
-}
+/**************************************************************************
+ *             Function 
+ *************************************************************************/
+
+static void print_compiler ( http_request* s );
+
 
 static int memoryInfosDetail ( http_request* s ) {
     int all_file_size=0;
@@ -238,9 +91,6 @@ static int memoryInfosDetail ( http_request* s ) {
 #endif
     return 0;
 }
-
-
-
 
 
 static void getServerLink ( http_request* s ) {
@@ -347,64 +197,164 @@ static void getServerLinkSSL ( http_request* s ) {
 #endif
 }
 
-/*DEFINE_FUNCTION_INT( ip ){
-	printHTMLChunk(s->socket,"%s",getConfigText( "server_ip") );
-}*/
-
-DEFINE_FUNCTION_INT( server_name ){
-	printHTMLChunk ( s->socket,"%s",SERVER_NAME );
+DEFINE_FUNCTION_INT( websocket_avaible ){
+#ifdef WEBSERVER_USE_WEBSOCKETS
+		printHTMLChunk ( s->socket ,"AVAILABLE" );
+#else
+        printHTMLChunk ( s->socket ,"NOT AVAIBLE" );
+#endif
 }
 
-DEFINE_FUNCTION_INT( session_timeout ){
-	printHTMLChunk ( s->socket,"%d",getConfigInt("session_timeout") );
+#define PRINT_RETURN( value ) printHTMLChunk ( s->socket ,value ); return;
+
+DEFINE_FUNCTION_INT( build_os ){
+		// https://sourceforge.net/p/predef/wiki/OperatingSystems/
+	
+#ifdef OSX
+		PRINT_RETURN( "macOS" );
+#endif
+#ifdef LINUX
+		PRINT_RETURN( "Linux" );
+#endif
+#ifdef _WIN32
+		PRINT_RETURN( "Win32" );
+#endif  
+		PRINT_RETURN( "Unknown" );
 }
 
-DEFINE_FUNCTION_INT( host ){
-	printHTMLChunk ( s->socket,"%s",s->header->Host );
+DEFINE_FUNCTION_INT( ssl_avaible ){
+#ifdef WEBSERVER_USE_SSL
+        printHTMLChunk ( s->socket ,"AVAILABLE" );
+#else
+        printHTMLChunk ( s->socket ,"NOT AVAIBLE" );
+#endif     
 }
 
-DEFINE_FUNCTION_INT( host_name ){
-	printHTMLChunk ( s->socket,"%s",s->header->HostName );
+DEFINE_FUNCTION_INT( 64bit_avaible ){
+#ifdef __INTEL_COMPILER
+#ifdef _WIN64
+        PRINT_RETURN( "AVAILABLE" );
+#else
+#ifdef __LP64__
+        PRINT_RETURN( "AVAILABLE" );
+#else
+       PRINT_RETURN( "NOT AVAILABLE" );
+#endif
+#endif
+#endif
+
+#ifdef __GNUC__
+#ifdef __LP64__
+        PRINT_RETURN( "AVAILABLE" );
+#else
+        PRINT_RETURN( "NOT AVAILABLE" );
+#endif
+#endif
+
+#ifdef _MSC_VER
+#ifdef _WIN64
+        PRINT_RETURN( "AVAILABLE" );
+#else
+        PRINT_RETURN( "NOT AVAILABLE" );
+        return 1;
+#endif
+#endif
+
+        printHTMLChunk ( s->socket ,"Unknown" );
 }
 
-DEFINE_FUNCTION_INT( build_time ){
-	 printHTMLChunk ( s->socket ,"%s %s", __DATE__,__TIME__ );
+DEFINE_FUNCTION_INT( memoryInfos ){
+    printHTMLChunk ( s->socket,"<font bold size=3>Allocated Memory</font>" );
+    printHTMLChunk ( s->socket,"<table><th>Typ<th>Bytes" );
+    printHTMLChunk ( s->socket,"<tr><td>CUR<td>%ld",allocated );
+    printHTMLChunk ( s->socket,"<tr><td>MAX<td>%ld",allocated_max );
+    printHTMLChunk ( s->socket,"</table>" );
 }
 
-DEFINE_FUNCTION_INT( server_port ){
-	 printHTMLChunk ( s->socket,"%d",getConfigInt("port") );
+DEFINE_FUNCTION_INT( compiler ) {        print_compiler( s );                                               }
+DEFINE_FUNCTION_INT( host_name ){        printHTMLChunk ( s->socket,"%s",s->header->HostName );             }
+DEFINE_FUNCTION_INT( server_name ){      printHTMLChunk ( s->socket,"%s",SERVER_NAME );                     }
+DEFINE_FUNCTION_INT( build_time ){       printHTMLChunk ( s->socket ,"%s %s", __DATE__,__TIME__ );          }
+
+DEFINE_FUNCTION_INT( session_timeout ){  printHTMLChunk ( s->socket,"%d",getConfigInt("session_timeout") ); }
+
+DEFINE_FUNCTION_INT( host ){             printHTMLChunk ( s->socket,"%s",s->header->Host );           }
+DEFINE_FUNCTION_INT( server_port ){      printHTMLChunk ( s->socket,"%d",getConfigInt("port") );      }
+DEFINE_FUNCTION_INT( server_ssl_port ){  printHTMLChunk ( s->socket,"%d",getConfigInt("ssl_port") );  }
+DEFINE_FUNCTION_INT( link ){             getServerLinkStd ( s );        }
+DEFINE_FUNCTION_INT( link_std ){         getServerLinkStd ( s );     }
+DEFINE_FUNCTION_INT( link_ssl ){         getServerLinkSSL ( s );     }
+
+DEFINE_FUNCTION_INT( printRegisteredFunctions ){  printRegisteredFunctions ( s );  }
+DEFINE_FUNCTION_INT( printRegisteredConditions ){ printRegisteredConditions ( s ); }
+DEFINE_FUNCTION_INT( printRegisteredPlugins ){    printRegisteredPlugins ( s );    }
+DEFINE_FUNCTION_INT( printLoadedFiles ){          dumpLoadedFiles ( s );           }
+
+DEFINE_FUNCTION_INT( memoryInfosDetail ){  memoryInfosDetail ( s ); }
+DEFINE_FUNCTION_INT( dumpSessionStore ){   dumpSessionStore ( s );  }
+DEFINE_FUNCTION_INT( dumpSessions ){       dumpSessions ( s );      }
+DEFINE_FUNCTION_INT( dumpGlobals ){        dumpGlobals ( s );       }
+DEFINE_FUNCTION_INT( dumpSockets ){        dumpSockets ( s );       }
+
+DEFINE_FUNCTION_INT( startSession ){   
+#ifdef WEBSERVER_USE_SESSIONS
+        restoreSession ( s ,1, 1 );
+#else
+        WebServerPrintf ( "builtinFunction: startSession not AVAILABLE\r\n" );
+#endif
 }
 
-DEFINE_FUNCTION_INT( server_ssl_port ){
-	 printHTMLChunk ( s->socket,"%d",getConfigInt("ssl_port") );
-}
-
+ 
 void register_internal_funcs( void ) {
 
 #ifndef _MSC_VER
 	REGISTER_FUNCTION_INT( dump_render_vars );
 #endif
+	
+	REGISTER_LOCAL_FUNCTION_INT( startSession );
+	
+	REGISTER_LOCAL_FUNCTION_INT( websocket_avaible );
+	REGISTER_LOCAL_FUNCTION_INT( build_os );
+	REGISTER_LOCAL_FUNCTION_INT( ssl_avaible );
+	REGISTER_LOCAL_FUNCTION_INT( 64bit_avaible );
+	
 	REGISTER_LOCAL_FUNCTION_INT( compiler );
+	REGISTER_LOCAL_FUNCTION_INT( build_time );
 	REGISTER_LOCAL_FUNCTION_INT( memoryInfos );
-/*	REGISTER_FUNCTION( ip ); */
 	REGISTER_LOCAL_FUNCTION_INT( server_name );
 	REGISTER_LOCAL_FUNCTION_INT( session_timeout );
+	
 	REGISTER_LOCAL_FUNCTION_INT( host );
 	REGISTER_LOCAL_FUNCTION_INT( host_name );
-	REGISTER_LOCAL_FUNCTION_INT( build_time );
 	REGISTER_LOCAL_FUNCTION_INT( server_port );
 	REGISTER_LOCAL_FUNCTION_INT( server_ssl_port );
+	REGISTER_LOCAL_FUNCTION_INT( link );
+	REGISTER_LOCAL_FUNCTION_INT( link_std );
+	REGISTER_LOCAL_FUNCTION_INT( link_ssl );
+
+	REGISTER_LOCAL_FUNCTION_INT( printRegisteredFunctions );
+	REGISTER_LOCAL_FUNCTION_INT( printRegisteredConditions );
+	REGISTER_LOCAL_FUNCTION_INT( printRegisteredPlugins );
+	REGISTER_LOCAL_FUNCTION_INT( printLoadedFiles );
+	
+	REGISTER_LOCAL_FUNCTION_INT( memoryInfosDetail );
+	
+	
+	REGISTER_LOCAL_FUNCTION_INT( dumpSessionStore );
+	REGISTER_LOCAL_FUNCTION_INT( dumpSessions );
+	REGISTER_LOCAL_FUNCTION_INT( dumpGlobals );
+	REGISTER_LOCAL_FUNCTION_INT( dumpSockets );
+	
+	register_internal_conditions();
 
 }
 
+
+
+
+
 #define CheckFunktion(a) if(0==strncmp((char*)func->parameter[0].text,a,strlen(a))) if(func->parameter[0].text[strlen(a)]=='\0')
-
 int builtinFunction ( http_request* s,FUNCTION_PARAS* func ) {
-
-    CheckFunktion ( "memoryInfosDetail" ) {
-        memoryInfosDetail ( s );
-        return 0;
-    }
 
 #ifdef WEBSERVER_USE_IPV6
     CheckFunktion ( "ipv6" ) {
@@ -416,61 +366,83 @@ int builtinFunction ( http_request* s,FUNCTION_PARAS* func ) {
 #endif
 
 
-    CheckFunktion ( "link" ) {
-        getServerLink ( s );
-        return 0;
-    }
-    CheckFunktion ( "link_std" ) {
-        getServerLinkStd ( s );
-        return 0;
-    }
-    CheckFunktion ( "link_ssl" ) {
-        getServerLinkSSL ( s );
-        return 0;
-    }
-    CheckFunktion ( "registeredFunctionsDetail" ) {
-        printRegisteredFunctions ( s );
-        return 0;
-    }
-    CheckFunktion ( "registeredConditionsDetail" ) {
-        printRegisteredConditions ( s );
-        return 0;
-    }
-    CheckFunktion ( "registeredPlugins" ) {
-        printRegisteredPlugins ( s );
-        return 0;
-    }
-    CheckFunktion ( "printLoadedFiles" ) {
-    	dumpLoadedFiles ( s );
-        return 0;
-    }
-	CheckFunktion ( "dumpGlobals" ){
-		dumpGlobals(s);
-		return 0;
-	}
-	CheckFunktion ( "dumpSessions" ){
-		dumpSessions(s);
-		return 0;
-	}
-	CheckFunktion ( "dumpSockets" ){
-		dumpSockets(s);
-		return 0;
-	}
-	CheckFunktion ( "dumpSessionStore" ) {
-		dumpSession ( s );
-        return 0;
-    }
-    if ( miniFunctions ( s,func->parameter[0].text ) ){
-        return 0;
-    }
-
-    if ( sessionFunctions ( s,func->parameter[0].text ) ){
-        return 0;
-    }
 
     printHTMLChunk ( s->socket ,"Unbekannt :%s\n",func->parameter[0].text );
     return 0;
 }
 
+static void print_compiler ( http_request* s ) {
 
+#ifdef __INTEL_COMPILER
+    unsigned int t1,patch,sversion,version;
+    t1 =  __INTEL_COMPILER;
+    patch = t1 % 10;
+    t1 = t1 / 10;
+    sversion = t1 % 10;
+    t1 = t1 / 10;
+    version = t1 ;
+
+    printHTMLChunk ( s->socket ,"Intel Compiler %d.%d.%d",version,sversion,patch );
+    return;
+#endif
+
+#ifdef __clang__
+	printHTMLChunk ( s->socket ,"clang %s",__clang_version__);
+    return;
+#endif
+
+#ifdef __GNUC__
+#if __GNUC__ > 2
+    printHTMLChunk ( s->socket ,"GCC %d.%d.%d",__GNUC__,__GNUC_MINOR__,__GNUC_PATCHLEVEL__ );
+    return;
+#else
+     printHTMLChunk ( s->socket ,"GCC %d.%d",__GNUC__,__GNUC_MINOR__ );
+     return;
+#endif
+#endif
+
+	 // https://en.wikipedia.org/wiki/Microsoft_Visual_C%2B%2B
+	 // https://dev.to/yumetodo/list-of-mscver-and-mscfullver-8nd
+
+#ifdef _MSC_FULL_VER
+#if _MSC_FULL_VER == 191627027
+	 printHTMLChunk(s->socket, "Microsoft Visual C++ 2017 (15.9.7)"); return;
+#endif
+	 //printHTMLChunk(s->socket, "_MSC_FULL_VER %d", _MSC_FULL_VER);
+#endif
+
+#ifdef _MSC_VER
+#if _MSC_VER == 600
+    printHTMLChunk ( s->socket ,"Microsoft C Compiler version 6.0" );
+#elif _MSC_VER == 700
+    printHTMLChunk ( s->socket ,"Microsoft C/C++ compiler version 7.0" );
+#elif _MSC_VER == 800
+    printHTMLChunk ( s->socket ,"Microsoft Visual C++, 32-bit, version 1.0" );
+#elif _MSC_VER == 900
+    printHTMLChunk ( s->socket ,"Microsoft Visual C++, 32-bit, version 2.0" );
+#elif _MSC_VER == 1000
+    printHTMLChunk ( s->socket ,"Microsoft Visual C++, 32-bit, version 4.0" );
+#elif _MSC_VER == 1100
+    printHTMLChunk ( s->socket ,"Microsoft Visual C++, 32-bit, version 5.0" );
+#elif _MSC_VER == 1200
+    printHTMLChunk ( s->socket ,"Microsoft Visual C++, 32-bit, version 6.0" );
+#elif _MSC_VER == 1300
+    printHTMLChunk ( s->socket ,"Microsoft Visual C++ 2002 (7.0)" );
+#elif _MSC_VER == 1310
+    printHTMLChunk ( s->socket ,"Microsoft Visual C++ 2003 (7.1)" );
+#elif _MSC_VER == 1400
+    printHTMLChunk ( s->socket ,"Microsoft Visual C++ 2005 (8.0)" );
+#elif _MSC_VER == 1500
+    printHTMLChunk ( s->socket ,"Microsoft Visual C++ 2008 (9.0)" );
+#elif _MSC_VER == 1913
+	 printHTMLChunk(s->socket, "Microsoft Visual C++ 2017 (14.12)"); 
+#elif _MSC_VER == 1916
+	 printHTMLChunk(s->socket, "Visual Studio 2017 version ( 15.9 )"); return;
+#else
+    printHTMLChunk ( s->socket ,"Microsoft %d",_MSC_VER );
+#endif
+	return;
+#endif
+    printHTMLChunk ( s->socket ,"Unknown Compiler" );
+}
 
