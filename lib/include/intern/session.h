@@ -56,7 +56,7 @@ int 		checkUserRegistered(http_request* s);
 char 		setUserRegistered(http_request* s,char status);
 
 
-int 		dumpSession( http_request *s );
+int 		dumpSessionStore( http_request *s );
 void 		dumpSessions( http_request *s );
 unsigned long 	dumpSessionsSize( int *count );
 

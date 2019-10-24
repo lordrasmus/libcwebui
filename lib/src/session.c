@@ -744,7 +744,7 @@ void checkSessionCookie(http_request* s) {
 }
 
 
-int dumpSession( http_request* s ) {
+int dumpSessionStore( http_request* s ) {
 	uint32_t s1 = 0;
 	uint32_t s2 = 0;
 
