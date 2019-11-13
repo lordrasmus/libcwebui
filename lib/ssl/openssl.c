@@ -335,9 +335,9 @@ int WebserverSSLCloseSockets(socket_info *s) {
 
 void printSSLErrorQueue(socket_info* s) {
 	unsigned long err_code;
-	char buffer[130]; // SSL requires 120 bytes
+	char buffer[256]; // SSL requires at least 256 bytes
 	while ((err_code = ERR_get_error())) {
-		ERR_error_string(err_code, buffer);
+		ERR_error_string_n(err_code, buffer, sizeof( buffer ));
 		LOG( CONNECTION_LOG, ERROR_LEVEL, s->socket, "%s", buffer);
 	}
 }
@@ -432,17 +432,28 @@ int WebserverSSLAccept(socket_info* s) {
 				LOG( CONNECTION_LOG, ERROR_LEVEL, s->socket,"%s", "SSL_ERROR_SYSCALL");
 				printSSLErrorQueue(s);
 				return SSL_PROTOCOL_ERROR;
-			case SSL_ERROR_SSL:
-				LOG( CONNECTION_LOG, ERROR_LEVEL, s->socket, "%s","SSL_ERROR_SSL");
-				printSSLErrorQueue(s);
+			case SSL_ERROR_SSL:{
+					int r3 = ERR_get_error();
+					if ( r3 == 336151574 ){
+						// error:14094416:SSL routines:ssl3_read_bytes:sslv3 alert certificate unknown
+						// ( 336151574 / 0x14094416 )
+						// the client reports that the certificate is unknown, do not print that error
+						return SSL_PROTOCOL_ERROR;
+					}
+					LOG( CONNECTION_LOG, ERROR_LEVEL, s->socket, "%s","SSL_ERROR_SSL");
+
+					char buffer[256];
+					ERR_error_string_n(r3, buffer, 256);
+					LOG( CONNECTION_LOG, ERROR_LEVEL, s->socket, "%s", buffer);
+
+					printSSLErrorQueue(s);
+				}
 				return SSL_PROTOCOL_ERROR;
-				break;
 				// A failure in the SSL library occurred, usually a protocol error. The OpenSSL error queue contains more information on the error.
 			default:
 				printSSLErrorQueue(s);
 				LOG( CONNECTION_LOG, ERROR_LEVEL, s->socket, "Unhandled SSL Error ( %d )", r2);
 				return SSL_PROTOCOL_ERROR;
-				break;
 			}
 		}
 	}
