@@ -440,6 +440,10 @@ int WebserverSSLAccept(socket_info* s) {
 						// the client reports that the certificate is unknown, do not print that error
 						return SSL_PROTOCOL_ERROR;
 					}
+					if ( r3 == 336151576 ){
+						// error:14094418:SSL routines:ssl3_read_bytes:tlsv1 alert unknown ca
+						return SSL_PROTOCOL_ERROR;
+					}
 					LOG( CONNECTION_LOG, ERROR_LEVEL, s->socket, "%s","SSL_ERROR_SSL");
 
 					char buffer[256];
