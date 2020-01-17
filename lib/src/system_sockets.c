@@ -20,7 +20,9 @@ SPDX-License-Identifier: MPL-2.0
 
 #include "webserver.h"
 
-
+#ifdef __CDT_PARSER__
+	#define __BASE_FILE__
+#endif
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -279,14 +281,14 @@ static int check_post_header( socket_info* sock ){
 	if ( sock->header->contenttype == 0 ){
 		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s","header->contenttype == 0 ");
 		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s",sock->header_buffer);
-		#warning "ändern"
+		// TODO nicht einfach den Buffer ausgeben
 		return -1;
 	}
 
 	if ( ( sock->header->contenttype == MULTIPART_FORM_DATA ) && ( sock->header->boundary == 0 ) ){
 		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s","header->boundary == 0 ");
 		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s",sock->header_buffer);
-		#warning "ändern"
+		// TODO nicht einfach den Buffer ausgeben
 		return -1;
 	}
 

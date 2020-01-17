@@ -59,6 +59,9 @@ SPDX-License-Identifier: MPL-2.0
 	#error "Must use OpenSSL 0.9.6 or later"
 #endif
 
+#ifdef __CDT_PARSER__
+	#define __BASE_FILE__
+#endif
 
 
 struct ssl_store_s {
