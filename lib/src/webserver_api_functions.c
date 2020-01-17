@@ -548,18 +548,7 @@ char* ws_get_cors_type_name( CORS_HEADER_TYPES type ){
 	return get_cors_type_name( type );
 }
 
-/**
-* @brief just a sample.
-*
-* @param port [in] Port number on which bind should be done.
-* @param outSocket [out] Pointer to socket handle.
-* @param listen_count [in] Length of pending connection queue
-* @return Negative value indicating error code.
-* @return SUCCESS and valid socket in outSocket
-* @details This function creates blocking socket, one can use fnSetSocketNonBlocking to change this default.
-* @note In this function port number will converted to network byte order before its use.
-* @todo nothing.
-*/
+
 
 #include "webserver_api_functions_depricated.c"
 
