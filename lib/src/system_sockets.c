@@ -279,12 +279,14 @@ static int check_post_header( socket_info* sock ){
 	if ( sock->header->contenttype == 0 ){
 		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s","header->contenttype == 0 ");
 		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s",sock->header_buffer);
+		#warning "ändern"
 		return -1;
 	}
 
 	if ( ( sock->header->contenttype == MULTIPART_FORM_DATA ) && ( sock->header->boundary == 0 ) ){
 		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s","header->boundary == 0 ");
 		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s",sock->header_buffer);
+		#warning "ändern"
 		return -1;
 	}
 
@@ -334,7 +336,7 @@ static int handleClientHeaderData(socket_info* sock) {
 				sock->closeSocket = 1;
 				return -1;
 			}
-			if ( sock->header->method == HTTP_POST ) {
+			if ( ( sock->header->method == HTTP_POST ) && ( sock->header->header_complete == 1 ) )  {
 				/*
 				LOG(CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"POST %d of %d",sock->header->post_buffer_pos,sock->header->contentlenght);
 				*/
@@ -350,9 +352,11 @@ static int handleClientHeaderData(socket_info* sock) {
 				if ( this_post_read > 20000 ){
 					return 0;
 				}
-#ifdef ENABLE_DEVEL_WARNINGS				
-				#warning "ändern weil so der WDT nicht mehr rankommt"
-#endif
+
+				if ( len == 0 ){
+					return 0;
+				}
+
 				continue;
 			}
 

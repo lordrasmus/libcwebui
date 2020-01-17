@@ -189,6 +189,8 @@ typedef struct {
 	char *Access_Control_Request_Headers;
 	char *Accept_Encoding;
 	char isHttp1_1;
+	
+	char header_complete;
 
 #ifdef WEBSERVER_USE_WEBSOCKETS
 	unsigned char WebSocketOutHash[40]; /* Versionen vor 8 benutzen nur 16 byte */
