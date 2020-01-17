@@ -23,26 +23,14 @@ SPDX-License-Identifier: MPL-2.0
 #endif
 
 
-/* http://www.campin.net/newlogcheck.html */
-
-
-static void writeToLog ( char* buffer ) {
-	#if defined (_WIN32)
-		printf ( "LOG : %s",buffer );
-	#elif defined ( __GNUC__ )
-		printf ( "Webserver: %s",buffer );
-		fflush(stdout);
-	#else
-		#error "writeToLog not handled"
-	#endif
-}
-
 int last_log_length=0;
 
 void addLog ( LogChannels channel,LogLevels level,char* filename,int fileline,const char* function,int socket,char* text,... ) {
-	static char buff[451];/* viel laenger darf eine logzeile nicht sein */
+	char buff[451];/* viel laenger darf eine logzeile nicht sein */
 	int len=0,i;
 	va_list ap;
+
+	printf( "%s", "Webserver: " );
 
 	len = snprintf (buff, 450,"%s :  ",function);
 	if(len < last_log_length){
@@ -54,37 +42,47 @@ void addLog ( LogChannels channel,LogLevels level,char* filename,int fileline,co
 	if(len > last_log_length){
 		last_log_length = len;
 	}
+	
+	buff[len] = '\0';
+	printf( "%s", buff );
+	len=0;
 
 	switch ( level ){
 		case NOTICE_LEVEL:
-			len += snprintf (&buff[len],450-len," NOTICE  : ");
+			printf(" NOTICE  : ( %d ) : ",socket);
 			break;
 		case INFO_LEVEL:
-			len += snprintf (&buff[len],450-len," INFO    : ");
+			printf(" INFO    : ( %d ) : ",socket);
 			break;
 		case WARNING_LEVEL:
-			len += snprintf (&buff[len],450-len," WARNING : ");
+			printf(" WARNING : ( %d ) : ",socket);
 			break;
 		case ERROR_LEVEL:
-			len += snprintf (&buff[len],450-len," ERROR   : ");
+			printf(" ERROR   : ( %d ) : ",socket);
 			break;
 	}
-	len += snprintf (&buff[len],450-len,"( %d ) : ",socket);
-
+	
+	// Maximal 300 Zeichen vom Variablen teil ausgeben
 	va_start ( ap, text );
-	len+= vsnprintf ( &buff[len],450-len, text, ap );
+	len = vsnprintf ( buff ,300, text, ap );
 	va_end ( ap );
-
+	if ( len < 300 ){
+		buff[len] = '\0';
+	}else{
+		buff[300] = '\0';
+	}
+	printf( "%s", buff );
+	
 	switch ( level ){
 		case NOTICE_LEVEL:
 			break;
 		case INFO_LEVEL:
 		case WARNING_LEVEL:
 		case ERROR_LEVEL:
-			len+= snprintf (&buff[len], 450-len,"\n   ->   File: %s, Line :%d",filename,fileline);
+			printf( "\n   ->   File: %s, Line :%d",filename,fileline );
 			break;
 	}
-
-	snprintf ( &buff[len], 450-len,"\n" );
-	writeToLog ( buff );
+	
+	printf( "\n" );
+	fflush(stdout);
 }
