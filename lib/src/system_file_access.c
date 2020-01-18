@@ -125,7 +125,7 @@ int prepare_file_content(WebserverFileInfo* file) {
 				break;
 			case FS_LOCAL_FILE_SYSTEM :
 				if ( 1 == local_file_system_check_file_modified( file ) ){
-					printf("prepare_file_content:  file change %s File System -> FS_LOCAL_FILE_SYSTEM  \n", file->FilePath );
+					//printf("prepare_file_content:  file change %s File System -> FS_LOCAL_FILE_SYSTEM  \n", file->FilePath );
 					#ifndef WEBSERVER_DISABLE_CACHE
 					generateEtag ( file );
 					#endif
@@ -159,7 +159,7 @@ int prepare_file_content(WebserverFileInfo* file) {
 		case FS_WNFS:		// WNFS wird vorher abgefragt
 			break;
 		case FS_LOCAL_FILE_SYSTEM :
-			printf("prepare_file_content: prepare content %s  File System -> FS_LOCAL_FILE_SYSTEM \n", file->FilePath );
+			//printf("prepare_file_content: prepare content %s  File System -> FS_LOCAL_FILE_SYSTEM \n", file->FilePath );
 			local_file_system_read_content( file );
 			break;
 
