@@ -49,6 +49,8 @@
                                     								
                                 </option>
                                 								
+                                <option id="gnu.cpp.compiler.option.dialect.std.1672395790" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.cpp.compiler.dialect.default" valueType="enumerated"/>
+                                								
                                 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.974561950" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
                                 							
                             </tool>
@@ -84,6 +86,14 @@
                                     <listOptionValue builtIn="false" value="SINGLE_MAIN"/>
                                     								
                                 </option>
+                                								
+                                <option id="gnu.c.compiler.option.warnings.pedantic.828447566" name="Pedantic (-pedantic)" superClass="gnu.c.compiler.option.warnings.pedantic" useByScannerDiscovery="false" value="false" valueType="boolean"/>
+                                								
+                                <option id="gnu.c.compiler.option.warnings.extrawarn.1206718350" name="Extra warnings (-Wextra)" superClass="gnu.c.compiler.option.warnings.extrawarn" useByScannerDiscovery="false" value="false" valueType="boolean"/>
+                                								
+                                <option id="gnu.c.compiler.option.warnings.syntax.1718274145" name="Check syntax only (-fsyntax-only)" superClass="gnu.c.compiler.option.warnings.syntax" useByScannerDiscovery="false" value="false" valueType="boolean"/>
+                                								
+                                <option id="gnu.c.compiler.option.warnings.allwarn.1932397913" name="All warnings (-Wall)" superClass="gnu.c.compiler.option.warnings.allwarn" useByScannerDiscovery="false" value="false" valueType="boolean"/>
                                 								
                                 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1305772394" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
                                 							
@@ -177,38 +187,6 @@
                     					
                     <fileInfo id="cdt.managedbuild.config.gnu.exe.debug.544275065.289268267" name="WebserverConfig.h" rcbsApplicability="disable" resourcePath="Samples/OSX/MakeProject/WebserverConfig.h" toolsToInvoke=""/>
                     					
-                    <folderInfo id="cdt.managedbuild.config.gnu.exe.debug.544275065.2078728100" name="/" resourcePath="Samples/Barrelfish">
-                        						
-                        <toolChain id="cdt.managedbuild.toolchain.gnu.exe.debug.714881542" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.exe.debug" unusedChildren="">
-                            							
-                            <tool id="cdt.managedbuild.tool.gnu.archiver.base.2143563892" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base.148707138"/>
-                            							
-                            <tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1946705396" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1842834841">
-                                								
-                                <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.847175500" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-                                							
-                            </tool>
-                            							
-                            <tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.239657872" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1545943257">
-                                								
-                                <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.58874164" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
-                                							
-                            </tool>
-                            							
-                            <tool id="cdt.managedbuild.tool.gnu.c.linker.exe.debug.1634693331" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.debug.1187687903"/>
-                            							
-                            <tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.584659109" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.1696220466"/>
-                            							
-                            <tool id="cdt.managedbuild.tool.gnu.assembler.exe.debug.617133381" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.exe.debug.317383755">
-                                								
-                                <inputType id="cdt.managedbuild.tool.gnu.assembler.input.855947812" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
-                                							
-                            </tool>
-                            						
-                        </toolChain>
-                        					
-                    </folderInfo>
-                    					
                     <fileInfo id="cdt.managedbuild.config.gnu.exe.debug.544275065.1536783293" name="WebserverConfig.h" rcbsApplicability="disable" resourcePath="Samples/Barrelfish/WebserverConfig.h" toolsToInvoke=""/>
                     					
                     <sourceEntries>
@@ -269,7 +247,7 @@
                                 								
                                 <option defaultValue="gnu.cpp.compiler.debugging.level.none" id="gnu.cpp.compiler.exe.release.option.debugging.level.1507075959" name="Debug Level" superClass="gnu.cpp.compiler.exe.release.option.debugging.level" useByScannerDiscovery="false" valueType="enumerated"/>
                                 								
-                                <option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.compiler.option.preprocessor.def.910910388" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
+                                <option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.compiler.option.preprocessor.def.910910388" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
                                     									
                                     <listOptionValue builtIn="false" value="SINGLE_MAIN"/>
                                     								
@@ -285,7 +263,7 @@
                                 								
                                 <option defaultValue="gnu.c.debugging.level.none" id="gnu.c.compiler.exe.release.option.debugging.level.1453741283" name="Debug Level" superClass="gnu.c.compiler.exe.release.option.debugging.level" useByScannerDiscovery="false" valueType="enumerated"/>
                                 								
-                                <option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.compiler.option.preprocessor.def.symbols.976617220" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+                                <option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.compiler.option.preprocessor.def.symbols.976617220" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
                                     									
                                     <listOptionValue builtIn="false" value="SINGLE_MAIN"/>
                                     								
