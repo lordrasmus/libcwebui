@@ -91,7 +91,6 @@ int sendFile(http_request* s, WebserverFileInfo *file) {
 	if ((s == 0) || (s->socket == 0) || (file == 0)) {
 		return -1;
 	}
-	s->socket->file_infos.file_info = 0;
 
 	switch ( file->fs_type ){
 		case FS_LOCAL_FILE_SYSTEM :
@@ -118,8 +117,7 @@ int sendFile(http_request* s, WebserverFileInfo *file) {
 		return -1;
 	}
 
-	s->socket->file_infos.file_send_pos = 0;
-	s->socket->file_infos.file_info = file;
+	s->socket->send_file_info = file;
 
 	return 0;
 }

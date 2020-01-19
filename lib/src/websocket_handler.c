@@ -17,6 +17,10 @@ SPDX-License-Identifier: MPL-2.0
 
 #include "webserver.h"
 
+#ifdef __CDT_PARSER__
+	#define __BASE_FILE__
+#endif
+
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -77,11 +81,11 @@ static int handleWebsocket(socket_info* sock, EVENT_TYPES type) {
 					break;
 				}
 
-				to_send = chunk->length - sock->file_infos.file_send_pos;
-				status = WebserverSend(sock, (unsigned char*) &chunk->text[sock->file_infos.file_send_pos], to_send, 0, &send_bytes);
+				to_send = chunk->length - sock->websocket_send_pos;
+				status = WebserverSend(sock, (unsigned char*) &chunk->text[sock->websocket_send_pos], to_send, 0, &send_bytes);
 
 				if (likely (send_bytes == to_send) ) {
-					sock->file_infos.file_send_pos = 0;
+					sock->websocket_send_pos = 0;
 					ws_list_delete(&sock->websocket_chunk_list, chunk);
 					WebserverFreeHtml_chunk(chunk);
 					if (likely ( status == SOCKET_SEND_NO_MORE_DATA ) ){
@@ -96,7 +100,8 @@ static int handleWebsocket(socket_info* sock, EVENT_TYPES type) {
 
 				/* Der Buffer konnte nur teilweise gesendet werden */
 				if ((status == SOCKET_SEND_NO_MORE_DATA) && (send_bytes < to_send)) {
-					sock->file_infos.file_send_pos = send_bytes;
+					// TODO muss das nicht eher addiert werden ??
+					sock->websocket_send_pos = send_bytes;
 					break;
 				}
 				

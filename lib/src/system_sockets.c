@@ -312,6 +312,7 @@ static int handleClientHeaderData(socket_info* sock) {
 
 	unsigned int this_post_read = 0;
 
+	sock->send_file_info = 0;
 
 	if (sock->header_buffer == 0) {
 		sock->header_buffer = (char*) WebserverMalloc( buffer_length );
@@ -321,8 +322,12 @@ static int handleClientHeaderData(socket_info* sock) {
 	while (1) {
 
 		if (buffer_length - sock->header_buffer_pos > 0) {
-			int len = WebserverRecv(sock, (unsigned char*) &sock->header_buffer[sock->header_buffer_pos],
-					buffer_length - sock->header_buffer_pos, 0);
+			int len = 0;
+			if ( sock->skip_read == 0 ){
+				unsigned char* p =(unsigned char*) &sock->header_buffer[sock->header_buffer_pos];
+				int read_length = buffer_length - sock->header_buffer_pos;
+				len = WebserverRecv(sock, p ,read_length , 0);
+			}
 			#ifdef _WEBSERVER_SOCKET_DEBUG_
 				LOG(CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"Client Header Recv %d",len);
 			#endif
@@ -562,11 +567,11 @@ static int handleClient(socket_info* sock) {
 		if (handleWebRequest(sock) < 0) {
 			return -1;
 		}
-		sock->file_infos.file_send_pos = 0;
 
+		// TODO das geht so nicht wenn mehrer Requests aufeinam verarbeitet werden
 		generateOutputBuffer(sock);
 
-		addEventSocketWritePersist(sock);
+
 
 	}
 
@@ -578,31 +583,31 @@ static int handleClient(socket_info* sock) {
 }
 
 
-static char sendData(socket_info* sock, const unsigned char* buffer, FILE_OFFSET length) {
+static char sendData(socket_info* sock, const char *buffer, const unsigned long buffer_size, unsigned long *buffer_send_pos) {
 	int ret;
 	int to_send;
 	SOCKET_SEND_STATUS status;
 
-	while (sock->file_infos.file_send_pos < length) {
-		to_send = length - sock->file_infos.file_send_pos;
+	while( *buffer_send_pos < buffer_size ) {
+		to_send = buffer_size - *buffer_send_pos;
 		if (to_send > WRITE_DATA_SIZE){
 			to_send = WRITE_DATA_SIZE;
 		}
 
-		status = WebserverSend(sock, &buffer[sock->file_infos.file_send_pos], to_send, 0, &ret);
+		status = WebserverSend(sock, &buffer[ *buffer_send_pos ], to_send, 0, &ret);
 #if _WEBSERVER_CONNECTION_DEBUG_ > 4
 		LOG ( CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%d of %d %d",ret,to_send,status );
 #endif
 		switch (status) {
 		case SOCKET_SEND_NO_MORE_DATA:
-			sock->file_infos.file_send_pos += ret;
+			*buffer_send_pos += ret;
 			break;
 
 		case SOCKET_SEND_CLIENT_DISCONNECTED:
 			return CLIENT_DICONNECTED;
 
 		case SOCKET_SEND_SEND_BUFFER_FULL:
-			sock->file_infos.file_send_pos += ret;
+			*buffer_send_pos += ret;
 			return DATA_PENDING;
 
 		case SOCKET_SEND_SSL_ERROR:
@@ -620,103 +625,46 @@ static char sendData(socket_info* sock, const unsigned char* buffer, FILE_OFFSET
 	return CLIENT_NO_MORE_DATA;
 }
 
-static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendOutputBuffer(socket_info* sock) {
+
+static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendRamFile(socket_info* sock, socket_file_infos* file) {
 	int ret;
-
-#ifdef _WEBSERVER_CONNECTION_SEND_DEBUG_
-	LOG ( CONNECTION_LOG,ERROR_LEVEL,sock->socket,"handleClientWriteData Send Output Buffer ","" );
-#endif
-
-	if ( sock->output_header_buffer != 0 ){
-		ret = sendData(sock, (unsigned char*) sock->output_header_buffer, sock->output_header_buffer_size);
-		switch (ret) {
-			case CLIENT_NO_MORE_DATA:
-				WebserverFree(sock->output_header_buffer);
-				sock->output_header_buffer = 0;
-				sock->file_infos.file_send_pos = 0;
-				break;
-			case DATA_PENDING:
-				return DATA_PENDING;
-			case CLIENT_DICONNECTED:
-				goto client_diconnected_header;
-			default:
-				LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "unhandled send status output_header_buffer pos : %"PRId64" status : %d",
-						sock->file_infos.file_send_pos, ret);
-				goto client_diconnected_header;
-		}
-	}
-	
-	if ( sock->output_main_buffer_size > 0 ){
-	
-		ret = sendData(sock, (unsigned char*) sock->output_main_buffer, sock->output_main_buffer_size);
-		switch (ret) {
-			case CLIENT_NO_MORE_DATA:
-				break;
-			case DATA_PENDING:
-				return DATA_PENDING;
-			case CLIENT_DICONNECTED:
-				goto client_diconnected_main;
-			default:
-				LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "unhandled send status output_main_buffer pos : %"PRId64" status : %d",
-						sock->file_infos.file_send_pos, ret);
-				goto client_diconnected_main;
-		}
-	}
-	if ( sock->output_main_buffer != 0 ){
-		WebserverFree(sock->output_main_buffer);
-	}
-	sock->output_main_buffer = 0;
-	sock->file_infos.file_send_pos = 0;
-	return NO_MORE_DATA;
-
-client_diconnected_header:
-	WebserverFree(sock->output_header_buffer);
-	sock->output_header_buffer = 0;
-
-client_diconnected_main:
-	WebserverFree(sock->output_main_buffer);
-	sock->output_main_buffer = 0;
-	sock->file_infos.file_send_pos = 0;
-	return CLIENT_DICONNECTED;
-}
-
-static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendRamFile(socket_info* sock) {
-	int ret;
-	ret = sendData(sock, sock->file_infos.file_info->Data, sock->file_infos.file_info->DataLenght);
+	ret = sendData(sock, file->file_info->Data, file->file_info->DataLenght,&file->file_send_pos);
 	switch (ret) {
 	case CLIENT_NO_MORE_DATA:
 		break;
 	case DATA_PENDING:
 		return DATA_PENDING;
 	case CLIENT_DICONNECTED:
-		sock->file_infos.file_send_pos = 0;
-		sock->file_infos.file_info = 0;
+		file->file_send_pos = 0;
+		file->file_info = 0;
 		return CLIENT_DICONNECTED;
 	default:
-		sock->file_infos.file_send_pos = 0;
-		sock->file_infos.file_info = 0;
+		file->file_send_pos = 0;
+		file->file_info = 0;
 		LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "unhandled send status file ram pos : %"PRId64" status : %d",
-				sock->file_infos.file_send_pos, ret);
+				file->file_send_pos, ret);
 		return CLIENT_DICONNECTED;
 	}
-	sock->file_infos.file_send_pos = 0;
-	sock->file_infos.file_info = 0;
+	file->file_send_pos = 0;
+	file->file_info = 0;
 	return NO_MORE_DATA;
 }
 
+
+
 #ifdef LINUX
-static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendFileSystem_sendfile(socket_info* sock) {
+static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendFileSystem_sendfile(socket_info* sock, socket_file_infos* file) {
 	FILE_OFFSET offset;
 	int fd, diff, send;
 
-	offset = sock->file_infos.file_send_pos;
+	offset = file->file_send_pos;
 
 	//printf("handleClientWriteDataSendFileSystem_sendfile : %s\n",sock->file_infos.file_info->Url);
 
 	// TODO(lordrasmus) : an fs anpassen
 
-	fd = PlatformOpenDataReadStream(sock->file_infos.file_info->FilePath);
-	diff = sock->file_infos.file_info->DataLenght - sock->file_infos.file_send_pos;
+	fd = PlatformOpenDataReadStream( file->file_info->FilePath);
+	diff = file->file_info->DataLenght - file->file_send_pos;
 
 	//printf("handleClientWriteDataSendFileSystem_sendfile: Diff %d DataLenght %d\n", diff, sock->file_infos.file_info->DataLenght );
 
@@ -725,14 +673,14 @@ static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendFileSystem_sendfile(soc
 	PlatformCloseDataStream();
 
 	if (send > 0) {
-		sock->file_infos.file_send_pos += send;
+		file->file_send_pos += send;
 
-		if (sock->file_infos.file_info->DataLenght > sock->file_infos.file_send_pos){
+		if ( file->file_info->DataLenght > file->file_send_pos ){
 			 return DATA_PENDING;
 		}
 
-		sock->file_infos.file_send_pos = 0;
-		sock->file_infos.file_info = 0;
+		file->file_send_pos = 0;
+		file->file_info = 0;
 		return NO_MORE_DATA;
 	}
 
@@ -763,55 +711,133 @@ static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendFileSystem_sendfile(soc
 }
 #endif
 
-static CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCached(socket_info* sock) {
+static CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCached(socket_info* sock, socket_file_infos* file) {
 #ifdef WEBSERVER_USE_SSL
 	if (sock->use_ssl == 1) {
-		return handleClientWriteDataNotCachedReadWrite(sock);
+		return handleClientWriteDataNotCachedReadWrite(sock, file);
 	} else {
 #ifdef LINUX
-		return handleClientWriteDataSendFileSystem_sendfile(sock);
+		return handleClientWriteDataSendFileSystem_sendfile(sock, file);
 #else
-		return handleClientWriteDataNotCachedReadWrite(sock);
+		return handleClientWriteDataNotCachedReadWrite(sock, file);
 #endif
 	}
 #else
-	
+
 #ifdef LINUX
-	return handleClientWriteDataSendFileSystem_sendfile(sock);
+	return handleClientWriteDataSendFileSystem_sendfile(sock, file);
 #else
-	return handleClientWriteDataNotCachedReadWrite(sock);
+	return handleClientWriteDataNotCachedReadWrite(sock, file);
 #endif
+
+#endif
+}
+
+
+static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendOutputBuffer(socket_info* sock, output_struct *output) {
+	int ret;
+
+#ifdef _WEBSERVER_CONNECTION_SEND_DEBUG_
+	LOG ( CONNECTION_LOG,ERROR_LEVEL,sock->socket,"handleClientWriteData Send Output Buffer ","" );
+#endif
+
+
+	if ( output->header.buffer != 0 ){
+		ret = sendData( sock, output->header.buffer, output->header.buffer_size, &output->header.buffer_send_pos );
+		switch (ret) {
+			case CLIENT_NO_MORE_DATA:
+				WebserverFree( output->header.buffer );
+				output->header.buffer = 0;
+				output->header.buffer_send_pos = 0;
+				break;
+			case DATA_PENDING:
+				return DATA_PENDING;
+			case CLIENT_DICONNECTED:
+				goto client_diconnected_header;
+			default:
+				LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "unhandled send status output_header_buffer pos : %"PRId64" status : %d",
+						output->header.buffer_send_pos, ret);
+				goto client_diconnected_header;
+		}
+	}
 	
-#endif
+	if ( output->main.buffer != 0 ){
+		ret = sendData( sock, output->main.buffer, output->main.buffer_size, &output->main.buffer_send_pos );
+		switch (ret) {
+			case CLIENT_NO_MORE_DATA:
+				WebserverFree( output->main.buffer );
+				output->main.buffer = 0;
+				output->main.buffer_send_pos = 0;
+				break;
+			case DATA_PENDING:
+				return DATA_PENDING;
+			case CLIENT_DICONNECTED:
+				goto client_diconnected_main;
+			default:
+				LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "unhandled send status output_main_buffer pos : %"PRId64" status : %d",
+						output->main.buffer_send_pos, ret);
+				goto client_diconnected_main;
+		}
+	}
+
+	if (output->file_infos.file_info != 0) {
+
+		//TODO Die Meldung fixen
+		#ifdef _WEBSERVER_CONNECTION_SEND_DEBUG_
+			LOG ( CONNECTION_LOG,ERROR_LEVEL,sock->socket,"handleClientWriteData Send File  Bytes %ld Pos %ld", sock->file_infos.file_info->DataLenght,sock->file_infos.file_send_pos );
+		#endif
+
+		if (output->file_infos.file_info->RamCached == 1) {
+			return handleClientWriteDataSendRamFile( sock , &output->file_infos);
+		} else {
+
+			return handleClientWriteDataNotCached(sock, &output->file_infos);
+
+		}
+	}
+
+
+	return NO_MORE_DATA;
+
+client_diconnected_header:
+	if ( output->header.buffer != 0 ){
+		WebserverFree( output->header.buffer );
+		output->header.buffer = 0;
+	}
+	output->header.buffer_send_pos = 0;
+
+client_diconnected_main:
+	if ( output->main.buffer != 0 ){
+		WebserverFree( output->main.buffer );
+		output->main.buffer = 0;
+	}
+	output->main.buffer_send_pos = 0;
+
+
+	return CLIENT_DICONNECTED;
 }
 
 CLIENT_WRITE_DATA_STATUS handleClientWriteData(socket_info* sock) {
 	CLIENT_WRITE_DATA_STATUS status_ret;
 
-	if (sock->output_main_buffer != 0) {
-		status_ret = handleClientWriteDataSendOutputBuffer(sock);
+	// TODO die liste muss abgearbeitet werden
+	while ( ws_list_size( &sock->output_list ) > 0 )
+	{
+		output_struct *output = (output_struct*)ws_list_get_at( &sock->output_list, 0 );
+
+		status_ret = handleClientWriteDataSendOutputBuffer(sock, output);
 		if (status_ret != NO_MORE_DATA){
 			return status_ret;
 		}
-	}
 
-	if (sock->file_infos.file_info == 0) {
-		return NO_MORE_DATA;
-	}
-
-#ifdef _WEBSERVER_CONNECTION_SEND_DEBUG_
-	LOG ( CONNECTION_LOG,ERROR_LEVEL,sock->socket,"handleClientWriteData Send File  Bytes %ld Pos %ld", sock->file_infos.file_info->DataLenght,sock->file_infos.file_send_pos );
-#endif
-
-	if (sock->file_infos.file_info->RamCached == 1) {
-		return handleClientWriteDataSendRamFile(sock);
-	} else {
-
-		return handleClientWriteDataNotCached(sock);
+		WebserverFree( output );
+		ws_list_delete( &sock->output_list, output );
 
 	}
 
 	return NO_MORE_DATA;
+
+
 }
 
 
@@ -911,7 +937,7 @@ int WebserverCloseSocket(socket_info* sock) {
 #endif
 }
 
-CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* sock) {
+CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* sock, socket_file_infos* file) {
 	int ret;
 	CLIENT_WRITE_DATA_STATUS ret_v;
 	SOCKET_SEND_STATUS status;
@@ -923,11 +949,11 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* so
 #endif
 
 	buffer = (unsigned char *) WebserverMalloc( WRITE_DATA_SIZE );
-	PlatformOpenDataReadStream(sock->file_infos.file_info->FilePath);
-	PlatformSeekToPosition(sock->file_infos.file_send_pos);
+	PlatformOpenDataReadStream( file->file_info->FilePath);
+	PlatformSeekToPosition( file->file_send_pos);
 
 	while (1) {
-		diff = sock->file_infos.file_info->DataLenght - sock->file_infos.file_send_pos;
+		diff = file->file_info->DataLenght - file->file_send_pos;
 		if (diff > WRITE_DATA_SIZE){
 			to_read = WRITE_DATA_SIZE;
 		}else{
@@ -947,8 +973,8 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* so
 #if _WEBSERVER_CONNECTION_DEBUG_ >= 5
 			LOG ( SOCKET_LOG,NOTICE_LEVEL,sock->socket,"SOCKET_SEND_NO_MORE_DATA : %d status : %d ret : %d",sock->file_infos.file_send_pos,status,ret );
 #endif
-			sock->file_infos.file_send_pos += ret;
-			if (sock->file_infos.file_info->DataLenght == sock->file_infos.file_send_pos) {
+			file->file_send_pos += ret;
+			if ( file->file_info->DataLenght == file->file_send_pos) {
 				ret_v = NO_MORE_DATA;
 				goto send_ende;
 			}
@@ -960,25 +986,26 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* so
 			goto send_ende;
 
 		case SOCKET_SEND_SEND_BUFFER_FULL:
-			sock->file_infos.file_send_pos += ret;
+			file->file_send_pos += ret;
 			PlatformCloseDataStream();
 			WebserverFree(buffer);
 			return DATA_PENDING;
 
 		default:
 			LOG(SOCKET_LOG, ERROR_LEVEL, sock->socket, "unhandled send status file file pos : %"PRId64" status : %d",
-					sock->file_infos.file_send_pos, status);
+					file->file_send_pos, status);
 			ret_v = CLIENT_DICONNECTED;
 			goto send_ende;
 		}
 
-		if (sock->file_infos.file_info->DataLenght == sock->file_infos.file_send_pos) {
+		if ( file->file_info->DataLenght == file->file_send_pos) {
 			ret_v = NO_MORE_DATA;
 			break;
 		}
 	}
 
-	send_ende: sock->file_infos.file_info = 0;
+	send_ende:
+		file->file_info = 0;
 	PlatformCloseDataStream();
 	WebserverFree(buffer);
 	return ret_v;
@@ -1061,10 +1088,14 @@ void handleer( int a, short b, void *t ) {
 
 	if (sock->client == 1) {
 		if (b == EVENT_READ) {
+			// TODO prüfen ob das addEventSocketWritePersist immer aufgerufen wird
+
 			#ifdef WEBSERVER_USE_SSL
+
+			// TODO das ssl pendig bytes in kombination mit mehreren headern testen
+
 			sock->ssl_pending = 0;
 			if(sock->use_ssl == 1){
-
 
 				/*
   				 Im SSL read muss die event registrierung blockiert werden bis
@@ -1089,7 +1120,6 @@ void handleer( int a, short b, void *t ) {
 
 				commitSslEventFlags( sock );
 
-				return;
 			}else{
 			#endif
 				ret = handleClient(sock);
@@ -1098,10 +1128,25 @@ void handleer( int a, short b, void *t ) {
 					return;
 				}
 
-				return;
+
 			#ifdef WEBSERVER_USE_SSL
 			}
 			#endif
+
+			while( sock->header_buffer_pos > 0){
+				sock->skip_read = 1;
+				ret = handleClient(sock);
+				if (ret < 0) {
+					WebserverConnectionManagerCloseRequest(sock);
+					return;
+				}
+
+			}
+			sock->skip_read = 0;
+			addEventSocketWritePersist(sock);
+
+
+			return;
 
 		}
 		if (b == EVENT_WRITE) {
@@ -1112,7 +1157,10 @@ void handleer( int a, short b, void *t ) {
 				LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"request finished","" );
 #endif
 				delEventSocketWritePersist(sock);
+
+				// TODO Keep Alive scheint nicht korrekt zu funktionieren
 				if (checkConnectionKeepAlive(sock) == 1) {
+					// TODO prüfen ob das noch gebraucht wird
 					if (sock->header_buffer_pos > 0) {
 						if (sock->closeSocket == 1) {
 							WebserverConnectionManagerCloseRequest(sock);
@@ -1177,8 +1225,13 @@ uint32_t getSocketInfoSize(socket_info* sock) {
 		ret+= WEBSERVER_GUID_LENGTH+1;
 	}
 #endif
-	ret += sock->output_header_buffer_size;
-	ret += sock->output_main_buffer_size;
+
+	ws_list_iterator_start( &sock->output_list );
+	while( ws_list_iterator_hasnext ( &sock->output_list ) ){
+		output_struct* out = (output_struct*) ws_list_iterator_next( &sock->output_list );
+		ret += out->header.buffer_size;
+		ret += out->main.buffer_size;
+	}
 
 	return ret;
 }

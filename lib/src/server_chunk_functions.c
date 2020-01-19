@@ -14,6 +14,9 @@ SPDX-License-Identifier: MPL-2.0
 
 */
 
+#ifdef __CDT_PARSER__
+	#define __BASE_FILE__ base
+#endif
 
 #include "webserver.h"
 #include <miniz.h>
@@ -26,17 +29,7 @@ SPDX-License-Identifier: MPL-2.0
 	#warning feste Buffer entfernen
 #endif
 
-void WebserverPrintShortInfos(void);
 
-#if 0
-static void freeHTMLChunk(void* var) {
-	/*   html_chunk* chunk = ( html_chunk* ) var;
-	 WebserverFree ( chunk->text );
-	 WebserverFree ( chunk );
-	 */
-	WebserverFreeHtml_chunk((html_chunk*)var);
-}
-#endif
 
 static void writeChunk(list_t* liste, const unsigned char* text, unsigned int length) {
 	html_chunk* chunk = 0, *tmp;
@@ -328,15 +321,17 @@ void generateOutputBuffer(socket_info* sock) {
 	char* buffer;
 	uint32_t offset = 0;
 	
-	sock->file_infos.file_send_pos = 0;
 	
-	if ( sock->use_output_compression == 1 ){
+	output_struct *output = WebserverMalloc( sizeof( output_struct ) );
+	memset( output, 0 , sizeof( output_struct ) );
+
+	if ( ( sock->use_output_compression == 1 ) && ( sock->send_file_info == 0 ) ){
 		unsigned long body_size = getChunkListSize(&sock->html_chunk_list);
 		buffer = (char*) WebserverMalloc ( body_size + 1  ); /* +1 fuer Header Debug '\0' */
 		
 		offset = writeChunksToBuffer(&sock->html_chunk_list, &buffer[offset], 1 );
-		sock->output_main_buffer = buffer;
-		sock->output_main_buffer_size = offset;
+		output->main.buffer = buffer;
+		output->main.buffer_size = offset;
 		
 		if ( body_size == 0){
 			printf("url : %s\n",sock->header->url);
@@ -357,8 +352,9 @@ void generateOutputBuffer(socket_info* sock) {
 		
 		offset = writeChunksToBuffer(&sock->header_chunk_list, buffer, 0);
 		
-		sock->output_header_buffer = buffer;
-		sock->output_header_buffer_size = offset;
+		output->header.buffer = buffer;
+		output->header.buffer_size = offset;
+		ws_list_append( &sock->output_list, output );
 		return;
 	}
 	
@@ -384,9 +380,18 @@ void generateOutputBuffer(socket_info* sock) {
 #ifdef _WEBSERVER_DEBUG_
 	LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket, "compiled HTML Size %d ",size );
 #endif
-	sock->output_main_buffer = buffer;
-	sock->output_main_buffer_size = offset;
+	output->main.buffer = buffer;
+	output->main.buffer_size = offset;
 	
+	if ( sock->send_file_info != 0 ){
+
+		output->file_infos.file_info= sock->send_file_info;
+		output->file_infos.file_send_pos = 0;
+
+		sock->send_file_info = 0;
+	}
+
+	ws_list_append( &sock->output_list, output );
 
 }
 

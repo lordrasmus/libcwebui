@@ -233,6 +233,22 @@ typedef struct{
 
 typedef void ( *extern_handler ) ( int fd, void* ptr );
 
+typedef struct{
+
+	char *buffer;
+	unsigned long buffer_size;
+	unsigned long buffer_send_pos;
+
+} output_buffer;
+
+typedef struct{
+
+	output_buffer header;
+	output_buffer main;
+
+	socket_file_infos file_infos;
+
+} output_struct;
 
 typedef struct {
 	int socket;
@@ -273,6 +289,7 @@ typedef struct {
 	char event_persist;
 #endif
 	char closeSocket;
+	char skip_read;
 
 	void *s;
 
@@ -290,8 +307,12 @@ typedef struct {
 
 	list_t websocket_chunk_list;
 	list_t websocket_fragments;
+	int    websocket_send_pos;
+
 	unsigned int websocket_fragment_start_opcode;
 	unsigned int websocket_fragments_length;
+
+
 
 	unsigned char *websocket_buffer;
 	unsigned int websocket_buffer_offset;
@@ -299,15 +320,12 @@ typedef struct {
 	char *websocket_store_guid;
 #endif
 
-	socket_file_infos file_infos;
+	WebserverFileInfo *send_file_info;
 
 	char use_output_compression;
 
-	char *output_header_buffer;
-	unsigned long output_header_buffer_size;
 
-	char *output_main_buffer;
-	unsigned long output_main_buffer_size;
+	list_t output_list;
 
 	extern_handler extern_handle;
 	void* extern_handle_data_ptr;
