@@ -257,6 +257,9 @@ DEFINE_FUNCTION( file_upload ){
 	}
 }
 
+DEFINE_FUNCTION( mini_function ){
+	printHTML(s,"mini_function");
+}
 
 
 #ifdef SINGLE_MAIN
@@ -275,6 +278,7 @@ WEBSERVER_API_HOOK{
 	REGISTER_LOCAL_FUNCTION ( cachemenustart );
 	REGISTER_LOCAL_FUNCTION ( sessionmenustart );
 	REGISTER_LOCAL_FUNCTION ( menustart );
+	REGISTER_LOCAL_FUNCTION ( mini_function );
 
 	REGISTER_LOCAL_FUNCTION ( js_func );
 
