@@ -14,7 +14,9 @@ SPDX-License-Identifier: MPL-2.0
 
 */
 
-
+#ifdef __CDT_PARSER__
+	#define __BASE_FILE__ base
+#endif
 
 #include "webserver.h"
 #include <miniz.h>
