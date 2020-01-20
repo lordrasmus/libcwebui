@@ -144,6 +144,8 @@ static char guid_cmp(const char* a, const char* b) {
 		return 0;
 	}
 	for (i = 0; i < WEBSERVER_GUID_LENGTH; i++) {
+		if ( ( a[i] == b[i] ) && ( a[i] == 0 ) ) break;
+
 		if (a[i] != b[i]){
 			return 0;
 		}
@@ -227,6 +229,8 @@ int checkUserRegistered(http_request* s) {
 		guid_var_ssl = int_getSessionValue(s, SESSION_STORE_SSL, (char*) "session-id-ssl");
 		if (0 != guid_var_ssl) {
 			got_guid_ssl = true;
+			//printf("guid_var->val.value_string     : %s\n",guid_var->val.value_string);
+			//printf("guid_var_ssl->val.value_string : %s\n",guid_var_ssl->val.value_string);
 			if (guid_cmp(guid_var->val.value_string, guid_var_ssl->val.value_string)) {
 				guid_match = true;
 				if (guid_match && true_both){
@@ -240,12 +244,22 @@ int checkUserRegistered(http_request* s) {
 	PlatformUnlockMutex( &session_mutex );
 
 	if (s->socket->use_ssl == 1) {
+		/*printf("got_guid_ssl: %d\n",got_guid_ssl);
+		printf("got_normal: %d\n",got_normal);
+		printf("got_giud: %d\n",got_giud);
+		printf("true_both: %d\n",true_both);
+		printf("true_normal: %d\n",true_normal);
+		printf("true_ssl: %d\n",true_ssl);
+		printf("guid_match: %d\n",guid_match);*/
+
 		if (got_guid_ssl != got_giud){
 			return SESSION_MISMATCH_ERROR;
 		}
+
 		if (guid_match != true_both){
 			return SESSION_MISMATCH_ERROR;
 		}
+
 		if (got_guid_ssl && got_normal && (true_normal != true_ssl)){
 			return SESSION_MISMATCH_ERROR;
 		}
