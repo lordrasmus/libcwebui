@@ -168,7 +168,7 @@ static void url_sanity_check( HttpRequestHeader *header ){
 			return;
 		}
 	}
-
+	url_decode( header->url );
 	pos = stringfind(header->url, "..");
 	if (pos > 0) {
 		header->error = 1;
