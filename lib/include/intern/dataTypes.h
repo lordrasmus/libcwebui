@@ -237,7 +237,7 @@ typedef struct{
 
 	char *buffer;
 	unsigned long buffer_size;
-	unsigned long buffer_send_pos;
+	FILE_OFFSET buffer_send_pos;
 
 } output_buffer;
 

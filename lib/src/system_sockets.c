@@ -281,14 +281,14 @@ static int check_post_header( socket_info* sock ){
 	if ( sock->header->contenttype == 0 ){
 		//LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s","header->contenttype == 0 ");
 		//LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s",sock->header_buffer);
-		// TODO nicht einfach den Buffer ausgeben
+		// nicht einfach den Buffer ausgeben
 		return -1;
 	}
 
 	if ( ( sock->header->contenttype == MULTIPART_FORM_DATA ) && ( sock->header->boundary == 0 ) ){
 		//LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s","header->boundary == 0 ");
 		//LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s",sock->header_buffer);
-		// TODO nicht einfach den Buffer ausgeben
+		// nicht einfach den Buffer ausgeben
 		return -1;
 	}
 
@@ -568,7 +568,7 @@ static int handleClient(socket_info* sock) {
 }
 
 
-static char sendData(socket_info* sock, const char *buffer, const unsigned long buffer_size, unsigned long *buffer_send_pos) {
+static char sendData(socket_info* sock, const unsigned char *buffer, const unsigned long buffer_size, FILE_OFFSET *buffer_send_pos) {
 	int ret;
 	int to_send;
 	SOCKET_SEND_STATUS status;
@@ -728,7 +728,7 @@ static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendOutputBuffer(socket_inf
 
 
 	if ( output->header.buffer != 0 ){
-		ret = sendData( sock, output->header.buffer, output->header.buffer_size, &output->header.buffer_send_pos );
+		ret = sendData( sock, (unsigned char*)output->header.buffer, output->header.buffer_size, &output->header.buffer_send_pos );
 		switch (ret) {
 			case CLIENT_NO_MORE_DATA:
 				WebserverFree( output->header.buffer );
@@ -747,7 +747,7 @@ static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendOutputBuffer(socket_inf
 	}
 	
 	if ( output->main.buffer != 0 ){
-		ret = sendData( sock, output->main.buffer, output->main.buffer_size, &output->main.buffer_send_pos );
+		ret = sendData( sock, (unsigned char*)output->main.buffer, output->main.buffer_size, &output->main.buffer_send_pos );
 		switch (ret) {
 			case CLIENT_NO_MORE_DATA:
 				WebserverFree( output->main.buffer );
