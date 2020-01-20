@@ -595,9 +595,9 @@ int ParseHeader(socket_info* sock, HttpRequestHeader* header, char* buffer, unsi
 	char back;
 	unsigned int line_length;
 
+	*bytes_parsed = 0;
 
 	if (length < 2){
-		*bytes_parsed = 0;
 		return -6;
 	}
 

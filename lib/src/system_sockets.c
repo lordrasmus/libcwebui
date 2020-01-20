@@ -482,17 +482,25 @@ static int checkConnectionKeepAlive(socket_info *sock) {
 		if (strcasecmp(sock->header->Connection, "keep-alive") != 0) {
 			return -1;
 		} else {
-			WebserverResetHttpRequestHeader(sock->header);
 			return 1;
 		}
 	}
 
 	if (sock->header->isHttp1_1 == 1) {
-		WebserverResetHttpRequestHeader(sock->header);
 		return 1;
 	}
 	return -1;
 }
+
+/*
+ *	Return Werte
+ *
+ *		-1 = Socket Fehler , Verbindung beenden
+ *		0  = Header nicht zuende es müssen noch Daten gelesen werden
+ *		1  = Request wurde komplett gelesen und Output generiert
+ *		2  = Websocket handling , Events wurden eingetragen
+ *
+ */
 
 static int handleClient(socket_info* sock) {
 	int ret;
@@ -510,7 +518,6 @@ static int handleClient(socket_info* sock) {
 
 	/* das hier tritt auf wenn der header noch nicht zuende ist */
 	if (ret == 0) {
-		addEventSocketRead(sock);
 		return 0;
 	}
 	if (ret == 1) {
@@ -524,7 +531,7 @@ static int handleClient(socket_info* sock) {
 			sock->isWebsocket = 1;
 			startWebsocketConnection ( sock );
 			addEventSocketReadWritePersist ( sock );
-			return 0;
+			return 2;
 		}
 
 		/* Websocket Protokol Version wird nicht unterstützt */
@@ -535,7 +542,7 @@ static int handleClient(socket_info* sock) {
 			#endif
 			generateOutputBuffer(sock);
 			addEventSocketWritePersist(sock);
-			return 0;
+			return 2;
 		}
 
 #endif
@@ -549,10 +556,10 @@ static int handleClient(socket_info* sock) {
 			return -1;
 		}
 
-		// TODO das geht so nicht wenn mehrer Requests aufeinam verarbeitet werden
 		generateOutputBuffer(sock);
 
-
+		WebserverResetHttpRequestHeader(sock->header);
+		return 1;
 
 	}
 
@@ -801,7 +808,6 @@ client_diconnected_main:
 CLIENT_WRITE_DATA_STATUS handleClientWriteData(socket_info* sock) {
 	CLIENT_WRITE_DATA_STATUS status_ret;
 
-	// TODO die liste muss abgearbeitet werden
 	while ( ws_list_size( &sock->output_list ) > 0 )
 	{
 		output_struct *output = (output_struct*)ws_list_get_at( &sock->output_list, 0 );
@@ -1098,6 +1104,7 @@ void handleer( int a, short b, void *t ) {
 					}
 				}
 
+				// TODO alten code entfernen
 #if 0
 
 				/*
@@ -1133,10 +1140,20 @@ void handleer( int a, short b, void *t ) {
 				WebserverConnectionManagerCloseRequest(sock);
 				return;
 			}
+			// TODO Websocket handling testen
+			if ( ret == 2 ){ // Websocket wurde behandelt
+				return;
+			}
+			if( ret == 0 ){  // Header unvollständig weitere daten lesen
+				addEventSocketRead( sock );
+				return;
+			}
+
+			// TODO testen wenn nur teile des headers da sind
 
 			sock->skip_read = 1;
 			while(( sock->header_buffer_pos > 0) || ( WebserverSSLPending ( sock ) == 1 ) ){
-				if ( WebserverSSLPending ( sock ) == 1 ) {
+				if ( (sock->use_ssl == 1) && ( WebserverSSLPending ( sock ) == 1 ) ) {
 					printf("SSL Pending %d\n",sock->ssl_pending_bytes);
 
 					unsigned char* p =(unsigned char*) &sock->header_buffer[sock->header_buffer_pos];
@@ -1150,17 +1167,24 @@ void handleer( int a, short b, void *t ) {
 					sock->header_buffer_pos += len;
 				}
 
-				// TODO ein scheint so zu sein der socket hier schon als lesend eingetragen wird wenn der Header unvollständig ist
 				ret = handleClient(sock);
 				if (ret < 0) {
 					WebserverConnectionManagerCloseRequest(sock);
 					return;
 				}
+				// Header nicht zuende , weitere daten lesen
+				if( ret == 0 ){
+					break;
+				}
 			}
 			sock->skip_read = 0;
 
-			// TODO das kollidiert mit dem write event eintrag hier
-			addEventSocketWritePersist(sock);
+			// Wenn Output Daten generiert wurden diese erstmal schreiben, nach dem schreiben dann wieder input daten lesen
+			if ( ws_list_size( &sock->output_list ) > 0 ){
+				addEventSocketWritePersist(sock);
+			}else{
+				addEventSocketRead( sock );
+			}
 
 			return;
 
@@ -1182,7 +1206,7 @@ void handleer( int a, short b, void *t ) {
 							WebserverConnectionManagerCloseRequest(sock);
 							return;
 						} else {
-							handleClient(sock);
+							addEventSocketRead(sock);
 							return;
 						}
 					} else {
