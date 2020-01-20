@@ -346,6 +346,14 @@ void printSSLErrorQueue(socket_info* s) {
 
 int WebserverSSLPending(socket_info* s) {
 
+	if(s->use_ssl == 0){
+		return 0;
+	}
+
+	if ( s->ssl_context == 0 ){
+		return 0;
+	}
+
 	s->ssl_pending_bytes = SSL_pending( s->ssl_context->ssl );
 
 	if( s->ssl_pending_bytes > 0 ){

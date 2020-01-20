@@ -1119,8 +1119,8 @@ void handleer( int a, short b, void *t ) {
 
 			sock->skip_read = 1;
 			while(( sock->header_buffer_pos > 0) || ( WebserverSSLPending ( sock ) == 1 ) ){
-				if ( (sock->use_ssl == 1) && ( WebserverSSLPending ( sock ) == 1 ) ) {
-					printf("SSL Pending %d\n",sock->ssl_pending_bytes);
+				if ( WebserverSSLPending ( sock ) == 1 ) {
+					//printf("SSL Pending %d\n",sock->ssl_pending_bytes);
 
 					unsigned char* p =(unsigned char*) &sock->header_buffer[sock->header_buffer_pos];
 					int read_length = sock->header_buffer_size - sock->header_buffer_pos;
