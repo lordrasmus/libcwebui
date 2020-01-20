@@ -1075,11 +1075,8 @@ void handleer( int a, short b, void *t ) {
 
 	if (sock->client == 1) {
 		if (b == EVENT_READ) {
-			// TODO prüfen ob das addEventSocketWritePersist immer aufgerufen wird
 
 			#ifdef WEBSERVER_USE_SSL
-
-			// TODO das ssl pendig bytes in kombination mit mehreren headern testen
 
 			sock->ssl_pending = 0;
 			if(sock->use_ssl == 1){
@@ -1092,7 +1089,6 @@ void handleer( int a, short b, void *t ) {
 					}
 					if (ret == SSL_ACCEPT_OK) {
 						// Wenn das SSL Accept OK ist das normale HTTP Header handling starten
-
 					}
 					if (ret == SSL_PROTOCOL_ERROR) {
 						WebserverConnectionManagerCloseRequest(sock);
@@ -1104,32 +1100,6 @@ void handleer( int a, short b, void *t ) {
 					}
 				}
 
-				// TODO alten code entfernen
-#if 0
-
-				/*
-  				 Im SSL read muss die event registrierung blockiert werden bis
-				 alle pending bytes gelesen wurden
-				*/
-				sock->ssl_block_event_flags = 1;
-				ret = handleClient(sock);
-				if (ret < 0) {
-					WebserverConnectionManagerCloseRequest(sock);
-					return;
-				}
-				while ( WebserverSSLPending ( sock ) ){
-					sock->ssl_pending = 1;
-					ret = handleClient(sock);
-					if (ret < 0) {
-						WebserverConnectionManagerCloseRequest(sock);
-						return;
-					}
-				}
-				sock->ssl_pending = 0;
-				sock->ssl_block_event_flags = 0;
-
-				commitSslEventFlags( sock );
-#endif
 			}
 			#endif
 
@@ -1149,7 +1119,6 @@ void handleer( int a, short b, void *t ) {
 				return;
 			}
 
-			// TODO testen wenn nur teile des headers da sind
 
 			sock->skip_read = 1;
 			while(( sock->header_buffer_pos > 0) || ( WebserverSSLPending ( sock ) == 1 ) ){
