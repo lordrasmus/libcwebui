@@ -317,6 +317,7 @@ static int handleClientHeaderData(socket_info* sock) {
 	if (sock->header_buffer == 0) {
 		sock->header_buffer = (char*) WebserverMalloc( buffer_length );
 		sock->header_buffer_pos = 0;
+		sock->header_buffer_size = buffer_length;
 	}
 
 	while (1) {
@@ -499,29 +500,9 @@ static int handleClient(socket_info* sock) {
 #ifdef _WEBSERVER_SOCKET_DEBUG_
 	LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"Client Data","" );
 #endif
-#ifdef WEBSERVER_USE_SSL
-	if (sock->run_ssl_accept == 1) {
-		ret = WebserverSSLAccept(sock);
-		if (ret == CLIENT_NO_MORE_DATA) {
-			addEventSocketRead(sock);
-			return 0;
-		}
-		if (ret == SSL_ACCEPT_OK) {
-#ifdef _WEBSERVER_SOCKET_DEBUG_
-			LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"Handle SSL Data" ,"");
-#endif
-		}
-		if (ret == SSL_PROTOCOL_ERROR) {
-#ifdef _WEBSERVER_SOCKET_DEBUG_
-			LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"SSL Protocol Error" ,"");
-#endif
-			return -1;
-		}
-		if (ret == NO_SSL_CONNECTION_ERROR) {
-			return -1;
-		}
-	}
-#endif
+
+
+
 	ret = handleClientHeaderData(sock);
 #if _WEBSERVER_CONNECTION_DEBUG_ > 4
 	LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"handleClientData ret : %d",ret );
@@ -1097,6 +1078,28 @@ void handleer( int a, short b, void *t ) {
 			sock->ssl_pending = 0;
 			if(sock->use_ssl == 1){
 
+				if (sock->run_ssl_accept == 1) {
+					ret = WebserverSSLAccept(sock);
+					if (ret == CLIENT_NO_MORE_DATA) {
+						addEventSocketRead(sock);
+						return;
+					}
+					if (ret == SSL_ACCEPT_OK) {
+						// Wenn das SSL Accept OK ist das normale HTTP Header handling starten
+
+					}
+					if (ret == SSL_PROTOCOL_ERROR) {
+						WebserverConnectionManagerCloseRequest(sock);
+						return;
+					}
+					if (ret == NO_SSL_CONNECTION_ERROR) {
+						WebserverConnectionManagerCloseRequest(sock);
+						return;
+					}
+				}
+
+#if 0
+
 				/*
   				 Im SSL read muss die event registrierung blockiert werden bis
 				 alle pending bytes gelesen wurden
@@ -1119,32 +1122,45 @@ void handleer( int a, short b, void *t ) {
 				sock->ssl_block_event_flags = 0;
 
 				commitSslEventFlags( sock );
-
-			}else{
-			#endif
-				ret = handleClient(sock);
-				if (ret < 0) {
-					WebserverConnectionManagerCloseRequest(sock);
-					return;
-				}
-
-
-			#ifdef WEBSERVER_USE_SSL
+#endif
 			}
 			#endif
 
-			while( sock->header_buffer_pos > 0){
-				sock->skip_read = 1;
+
+
+			ret = handleClient(sock);
+			if (ret < 0) {
+				WebserverConnectionManagerCloseRequest(sock);
+				return;
+			}
+
+			sock->skip_read = 1;
+			while(( sock->header_buffer_pos > 0) || ( WebserverSSLPending ( sock ) == 1 ) ){
+				if ( WebserverSSLPending ( sock ) == 1 ) {
+					printf("SSL Pending %d\n",sock->ssl_pending_bytes);
+
+					unsigned char* p =(unsigned char*) &sock->header_buffer[sock->header_buffer_pos];
+					int read_length = sock->header_buffer_size - sock->header_buffer_pos;
+					if ( read_length > sock->ssl_pending_bytes){
+						read_length = sock->ssl_pending_bytes;
+					}
+
+					// Wenn Pending Bytes im SSL Block sind werden nur die gelesen aber kein echter recv Aufruf durchgeführt
+					int len = WebserverRecv(sock, p ,read_length , 0);
+					sock->header_buffer_pos += len;
+				}
+
+				// TODO ein scheint so zu sein der socket hier schon als lesend eingetragen wird wenn der Header unvollständig ist
 				ret = handleClient(sock);
 				if (ret < 0) {
 					WebserverConnectionManagerCloseRequest(sock);
 					return;
 				}
-
 			}
 			sock->skip_read = 0;
-			addEventSocketWritePersist(sock);
 
+			// TODO das kollidiert mit dem write event eintrag hier
+			addEventSocketWritePersist(sock);
 
 			return;
 

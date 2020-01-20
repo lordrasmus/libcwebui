@@ -276,10 +276,12 @@ typedef struct {
 #ifdef WEBSERVER_USE_SSL
 	char use_ssl;
 	char ssl_pending;
+	// TODO werden die event flags noch gebraucht ??
 	char ssl_block_event_flags;
 	uint32_t ssl_event_flags;
 	char run_ssl_accept;
 	struct ssl_store_s *ssl_context;
+	int ssl_pending_bytes;
 #endif
 
 #ifdef USE_LIBEVENT
@@ -298,6 +300,7 @@ typedef struct {
 	HttpRequestHeader* header;
 	char *header_buffer;
 	unsigned int header_buffer_pos;
+	unsigned int header_buffer_size;
 
 	list_t header_chunk_list;
 	list_t html_chunk_list;
