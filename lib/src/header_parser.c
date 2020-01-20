@@ -419,7 +419,7 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 	}
 
 	if ( header->method == 0 ){
-		for ( int i = 0 ; i < length; i++ ){
+		for ( unsigned int i = 0 ; i < length; i++ ){
 			if ( line[i] == ' ' ){
 				int max = i;
 				if ( max > ( MAX_ERROR_METHOD -1 )  )
@@ -546,7 +546,7 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 			header->contenttype=MULTIPART_FORM_DATA;
 
 			i2++;
-			int i;
+			unsigned int i;
 			for( i=i2;i<length;i++){
 				if(line[i]=='\r'){
 					break;
