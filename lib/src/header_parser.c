@@ -168,6 +168,8 @@ static void url_sanity_check( HttpRequestHeader *header ){
 			return;
 		}
 	}
+
+	// TODO die Fehlermeldung überarbeiten die hier von kommt
 	url_decode( header->url );
 	pos = stringfind(header->url, "..");
 	if (pos > 0) {
