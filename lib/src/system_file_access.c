@@ -245,7 +245,7 @@ WebserverFileInfo VISIBLE_ATTR *getFile( char *name)  {
 
 	file = getFileLocalFileSystem( name);
 	if ( file == 0 ){
-		printf("getFile : Error File %s not found\n", name );
+		//printf("getFile : Error File %s not found\n", name );
 		return 0;
 	}
 
