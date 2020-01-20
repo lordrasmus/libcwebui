@@ -20,7 +20,9 @@ SPDX-License-Identifier: MPL-2.0
 
 #include "webserver.h"
 
-
+#ifdef __CDT_PARSER__
+	#define __BASE_FILE__
+#endif
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -279,14 +281,14 @@ static int check_post_header( socket_info* sock ){
 	if ( sock->header->contenttype == 0 ){
 		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s","header->contenttype == 0 ");
 		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s",sock->header_buffer);
-		#warning "ändern"
+		// TODO nicht einfach den Buffer ausgeben
 		return -1;
 	}
 
 	if ( ( sock->header->contenttype == MULTIPART_FORM_DATA ) && ( sock->header->boundary == 0 ) ){
 		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s","header->boundary == 0 ");
 		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s",sock->header_buffer);
-		#warning "ändern"
+		// TODO nicht einfach den Buffer ausgeben
 		return -1;
 	}
 
@@ -306,7 +308,7 @@ static int check_post_header( socket_info* sock ){
 static int handleClientHeaderData(socket_info* sock) {
 	int len2;
 	unsigned int buffer_length = WEBSERVER_MAX_HEADER_LINE_LENGHT * 1;
-	unsigned int parsed;
+	unsigned int parsed = 0;
 
 	unsigned int this_post_read = 0;
 
@@ -345,9 +347,11 @@ static int handleClientHeaderData(socket_info* sock) {
 						return 0;
 					}
 					if ( 1 == recv_post_payload( sock ,sock->header_buffer, len ) ){
+						sock->header->header_complete = 0;
 						return 1;	/* Aktuellen POST Request  gelesen, weiter Daten sind der nächste Header */
 					}
 				}
+				// Die schleife unterbrechen damit andere Sockets dran kommen
 				this_post_read+=len;
 				if ( this_post_read > 20000 ){
 					return 0;
@@ -363,12 +367,18 @@ static int handleClientHeaderData(socket_info* sock) {
 			sock->header_buffer_pos += len;
 		}
 
-
-
-		len2 = ParseHeader(sock, sock->header, sock->header_buffer, sock->header_buffer_pos, &parsed);
-		if (len2 > 0) {
-			reCopyHeaderBuffer(sock, len2);
-			continue;
+		if ( sock->header->header_complete == 0 ){
+			len2 = ParseHeader(sock, sock->header, sock->header_buffer, sock->header_buffer_pos, &parsed);
+			if (len2 > 0) {
+				reCopyHeaderBuffer(sock, parsed);
+				continue;
+			}else{
+				// TODO wenn das ein POST ist könnte man das kopieren lassen und unten den offset verwenden
+				if ( parsed > 0 ){
+					reCopyHeaderBuffer(sock, parsed);
+					parsed = 0;
+				}
+			}
 		}
 
 		/* Keine Zeile erkannt weiter Daten lesen */
@@ -397,6 +407,7 @@ static int handleClientHeaderData(socket_info* sock) {
 		}
 #ifdef WEBSERVER_USE_WEBSOCKETS
 		if ( 1 == checkIskWebsocketConnection(sock) ){
+			sock->header->header_complete = 0;
 			return 1;
 		}
 #endif
@@ -410,12 +421,17 @@ static int handleClientHeaderData(socket_info* sock) {
 					LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","POST Method Header Error" );
 					return -1;
 				}
-				if ( 1 == recv_post_payload( sock, &sock->header_buffer[parsed + 1], sock->header_buffer_pos - ( parsed + 1 ) )){
+				// Das muss hier sein weil noch Teil der Daten im Header Buffer sein können
+				if ( 1 == recv_post_payload( sock, sock->header_buffer, sock->header_buffer_pos )){
+					sock->header->header_complete = 0;
 					return 1; /* Aktuellen POST Request  gelesen, weiter Daten sind der nächste Header */
 				}
+
 				continue;
 			}
-			reCopyHeaderBuffer(sock, parsed + 1);
+			// TODO mehrfache HTTP GET Header testen
+			//reCopyHeaderBuffer(sock, parsed + 1);
+			sock->header->header_complete = 0;
 			return 1;
 		}
 
@@ -437,6 +453,7 @@ static int handleClientHeaderData(socket_info* sock) {
 #if _WEBSERVER_CONNECTION_DEBUG_ > 4
 			LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","Client Header Complete" );
 #endif
+			sock->header->header_complete = 0;
 			return 1;
 		}
 

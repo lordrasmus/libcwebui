@@ -72,9 +72,6 @@ tests/list/test_list_old
 tests/list/test_new.txt
 tests/list/test_old.txt
 
-.cproject
-.project
-.settings/
 LinuxMain/.cproject
 LinuxMain/.project
 LinuxMain/.settings/
@@ -126,3 +123,5 @@ Samples/OSX/MakeProject/main*
 
 tests/tscan/TscanCodeV2.14.24*
 tests/infer/infer-*
+
+Debug

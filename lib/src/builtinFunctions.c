@@ -92,7 +92,7 @@ static int memoryInfosDetail ( http_request* s ) {
     return 0;
 }
 
-
+#if 0
 static void getServerLink ( http_request* s ) {
 #ifdef WEBSERVER_USE_IPV6
     char mybuf[INET6_ADDRSTRLEN];
@@ -133,6 +133,7 @@ static void getServerLink ( http_request* s ) {
 #endif
 
 }
+#endif
 
 static void getServerLinkStd ( http_request* s ) {
 #ifdef WEBSERVER_USE_IPV6

@@ -104,7 +104,7 @@ base64_encode(char *dest, int size, const unsigned char *src, int slen)
 void WebserverBase64Encode(const unsigned char *input, int length, unsigned char *output, SIZE_TYPE out_length) {
 	memset( output, 0 , out_length );
 	
-	base64_encode( output, out_length, input, length );
+	base64_encode( (char*)output, out_length, input, length );
 }
 
 

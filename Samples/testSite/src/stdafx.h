@@ -17,5 +17,3 @@
 //#include "webserver.h"
 
 
-
-// TODO: Hier auf zus�tzliche Header, die das Programm erfordert, verweisen.
