@@ -379,7 +379,6 @@ static int handleClientHeaderData(socket_info* sock) {
 				reCopyHeaderBuffer(sock, parsed);
 				continue;
 			}else{
-				// TODO wenn das ein POST ist könnte man das kopieren lassen und unten den offset verwenden
 				if ( parsed > 0 ){
 					reCopyHeaderBuffer(sock, parsed);
 					parsed = 0;
@@ -435,8 +434,6 @@ static int handleClientHeaderData(socket_info* sock) {
 
 				continue;
 			}
-			// TODO mehrfache HTTP GET Header testen
-			//reCopyHeaderBuffer(sock, parsed + 1);
 			sock->header->header_complete = 0;
 			return 1;
 		}
