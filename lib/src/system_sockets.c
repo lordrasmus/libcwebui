@@ -1116,9 +1116,13 @@ void handleer( int a, short b, void *t ) {
 				return;
 			}
 
+			#ifndef WEBSERVER_USE_SSL
+				#define  WebserverSSLPending( a ) 0
+			#endif
 
 			sock->skip_read = 1;
 			while(( sock->header_buffer_pos > 0) || ( WebserverSSLPending ( sock ) == 1 ) ){
+				#ifdef WEBSERVER_USE_SSL
 				if ( WebserverSSLPending ( sock ) == 1 ) {
 					//printf("SSL Pending %d\n",sock->ssl_pending_bytes);
 
@@ -1132,6 +1136,7 @@ void handleer( int a, short b, void *t ) {
 					int len = WebserverRecv(sock, p ,read_length , 0);
 					sock->header_buffer_pos += len;
 				}
+				#endif
 
 				ret = handleClient(sock);
 				if (ret < 0) {
