@@ -61,79 +61,38 @@ int create_socket( void ){
 }
 
 
-void test_request( int sockfd, char* path, char* file ){
-	
-	char file_path[1000];
-	
-	static char buffer[100000];
-	int offset = 0;
-	
-	sprintf( file_path, "%s%s",path, file );
-	
-	printf("Teste : %s\n",file_path);
-	int fd = open( file_path, O_RDONLY );
-    int l = read( fd, buffer, sizeof( buffer ) );
-    close( fd );
-    
-    
-    
-    
-    write( sockfd, buffer, l );
-    
-    printf("written : %d\n",l);
-    memset( buffer, 0,  sizeof( buffer ) );
-    
-    return;
-    
-    offset = 0;
-    int header = 0;
-    while(1){
-		int ret = read( sockfd, &buffer[offset], 1);
-		if ( ret <= 0) break;
-		offset += ret;
-		
-		if( ( buffer[0] == '\r' ) && ( buffer[1] == '\n' ) ){
-			break;
-		}
-		
-		if( ( buffer[offset-2] == '\r' ) && ( buffer[offset-1] == '\n' ) ){
-			buffer[offset] = 0;
-			//printf("%s",buffer);
-			offset=0;
-		}
-		
-		//printf("%c",buffer[0]);
-		//fflush(stdout);
-	}
-}
-
-void test_dir( char* path ){
-	DIR *d;
-    struct dirent *dir;
-    
-    int sock = create_socket();
-    
-    d = opendir( path );
-    while ((dir = readdir(d)) != NULL)
-	{
-		if ( 0 == strcmp(dir->d_name, "." ) ) continue;
-		if ( 0 == strcmp(dir->d_name, ".." ) ) continue;
-		if ( 0 == strcmp(dir->d_name, "README.txt" ) ) continue;
-		
-		if ( 0 != strncmp(dir->d_name, "COOK", 4 ) ) continue;
-		
-		printf("%s\n", dir->d_name);
-		
-		test_request( sock, path, dir->d_name );
-	}
-	closedir(d);
-}
 
 int main(){
 
+	int sock = create_socket();
 	
-    
-    test_dir( "../../fuzzing/parse_header/input/" );
+	char* host_and_port = "127.0.0.1:4443"; 
+    char* server_request_template = "GET /mini_template.html HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n"; 
+	
+	char server_request[5000];
+	memset( server_request, 0 , sizeof( server_request ) );
+	
+	while( strlen( server_request ) < 2500 ){
+		strcat( server_request, server_request_template );
+	}
+	
+	int single_write = 0;
+	int enters = 0;
+	
+	if ( single_write == 1 ){
+		write( sock, server_request, strlen( server_request) );
+	}else{
+		int off = 0;
+		while( off < strlen( server_request) ){
+			// 70 ist einer komplett und einer teilweise
+			off += write( sock, &server_request[off], 65 );
+			//sleep( 20 );
+			getc(stdin);
+			enters++;
+			printf("enters: %d\n",enters);
+			fflush(stdout);
+		}
+	}
     
     sleep( 1000 );
     
