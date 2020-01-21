@@ -123,8 +123,10 @@ int VISIBLE_ATTR ws_list_delete(list_t *l, void *data){
         next->prev = prev;
     }
     
-    //if ( l->freer != 0 ) // data wird im original nicht gelöscht
-    //    l->freer( del->data );
+    // TODO der freer wird immoment garnicht ausgeführt
+   /* if ( l->freer != 0 ){
+        l->freer( del->data );
+    }*/
     
     free( del );
     
