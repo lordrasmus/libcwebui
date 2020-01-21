@@ -142,6 +142,10 @@ void 	PlatformGetGUID ( char* buf,SIZE_TYPE length ) {
 	memset( buf, 0 , length);
 
 	int fd = open("/dev/urandom",O_RDONLY);
+	if ( fd < 0 ){
+		printf("\nERROR: cant open /dev/urandom\n\n");
+		exit(1);
+	}
 	read( fd, uuid, 16 );
 	close( fd );
 
