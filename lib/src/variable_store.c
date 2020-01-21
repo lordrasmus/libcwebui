@@ -162,6 +162,7 @@ void freeVariable(ws_variable_store* store, ws_variable* var) {
 		return;
 	}
 
+	// TODO warum wird hier der seeker entfernt ??
 	ws_list_attributes_seeker(&store->var_list, 0);
 	ws_list_delete(&store->var_list, var);
 	ws_list_attributes_seeker(&store->var_list, var_seeker);
@@ -193,6 +194,7 @@ ws_variable* getFirstVariable(ws_variable_store* store) {
 		return 0;
 	}
 
+	// TODO hier kann man auch ws_list_get_at() verwenden
 	ws_list_iterator_start(&store->var_list);
 	if (0 == ws_list_iterator_hasnext(&store->var_list)) {
 		ws_list_iterator_stop(&store->var_list);
