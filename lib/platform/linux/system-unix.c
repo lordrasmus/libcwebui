@@ -146,7 +146,10 @@ void 	PlatformGetGUID ( char* buf,SIZE_TYPE length ) {
 		printf("\nERROR: cant open /dev/urandom\n\n");
 		exit(1);
 	}
-	read( fd, uuid, 16 );
+	int ret = 0;
+	while( ret < 16 ){
+		ret += read( fd, uuid, 16 - ret );
+	}
 	close( fd );
 
 	// UUID Version 4
