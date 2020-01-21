@@ -809,9 +809,11 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteData(socket_info* sock) {
 	{
 		output_struct *output = (output_struct*)ws_list_get_at( &sock->output_list, 0 );
 
-		status_ret = handleClientWriteDataSendOutputBuffer(sock, output);
-		if (status_ret != NO_MORE_DATA){
-			return status_ret;
+		if( output != 0 ){
+			status_ret = handleClientWriteDataSendOutputBuffer(sock, output);
+			if (status_ret != NO_MORE_DATA){
+				return status_ret;
+			}
 		}
 
 		ws_list_delete( &sock->output_list, output );
