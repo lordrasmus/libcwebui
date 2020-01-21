@@ -245,9 +245,7 @@ static int recv_post_payload( socket_info* sock, const char* buffer, uint32_t le
 		if ( len > diff ){
 			sock->header_buffer_pos = diff;
 			reCopyHeaderBuffer(sock, diff);
-#ifdef ENABLE_DEVEL_WARNINGS			
-			#warning "verarbeitung von weiteren header bytes noch testen"
-#endif
+			// TODO verarbeitung von weiteren header bytes noch testen
 			call_post_post_handler( sock );
 
 			return 1;
