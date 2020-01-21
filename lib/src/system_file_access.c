@@ -14,6 +14,9 @@ SPDX-License-Identifier: MPL-2.0
 
 */
 
+#ifdef __CDT_PARSER__
+	#define __BASE_FILE__ base
+#endif
 
 #include "webserver.h"
 #include <miniz.h>
@@ -242,7 +245,7 @@ WebserverFileInfo VISIBLE_ATTR *getFile( char *name)  {
 
 	file = getFileLocalFileSystem( name);
 	if ( file == 0 ){
-		printf("getFile : Error File %s not found\n", name );
+		//printf("getFile : Error File %s not found\n", name );
 		return 0;
 	}
 

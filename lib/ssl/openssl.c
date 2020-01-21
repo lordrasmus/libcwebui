@@ -67,7 +67,6 @@ SPDX-License-Identifier: MPL-2.0
 struct ssl_store_s {
 	SSL *ssl;
 	BIO *sbio;
-	unsigned int read_pending;
 };
 
 struct sha_context {
@@ -317,7 +316,7 @@ int WebserverSSLInit(socket_info* s) {
 		LOG(CONNECTION_LOG, ERROR_LEVEL, s->socket,"%s", "WebserverSSLInit fehler");
 	}
 
-	s->ssl_context->read_pending = 0;
+	s->ssl_pending_bytes = 0;
 	s->ssl_context->sbio= BIO_new_socket(s->socket, BIO_NOCLOSE);
 	SSL_set_bio(s->ssl_context->ssl, s->ssl_context->sbio, s->ssl_context->sbio);
 
@@ -347,9 +346,17 @@ void printSSLErrorQueue(socket_info* s) {
 
 int WebserverSSLPending(socket_info* s) {
 
-	s->ssl_context->read_pending = SSL_pending( s->ssl_context->ssl );
+	if(s->use_ssl == 0){
+		return 0;
+	}
 
-	if( s->ssl_context->read_pending > 0 ){
+	if ( s->ssl_context == 0 ){
+		return 0;
+	}
+
+	s->ssl_pending_bytes = SSL_pending( s->ssl_context->ssl );
+
+	if( s->ssl_pending_bytes > 0 ){
 		return 1;
 	}
 
@@ -476,14 +483,14 @@ int WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, unsigned int
 	int diff;
 	unsigned long err_code;
 
-	if ( s->ssl_context->read_pending ){
+	if ( s->ssl_pending_bytes ){
 
 		if ( ! WebserverSSLPending( s ) ){
 			return 0;
 		}
 
-		if ( s->ssl_context->read_pending <= len ){
-			ret = SSL_read(s->ssl_context->ssl, buf, s->ssl_context->read_pending );
+		if ( s->ssl_pending_bytes <= len ){
+			ret = SSL_read(s->ssl_context->ssl, buf, s->ssl_pending_bytes );
 			return ret;
 		}else{
 			ret = SSL_read(s->ssl_context->ssl, buf, len );

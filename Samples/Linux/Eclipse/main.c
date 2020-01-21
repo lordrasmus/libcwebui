@@ -25,9 +25,6 @@ static void sig_pipe_hanler(int signum) {
 
 
 
-
-//extern unsigned char data__[];
-//extern unsigned char data__css_[];
 void init_testsite( void );
 
 int main(int argc, char **argv) {
@@ -41,8 +38,6 @@ int main(int argc, char **argv) {
 
 	if (0 == WebserverInit()) {
 
-		//WebserverAddBinaryData( data__ );
-		//WebserverAddBinaryData( data__css_ );
 		
 		ws_add_dir("","Samples/testSite/www/",0,0);
 		ws_add_dir("css","Samples/testSite/css/",0,0);

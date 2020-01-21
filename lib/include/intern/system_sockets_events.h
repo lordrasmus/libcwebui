@@ -62,7 +62,7 @@ void setEventSocketWrite(socket_info* info);
 void setEventSocketRead(socket_info* info);
 
 CLIENT_WRITE_DATA_STATUS handleClientWriteData(socket_info* sock);
-CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* sock);
+CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* sock, socket_file_infos* file);
 
 
 

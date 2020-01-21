@@ -20,19 +20,6 @@ SPDX-License-Identifier: MPL-2.0
 
 list_t chunk_cache;
 
-#if 0
-static void WebserverFreeMem(void) {
-	/*    for (i=0;i<g_files.FileCount;i++)
-	{
-	WebserverFree(g_files.files[i]->Name);
-	WebserverFree(g_files.files[i]->Data);
-	WebserverFree(g_files.files[i]);
-	}
-	WebserverFree(g_files.files);*/
-	/* TODO: "freigeben der datai infos wieder einbauen" */
-}
-#endif
-
 
 
 Parameter* WebserverMallocParameter(void) {

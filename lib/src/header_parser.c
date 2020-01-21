@@ -169,6 +169,8 @@ static void url_sanity_check( HttpRequestHeader *header ){
 		}
 	}
 
+	// TODO die Fehlermeldung überarbeiten die hier von kommt
+	url_decode( header->url );
 	pos = stringfind(header->url, "..");
 	if (pos > 0) {
 		header->error = 1;
@@ -256,7 +258,6 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 	unsigned long len;
 	SIZE_TYPE h_len;
 	int pos;
-	unsigned int i;
 	char* c_pos = 0;
 #ifdef _WEBSERVER_HEADER_DEBUG_
 	LOG(HEADER_PARSER_LOG,NOTICE_LEVEL,0,"Header Line : %s",line);
@@ -418,7 +419,7 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 	}
 
 	if ( header->method == 0 ){
-		for ( int i = 0 ; i < length; i++ ){
+		for ( unsigned int i = 0 ; i < length; i++ ){
 			if ( line[i] == ' ' ){
 				int max = i;
 				if ( max > ( MAX_ERROR_METHOD -1 )  )
@@ -545,8 +546,8 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 			header->contenttype=MULTIPART_FORM_DATA;
 
 			i2++;
-
-			for(i=i2;i<length;i++){
+			unsigned int i;
+			for( i=i2;i<length;i++){
 				if(line[i]=='\r'){
 					break;
 				}
@@ -595,9 +596,9 @@ int ParseHeader(socket_info* sock, HttpRequestHeader* header, char* buffer, unsi
 	char back;
 	unsigned int line_length;
 
+	*bytes_parsed = 0;
 
 	if (length < 2){
-		*bytes_parsed = 0;
 		return -6;
 	}
 
