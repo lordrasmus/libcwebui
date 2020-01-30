@@ -551,7 +551,10 @@ static int handleClient(socket_info* sock) {
 			return -1;
 		}
 
-		generateOutputBuffer(sock);
+		// sonderfall wenn nur \r\n gesendet wird
+		if (  sock->header->parsed_bytes != 0 ) {
+			generateOutputBuffer(sock);
+		}
 
 		WebserverResetHttpRequestHeader(sock->header);
 		return 1;
