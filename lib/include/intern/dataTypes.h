@@ -334,6 +334,8 @@ typedef struct {
 	extern_handler extern_handle;
 	void* extern_handle_data_ptr;
 
+	uint32_t error_requests_on_socket;
+
 } socket_info;
 
 typedef struct{
