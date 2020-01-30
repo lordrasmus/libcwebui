@@ -191,6 +191,7 @@ typedef struct {
 	char isHttp1_1;
 	
 	char header_complete;
+	uint32_t parsed_bytes;
 
 #ifdef WEBSERVER_USE_WEBSOCKETS
 	unsigned char WebSocketOutHash[40]; /* Versionen vor 8 benutzen nur 16 byte */
@@ -332,6 +333,8 @@ typedef struct {
 
 	extern_handler extern_handle;
 	void* extern_handle_data_ptr;
+
+	uint32_t error_requests_on_socket;
 
 } socket_info;
 

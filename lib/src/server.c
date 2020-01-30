@@ -204,11 +204,6 @@ int getHttpRequest(socket_info* sock) {
 	s.header = sock->header;
 	sock->disable_output = 0;
 
-	if (s.header->method == HTTP_UNKNOWN_METHOD) {
-		sendMethodNotAllowed(sock);
-		endHTTPRequest(&s);
-		return 0;
-	}
 
 	if (s.header->method == HTTP_OPTIONS) {
 		sendPreflightAllowed(sock);

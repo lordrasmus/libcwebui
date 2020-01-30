@@ -449,7 +449,7 @@ char waitEvents( void ) {
 
 
 			if(FD_ISSET(sock3, &lese_sock)){
-				int totalPending; 
+
 				socket_info *client_sock_info = client_sock[i].sock;
 
 				if ( ( client_sock[i].flags & EVENT_PERSIST ) == EVENT_PERSIST ){

@@ -108,6 +108,22 @@ int handleWebRequest(socket_info* sock) {
 		return -1;
 	}
 
+	if ( sock->error_requests_on_socket > 5 ){
+		return -1;
+	}
+
+	// das passiert wenn nur \r\n gesendet wird, in dem fall einfach nichts tun
+	if (  sock->header->parsed_bytes == 0 ) {
+		return 0;
+	}
+
+	// Wenn keine Methoder erkannt wurde
+	if (sock->header->method == HTTP_UNKNOWN_METHOD) {
+		sendMethodNotAllowed(sock);
+		return 0;
+	}
+
+
 	if (checkHeaderComplete(sock->header) == false) {
 		sendMethodBadRequestMissingHeaderLines(sock);
 		return 0;

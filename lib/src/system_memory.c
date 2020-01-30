@@ -184,6 +184,7 @@ void WebserverResetHttpRequestHeader(HttpRequestHeader *header) {
 	clearVariables(header->parameter_store);
 	ws_list_destroy(&header->cookie_list);
 
+	header->parsed_bytes = 0;
 
 	header->post_buffer_pos = 0;
 	header->contenttype = 0;

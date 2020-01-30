@@ -602,11 +602,24 @@ int ParseHeader(socket_info* sock, HttpRequestHeader* header, char* buffer, unsi
 		return -6;
 	}
 
+
+
 	// Wenn das im Buffer steht muss der Header zuende sein
 	// Wenn eine Header Zeile verarbeitet wurde wird das \r\n am ende mit abgeschnitten,
 	// also bleibt am Ende des Headers nur \r\n über
 	if ((buffer[0] == '\r') && (buffer[1] == '\n')){
 		*bytes_parsed = 2;
+
+		// Das ist ein Sonderfall wenn nur \r\n hinereinander weg gesendet wird, in dem Fall das \r\n aus dem Buffer entfernen und nichts tun
+		if ( header->parsed_bytes == 0 ){
+			if ( length > 2 ){
+				/* es sind weiterer daten im datenstrom vorhanden */
+				return -3;
+			}
+		}
+
+
+		header->parsed_bytes += *bytes_parsed;
 
 		header->header_complete = 1;
 
@@ -638,6 +651,9 @@ int ParseHeader(socket_info* sock, HttpRequestHeader* header, char* buffer, unsi
 			last_line_end = i + 1;
 			buffer[i - 1] = back;
 			*bytes_parsed = last_line_end;
+
+			header->parsed_bytes += *bytes_parsed;
+
 			return last_line_end;
 		}
 
@@ -647,6 +663,7 @@ int ParseHeader(socket_info* sock, HttpRequestHeader* header, char* buffer, unsi
 			header->header_complete = 1;
 			
 			*bytes_parsed = i;
+			header->parsed_bytes += *bytes_parsed;
 			/* es ist ein weiterer header im datenstrom gewesen */
 			if ( (i + 1 ) < length){
 				return -3;

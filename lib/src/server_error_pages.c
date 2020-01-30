@@ -61,6 +61,7 @@ int sendAccessDenied(http_request* s){
 
 int sendMethodNotAllowed(socket_info *sock){
 	int length = 0;
+	sock->error_requests_on_socket++;
 	length += printHTMLChunk( sock,"<html><title>405 Method Not Allowed</title><body>");
 	length += printHTMLChunk( sock,"<h1>405 Method Not Allowed</h1>");
 	length += printHTMLChunk( sock,"<p>The Method is not allowed on this server.</p><hr />");
@@ -71,6 +72,7 @@ int sendMethodNotAllowed(socket_info *sock){
 
 int sendMethodBadRequest(socket_info *sock){
 	int length = 0;
+	sock->error_requests_on_socket++;
 	length += printHTMLChunk(sock,"<html><title>400 Bad Request</title>");
 	length += printHTMLChunk(sock,"<body><h1>400 Bad Request</h1>");
 	length += printHTMLChunk(sock,"<p>The request could not be understood by the server due to malformed syntax.</p><hr />");
@@ -81,6 +83,7 @@ int sendMethodBadRequest(socket_info *sock){
 
 int sendMethodBadRequestMissingHeaderLines(socket_info *sock){
 	int length = 0;
+	sock->error_requests_on_socket++;
 	length += printHTMLChunk(sock,"<html><title>400 Bad Request</title>");
 	length += printHTMLChunk(sock,"<body><h1>400 Bad Request</h1>");
 	length += printHTMLChunk(sock,"<p>The request could not be understood by the server due to malformed syntax.");
@@ -92,6 +95,7 @@ int sendMethodBadRequestMissingHeaderLines(socket_info *sock){
 
 int sendMethodBadRequestLineToLong(socket_info *sock){
 	int length = 0;
+	sock->error_requests_on_socket++;
 	length += printHTMLChunk(sock,"<html><title>400 Bad Request</title>");
 	length += printHTMLChunk(sock,"<body><h1>400 Bad Request</h1>");
 	length += printHTMLChunk(sock,"<p>The request could not be understood by the server due to malformed syntax.");

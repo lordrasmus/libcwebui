@@ -90,6 +90,7 @@ void test_request( int sockfd, char* path, char* file ){
     while(1){
 		int ret = read( sockfd, &buffer[offset], 1);
 		if ( ret <= 0) break;
+		printf("%s",buffer);
 		offset += ret;
 		
 		if( ( buffer[0] == '\r' ) && ( buffer[1] == '\n' ) ){
@@ -98,7 +99,7 @@ void test_request( int sockfd, char* path, char* file ){
 		
 		if( ( buffer[offset-2] == '\r' ) && ( buffer[offset-1] == '\n' ) ){
 			buffer[offset] = 0;
-			//printf("%s",buffer);
+			printf("%s",buffer);
 			offset=0;
 		}
 		
@@ -116,6 +117,9 @@ void test_dir( char* path ){
     d = opendir( path );
     while ((dir = readdir(d)) != NULL)
 	{
+		printf("f: %s\n",dir->d_name);
+		fflush(stdout);
+		
 		if ( 0 == strcmp(dir->d_name, "." ) ) continue;
 		if ( 0 == strcmp(dir->d_name, ".." ) ) continue;
 		if ( 0 == strcmp(dir->d_name, "README.txt" ) ) continue;
@@ -123,6 +127,7 @@ void test_dir( char* path ){
 		if ( 0 != strncmp(dir->d_name, "COOK", 4 ) ) continue;
 		
 		printf("%s\n", dir->d_name);
+		fflush(stdout);
 		
 		test_request( sock, path, dir->d_name );
 	}
@@ -133,7 +138,11 @@ int main(){
 
 	
     
-    test_dir( "../../fuzzing/parse_header/input/" );
+    //test_dir( "../../fuzzing/parse_header/input/" );
+    
+    int sock = create_socket();
+    test_request( sock, "../../fuzzing/parse_header/input/", "INVALID_MULTI_HEADER" );
+    
     
     sleep( 1000 );
     
