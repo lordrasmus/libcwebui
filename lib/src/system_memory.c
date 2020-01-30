@@ -56,6 +56,7 @@ socket_info* WebserverMallocSocketInfo(void) {
 	memset(sock, 0, sizeof(socket_info));
 	ws_list_init(&sock->header_chunk_list);
 	ws_list_init(&sock->html_chunk_list);
+	ws_list_init(&sock->output_list);
 #ifdef WEBSERVER_USE_WEBSOCKETS
 	ws_list_init(&sock->websocket_chunk_list);
 	ws_list_init(&sock->websocket_fragments);
@@ -100,6 +101,25 @@ void WebserverFreeSocketInfo(socket_info* sock) {
 	#warning "ssl strukturen freigeben"
 #endif
 
+
+	// TODO das löschen der output liste mal mit dem List freer lösen
+	while ( ws_list_size( &sock->output_list ) > 0 ){
+		output_struct *output = (output_struct*)ws_list_get_at( &sock->output_list, 0 );
+
+		ws_list_delete( &sock->output_list, output );
+
+		if( output != 0 ){
+			if ( output->header.buffer != 0 ){
+				WebserverFree( output->header.buffer );
+			}
+
+			if ( output->main.buffer != 0 ){
+				WebserverFree( output->main.buffer );
+			}
+		}
+		WebserverFree( output );
+
+	}
 
 	PlatformDestroyMutex(&sock->socket_mutex);
 
