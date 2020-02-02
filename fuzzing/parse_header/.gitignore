@@ -7,3 +7,5 @@ CORPUS
 fuzz_target.o
 crash-*
 .sconsign.dblite
+main.fuzz
+*.log
