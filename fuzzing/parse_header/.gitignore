@@ -2,3 +2,8 @@ main
 .gdbinit
 main.afl.gcc
 output*
+CORPUS
+
+fuzz_target.o
+crash-*
+.sconsign.dblite
