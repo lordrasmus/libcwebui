@@ -60,3 +60,7 @@ lto:
 	
 	-clang ${CLANG_FLAGS} -Os main.c ${FILES}  -o main.clang ${LIBS}
 	-gcc ${FLAGS} -Os main.c ${FILES}  -o main.gcc ${LIBS}
+
+
+clang_fuzz:
+	clang -g -fsanitize=address,fuzzer  ${FLAGS} ${FILES} fuzz_target.c -o main.fuzz ${LIBS}

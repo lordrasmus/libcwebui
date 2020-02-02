@@ -1,5 +1,5 @@
 
-OPTS= -DLINUX -std=c99
+OPTS= -std=c99
 #-O2
 #-D _WEBSERVER_HEADER_DEBUG_
 
@@ -7,7 +7,9 @@ FLAGS= -I../../lib/ -I../../lib/include/ -I../../lib/include/intern/ -I../../lib
 	-I../../lib/third_party/src/rb_tree/ -I../../lib/platform/include/ -I../../lib/third_party/src/is_utf8/ \
 	${OPTS} $$(python2.7-config --cflags)  $$(python2.7-config --ldflags)
 
-FILES=../../lib/src/convert.c ../../lib/src/variable_store.c ../../lib/src/header_parser.c ../../lib/src/system_memory.c ../../lib/platform/linux/system-unix.c \
+FILES=../../lib/src/sha1.c ../../lib/src/base64.c ../../lib/src/convert.c ../../lib/src/variable_store.c ../../lib/src/header_parser.c \
+	../../lib/src/webserver_api_functions.c ../../lib/src/system_file_access_binary.c \
+	../../lib/src/system_memory.c ../../lib/src/system_memory_gcc.c ../../lib/platform/linux/system-unix.c \
 	../../lib/src/linked_list.c ../../lib/src/utils.c ../../lib/src/server_chunk_functions.c ../../lib/src/variable.c \
 	../../lib/src/cookie.c ../../lib/src/websockets.c ../../lib/src/engine_api_extensions.c ../../lib/third_party/src/rb_tree/red_black_tree.c \
 	../../lib/third_party/src/rb_tree/stack.c ../../lib/third_party/src/rb_tree/misc.c ../../lib/src/message_queue.c ../../lib/src/header_send.c \
@@ -22,8 +24,6 @@ FILES=../../lib/src/convert.c ../../lib/src/variable_store.c ../../lib/src/heade
 	../../lib/src/engine_functions.c ../../lib/src/engine_if.c ../../lib/src/engine_tags.c \
 	../../lib/third_party/src/is_utf8/is_utf8.c \
 	../../lib/python/py_api_functions.c ../../lib/python/py_plugin.c ../../lib/python/py_utils.c \
-	../../lib/third_party/src/miniz/miniz_tinfl.c \
-	../../lib/third_party/src/miniz/miniz_tdef.c \
 	../../lib/third_party/src/miniz/miniz.c
 
 include ../Makefile.afl_inc

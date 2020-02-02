@@ -1,0 +1,13 @@
+
+inc=[	'../../lib/', '../../lib/include/','../../lib/include/intern/',
+		'../../lib/third_party/src/miniz/','../../lib/third_party/src/rb_tree/','../../lib/platform/include/',
+		'../../lib/third_party/src/is_utf8/']
+
+env = Environment(CC = '/usr/lib/llvm/9/bin/clang',CXX = '/usr/lib/llvm/9/bin/clang++',CPPPATH=inc)
+
+src=[	'fuzz_target.c',
+		'../../lib/src/convert.c',
+		'../../lib/src/sha1.c']
+
+env.Program('main.fuzz',src )
+
