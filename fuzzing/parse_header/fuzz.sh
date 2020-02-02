@@ -2,7 +2,7 @@
 
 make clang_fuzz
 
-mkdir CORPUS
+mkdir -p CORPUS
 cp input/* CORPUS
 
-./main.fuzz CORPUS/ -jobs=20
+./main.fuzz CORPUS/ -jobs=$(nproc) -workers=$(nproc)
