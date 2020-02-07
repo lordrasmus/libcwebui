@@ -161,7 +161,7 @@ static socket_info* addClientSocket(int s, char ssl) {
 	return 0;
 }
 
-static void reCopyHeaderBuffer(socket_info* sock, unsigned int end) {
+void reCopyHeaderBuffer(socket_info* sock, unsigned int end) {
 	unsigned int i, i2;
 	i2 = end; /* end ist das letzte geparste zeichen */
 	for (i = 0; i < sock->header_buffer_pos - end; i++, i2++) {
