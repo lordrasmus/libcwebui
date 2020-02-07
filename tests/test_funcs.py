@@ -77,7 +77,7 @@ def run_tests( base_dir ):
 			continue
 
 
-		ret = os.system("diff " + result_file + " /tmp/test_out > /dev/null" )
+		ret = os.system("diff -u /tmp/test_out " + result_file + " > /dev/null" )
 		if ret == 0:
 			print("\x1b[32mpass\x1b[0m")
 		else:
@@ -90,9 +90,19 @@ def run_tests( base_dir ):
 				os.system("cat /tmp/test_out" )
 				print("< Soll   " +  result_file + " >")
 				os.system("cat " + result_file )
-				print("< Diff diff -u /tmp/test_out " + result_file + " >")
-				os.system("diff -u /tmp/test_out " + result_file )
+				print("< Diff diff -u " + result_file + " /tmp/test_out >")
+				os.system("diff -u " + result_file + " /tmp/test_out" )
 				print("< Ende >")
+				
+				value = input("w = weiter, u = update : ")
+				if value == "w":
+					continue
+				
+				if value == "u":
+					os.system("cp /tmp/test_out " + result_file )
+					continue
+				
+				exit(1)
 
 
 

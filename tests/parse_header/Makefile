@@ -1,5 +1,5 @@
 
-OPTS= -std=c99
+OPTS= -std=c99 -ggdb3
 #-O2
 
 FLAGS=-I../../lib/ -I../../lib/include/ -I../../lib/include/intern/ -I../../lib/third_party/src/simclist/ \

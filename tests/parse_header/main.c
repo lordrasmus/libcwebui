@@ -1,5 +1,9 @@
 
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 
 #include <webserver.h>
 
@@ -47,7 +51,7 @@ void print_header( HttpRequestHeader *header ){
 	}
 
 	printf("Cookies : \n");
-
+	//printf("Count : %d\n",ws_list_size( &header->cookie_list ) );
 	Cookie* cookie;
 	ws_list_iterator_start(&header->cookie_list);
 	while( ( cookie = (Cookie*)ws_list_iterator_next(&header->cookie_list) ) ){
@@ -63,14 +67,13 @@ void print_header( HttpRequestHeader *header ){
 
 
 
+// Eingentlich eine rein interne Funktione
+void reCopyHeaderBuffer(socket_info* sock, unsigned int end) ;
+
 int main( int argc, char** argv){
 
-	char buf[10000];
-
-
-	memset(buf, 0, 10000);
-	int len = read(0, buf, 10000);
-
+	
+	
 
 	socket_info sock;
 	HttpRequestHeader *header = WebserverMallocHttpRequestHeader();
@@ -78,9 +81,33 @@ int main( int argc, char** argv){
 	memset(&sock , 0, sizeof( socket_info ));
 
 	sock.header = header;
+	sock.header_buffer = malloc( 10000 );
+	sock.header_buffer_size = 10000;
+	memset(sock.header_buffer, 0, 10000);
+	
+	int len;
+	if ( argc == 1 ){
+		len = read(0, sock.header_buffer, 10000);
+	}else{
+		struct stat st;
+		stat(argv[1], &st);
+		int size = st.st_size;
+		int fd = open( argv[1], O_RDONLY );
+		len = read(fd, sock.header_buffer, size);
+	}
+
+	sock.header_buffer_pos = len;
 
 	unsigned int bytes_parsed;
-	ParseHeader( &sock, header, buf, len , &bytes_parsed );
+	while(sock.header_buffer_pos>0){
+		int len2 = ParseHeader( &sock, header, sock.header_buffer, sock.header_buffer_pos , &bytes_parsed );
+		//printf("len: %d\n",len2);
+		if (len2 > 0) {
+			reCopyHeaderBuffer(&sock, bytes_parsed);
+			continue;
+		}
+		break;
+	}
 
 
 	print_header( header );
