@@ -25,17 +25,14 @@ void print_header( HttpRequestHeader *header ){
 
 
 	printf("   URL : %s\n",header->url);
-	printf("   Content-Length: %d\n",header->contentlenght);
+	printf("   Content-Length: %ld\n",header->contentlenght);
 	printf("   Host: %s\n",header->HostName);
 	printf("   If-Modified-Since: %s\n",header->If_Modified_Since); /* Wed, 12 Dec 2007 13:13:08 GMT */
 	printf("   If-None-Match: %s\n",header->etag);
 	printf("   Upgrade: %s\n",header->Upgrade);
 	printf("   Connection: %s\n",header->Connection);
 	printf("   Origin: %s\n",header->Origin);
-	printf("   Sec-WebSocket-Key1: %s\n",header->SecWebSocketKey1);
-	printf("   Sec-WebSocket-Key2: %s\n",header->SecWebSocketKey2);
 	printf("   Sec-WebSocket-Key: %s\n",header->SecWebSocketKey);
-	printf("   Sec-WebSocket-Origin: %s\n",header->SecWebSocketOrigin);
 	printf("   Sec-WebSocket-Protocol: %s\n",header->SecWebSocketProtocol);
 	printf("   Sec-WebSocket-Version: %d\n",header->SecWebSocketVersion);
 
