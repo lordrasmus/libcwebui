@@ -51,6 +51,7 @@ addons:
 stages:
     - unittests
     - default
+    - osx
 
 
 stage: default
@@ -96,6 +97,7 @@ jobs:
     - os: osx
       osx_image: xcode10
       compiler: clang
+      stage: osx
       env: CC=clang CXX=clang++
       #python: 3.6
       before_script:
