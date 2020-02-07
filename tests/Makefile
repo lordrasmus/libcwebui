@@ -1,2 +1,2 @@
 all:
-	(cd parse_header/ ; ./run_tests.py )
+	$(MAKE) -C parse_header tun_test

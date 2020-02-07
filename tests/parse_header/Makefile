@@ -78,4 +78,5 @@ main.clang: ${FILES} main.c
 clean:
 	rm -f main.gcc main.clang
 
-
+tun_test:
+	./run_tests.py 
