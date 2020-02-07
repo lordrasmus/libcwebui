@@ -104,4 +104,15 @@ int sendMethodBadRequestLineToLong(socket_info *sock){
 	return 0;
 }
 
+int sendInternalError(socket_info *sock){
+	int length = 0;
+	sock->error_requests_on_socket++;
+	length += printHTMLChunk(sock,"<html><title>500 Internal Server Error</title>");
+	length += printHTMLChunk(sock,"<body><h1>500 Internal Server Error</h1>");
+	length += printHTMLChunk(sock,"<p>The request could not be handled");
+	sendHeaderError(sock,(char*)"500 Internal Server Error",length);
+	return 0;
+}
+
+
 
