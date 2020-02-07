@@ -43,6 +43,7 @@ extern "C" {
 
 	int		WebserverStartConnectionManager( void );
 	void	WebserverConnectionManagerStartLoop( void );
+	void    reCopyHeaderBuffer(socket_info* sock, unsigned int end);
 	void	WebserverConnectionManagerCloseRequest(socket_info* sock);
 	void 	WebserverConnectionManagerCloseConnections(void);
 	int		handleWebRequest(socket_info* sock);

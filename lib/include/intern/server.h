@@ -65,6 +65,7 @@ int sendMethodNotAllowed(socket_info *sock);
 int sendMethodBadRequest(socket_info *sock);
 int sendMethodBadRequestLineToLong(socket_info *sock);
 int sendMethodBadRequestMissingHeaderLines(socket_info *sock);
+int sendInternalError(socket_info *sock);
 
 int checkBuilinSites(http_request* s);
 

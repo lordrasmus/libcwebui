@@ -1,3 +1,6 @@
+
+ Status : more data in buffer
+
 -----------  Header Info Start  ----------------------------
 Header Valid
    Method: HTTP_POST
@@ -10,10 +13,7 @@ Header Valid
    Upgrade: up
    Connection:  Connection
    Origin: Origin
-   Sec-WebSocket-Key1: SecWebSocketKey1
-   Sec-WebSocket-Key2: SecWebSocketKey2
    Sec-WebSocket-Key: SecWebSocketKey
-   Sec-WebSocket-Origin: SecWebSocketOrigin
    Sec-WebSocket-Protocol: SecWebSocketProtocol
    Sec-WebSocket-Version: 12
 Parameter :

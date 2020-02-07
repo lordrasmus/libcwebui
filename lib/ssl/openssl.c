@@ -489,7 +489,7 @@ int WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, unsigned int
 			return 0;
 		}
 
-		if ( s->ssl_pending_bytes <= len ){
+		if ( (unsigned int)s->ssl_pending_bytes <= len ){
 			ret = SSL_read(s->ssl_context->ssl, buf, s->ssl_pending_bytes );
 			return ret;
 		}else{

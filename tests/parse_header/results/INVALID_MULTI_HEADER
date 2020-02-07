@@ -5,9 +5,9 @@
 Header Valid
    Method: HTTP_GET
    Version: HTTP/1.1
-   URL : index.html
+   URL : 
    Content-Length: 0
-   Host: (null)
+   Host: 192.168.11.79
    If-Modified-Since: (null)
    If-None-Match: (null)
    Upgrade: (null)

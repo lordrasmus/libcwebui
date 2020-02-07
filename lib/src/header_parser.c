@@ -633,7 +633,7 @@ int ParseHeader(socket_info* sock, HttpRequestHeader* header, char* buffer, unsi
 
 	for (i = 3; i < length; i++) {
 
-		if ( i >= WEBSERVER_MAX_HEADER_LINE_LENGHT) {
+		if ( i >= ( WEBSERVER_MAX_HEADER_LINE_LENGHT - 1 ) ) {
 			return 0;
 		}
 

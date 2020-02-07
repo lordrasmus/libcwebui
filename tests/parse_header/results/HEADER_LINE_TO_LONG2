@@ -1,11 +1,10 @@
 
- Status : more data in buffer
+ Status : Header line to long
 
 -----------  Header Info Start  ----------------------------
-Header Valid
-   Method: HTTP_GET
-   Version: HTTP/1.1
-   URL : index.html
+Header Invalid
+   Version: HTTP/1.0
+   URL : (null)
    Content-Length: 0
    Host: (null)
    If-Modified-Since: (null)

@@ -14,6 +14,9 @@ SPDX-License-Identifier: MPL-2.0
 
 */
 
+#ifndef _POSIX_C_SOURCE
+	#define _POSIX_C_SOURCE 1
+#endif
 
 
 #include <stdio.h>

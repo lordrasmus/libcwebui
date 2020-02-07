@@ -161,7 +161,7 @@ static socket_info* addClientSocket(int s, char ssl) {
 	return 0;
 }
 
-static void reCopyHeaderBuffer(socket_info* sock, unsigned int end) {
+void reCopyHeaderBuffer(socket_info* sock, unsigned int end) {
 	unsigned int i, i2;
 	i2 = end; /* end ist das letzte geparste zeichen */
 	for (i = 0; i < sock->header_buffer_pos - end; i++, i2++) {
@@ -386,6 +386,13 @@ static int handleClientHeaderData(socket_info* sock) {
 
 		/* Keine Zeile erkannt weiter Daten lesen */
 		if (len2 == -6) {
+			/* zur sicherheit nochmal prüfen ob der header buffer voll ist
+			 * wen ja haben wir hier einen internen fehler */
+			if ( ( buffer_length - sock->header_buffer_pos ) == 0 ){
+				sendInternalError(sock);
+				sock->closeSocket = 1;
+				return -1;
+			}
 			return 0;
 		}
 
@@ -574,7 +581,7 @@ static char sendData(socket_info* sock, const unsigned char *buffer, const unsig
 	int to_send;
 	SOCKET_SEND_STATUS status;
 
-	while( *buffer_send_pos < buffer_size ) {
+	while( *buffer_send_pos < (FILE_OFFSET)buffer_size ) {
 		to_send = buffer_size - *buffer_send_pos;
 		if (to_send > WRITE_DATA_SIZE){
 			to_send = WRITE_DATA_SIZE;

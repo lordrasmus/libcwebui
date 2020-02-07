@@ -10,5 +10,5 @@ from test_funcs import *
 
 
 
-run_tests("parse_header")
+exit( run_tests("parse_header") )
 

@@ -10,10 +10,7 @@ Header Valid
    Upgrade: (null)
    Connection: (null)
    Origin: (null)
-   Sec-WebSocket-Key1: (null)
-   Sec-WebSocket-Key2: (null)
    Sec-WebSocket-Key: (null)
-   Sec-WebSocket-Origin: (null)
    Sec-WebSocket-Protocol: (null)
    Sec-WebSocket-Version: 0
 Parameter :
