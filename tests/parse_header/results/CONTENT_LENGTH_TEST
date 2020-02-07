@@ -1,0 +1,18 @@
+-----------  Header Info Start  ----------------------------
+Header Valid
+   Method: HTTP_POST
+   Version: HTTP/1.1
+   URL : index.html
+   Content-Length: 22
+   Host: (null)
+   If-Modified-Since: (null)
+   If-None-Match: (null)
+   Upgrade: (null)
+   Connection: (null)
+   Origin: (null)
+   Sec-WebSocket-Key: (null)
+   Sec-WebSocket-Protocol: (null)
+   Sec-WebSocket-Version: 0
+Parameter :
+Cookies : 
+-----------  Header Info End  ----------------------------

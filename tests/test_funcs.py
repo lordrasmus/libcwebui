@@ -43,6 +43,7 @@ def run_tests( base_dir ):
 	ret = subprocess.getstatusoutput( "find ../../fuzzing/" + base_dir + "/input/* | grep -v README.txt")
 	liste = ret[1].split("\n")
 
+	test_failed=False
 
 	#pprint( liste )
 
@@ -83,6 +84,8 @@ def run_tests( base_dir ):
 		else:
 			print("\x1b[31mfail\x1b[0m")
 
+			test_failed = True
+
 			if args.verbose is True:
 				print("<---------- Input ----------   " + test + " >")
 				os.system("cat " + test )
@@ -105,4 +108,7 @@ def run_tests( base_dir ):
 				exit(1)
 
 
-
+	if test_failed:
+		return 1
+	
+	return 0

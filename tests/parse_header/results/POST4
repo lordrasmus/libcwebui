@@ -1,0 +1,21 @@
+
+ Status : more data in buffer
+
+-----------  Header Info Start  ----------------------------
+Header Valid
+   Method: HTTP_POST
+   Version: HTTP/1.0
+   URL : ttp://127.0.0.1/iControl/iControlPortal.cgi
+   Content-Length: 1045
+   Host: (null)
+   If-Modified-Since: (null)
+   If-None-Match: (null)
+   Upgrade: (null)
+   Connection: Keep-Alive
+   Origin: (null)
+   Sec-WebSocket-Key: (null)
+   Sec-WebSocket-Protocol: (null)
+   Sec-WebSocket-Version: 0
+Parameter :
+Cookies : 
+-----------  Header Info End  ----------------------------

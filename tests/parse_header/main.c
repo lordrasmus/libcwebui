@@ -81,9 +81,9 @@ int main( int argc, char** argv){
 	memset(&sock , 0, sizeof( socket_info ));
 
 	sock.header = header;
-	sock.header_buffer = malloc( 10000 );
-	sock.header_buffer_size = 10000;
-	memset(sock.header_buffer, 0, 10000);
+	sock.header_buffer = malloc( 100000 );
+	sock.header_buffer_size = 100000;
+	memset(sock.header_buffer, 0, 100000);
 	
 	int len;
 	if ( argc == 1 ){
@@ -106,8 +106,50 @@ int main( int argc, char** argv){
 			reCopyHeaderBuffer(&sock, bytes_parsed);
 			continue;
 		}
+		printf("\n Status : ");
+		/* Header Zeile zu lang */
+		if (len2 == 0) {
+			printf("Header line to long\n\n");
+			header->error = 1;
+			break;
+		}
+
+		/* methode nicht erlaubt */
+		if (len2 == -4) {
+			printf("Method not allowed\n\n");
+			header->error = 1;
+			break;
+		}
+
+		/* websocket handshake error */
+		if (len2 == -5) {
+			printf("websocket handshake error\n\n");
+			header->error = 1;
+			break;
+		}
+
+		/* Keine Zeile erkannt weiter Daten lesen */
+		if (len2 == -6) {
+			printf("incomplete header\n\n");
+			break;
+		}
+
+		/* Header zuende aber noch weitere daten vorhanden */
+		if (len2 == -3) {
+			printf("more data in buffer\n\n");
+			break;
+		}
+
+		/* Header ist zuende und keine weiteren daten */
+		if (len2 == -2){
+			printf("header complete\n\n");
+			break;
+		}
+
+		printf("Error Status unbekannt : %d\n\n",len2);
 		break;
 	}
+
 
 
 	print_header( header );
