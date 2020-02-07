@@ -61,11 +61,11 @@ def run_tests( base_dir ):
 
 		if not os.path.exists( result_file ):
 			print("Error: keine Result Datei -> %s\n" % result_file)
-			print("<---------- Input ----------   " + test + " >")
+			print("\x1b[32m<---------- Input ----------   " + test + " >\x1b[0m")
 			os.system("cat " + test )
-			print("<---------- Output ---------   /tmp/test_out  >")
+			print("\x1b[32m<---------- Output ---------   /tmp/test_out  >\x1b[0m")
 			os.system("cat /tmp/test_out" )
-			print("<---------- Soll  ----------   " + result_file + " >")
+			print("\x1b[32m<---------- Soll  ----------   " + result_file + " >\x1b[0m")
 
 			ans = question_yes_no("Result File erzeugen ?","j")
 			if ans == "True":
@@ -87,15 +87,15 @@ def run_tests( base_dir ):
 			test_failed = True
 
 			if args.verbose is True:
-				print("<---------- Input ----------   " + test + " >")
+				print("\x1b[32m<---------- Input ----------   " + test + " >\x1b[0m")
 				os.system("cat " + test )
-				print("< Output /tmp/test_out  >")
+				print("\x1b[32m< Output /tmp/test_out  >\x1b[0m")
 				os.system("cat /tmp/test_out" )
-				print("< Soll   " +  result_file + " >")
+				print("\x1b[32m< Soll   " +  result_file + " >\x1b[0m")
 				os.system("cat " + result_file )
-				print("< Diff diff -u " + result_file + " /tmp/test_out >")
+				print("\x1b[32m< Diff diff -u " + result_file + " /tmp/test_out >\x1b[0m")
 				os.system("diff -u " + result_file + " /tmp/test_out" )
-				print("< Ende >")
+				print("\x1b[32m< Ende >\x1b[0m")
 				
 				value = input("w = weiter, u = update : ")
 				if value == "w":
