@@ -66,6 +66,10 @@ jobs:
     - os: linux
       stage: unittests
       env: CC=gcc- CXX=g++
+      addons:
+        apt:
+            packages: ['libevent-dev']
+      before_script:
       script:
          - make unittests
 
