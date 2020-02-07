@@ -48,10 +48,25 @@ addons:
 #         - sourceline: "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main"
       packages: ['libevent-dev'] # , 'gcc-4.4', 'g++-4.4', 'gcc-4.6', 'g++-4.6', 'gcc-4.7', 'g++-4.7', 'gcc-4.8', 'g++-4.8', 'gcc-4.9', 'g++-4.9', 'gcc-5', 'g++-5', 'gcc-6', 'g++-6', 'gcc-7', 'g++-7', 'gcc-8', 'g++-8', 'gcc-9', 'g++-9'] 
 
-stage: test
-        
+stages:
+    - unittests
+    - default
+
+
+stage: default
+   
 jobs:
    include:
+   
+   ##########################################################################################
+   #     Unittests                                                                          #
+   ##########################################################################################
+   
+    - os: linux
+      stage: unittests
+      env: CC=gcc- CXX=g++
+      script:
+         - make unittests
 
    ########################################################################################## 
    #     Windows Test ( basiert auf mingw gcc )                                             #
@@ -110,7 +125,7 @@ jobs:
             branch_pattern: master
 
    ##########################################################################################
-   #     Linux Test                                                                         #
+   #     Linux Compiler Tests                                                               #
    ##########################################################################################
 
    

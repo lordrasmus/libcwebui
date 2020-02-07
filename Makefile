@@ -23,6 +23,9 @@ clean:
 	$(MAKE) -C Samples/testSite clean
 	$(MAKE) -C Docker clean
 
+unittests:
+	$(MAKE) -C tests
+
 linux_tests:
 	$(MAKE) -C lib
 	$(MAKE) -C Samples/testSite
