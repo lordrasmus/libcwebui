@@ -50,7 +50,7 @@ addons:
 
 stages:
     - unittests
-    - default
+    - linux
     - osx
 
 
@@ -117,6 +117,7 @@ jobs:
 
     - os: linux
       env: CC=gcc CXX=g++
+      stage: linux
       addons:
         apt:
             packages: ['libevent-dev']
@@ -136,7 +137,7 @@ jobs:
 
    
     - os: linux
-      stage: default    
+      stage: linux    
       env: CC=gcc-4.4 CXX=g++-4.4
     
 # #   - os: linux
@@ -161,15 +162,15 @@ jobs:
      # env: CC=gcc-6 CXX=g++-6
 
     - os: linux
-      stage: default    
+      stage: linux    
       env: CC=gcc-7 CXX=g++-7
 
     - os: linux
-      stage: default    
+      stage: linux    
       env: CC=gcc-8 CXX=g++-8
 
     - os: linux
-      stage: default    
+      stage: linux    
       env: CC=gcc-9 CXX=g++-9
 
    # - os: linux
@@ -201,7 +202,7 @@ jobs:
      # env: CC=clang-5.0 CXX=clang++-5.0
 
     - os: linux
-      stage: default    
+      stage: linux    
       compiler: clang
       env: CC=clang-6.0 CXX=clang++-6.0     
 
@@ -214,7 +215,7 @@ jobs:
      # env: CC=clang-8 CXX=clang++-8
 
     - os: linux
-      stage: default     
+      stage: linux     
       compiler: clang
       env: CC=clang-9 CXX=clang++-9
 
