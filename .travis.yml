@@ -99,9 +99,9 @@ jobs:
    #      - make osx_tests
          
     - os: osx
+      stage: osx
       osx_image: xcode10
       compiler: clang
-      stage: osx
       env: CC=clang CXX=clang++
       #python: 3.6
       before_script:
@@ -112,12 +112,12 @@ jobs:
       
       
    ##########################################################################################
-   #     Linux Test ( Coveriry )                                                            #
+   #     Linux Test ( Coverity )                                                            #
    ##########################################################################################
 
     - os: linux
-      env: CC=gcc CXX=g++
       stage: linux
+      env: CC=gcc CXX=g++
       addons:
         apt:
             packages: ['libevent-dev']
