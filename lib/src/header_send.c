@@ -82,7 +82,11 @@ char* get_cors_type_name( CORS_HEADER_TYPES type ){
 
 int sendHeaderWebsocket(socket_info* sock) {
 	
-	printWebsocketChunk(sock, "HTTP/1.1 101 Switching Protocols\r\n");
+	if ( sock->header->isHttp1_1 ){
+		printWebsocketChunk(sock, "HTTP/1.1 101 Switching Protocols\r\n");
+	}else{
+		printWebsocketChunk(sock, "HTTP/1.0 101 Switching Protocols\r\n");
+	}
 	printWebsocketChunk(sock, "Upgrade: websocket\r\n");
 	printWebsocketChunk(sock, "Connection: Upgrade\r\n");
 	printWebsocketChunk(sock, "Sec-WebSocket-Accept: %s\r\n", sock->header->WebSocketOutHash);
@@ -120,7 +124,11 @@ static void addConnectionStatusLines(socket_info* socket) {
 
 int sendPreflightAllowed(socket_info *sock) {
 
-	printHeaderChunk( sock, "HTTP/1.1 204 No Content\r\n");
+	if ( sock->header->isHttp1_1 ){
+		printHeaderChunk( sock, "HTTP/1.1 204 No Content\r\n");
+	}else{
+		printHeaderChunk( sock, "HTTP/1.0 204 No Content\r\n");
+	}
 	printHeaderChunk( sock, "Server: %s\r\n", "libCWebUI");
 
 
@@ -167,7 +175,11 @@ static void addCacheControlLines(http_request* s, WebserverFileInfo *info) {
 }
 
 int sendHeaderNotModified(http_request* s, WebserverFileInfo *info) {
-	printHeaderChunk(s->socket, "HTTP/1.1 304 Not Modified\r\n");
+	if ( s->header->isHttp1_1 ){
+		printHeaderChunk(s->socket, "HTTP/1.1 304 Not Modified\r\n");
+	}else{
+		printHeaderChunk(s->socket, "HTTP/1.0 304 Not Modified\r\n");
+	}
 	printHeaderChunk(s->socket, "Server: %s\r\n", "libCWebUI");
 	addCacheControlLines(s, info);
 	addConnectionStatusLines(s->socket);
@@ -176,7 +188,11 @@ int sendHeaderNotModified(http_request* s, WebserverFileInfo *info) {
 }
 
 void sendHeaderNotFound(http_request* s, int p_lenght) {
-	printHeaderChunk(s->socket, "HTTP/1.1 404 Not Found\r\n");
+	if ( s->header->isHttp1_1 ){
+		printHeaderChunk(s->socket, "HTTP/1.1 404 Not Found\r\n");
+	}else{
+		printHeaderChunk(s->socket, "HTTP/1.0 404 Not Found\r\n");
+	}
 	printHeaderChunk(s->socket, "Server: %s\r\n", "libCWebUI");
 	printHeaderChunk(s->socket, "Content-Length: %d\r\n", p_lenght);
 	printHeaderChunk(s->socket, "Content-Type: text/html\r\n");
@@ -185,7 +201,11 @@ void sendHeaderNotFound(http_request* s, int p_lenght) {
 }
 
 void sendHeaderError(socket_info* sock, char* ErrorMessage, int p_lenght) {
-	printHeaderChunk(sock, "HTTP/1.1 %s\r\n", ErrorMessage);
+	if ( sock->header->isHttp1_1 ){
+		printHeaderChunk(sock, "HTTP/1.1 %s\r\n", ErrorMessage);
+	}else{
+		printHeaderChunk(sock, "HTTP/1.0 %s\r\n", ErrorMessage);
+	}
 	printHeaderChunk(sock, "Server: %s\r\n", "libCWebUI");
 	printHeaderChunk(sock, "Content-Length: %d\r\n", p_lenght);
 	printHeaderChunk(sock, "Content-Type: text/html\r\n");
@@ -385,8 +405,11 @@ static void addSessionCookies(http_request* s,WebserverFileInfo *info){
  */
 int sendHeader(http_request* s, WebserverFileInfo *info, int p_lenght) {
 
-
-	printHeaderChunk(s->socket, "HTTP/1.1 200 OK\r\n");
+	if( s->header->isHttp1_1 ){
+		printHeaderChunk(s->socket, "HTTP/1.1 200 OK\r\n");
+	}else{
+		printHeaderChunk(s->socket, "HTTP/1.0 200 OK\r\n");
+	}
 	printHeaderChunk(s->socket, "Server: %s\r\n", "libCWebUI");
 
 	addSessionCookies( s , info );
