@@ -196,6 +196,10 @@ static const unsigned char* read_file( const char *alias, const unsigned char* d
 		file->DataLenght = real_size;
 
 		*offset_p += real_size + 1;
+
+		if ( template ){
+			file->TemplateFile = 1;
+		}
 	}
 
 
