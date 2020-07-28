@@ -271,7 +271,7 @@ int     PlatformSendSocket ( int socket, const unsigned char *buf, SIZE_TYPE len
 	SIZE_TYPE send_bytes = 0;
 
 	if ( len > INT_MAX ){
-		LOG ( CONNECTION_LOG,ERROR_LEVEL,socket,"len > INT_MAX ( %"PRId64" / %d ) ",len,INT_MAX );
+		LOG ( CONNECTION_LOG,ERROR_LEVEL,socket,"len > INT_MAX ( %"SIZE_TYPE_PRINT_DEZ" / %d ) ",len,INT_MAX );
         return CLIENT_UNKNOWN_ERROR;
 	}
 
@@ -338,7 +338,7 @@ int     PlatformRecvSocketNonBlocking ( int socket, unsigned char *buf, SIZE_TYP
     int ret;
 
     if ( len > INT_MAX ){
-		LOG ( CONNECTION_LOG,ERROR_LEVEL,socket,"len > INT_MAX ( %"PRId64" / %d ) ",len,INT_MAX );
+		LOG ( CONNECTION_LOG,ERROR_LEVEL,socket,"len > INT_MAX ( %"SIZE_TYPE_PRINT_DEZ" / %d ) ",len,INT_MAX );
         return CLIENT_UNKNOWN_ERROR;
 	}
 

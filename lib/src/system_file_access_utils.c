@@ -376,7 +376,7 @@ void generateEtag(WebserverFileInfo* file) {
 
 			FILE_OFFSET ret2 = PlatformReadBytes(data, to_read);
 			if ( ret2 != to_read ){
-				printf("Error: read mismatch %"PRIu64" != %"PRIu32"\n",ret2,to_read);
+				printf("Error: read mismatch %"FILE_OFF_PRINT_INT" != %"PRIu32"\n",ret2,to_read);
 			}
 
 			WebserverSHA1Update(sha_context, data, to_read);

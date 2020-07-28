@@ -61,6 +61,7 @@ SPDX-License-Identifier: MPL-2.0
 
 #define FILE_OFFSET __off_t
 #define FILE_OFF_PRINT_HEX "jX"
+#define FILE_OFF_PRINT_INT "lu"
 
 
 #define WS_MUTEX_TYPE		pthread_mutex_t

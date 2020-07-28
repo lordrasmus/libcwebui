@@ -88,7 +88,7 @@ int local_file_system_check_file_modified( WebserverFileInfo *file ){
 
 		FILE_OFFSET ret = PlatformReadBytes( ( unsigned char*) file->Data, file->DataLenght);
 		if ( ret != file->DataLenght ){
-			printf("Error: file size mismatch1 %"PRIu64" != %"PRIu64"\n",ret,file->DataLenght);
+			printf("Error: file size mismatch1 %"FILE_OFF_PRINT_INT" != %"FILE_OFF_PRINT_INT"\n",ret,file->DataLenght);
 		}
 
 		PlatformCloseDataStream();
@@ -108,7 +108,7 @@ int local_file_system_read_content( WebserverFileInfo *file ){
 
 		FILE_OFFSET ret = PlatformReadBytes( ( unsigned char*) file->Data, file->DataLenght);
 		if ( ret != file->DataLenght ){
-			printf("Error: file size mismatch2 %"PRIu64" != %"PRIu64"\n",ret,file->DataLenght);
+			printf("Error: file size mismatch2 %"FILE_OFF_PRINT_INT" != %"FILE_OFF_PRINT_INT"\n",ret,file->DataLenght);
 		}
 
 		PlatformCloseDataStream();
@@ -242,7 +242,7 @@ static WebserverFileInfo* getFileInformation( const char *name) {
 
 		FILE_OFFSET ret = PlatformReadBytes( template_header,  sizeof( template_v1_header ) -1 );
 		if ( ret !=  sizeof( template_v1_header ) -1 ){
-			printf("Error: file size mismatch3 %"PRIu64" != %ld\n",ret, sizeof( template_v1_header ) -1 );
+			printf("Error: file size mismatch3 %"FILE_OFF_PRINT_INT" != %u\n",ret, sizeof( template_v1_header ) -1 );
 		}
 
 		if ( 0 == memcmp( template_v1_header, template_header, sizeof( template_v1_header ) -1 ) ){

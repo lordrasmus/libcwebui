@@ -52,6 +52,7 @@ SPDX-License-Identifier: MPL-2.0
 
 #define FILE_OFFSET			uint64_t
 #define FILE_OFF_PRINT_HEX  "lX"
+#define FILE_OFF_PRINT_INT  PRId64
 
 int strcasecmp(const char *s1, const char *s2);
 
