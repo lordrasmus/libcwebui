@@ -504,6 +504,7 @@ int WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, unsigned int
 		ERR_clear_error();
 		diff = len - l;
 		ret = SSL_read(s->ssl_context->ssl, &buf[l], diff);
+		//printf("ssl read ret : %d - %d\n",ret, SSL_pending( s->ssl_context->ssl ));
 		//s->ssl_context->sbio
 		r2 = SSL_get_error(s->ssl_context->ssl, ret);
 		switch (r2) {

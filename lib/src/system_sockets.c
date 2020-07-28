@@ -347,12 +347,20 @@ static int handleClientHeaderData(socket_info* sock) {
 				LOG(CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"POST %d of %d",sock->header->post_buffer_pos,sock->header->contentlenght);
 				*/
 				if ( sock->header->contentlenght > sock->header->post_buffer_pos ) {
-					if ( len == 0 ){
-						return 0;
-					}
-					if ( 1 == recv_post_payload( sock ,sock->header_buffer, len ) ){
-						sock->header->header_complete = 0;
-						return 1;	/* Aktuellen POST Request  gelesen, weiter Daten sind der nächste Header */
+					// Wenn auf dem SSL Socket noch Bytes Pending waren ist sock->skip_read == 1 und len == 0
+					if ( sock->skip_read == 0 ){
+						if ( len == 0 ){
+							return 0;
+						}
+						if ( 1 == recv_post_payload( sock ,sock->header_buffer, len ) ){
+							sock->header->header_complete = 0;
+							return 1;	/* Aktuellen POST Request  gelesen, weiter Daten sind der nächste Header */
+						}
+					}else{
+						if ( 1 == recv_post_payload( sock ,sock->header_buffer, sock->header_buffer_pos ) ){
+							sock->header->header_complete = 0;
+							return 1;	/* Aktuellen POST Request  gelesen, weiter Daten sind der nächste Header */
+						}
 					}
 				}
 				// Die schleife unterbrechen damit andere Sockets dran kommen
@@ -1121,7 +1129,7 @@ void handleer( int a, short b, void *t ) {
 			if ( ret == 2 ){ // Websocket wurde behandelt
 				return;
 			}
-			if( ret == 0 ){  // Header unvollständig weitere daten lesen
+			if( ( ret == 0 ) && ( WebserverSSLPending ( sock ) == 0 ) ){  // Header unvollständig weitere daten lesen
 				addEventSocketRead( sock );
 				return;
 			}
