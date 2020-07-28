@@ -292,7 +292,6 @@ typedef struct {
 	char event_persist;
 #endif
 	char closeSocket;
-	char skip_read;
 
 	void *s;
 

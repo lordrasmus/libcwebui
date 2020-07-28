@@ -322,11 +322,9 @@ static int handleClientHeaderData(socket_info* sock) {
 
 		if (buffer_length - sock->header_buffer_pos > 0) {
 			int len = 0;
-			if ( sock->skip_read == 0 ){
-				unsigned char* p =(unsigned char*) &sock->header_buffer[sock->header_buffer_pos];
-				int read_length = buffer_length - sock->header_buffer_pos;
-				len = WebserverRecv(sock, p ,read_length , 0);
-			}
+			unsigned char* p =(unsigned char*) &sock->header_buffer[sock->header_buffer_pos];
+			int read_length = buffer_length - sock->header_buffer_pos;
+			len = WebserverRecv(sock, p ,read_length , 0);
 			#ifdef _WEBSERVER_SOCKET_DEBUG_
 				LOG(CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"Client Header Recv %d",len);
 			#endif
@@ -347,20 +345,12 @@ static int handleClientHeaderData(socket_info* sock) {
 				LOG(CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"POST %d of %d",sock->header->post_buffer_pos,sock->header->contentlenght);
 				*/
 				if ( sock->header->contentlenght > sock->header->post_buffer_pos ) {
-					// Wenn auf dem SSL Socket noch Bytes Pending waren ist sock->skip_read == 1 und len == 0
-					if ( sock->skip_read == 0 ){
-						if ( len == 0 ){
-							return 0;
-						}
-						if ( 1 == recv_post_payload( sock ,sock->header_buffer, len ) ){
-							sock->header->header_complete = 0;
-							return 1;	/* Aktuellen POST Request  gelesen, weiter Daten sind der nächste Header */
-						}
-					}else{
-						if ( 1 == recv_post_payload( sock ,sock->header_buffer, sock->header_buffer_pos ) ){
-							sock->header->header_complete = 0;
-							return 1;	/* Aktuellen POST Request  gelesen, weiter Daten sind der nächste Header */
-						}
+					if ( len == 0 ){
+						return 0;
+					}
+					if ( 1 == recv_post_payload( sock ,sock->header_buffer, len ) ){
+						sock->header->header_complete = 0;
+						return 1;	/* Aktuellen POST Request  gelesen, weiter Daten sind der nächste Header */
 					}
 				}
 				// Die schleife unterbrechen damit andere Sockets dran kommen
@@ -1138,23 +1128,7 @@ void handleer( int a, short b, void *t ) {
 				#define  WebserverSSLPending( a ) 0
 			#endif
 
-			sock->skip_read = 1;
 			while(( sock->header_buffer_pos > 0) || ( WebserverSSLPending ( sock ) == 1 ) ){
-				#ifdef WEBSERVER_USE_SSL
-				if ( WebserverSSLPending ( sock ) == 1 ) {
-					//printf("SSL Pending %d\n",sock->ssl_pending_bytes);
-
-					unsigned char* p =(unsigned char*) &sock->header_buffer[sock->header_buffer_pos];
-					int read_length = sock->header_buffer_size - sock->header_buffer_pos;
-					if ( read_length > sock->ssl_pending_bytes){
-						read_length = sock->ssl_pending_bytes;
-					}
-
-					// Wenn Pending Bytes im SSL Block sind werden nur die gelesen aber kein echter recv Aufruf durchgeführt
-					int len = WebserverRecv(sock, p ,read_length , 0);
-					sock->header_buffer_pos += len;
-				}
-				#endif
 
 				ret = handleClient(sock);
 				if (ret < 0) {
@@ -1166,7 +1140,6 @@ void handleer( int a, short b, void *t ) {
 					break;
 				}
 			}
-			sock->skip_read = 0;
 
 			// Wenn Output Daten generiert wurden diese erstmal schreiben, nach dem schreiben dann wieder input daten lesen
 			if ( ws_list_size( &sock->output_list ) > 0 ){
