@@ -332,8 +332,8 @@ void generateOutputBuffer(socket_info* sock) {
 		buffer = (char*) WebserverMalloc ( body_size + 1  ); /* +1 fuer Header Debug '\0' */
 		
 		offset = writeChunksToBuffer(&sock->html_chunk_list, &buffer[offset], 1 );
-		output->main.buffer = buffer;
-		output->main.buffer_size = offset;
+		output->body.buffer = buffer;
+		output->body.buffer_size = offset;
 		
 		if ( body_size == 0){
 			printf("url : %s\n",sock->header->url);
@@ -382,8 +382,8 @@ void generateOutputBuffer(socket_info* sock) {
 #ifdef _WEBSERVER_DEBUG_
 	LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket, "compiled HTML Size %d ",size );
 #endif
-	output->main.buffer = buffer;
-	output->main.buffer_size = offset;
+	output->body.buffer = buffer;
+	output->body.buffer_size = offset;
 	
 	if ( sock->send_file_info != 0 ){
 

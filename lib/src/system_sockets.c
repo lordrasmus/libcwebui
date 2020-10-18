@@ -752,13 +752,13 @@ static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendOutputBuffer(socket_inf
 		}
 	}
 	
-	if ( output->main.buffer != 0 ){
-		ret = sendData( sock, (unsigned char*)output->main.buffer, output->main.buffer_size, &output->main.buffer_send_pos );
+	if ( output->body.buffer != 0 ){
+		ret = sendData( sock, (unsigned char*)output->body.buffer, output->body.buffer_size, &output->body.buffer_send_pos );
 		switch (ret) {
 			case CLIENT_NO_MORE_DATA:
-				WebserverFree( output->main.buffer );
-				output->main.buffer = 0;
-				output->main.buffer_send_pos = 0;
+				WebserverFree( output->body.buffer );
+				output->body.buffer = 0;
+				output->body.buffer_send_pos = 0;
 				break;
 			case DATA_PENDING:
 				return DATA_PENDING;
@@ -766,7 +766,7 @@ static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendOutputBuffer(socket_inf
 				goto client_diconnected_main;
 			default:
 				LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "unhandled send status output_main_buffer pos : %"FILE_OFF_PRINT_INT" status : %d",
-						output->main.buffer_send_pos, ret);
+						output->body.buffer_send_pos, ret);
 				goto client_diconnected_main;
 		}
 	}
@@ -798,11 +798,11 @@ client_diconnected_header:
 	output->header.buffer_send_pos = 0;
 
 client_diconnected_main:
-	if ( output->main.buffer != 0 ){
-		WebserverFree( output->main.buffer );
-		output->main.buffer = 0;
+	if ( output->body.buffer != 0 ){
+		WebserverFree( output->body.buffer );
+		output->body.buffer = 0;
 	}
-	output->main.buffer_send_pos = 0;
+	output->body.buffer_send_pos = 0;
 
 
 	return CLIENT_DICONNECTED;
@@ -1232,7 +1232,7 @@ uint32_t getSocketInfoSize(socket_info* sock) {
 	while( ws_list_iterator_hasnext ( &sock->output_list ) ){
 		output_struct* out = (output_struct*) ws_list_iterator_next( &sock->output_list );
 		ret += out->header.buffer_size;
-		ret += out->main.buffer_size;
+		ret += out->body.buffer_size;
 	}
 
 	return ret;

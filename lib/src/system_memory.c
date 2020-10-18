@@ -113,8 +113,8 @@ void WebserverFreeSocketInfo(socket_info* sock) {
 				WebserverFree( output->header.buffer );
 			}
 
-			if ( output->main.buffer != 0 ){
-				WebserverFree( output->main.buffer );
+			if ( output->body.buffer != 0 ){
+				WebserverFree( output->body.buffer );
 			}
 		}
 		WebserverFree( output );

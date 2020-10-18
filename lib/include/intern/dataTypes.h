@@ -245,7 +245,7 @@ typedef struct{
 typedef struct{
 
 	output_buffer header;
-	output_buffer main;
+	output_buffer body;
 
 	socket_file_infos file_infos;
 
