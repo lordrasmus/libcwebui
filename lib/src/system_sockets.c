@@ -1102,6 +1102,9 @@ void handleer( int a, short b, void *t ) {
 			#endif
 
 
+			#ifndef WEBSERVER_USE_SSL
+				#define  WebserverSSLPending( a ) 0
+			#endif
 
 			ret = handleClient(sock);
 			if (ret < 0) {
@@ -1116,10 +1119,6 @@ void handleer( int a, short b, void *t ) {
 				addEventSocketRead( sock );
 				return;
 			}
-
-			#ifndef WEBSERVER_USE_SSL
-				#define  WebserverSSLPending( a ) 0
-			#endif
 
 			while(( sock->header_buffer_pos > 0) || ( WebserverSSLPending ( sock ) == 1 ) ){
 
