@@ -840,6 +840,7 @@ void handleServer(socket_info* sock) {
 	socket_info *client_sock;
 
 	while (1) {
+		memset( sock->client_ip_str, 0 , sizeof( sock->client_ip_str ) );
 		c = PlatformAccept(sock, &port);
 		if (c == -1){
 			return;
