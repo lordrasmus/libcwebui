@@ -20,6 +20,7 @@ SPDX-License-Identifier: MPL-2.0
 #ifdef WEBSERVER_USE_PYTHON
 
 
+#include <libgen.h>
 
 #include "intern/py_plugin.h"
 #include "intern/py_utils.h"
@@ -181,8 +182,21 @@ int py_load_python_plugin( const char* path ){
 
 	mod->thread_state = Py_NewInterpreter();
 	mod->global_namespace = PyModule_GetDict( PyImport_AddModule("__main__") );
+	
 	//mod->local_namespace  = PyDict_New();
 
+	char cwd[PATH_MAX];
+	getcwd(cwd, sizeof(cwd));
+    //printf("Current working dir: %s\n", cwd);
+    
+    strcat( cwd, "/" );
+    strcat( cwd, path );
+    //printf("full path: %s\n", cwd);
+    dirname( cwd );
+    //printf(" Basename : %s\n",cwd );
+       
+    strcpy( mod->exec_path, cwd );
+    
 	mod->path = malloc ( strlen ( path ) + 1 ) ;
 	strcpy( mod->path , path );
 
@@ -215,8 +229,17 @@ int py_load_python_plugin( const char* path ){
 		context = mod;
 		//context = NULL;
 
+		
+		getcwd(cwd, sizeof(cwd));
+		//chdir( mod->exec_path );
+		
+		char run[1000];
+		sprintf( run, "import sys\n" "sys.path.append('%s')\n", mod->exec_path );
+		
+		PyRun_SimpleString( run );
 		PyRun_File( fp,path , Py_file_input, mod->global_namespace,  mod->global_namespace );
-
+		//chdir( cwd );
+		
 		context = NULL;
 
 		fclose(fp);
@@ -277,9 +300,9 @@ void py_call_engine_function( http_request *s, user_func_s *func , FUNCTION_PARA
 				//PyObject* last_namespace = context->global_namespace;
 
 				context->global_namespace = PyModule_GetDict( PyImport_AddModule("__main__") );
-
+				
 				PyRun_File( fp,func->plugin->path , Py_file_input, context->global_namespace,  context->global_namespace );
-
+				
 				//Py_XDECREF(last_namespace);
 				#warning mem leak wegen neuem namspace
 				// alter namspace kann aber nicht einfach gelöscht werden
@@ -375,6 +398,7 @@ int py_init_modules( void ){
     }
 
 	Py_Initialize();
+	
 	//PyEval_InitThreads();
 
 	/*load_python_plugin("test.py");

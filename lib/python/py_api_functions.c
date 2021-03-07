@@ -199,6 +199,10 @@ static PyObject* py_getURLParameter( PyObject* obj, PyObject *args ){
 	return py_var;
 }
 
+static PyObject*  py_get_client_ip( PyObject* obj, PyObject *args ){
+	return PyString_FromString( py_cur_s->socket->client_ip_str );
+}
+
 PyMethodDef py_libcwebui_methods[] =
 {
 	{"register_function", py_register_function,  METH_VARARGS, "A simple example of an embedded function."},
@@ -213,6 +217,9 @@ PyMethodDef py_libcwebui_methods[] =
 	{"getSessionVar", py_getSessionVar, METH_VARARGS, "A simple example of an embedded function."},
 
 	{"getURLParameter", py_getURLParameter, METH_VARARGS, "A simple example of an embedded function."},
+	
+	{"get_client_ip", py_get_client_ip, METH_VARARGS, "A simple example of an embedded function."},
+	
 	//setGlobalVar
 	//getGlobalVar
 
