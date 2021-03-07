@@ -300,6 +300,11 @@ void  dumpEngineParameter(dummy_handler* s);
 int ws_check_utf8( unsigned char *str, uint32_t len, char **message);
 
 /*
+	decode URL String 
+*/
+void ws_url_decode(char *line);
+
+/*
       Text Frame über einen Websocket senden
 */
 int WebsocketSendTextFrame(const char* guid, const char* in, const int length);

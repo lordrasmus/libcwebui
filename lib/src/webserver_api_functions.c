@@ -548,6 +548,9 @@ char* ws_get_cors_type_name( CORS_HEADER_TYPES type ){
 	return get_cors_type_name( type );
 }
 
+void ws_url_decode(char *line){
+	url_decode( line );
+}
 
 
 #include "webserver_api_functions_depricated.c"

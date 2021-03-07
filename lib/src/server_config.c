@@ -28,6 +28,7 @@ void initConfig(void) {
 	config_v_store = createVariableStore();
 	setConfigInt( "port",80);
 	setConfigInt( "ssl_port",-1);
+	setConfigInt( "max_post_size",2 * 1024 * 1024); // Default 2 MB Max Post Size
 	setConfigInt( "use_csp",0);
 	setConfigInt( "reload_py_modules",0);
 	#ifdef WEBSERVER_SESSION_TIMEOUT

@@ -80,13 +80,14 @@ BIO *bio_err = 0;
 
 static char *pass;
 
+static long sess_cache_mode;
+
 
 SSL_CTX *initialize_ctx( char *keyfile, char* keyfile_backup, char* ca, char *password );
 int load_dh_params(SSL_CTX *ctx, char *file);
 void printSSLErrorQueue(socket_info* s);
 
 int initOpenSSL(void) {
-	long cache_mode;
 
 	int file_error = 0;
 
@@ -152,9 +153,16 @@ int initOpenSSL(void) {
 		return -1;
 	}
 
-	cache_mode = SSL_SESS_CACHE_OFF; // No session caching for client or server takes place.
-	//cache_mode = SSL_SESS_CACHE_SERVER|SSL_SESS_CACHE_NO_INTERNAL;
-	SSL_CTX_set_session_cache_mode(g_ctx, cache_mode);
+	//cache_mode = SSL_SESS_CACHE_OFF; // No session caching for client or server takes place.
+
+	//sess_cache_mode = SSL_SESS_CACHE_SERVER|SSL_SESS_CACHE_NO_INTERNAL;
+	//SSL_CTX_set_session_cache_mode(g_ctx, sess_cache_mode);
+
+
+	sess_cache_mode = SSL_CTX_get_session_cache_mode(g_ctx);
+
+	//printf("sess_cache_mode: 0x%X\n",sess_cache_mode);
+
 	//SSL_CTX_sess_set_new_cb(ctx,    ssl_callback_NewSessionCacheEntry);
 	//SSL_CTX_sess_set_get_cb(ctx,    ssl_callback_GetSessionCacheEntry);
 	//SSL_CTX_sess_set_remove_cb(ctx, ssl_callback_DelSessionCacheEntry);
@@ -321,6 +329,8 @@ int WebserverSSLInit(socket_info* s) {
 	SSL_set_bio(s->ssl_context->ssl, s->ssl_context->sbio, s->ssl_context->sbio);
 
 	SSL_set_read_ahead(s->ssl_context->ssl, 0);
+
+	//SSL_CTX_set_session_cache_mode(s->ssl_context->ssl, sess_cache_mode);
 
 	return 0;
 }

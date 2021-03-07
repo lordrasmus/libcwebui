@@ -29,9 +29,6 @@ SPDX-License-Identifier: MPL-2.0
 #endif
 
 
-#ifndef WEBSERVER_MAX_POST_CONTENT_LENGTH
-	#error WEBSERVER_MAX_POST_CONTENT_LENGTH muss definiert werden
-#endif
 
 /*
  http://tangentsoft.net/wskfaq/articles/bsd-compatibility.html
@@ -267,24 +264,20 @@ static int recv_post_payload( socket_info* sock, const char* buffer, uint32_t le
 
 static int check_post_header( socket_info* sock ){
 
-	#if WEBSERVER_MAX_POST_CONTENT_LENGTH > UINT64_MAX
-		#error WEBSERVER_MAX_POST_CONTENT_LENGTH > UINT64_MAX
-	#endif
-
-	if ( sock->header->contentlenght > WEBSERVER_MAX_POST_CONTENT_LENGTH ){
-		//LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"header->contentlenght > WEBSERVER_MAX_POST_CONTENT_LENGTH ( %" PRIu64 " > %d ) ",sock->header->contentlenght, WEBSERVER_MAX_POST_CONTENT_LENGTH );
+	if ( sock->header->contentlenght > getConfigInt("max_post_size") ){
+		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"header->contentlenght > max_post_size ( %" PRIu64 " > %d ) ",sock->header->contentlenght, getConfigInt("max_post_size") );
 		return -1;
 	}
 
 	if ( sock->header->contenttype == 0 ){
-		//LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s","header->contenttype == 0 ");
+		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s","header->contenttype == 0 ");
 		//LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s",sock->header_buffer);
 		// nicht einfach den Buffer ausgeben
 		return -1;
 	}
 
 	if ( ( sock->header->contenttype == MULTIPART_FORM_DATA ) && ( sock->header->boundary == 0 ) ){
-		//LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s","header->boundary == 0 ");
+		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s","header->boundary == 0 ");
 		//LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s",sock->header_buffer);
 		// nicht einfach den Buffer ausgeben
 		return -1;
@@ -1110,6 +1103,9 @@ void handleer( int a, short b, void *t ) {
 			#endif
 
 
+			#ifndef WEBSERVER_USE_SSL
+				#define  WebserverSSLPending( a ) 0
+			#endif
 
 			ret = handleClient(sock);
 			if (ret < 0) {
@@ -1124,10 +1120,6 @@ void handleer( int a, short b, void *t ) {
 				addEventSocketRead( sock );
 				return;
 			}
-
-			#ifndef WEBSERVER_USE_SSL
-				#define  WebserverSSLPending( a ) 0
-			#endif
 
 			while(( sock->header_buffer_pos > 0) || ( WebserverSSLPending ( sock ) == 1 ) ){
 
