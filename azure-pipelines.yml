@@ -10,10 +10,10 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-- script: echo Hello, world!
+- script: echo "Hello World! $(gcc -v)"
   displayName: 'Run a one-line script'
 
 - script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
+    sudo apt -y install python-dev-is-python3 libevent-dev
+    make
   displayName: 'Run a multi-line script'
