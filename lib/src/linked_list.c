@@ -147,29 +147,36 @@ int VISIBLE_ATTR ws_list_attributes_seeker(list_t *l, element_seeker seeker_fun)
 
 
 
-int VISIBLE_ATTR ws_list_append(list_t *l, void *data){
+int VISIBLE_ATTR ws_list_append(list_t *l, void *data, uint32_t flags ){
     
     l->element_count++;
     
+    struct list_entry* new_ele = malloc( sizeof( struct list_entry ) );
+    memset( new_ele, 0 , sizeof( struct list_entry ) );
+    new_ele->data = data;
+    
     if ( l->first == 0 ){
-        struct list_entry* entry = malloc( sizeof( struct list_entry ) );
-        memset( entry, 0 , sizeof( struct list_entry ) );
-        entry->data = data;
-        l->first = entry;
-        return -1;
+        l->first = new_ele;
+        l->last = new_ele;
+        return 1;
     }
     
     struct list_entry* cur = l->first;
-    while( cur->next != 0 ){
-        cur = cur->next;
+    
+    if ( flags & WS_LIST_APPEND_FIRST ){
+        cur->prev = new_ele;
+        new_ele->next = cur;
+        l->first = new_ele;
+        return 1;
     }
     
-    struct list_entry* new_ele = malloc( sizeof( struct list_entry ) );
-    memset( new_ele , 0 , sizeof( struct list_entry ) );
+    cur = l->last;
     
     cur->next = new_ele;
     new_ele->prev = cur; 
-    new_ele->data = data;
+    
+    
+    l->last = new_ele;
     
     return 1;
         

@@ -44,7 +44,7 @@ void *ws_popQueue(ws_MessageQueue* mq){
 
 void ws_pushQueue(ws_MessageQueue* mq,void* element){
 	PlatformLockMutex(&mq->lock);
-	ws_list_append(&mq->entry_list,element);
+	ws_list_append(&mq->entry_list,element,0);
 	PlatformUnlockMutex(&mq->lock);
 	PlatformPostSem(&mq->semid);
 }

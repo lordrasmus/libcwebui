@@ -346,7 +346,7 @@ static int recFrameV8(socket_info *sock) {
 				}else{
 					tmp = WebserverMalloc( wsf.real_length ) ;
 
-					ws_list_append(&sock->websocket_fragments, tmp);
+					ws_list_append(&sock->websocket_fragments, tmp,0);
 					for (ui = 0; ui < wsf.real_length; ui++){
 						if (wsf.mask_bit == 1) {
 							tmp[ui] = sock->websocket_buffer[offset + ui] ^ wsf.mask[ui % 4];
@@ -364,7 +364,7 @@ static int recFrameV8(socket_info *sock) {
 			case WSF_CONTINUE:
 				tmp = WebserverMalloc( wsf.real_length ) ;
 
-				ws_list_append(&sock->websocket_fragments, tmp);
+				ws_list_append(&sock->websocket_fragments, tmp,0);
 				for (ui = 0; ui < wsf.real_length; ui++){
 					if (wsf.mask_bit == 1) {
 						tmp[ui] = sock->websocket_buffer[offset + ui] ^ wsf.mask[ui % 4];

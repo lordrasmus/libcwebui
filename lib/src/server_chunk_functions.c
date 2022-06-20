@@ -36,7 +36,7 @@ static void writeChunk(list_t* liste, const unsigned char* text, unsigned int le
 	unsigned int to_write, diff, offset = 0;
 	if (ws_list_size(liste) == 0) {
 		chunk = WebserverMallocHtml_chunk();
-		ws_list_append(liste, chunk);
+		ws_list_append(liste, chunk,0);
 	}
 
 	if (chunk == 0) {
@@ -49,7 +49,7 @@ static void writeChunk(list_t* liste, const unsigned char* text, unsigned int le
 	while (length > 0) {
 		if (chunk == 0) {
 			chunk = WebserverMallocHtml_chunk();
-			ws_list_append(liste, chunk);
+			ws_list_append(liste, chunk,0);
 		}
 		diff = 2000 - chunk->length;
 		if (length < diff){
@@ -360,7 +360,7 @@ void generateOutputBuffer(socket_info* sock) {
 		
 		output->header.buffer = buffer;
 		output->header.buffer_size = offset;
-		ws_list_append( &sock->output_list, output );
+		ws_list_append( &sock->output_list, output, 0 );
 		return;
 	}
 	
@@ -397,7 +397,7 @@ void generateOutputBuffer(socket_info* sock) {
 		sock->send_file_info = 0;
 	}
 
-	ws_list_append( &sock->output_list, output );
+	ws_list_append( &sock->output_list, output, 0 );
 
 }
 

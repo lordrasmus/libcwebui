@@ -138,7 +138,7 @@ void addVariable(ws_variable_store* store, ws_variable* var) {
 	if (store == 0){
 		return;
 	}
-	ws_list_append(&store->var_list, var);
+	ws_list_append(&store->var_list, var,0);
 }
 
 void delVariable(ws_variable_store* store, const char* name) {

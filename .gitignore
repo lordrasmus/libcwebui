@@ -123,6 +123,8 @@ Samples/OSX/MakeProject/main*
 
 tests/tscan/TscanCodeV2.14.24*
 tests/infer/infer-*
+tests/list/test.txt
+tests/list/test_list
 
 Debug
 

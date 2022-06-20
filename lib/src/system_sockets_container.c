@@ -97,7 +97,7 @@ void deleteSocket(socket_info* sock) {
 
 void addSocketContainer(socket_info* sock) {
 	PlatformLockMutex(&socks_mutex);
-	ws_list_append(&sock_list, sock);
+	ws_list_append(&sock_list, sock,0);
 	PlatformUnlockMutex(&socks_mutex);
 }
 
@@ -142,7 +142,7 @@ void deleteAllSockets(void) {
 	while (ws_list_iterator_hasnext(&sock_list)) {
 		sock = (socket_info*) ws_list_iterator_next(&sock_list);
 		PlatformShutdown(sock->socket);
-		ws_list_append(&del_list, sock);
+		ws_list_append(&del_list, sock,0);
 	}
 	ws_list_iterator_stop(&sock_list);
 

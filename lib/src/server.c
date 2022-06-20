@@ -140,7 +140,7 @@ static void parsePostData(http_request *s){
 						file_info->name[0] = '\0';
 					}
 
-					ws_list_append(&s->upload_files, file_info);
+					ws_list_append(&s->upload_files, file_info, 0);
 					offset = offset3 + offset + bound_len - 1;	/* -1 weil die Hauptschelife +1 macht */
 					break;
 				}

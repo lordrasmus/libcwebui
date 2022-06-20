@@ -21,6 +21,7 @@ SPDX-License-Identifier: MPL-2.0
 
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 
 #ifdef __cplusplus
@@ -44,6 +45,7 @@ typedef struct {
     
     unsigned int element_count;
     struct list_entry* first;
+    struct list_entry* last;
     
     struct list_entry* cur_iter;
     
@@ -64,7 +66,8 @@ void *ws_list_iterator_next(list_t *l);
 int ws_list_iterator_hasnext(const list_t *l);
 int ws_list_iterator_stop(list_t *l);
 
-int ws_list_append(list_t *l, void *data);
+#define WS_LIST_APPEND_FIRST 1
+int ws_list_append(list_t *l, void *data, uint32_t flags);
 int ws_list_delete(list_t *l, void *data);
 
 void *ws_list_extract_at(list_t *l, unsigned int pos);

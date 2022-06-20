@@ -425,7 +425,7 @@ void register_function_websocket_handler(const char* url, websocket_handler f, c
 	tmp->wsh = f;
 	tmp->file = file;
 	tmp->line = line;
-	ws_list_append(list->handler_list, tmp);
+	ws_list_append(list->handler_list, tmp, 0);
 
 }
 
@@ -482,7 +482,7 @@ int loadPlugin(const char* name, const char* path) {
 	plugin->path = (char*) WebserverMalloc( strlen(path) + 1 );
 	strcpy(plugin->path, path);
 
-	ws_list_append(&plugin_liste, plugin);
+	ws_list_append(&plugin_liste, plugin, 0);
 
 	/* Prueen ob die Plugin Init Funktion abgestuertzt ist */
 	if (error_handler != 0) {

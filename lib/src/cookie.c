@@ -77,7 +77,7 @@ static void createCookie(HttpRequestHeader *header, char* name, unsigned int nam
 	WebServerPrintf("Parsed Cookie ( %p ) Name <%s>  Value <%s> \n",cookie,cookie->name,cookie->value);
 	#endif
 
-	ws_list_append(&header->cookie_list,cookie);
+	ws_list_append(&header->cookie_list,cookie, 0 );
 
 }
 

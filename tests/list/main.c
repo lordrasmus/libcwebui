@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <simclist.h>
+#include <linked_list.h>
 
 typedef struct{
 	char name[100];
@@ -77,10 +77,10 @@ int main( int argc, char** argv){
 	ws_list_attributes_freer( &test_list, ele_freer );
 	ws_list_attributes_seeker( &test_list, seeker );
 	
-	ws_list_append( &test_list, e0 );
-	ws_list_append( &test_list, e1 );
-	ws_list_append( &test_list, e2 );
-	ws_list_append( &test_list, e3 );
+	ws_list_append( &test_list, e0, 0 );
+	ws_list_append( &test_list, e1, 0 );
+	ws_list_append( &test_list, e2, 0 );
+	ws_list_append( &test_list, e3, 0 );
 	
 	printf("------------ ws_list_get_at ----------------\n");
 
@@ -123,5 +123,16 @@ int main( int argc, char** argv){
 		printf("Liste gefüllt\n");
 	else
 		printf("Liste leer\n");
+		
+	
+	e0 = gen_ele( "ele0",  "value0" );
+	e1 = gen_ele( "ele1",  "value1" );
+	e2 = gen_ele( "ele2",  "value2" );
+	
+	ws_list_append( &test_list, e0, 0 );
+	ws_list_append( &test_list, e1, WS_LIST_APPEND_FIRST );
+	ws_list_append( &test_list, e2, WS_LIST_APPEND_FIRST );
+	
+	dumplist( &test_list );
 	
 }

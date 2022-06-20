@@ -109,7 +109,7 @@ static void checkSessionTimeout(void) {
 #ifdef _WEBSERVER_SESSION_DEBUG_
 			WebServerPrintf("Delete SessionStore GUID : %s\r\n",ss->guid);
 #endif
-			ws_list_append(&del_list, node);
+			ws_list_append(&del_list, node, 0);
 			deleted++;
 		}
 	}
