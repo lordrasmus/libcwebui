@@ -36,6 +36,12 @@ void initConfig(void) {
 	#else
 		setConfigInt( "session_timeout" , 300 );
 	#endif
+
+	setConfigInt( "ssl_disable_SSLv2",1);
+	setConfigInt( "ssl_disable_SSLv3",1);
+	setConfigInt( "ssl_disable_TLSv1.0",0);
+	setConfigInt( "ssl_disable_TLSv1.1",0);
+
 	//setConfigText( "server_ip","127.0.0.1");
 }
 

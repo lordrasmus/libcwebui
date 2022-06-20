@@ -171,9 +171,15 @@ int initOpenSSL(void) {
 	SSL_CTX_set_mode(g_ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
 	SSL_CTX_set_read_ahead(g_ctx, 1);
 
+	int ops = 0;
+	if ( 1 == getConfigInt("ssl_disable_SSLv2") )   ops |= SSL_OP_NO_SSLv2;
+	if ( 1 == getConfigInt("ssl_disable_SSLv3") )   ops |= SSL_OP_NO_SSLv3;
+	if ( 1 == getConfigInt("ssl_disable_TLSv1.0") ) ops |= SSL_OP_NO_TLSv1;
+	if ( 1 == getConfigInt("ssl_disable_TLSv1.1") ) ops |= SSL_OP_NO_TLSv1_1;
+
 
 	// SSLv2, SSLv3 deaktivieren , testen :   nmap --script ssl-cert,ssl-enum-ciphers -p 443 192.168.11.94
-	SSL_CTX_set_options(g_ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+	SSL_CTX_set_options(g_ctx, ops );
 
 
 	return 0;
@@ -549,9 +555,9 @@ int WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, unsigned int
 		case SSL_ERROR_ZERO_RETURN:
 			err_code = ERR_get_error();
 			ERR_error_string(err_code, buffer);
-//#ifdef _WEBSERVER_CONNECTION_DEBUG_
+#ifdef _WEBSERVER_CONNECTION_DEBUG_
 			LOG ( CONNECTION_LOG,ERROR_LEVEL,s->socket,"%s","SSL_ERROR_ZERO_RETURN" );
-//#endif
+#endif
 			return CLIENT_DISCONNECTED;
 
 		case SSL_ERROR_SYSCALL:
