@@ -111,7 +111,7 @@ void 		setWSVariableCustomData(ws_variable* var, var_free_handler handle, void* 
 
 void 			setWSVariableArray(ws_variable* var);
 ws_variable*	getWSVariableArray(ws_variable* var, const char* name);
-ws_variable*	addWSVariableArray(ws_variable* var, const char* name);
+ws_variable*	addWSVariableArray(ws_variable* var, const char* name, uint32_t flags );
 void			delWSVariableArray(ws_variable* var, const char* name);
 ws_variable*	refWSVariableArray(ws_variable* var, ws_variable* ref);
 

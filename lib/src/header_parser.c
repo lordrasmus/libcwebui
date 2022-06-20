@@ -28,7 +28,7 @@ static void createParameter(HttpRequestHeader *header, char* name, unsigned int 
 
 
 	url_decode(name);
-	var = newVariable(header->parameter_store, name);
+	var = newVariable(header->parameter_store, name, 0 );
 
 	if (value != 0) {
 		url_decode(value);

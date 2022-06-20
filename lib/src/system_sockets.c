@@ -833,7 +833,6 @@ void handleServer(socket_info* sock) {
 	socket_info *client_sock;
 
 	while (1) {
-		memset( sock->client_ip_str, 0 , sizeof( sock->client_ip_str ) );
 		c = PlatformAccept(sock, &port);
 		if (c == -1){
 			return;
@@ -1103,9 +1102,6 @@ void handleer( int a, short b, void *t ) {
 			#endif
 
 
-			#ifndef WEBSERVER_USE_SSL
-				#define  WebserverSSLPending( a ) 0
-			#endif
 
 			ret = handleClient(sock);
 			if (ret < 0) {
@@ -1120,6 +1116,10 @@ void handleer( int a, short b, void *t ) {
 				addEventSocketRead( sock );
 				return;
 			}
+
+			#ifndef WEBSERVER_USE_SSL
+				#define  WebserverSSLPending( a ) 0
+			#endif
 
 			while(( sock->header_buffer_pos > 0) || ( WebserverSSLPending ( sock ) == 1 ) ){
 

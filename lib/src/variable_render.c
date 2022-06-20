@@ -31,7 +31,7 @@ void VISIBLE_ATTR initRenderVariable(http_request* s){
 }
 
 ws_variable* getRenderVariable(http_request* s,const char* name){
-	return newVariable(s->render_var_store,name);
+	return newVariable(s->render_var_store,name, 0 );
 }
 
 void VISIBLE_ATTR clearRenderVariables(http_request* s){
@@ -41,7 +41,7 @@ void VISIBLE_ATTR clearRenderVariables(http_request* s){
 
 
 void setRenderVariable(http_request* s,const char* name,const char* text){
-	ws_variable *var =  newVariable(s->render_var_store,name);
+	ws_variable *var =  newVariable(s->render_var_store,name,0);
 	setWSVariableString(var,text);
 }
 

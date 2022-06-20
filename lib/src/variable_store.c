@@ -103,17 +103,22 @@ ws_variable* searchVariable(ws_variable_store* store, const char* name) {
 	return var;
 }
 
-ws_variable* newVariable(ws_variable_store* store, const char* name) {
+ws_variable* newVariable(ws_variable_store* store, const char* name, uint32_t flags ) {
 	ws_variable* var = 0;
 	if (store == 0){
 		return 0;
 	}
 
 	if (name != 0) {
-		var = searchVariable(store, name);
-		if (var == 0) {
-			var = newWSVariable(name);
-			addVariable(store, var);
+		if ( flags & NO_CHECK_NAME_EXISTS ){
+				var = newWSVariable(name);
+				addVariable(store, var);
+		}else{
+			var = searchVariable(store, name);
+			if (var == 0) {
+				var = newWSVariable(name);
+				addVariable(store, var);
+			}
 		}
 	} else {
 		var = newWSVariable("");

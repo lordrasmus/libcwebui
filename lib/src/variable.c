@@ -319,18 +319,18 @@ ws_variable* getWSVariableArray(ws_variable* var, const char* name) {
 	return 0;
 }
 
-ws_variable* addWSVariableArray(ws_variable* var, const char* name) {
+ws_variable* addWSVariableArray(ws_variable* var, const char* name, uint32_t flags ) {
 	if ( var == 0 ){
 		return 0;
 	}
 	if (var->type == VAR_TYPE_ARRAY){
-		return newVariable(var->val.value_array, name);
+		return newVariable(var->val.value_array, name, flags );
 	}
 	if ( (var->type == VAR_TYPE_REF) && (var->val.value_ref->type == VAR_TYPE_ARRAY) ) {
 #ifdef ENABLE_DEVEL_WARNINGS
 		#warning noch testen
 #endif
-		return addWSVariableArray(var->val.value_ref,name);
+		return addWSVariableArray(var->val.value_ref,name, flags );
 	}
 
 	LOG( VARIABLE_LOG,ERROR_LEVEL,0,"var %s is not an array",var->name );
@@ -339,7 +339,7 @@ ws_variable* addWSVariableArray(ws_variable* var, const char* name) {
 }
 
 ws_variable* refWSVariableArray(ws_variable* var, ws_variable* ref) {
-	ws_variable *ret = newVariable(var->val.value_array, 0);
+	ws_variable *ret = newVariable(var->val.value_array, 0, 0 );
 	setWSVariableRef(ret, ref);
 	return ret;
 }
@@ -434,7 +434,7 @@ ws_variable* addWSVariableArrayIndex(ws_variable* var,	unsigned int index) {
 	}
 	for (; i <= index; i++) {
 		snprintf(name_buf, 10, "%d", i);
-		tmp = newVariable(var->val.value_array, name_buf);
+		tmp = newVariable(var->val.value_array, name_buf, 0 );
 	}
 
 	return tmp;

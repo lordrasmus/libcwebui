@@ -457,13 +457,13 @@ char setSessionValueByGUID(char* store_guid, STORE_TYPES store, const char* name
 	if (node != 0) {
 		ss = (sessionStore*) node->info;
 		if ((store == SESSION_STORE) && (ss->ssl == 0)) {
-			var = newVariable(ss->vars, name);
+			var = newVariable(ss->vars, name, 0 );
 			setWSVariableString(var, value);
 			PlatformUnlockMutex( &session_mutex );
 			return 1;
 		}
 		if ((store == SESSION_STORE_SSL) && (ss->ssl == 1)) {
-			var = newVariable(ss->vars, name);
+			var = newVariable(ss->vars, name, 0 );
 			setWSVariableString(var, value);
 			PlatformUnlockMutex( &session_mutex );
 			return 1;
@@ -486,11 +486,11 @@ ws_variable* getSessionValueByGUID(char* store_guid, STORE_TYPES store, const ch
 	if (node != 0) {
 		ss = (sessionStore*) node->info;
 		if ((store == SESSION_STORE) && (ss->ssl == 0)) {
-			ret = newVariable(ss->vars, name);
+			ret = newVariable(ss->vars, name, 0 );
 
 		}
 		if ((store == SESSION_STORE_SSL) && (ss->ssl == 1)) {
-			ret = newVariable(ss->vars, name);
+			ret = newVariable(ss->vars, name, 0 );
 		}
 	}
 
@@ -551,7 +551,7 @@ static char int_setSessionValue(http_request* s, STORE_TYPES store, const char* 
 		if (s->store == 0){
 			return false;
 		}
-		var = newVariable(s->store->vars, name);
+		var = newVariable(s->store->vars, name, 0 );
 		setWSVariableString(var, value);
 	}
 #ifdef WEBSERVER_USE_SSL
@@ -565,7 +565,7 @@ static char int_setSessionValue(http_request* s, STORE_TYPES store, const char* 
 		if (s->socket->use_ssl == 0){
 			return false;
 		}
-		var = newVariable(s->store_ssl->vars, name);
+		var = newVariable(s->store_ssl->vars, name, 0 );
 		setWSVariableString(var, value);
 	}
 #endif
@@ -605,7 +605,7 @@ static ws_variable* int_addSessionValue(http_request* s, STORE_TYPES store, cons
 		if (s->store == 0){
 			return 0;
 		}
-		var = newVariable(s->store->vars, name);
+		var = newVariable(s->store->vars, name, 0 );
 	}
 #ifdef WEBSERVER_USE_SSL
 	if (store == SESSION_STORE_SSL) {
@@ -618,7 +618,7 @@ static ws_variable* int_addSessionValue(http_request* s, STORE_TYPES store, cons
 		if (s->socket->use_ssl == 0){
 			return 0;
 		}
-		var = newVariable(s->store_ssl->vars, name);
+		var = newVariable(s->store_ssl->vars, name, 0 );
 	}
 #endif
 

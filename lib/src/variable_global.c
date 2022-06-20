@@ -55,7 +55,7 @@ int unlockGlobals( void ) {
 }
 
 ws_variable* setGlobalVariable(const char* name, const char* text) {
-	ws_variable *var = newVariable(global_v_store, name);
+	ws_variable *var = newVariable(global_v_store, name, 0 );
 	setWSVariableString(var, text);
 	return var;
 }
@@ -63,7 +63,7 @@ ws_variable* setGlobalVariable(const char* name, const char* text) {
 ws_variable* getGlobalVariable(const char* name) {
 	ws_variable* ret = getVariable(global_v_store, name);
 	if (ret == 0){
-		ret = newVariable(global_v_store, name);
+		ret = newVariable(global_v_store, name, 0 );
 	}
 	return ret;
 }

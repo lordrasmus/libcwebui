@@ -81,7 +81,7 @@ void VISIBLE_ATTR WebserverAddNoRamCacheFile( const char* url ){
 	tmp = getWSVariableArray(no_ram_cache_files, url);
 
 	if (tmp == 0) {
-		tmp = addWSVariableArray(no_ram_cache_files, url);
+		tmp = addWSVariableArray(no_ram_cache_files, url, 0 );
 	}
 	setWSVariableInt(tmp, 1);
 }
@@ -96,7 +96,7 @@ void VISIBLE_ATTR WebserverAddBlockedFile( const char* url ){
 	tmp = getWSVariableArray( blocked_files, url);
 
 	if (tmp == 0) {
-		tmp = addWSVariableArray( blocked_files, url);
+		tmp = addWSVariableArray( blocked_files, url, 0 );
 	}
 	setWSVariableInt(tmp, 1);
 }

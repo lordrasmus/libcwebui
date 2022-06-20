@@ -141,7 +141,7 @@ void add_local_file_system_dir(const char* alias, const char* dir, const int use
 	
 	LOG( FILESYSTEM_LOG, NOTICE_LEVEL, 0, "New dir alias /%s -> %s",alias,dir);
 	
-	tmp = addWSVariableArray( file_dirs , alias);
+	tmp = addWSVariableArray( file_dirs , alias, 0 );
 	
 	strncpy(buffer, dir, 990);
 	if (buffer[strlen(buffer)] != '/'){
@@ -242,7 +242,7 @@ static WebserverFileInfo* getFileInformation( const char *name) {
 
 		FILE_OFFSET ret = PlatformReadBytes( template_header,  sizeof( template_v1_header ) -1 );
 		if ( ret !=  sizeof( template_v1_header ) -1 ){
-			printf("Error: file size mismatch3 %"FILE_OFF_PRINT_INT" != %zu\n",ret, sizeof( template_v1_header ) -1 );
+			printf("Error: file size mismatch3 %"FILE_OFF_PRINT_INT" != %u\n",ret, sizeof( template_v1_header ) -1 );
 		}
 
 		if ( 0 == memcmp( template_v1_header, template_header, sizeof( template_v1_header ) -1 ) ){

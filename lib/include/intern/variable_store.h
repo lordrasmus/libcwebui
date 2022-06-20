@@ -43,7 +43,7 @@ void clearVariables(ws_variable_store* store);
 unsigned int getVariableStoreSize(ws_variable_store* store);
 
 ws_variable* searchVariable(ws_variable_store* store, const char* name);
-ws_variable* newVariable(ws_variable_store* store, const char* name);
+ws_variable* newVariable(ws_variable_store* store, const char* name, uint32_t flags );
 ws_variable* getVariable(ws_variable_store* store, const char* name);
 void addVariable(ws_variable_store* store, ws_variable* var);
 void delVariable(ws_variable_store* store, const char* name);

@@ -152,7 +152,7 @@ dummy_var* ws_get_render_var(dummy_handler* s, const char* name,WS_VAR_FLAGS fla
 	ws_variable* ret = getVariable(((http_request*)s)->render_var_store,name);
 	if ( (  flags & DO_NOT_CREATE ) == 0 ){
 		if (ret == 0){
-			ret = newVariable(((http_request*)s)->render_var_store,name);
+			ret = newVariable(((http_request*)s)->render_var_store,name, 0 );
 		}
 	}
 	return (dummy_var*) ret;
@@ -204,11 +204,15 @@ void setVariableToArray(dummy_var* var) {
 }
 
 dummy_var* addToVarArray(dummy_var* var, const char* name) {
-	return (dummy_var*) addWSVariableArray((ws_variable*) var, name);
+	return (dummy_var*) addWSVariableArray((ws_variable*) var, name, 0 );
+}
+
+dummy_var* addToVarArray2(dummy_var* var, const char* name, uint32_t flags) {
+	return (dummy_var*) addWSVariableArray((ws_variable*) var, name, flags );
 }
 
 dummy_var* addToVarArrayCustomData(dummy_var* var, const char* name,free_handler handle, void* data ){
-	ws_variable* ret = addWSVariableArray((ws_variable*) var, name);
+	ws_variable* ret = addWSVariableArray((ws_variable*) var, name, 0 );
 	setWSVariableCustomData(ret, handle, data);
 	return (dummy_var*)ret;
 }
@@ -550,6 +554,10 @@ char* ws_get_cors_type_name( CORS_HEADER_TYPES type ){
 
 void ws_url_decode(char *line){
 	url_decode( line );
+}
+
+void ws_register_url_function( char* url, url_handler_func func ){
+	register_url_function( url, func );
 }
 
 

@@ -176,7 +176,7 @@ void addTemplateFilePostfix(const char* postfix) {
 
 	tmp = getWSVariableArray(template_file_postfix, postfix);
 	if (tmp == 0) {
-		tmp = addWSVariableArray(template_file_postfix, postfix);
+		tmp = addWSVariableArray(template_file_postfix, postfix, 0 );
 	}
 	setWSVariableInt(tmp, 1);
 }
@@ -186,7 +186,7 @@ void addTemplateIgnoreFilePostfix(const char* postfix) {
 
 	tmp = getWSVariableArray(template_file_postfix, postfix);
 	if (tmp == 0) {
-		tmp = addWSVariableArray(template_file_postfix, postfix);
+		tmp = addWSVariableArray(template_file_postfix, postfix, 0 );
 	}
 	setWSVariableInt(tmp, 0);
 }

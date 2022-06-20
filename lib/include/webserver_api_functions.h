@@ -187,7 +187,11 @@ void setVariableToArray(dummy_var* var);
 /*
 		Neue Variable in einem Array erzeugen
 */
+
+#define NO_CHECK_NAME_EXISTS 1
+
 dummy_var* addToVarArray(dummy_var* var, const char* name);
+dummy_var* addToVarArray2(dummy_var* var, const char* name, uint32_t flags);
 dummy_var* addToVarArrayCustomData(dummy_var* var, const char* name,free_handler handle, void* data );
 
 void addToVarArrayInt(dummy_var* var, const char* name, int value );

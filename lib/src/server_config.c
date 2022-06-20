@@ -52,7 +52,7 @@ void freeConfig(void){
 void setConfigText(const char* name, const char* text) {
 	ws_variable *var;
 	PlatformLockMutex(&config_v_store->lock);
-	var = newVariable(config_v_store, name);
+	var = newVariable(config_v_store, name, 0 );
 	setWSVariableString(var, text);
 	PlatformUnlockMutex(&config_v_store->lock);
 }
@@ -60,7 +60,7 @@ void setConfigText(const char* name, const char* text) {
 void setConfigInt(const char* name, const int value) {
 	ws_variable *var;
 	PlatformLockMutex(&config_v_store->lock);
-	var = newVariable(config_v_store, name);
+	var = newVariable(config_v_store, name, 0 );
 	setWSVariableInt(var, value);
 	PlatformUnlockMutex(&config_v_store->lock);
 }
