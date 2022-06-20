@@ -203,13 +203,17 @@ void printHeaderChunk(socket_info* sock, const char *fmt, ... ) {
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"
 int vprintHTMLChunk(socket_info* sock, const char *fmt, va_list argptr) {
 	int l;
-	// TODO Funktion ist auf 1000 Zeichen begrenzt
-	char tmp[1000];
+	char *tmp;
+	
 	if (sock == 0){
 		return 0;
 	}
-	l = vsnprintf(tmp, 1000, fmt, argptr);
-	writeChunk(&sock->html_chunk_list, (unsigned char*) tmp, l);
+	
+	l = vsnprintf( 0, 0, fmt, argptr);
+	tmp = WebserverMalloc( l + 1 ); // +1 wegen dem \0
+	l = vsnprintf(tmp, l + 1 , fmt, argptr);
+	writeChunk(&sock->html_chunk_list, (unsigned char*) tmp, l );
+	WebserverFree( tmp );
 	return l;
 }
 #pragma GCC diagnostic warning "-Wformat-nonliteral"
