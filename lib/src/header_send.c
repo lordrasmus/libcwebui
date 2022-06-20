@@ -169,8 +169,11 @@ static void addCacheControlLines(http_request* s, WebserverFileInfo *info) {
 		if ( info->lastmodified != 0 ){
 			printHeaderChunk ( s->socket,"Last-Modified: %s\r\n",info->lastmodified );
 		}
-
+	}else{
+		printHeaderChunk ( s->socket,"Cache-Control: no-cache, no-store, must-revalidate\r\n" );
 	}
+#else
+	printHeaderChunk ( s->socket,"Cache-Control: no-cache, no-store, must-revalidate\r\n" );
 #endif
 }
 
@@ -328,21 +331,21 @@ static void addCSPHeaderLines(http_request* s){
 #ifdef WEBSERVER_USE_SSL
 
 	offset += snprintf(&buff[offset],1000-offset,"default-src http://%s https://%s; ",s->header->Host ,s->header->Host);
-	/*offset += snprintf(&buff[offset],1000-offset,"script-src 'self' 'unsafe-eval' http://%s https://%s; ",s->header->Host ,s->header->Host);*/
-	offset += snprintf(&buff[offset],1000-offset,"script-src http://%s https://%s; ",s->header->Host ,s->header->Host);
-	offset += snprintf(&buff[offset],1000-offset,"style-src http://%s https://%s; ",s->header->Host ,s->header->Host);
+	offset += snprintf(&buff[offset],1000-offset,"script-src 'self' 'unsafe-eval' 'unsafe-inline' http://%s https://%s; ",s->header->Host ,s->header->Host);
+	offset += snprintf(&buff[offset],1000-offset,"style-src 'unsafe-inline' http://%s https://%s; ",s->header->Host ,s->header->Host);
 	          snprintf(&buff[offset],1000-offset,"connect-src ws://%s http://%s wss://%s https://%s ; ",s->header->Host ,s->header->Host,s->header->Host ,s->header->Host );
 
 #else
 
 	offset += snprintf(&buff[offset],1000-offset,"default-src http://%s; ",s->header->Host );
-	offset += snprintf(&buff[offset],1000-offset,"script-src http://%s; ",s->header->Host );
-	offset += snprintf(&buff[offset],1000-offset,"style-src http://%s; ",s->header->Host );
+	offset += snprintf(&buff[offset],1000-offset,"script-src 'self' 'unsafe-eval' 'unsafe-inline' http://%s; ",s->header->Host );
+	offset += snprintf(&buff[offset],1000-offset,"style-src 'unsafe-inline' http://%s; ",s->header->Host );
 	          snprintf(&buff[offset],1000-offset,"connect-src ws://%s http://%s; ",s->header->Host ,s->header->Host );
 
 #endif
 
 
+	//offset += snprintf(&buff[offset],1000-offset," http://%s https://%s; ",s->header->Host ,s->header->Host);
 /*
 	printHeaderChunk(s->socket, "%s %s\r\n", "X-WebKit-CSP: ", buff);
 	printHeaderChunk(s->socket, "%s %s\r\n", "X-Content-Security-Policy: ", buff);
