@@ -374,6 +374,21 @@ void WebserverSetPostHandler( post_handler handler );
 
 void ws_generate_guid(char* buf, int length);
 
+typedef enum {
+	WS_FILE_TYPE_PLAIN,
+	WS_FILE_TYPE_HTML,
+	WS_FILE_TYPE_CSS,
+	WS_FILE_TYPE_JS,
+	WS_FILE_TYPE_XML,
+	WS_FILE_TYPE_XSL,
+	WS_FILE_TYPE_SVG,
+	WS_FILE_TYPE_JSON
+
+} WS_FILE_TYPES;
+
+typedef WS_FILE_TYPES (*url_handler_func)( dummy_handler* s, const char* url );
+void ws_register_url_function( char* url, url_handler_func func );
+
 /*
  *		Python API
  *

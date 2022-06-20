@@ -180,6 +180,101 @@ static void parsePostData(http_request *s){
 
 }
 
+struct url_functions{
+	char* url;
+	url_handler_func func;
+	
+	struct url_functions* next;
+	
+};
+
+struct url_functions *url_funcs = 0;
+
+
+void register_url_function( char* url, url_handler_func func ){
+	struct url_functions *f = WebserverMalloc( sizeof( struct url_functions ) );
+	
+	memset( f, 0, sizeof( struct url_functions ) );
+	
+	f->url = strdup( url );
+	f->func = func;
+	
+	
+	if ( url_funcs == 0 ){
+		url_funcs = f;
+	}else{
+		struct url_functions* entry = url_funcs;
+		while( entry->next != 0 ){
+			entry = entry->next;
+		}
+		
+		entry->next = f;
+	}
+	
+}
+
+int check_url_functions(http_request* p){
+	dummy_handler* s = (dummy_handler*) p;
+	
+	// keine URL Handler definiert
+	if ( url_funcs == 0 ){
+		return 1;
+	}
+	
+	struct url_functions *f = url_funcs;
+	
+	while( f != 0 ){
+		
+		char* f_url = f->url;
+		
+		if ( f->url[0] == '/' ){
+			f_url = &f->url[1];
+		}
+	
+		if ( 0 == strcmp( p->header->url, f_url ) ){
+			
+			// nochmal nachsehen wie man das anmachen kann
+			// p->socket->use_output_compression = 1;
+			
+			// irgendwie erzeugt das einen absturtz
+			restoreSession( s, 1 , 1 );
+			
+			
+			WS_FILE_TYPES ret = f->func( s, p->header->url );
+			
+			WebserverFileInfo info;
+			memset( &info, 0, sizeof( WebserverFileInfo ) );
+			info.TemplateFile = 1;
+			
+			info.FileType = FILE_TYPE_PLAIN;
+			switch ( ret ){
+				case WS_FILE_TYPE_PLAIN: info.FileType = FILE_TYPE_PLAIN; break;
+				case WS_FILE_TYPE_JSON:  info.FileType = FILE_TYPE_JSON; break;
+				case WS_FILE_TYPE_HTML:  info.FileType = FILE_TYPE_HTML; break;
+				case WS_FILE_TYPE_CSS:   info.FileType = FILE_TYPE_CSS; break;
+				case WS_FILE_TYPE_JS:    info.FileType = FILE_TYPE_JS; break;
+				case WS_FILE_TYPE_XML:   info.FileType = FILE_TYPE_XML; break;
+				case WS_FILE_TYPE_XSL:   info.FileType = FILE_TYPE_XSL; break;
+				case WS_FILE_TYPE_SVG:   info.FileType = FILE_TYPE_SVG; break;
+			}
+			
+			
+			
+			unsigned long size = getChunkListSize( &p->socket->html_chunk_list );
+			
+			sendHeader( p, &info, size );
+			
+			return 0;
+		}
+		
+		f = f->next;
+	}
+	
+	
+	
+	return 1;
+}
+
 
 /****************************************************************************
  *																	 	    *
@@ -249,13 +344,12 @@ int getHttpRequest(socket_info* sock) {
 		LOG ( CONNECTION_LOG,ERROR_LEVEL,s.socket->socket, "%s","Fatal Error locking Globals exiting" );
 		exit ( 1 );
 	}
-
-	/*if ( checkCGIFunctions ( &s ) == 0 ) {
-	 #ifdef _WEBSERVER_DEBUG_
-	 WebServerPrintf ( "  ... OK builtin Function\n" );
-	 #endif
-	 } else*/
-	if (checkBuilinSites(&s) == 0) {
+	
+	if ( check_url_functions ( &s ) == 0 ) {
+		#ifdef _WEBSERVER_DEBUG_
+		WebServerPrintf ( "  ... OK url Function\n" );
+		#endif
+	} else if (checkBuilinSites(&s) == 0) {
 #ifdef _WEBSERVER_DEBUG_
 		WebServerPrintf ( "  ... OK builtin Site\n" );
 #endif

@@ -75,6 +75,7 @@ WebserverFileInfo *getFileById(int id);
 
 void WebserverPrintInfos( void );
 
+void register_url_function( char* url, url_handler_func func );
 
 #ifdef __cplusplus
 }

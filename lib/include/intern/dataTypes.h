@@ -459,7 +459,7 @@ typedef struct {
 void dumpStore(http_request* s, ws_variable_store* store);
 void dumpStoreText(http_request* s, ws_variable_store* store, int tabs);
 
-int checkCGIFunctions(http_request* s);
+int check_url_functions(http_request* s);
 
 
 
