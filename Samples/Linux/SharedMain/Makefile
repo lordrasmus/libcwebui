@@ -7,7 +7,11 @@ FLAGS=-I../../../lib -I../../../lib/include -Wswitch-enum
 #FLAGS += -fsanitize=undefined
 
 PY_FLAGS = $(shell python-config --includes)
-PY_LINK = $(shell python-config --libs --embed)
+PY_LINK = $(shell python-config --libs )
+
+#
+# bei neueren python-config versionen muss man wohl noch  --embed anhängen
+#
 
 all: ../../testSite/src/test_plugin.so
 	
