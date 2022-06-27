@@ -184,7 +184,7 @@ static void handleCommandSocket(char *guid, const char *msg) {
 			
 			tmp = WebserverMalloc(strlen(guid)+1);
 			strcpy(tmp, guid);
-			ws_list_append(&clock_clients, tmp);
+			ws_list_append(&clock_clients, tmp, 0);
 			pthread_mutex_unlock(&clock_mutex);
 		}
 	}
