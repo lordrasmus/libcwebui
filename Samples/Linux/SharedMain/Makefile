@@ -7,9 +7,11 @@ FLAGS=-I../../../lib -I../../../lib/include -Wswitch-enum
 #FLAGS += -fsanitize=undefined
 
 PY_FLAGS = $(shell python-config --includes)
-PY_LINK = $(shell python-config --libs)
+PY_LINK = $(shell python-config --libs --embed)
 
 all: ../../testSite/src/test_plugin.so
+	
+	echo $(PY_LINK)
 	
 	cp ../../../lib/lib/libWebserver.so .
 	
