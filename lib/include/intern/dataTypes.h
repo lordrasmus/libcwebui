@@ -379,6 +379,7 @@ struct web_py_plugin{
 	PyObject* global_namespace;
 	PyObject* local_namespace;
 	char* path;
+	char* exec_path;
 	char plugin_name[60];
 
 	unsigned long int	last_mod_sec;

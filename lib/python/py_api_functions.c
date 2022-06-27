@@ -84,7 +84,7 @@ static PyObject* py_setRenderVar( PyObject* obj, PyObject *args ){
 		return NULL;
 	}
 
-	ws_variable *var =  newVariable(py_cur_s->render_var_store,name);
+	ws_variable *var =  newVariable(py_cur_s->render_var_store,name, 0);
 	py_to_ws_var( var, value );
 	Py_RETURN_NONE;
 }
@@ -100,7 +100,7 @@ static PyObject* py_getRenderVar( PyObject* obj, PyObject *args ){
 
 	if ( ! PyArg_ParseTuple( args, "s", &name ) ){ PyErr_SetString(PyExc_TypeError, "first parameter must be string"); 	return NULL;}
 
-	ws_variable *var = newVariable(py_cur_s->render_var_store,name);
+	ws_variable *var = newVariable(py_cur_s->render_var_store,name,0);
 
 	PyObject* py_var = py_ws_var_to_py( var );
 	if ( py_var == NULL ){

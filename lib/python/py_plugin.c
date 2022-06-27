@@ -152,7 +152,7 @@ PyObject* py_set_plugin_name( PyObject* self, PyObject *args )
 	strcpy(plugin->path, last_py_plugin_path);
 	plugin->type = 1; // Python
 
-	ws_list_append(&plugin_liste, plugin);
+	ws_list_append(&plugin_liste, plugin, 0);
 
 	current_plugin = plugin;
 
@@ -195,10 +195,8 @@ int py_load_python_plugin( const char* path ){
     dirname( cwd );
     //printf(" Basename : %s\n",cwd );
        
-    strcpy( mod->exec_path, cwd );
-    
-	mod->path = malloc ( strlen ( path ) + 1 ) ;
-	strcpy( mod->path , path );
+    mod->exec_path = strdup( cwd );
+	mod->path = strdup( path );
 
 	plugin_name = NULL;
 	plugin_name_buff = mod->plugin_name;
