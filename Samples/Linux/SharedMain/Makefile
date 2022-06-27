@@ -11,6 +11,7 @@ PY_LINK = $(shell python-config --libs )
 
 #
 # bei neueren python-config versionen muss man wohl noch  --embed anhängen
+# bei älteren geht das aber nicht
 #
 
 all: ../../testSite/src/test_plugin.so

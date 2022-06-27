@@ -135,3 +135,5 @@ lib/ssl/*.o
 lib/third_party/src/is_utf8/*.o
 lib/third_party/src/rb_tree/*.o
 lib/third_party/src/miniz/*.o
+
+tests/list/.gdbhistory
