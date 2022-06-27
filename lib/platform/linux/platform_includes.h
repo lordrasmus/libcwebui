@@ -25,6 +25,8 @@ SPDX-License-Identifier: MPL-2.0
 
 #define LINUX
 
+#define _DEFAULT_SOURCE
+
 #include <stdio.h>
 #include <ctype.h>
 #include <dlfcn.h>
@@ -34,7 +36,6 @@ SPDX-License-Identifier: MPL-2.0
 #include <unistd.h>
 
 #include <inttypes.h>
-
 
 #include <pthread.h>
 #include <semaphore.h>
