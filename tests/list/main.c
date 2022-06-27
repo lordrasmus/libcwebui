@@ -33,8 +33,8 @@ void dumplist( list_t* l ){
 
 list_test_ele* gen_ele( char* name, char* value){
 	list_test_ele* ret = malloc( sizeof( list_test_ele ) );
-	sprintf( ret->name , name );
-	sprintf( ret->value , value );
+	sprintf( ret->name , "%s", name );
+	sprintf( ret->value , "%s", value );
 	return ret;
 }
 
@@ -51,6 +51,7 @@ int seeker(const void *el, const void *indicator){
 void *ele_freer(const void * free_element){
 	list_test_ele *ele = (list_test_ele*)free_element;
 	
+	//printf("free %p  ",ele);
 	printf("free ");
 	print_ele( ele );
 	
@@ -112,6 +113,7 @@ int main( int argc, char** argv){
 	printf("------------ ws_list_delete 2 ----------------\n");
 	
 	ws_list_delete( &test_list, e2 );
+	ele_freer( e2 );
 	dumplist( &test_list );
 	
 	printf("------------ ws_list_destroy ----------------\n");
@@ -135,4 +137,5 @@ int main( int argc, char** argv){
 	
 	dumplist( &test_list );
 	
+	ws_list_empty( &test_list );
 }

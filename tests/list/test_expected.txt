@@ -21,6 +21,7 @@ name : ele0 -> value0
 ------------ ws_list_empty 1 ----------------
 Liste gefüllt
 ------------ ws_list_delete 2 ----------------
+free name : ele2 -> value2
    -- dump  -- 
 Elenemts : 2 
    name : ele0 -> value0
@@ -30,3 +31,8 @@ free name : ele0 -> value0
 free name : ele3 -> value3
 ------------ ws_list_empty 2 ----------------
 Liste leer
+   -- dump  -- 
+Elenemts : 3 
+   name : ele2 -> value2
+   name : ele1 -> value1
+   name : ele0 -> value0
