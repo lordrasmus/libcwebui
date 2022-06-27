@@ -63,6 +63,8 @@ int main( int argc, char** argv){
 	
 	list_t test_list;
 	list_test_ele *ele,*ele2;
+	list_test_ele *e_tmp;
+	
 	
 	list_test_ele *e0,*e1,*e2,*e3;
 	
@@ -137,5 +139,28 @@ int main( int argc, char** argv){
 	
 	dumplist( &test_list );
 	
-	ws_list_empty( &test_list );
+	while( ws_list_size(  &test_list ) > 0 ){
+		e_tmp = ws_list_get_at( &test_list, 0 );
+		ws_list_delete(  &test_list, e_tmp );
+		ele_freer( e_tmp );
+	}
+	
+	
+	e0 = gen_ele( "ele0",  "value0" );
+	e1 = gen_ele( "ele1",  "value1" );
+	e2 = gen_ele( "ele2",  "value2" );
+	
+	ws_list_append( &test_list, e0, 0 );
+	ws_list_append( &test_list, e1, 0 );
+	
+	ws_list_delete( &test_list, e1 );
+	ele_freer( e1 );
+	
+	ws_list_append( &test_list, e2, 0 );
+	
+	while( ws_list_size(  &test_list ) > 0 ){
+		e_tmp = ws_list_get_at( &test_list, 0 );
+		ws_list_delete(  &test_list, e_tmp );
+		ele_freer( e_tmp );
+	}
 }
