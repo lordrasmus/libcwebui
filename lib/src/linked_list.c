@@ -113,17 +113,24 @@ int VISIBLE_ATTR ws_list_delete(list_t *l, void *data){
     
     if( prev ){
         prev->next = next;
-    }else{
-        if( cur == l->first ){
-            l->first = next;
-        }
     }
     
     if( next ){
         next->prev = prev;
     }
     
+    if( del == l->first ){
+        l->first = next;
+    }
+
+    if( del == l->last ){
+        l->last = prev;
+    }
+
     // TODO der freer wird immoment garnicht ausgeführt
+    // kann man auch nicht einfach machen
+    // alle codestellen die data selber löschen dafür anpassen
+
    /* if ( l->freer != 0 ){
         l->freer( del->data );
     }*/
