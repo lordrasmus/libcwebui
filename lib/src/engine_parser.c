@@ -118,6 +118,9 @@ ws_variable* NEED_RESUL_CHECK parseVariable(http_request *s,char* buffer) {
 				case 2 : snprintf(error_buffer,100,"RENDER VAR %s not found",buffer);	break;
 				case 3 : snprintf(error_buffer,100,"SESSION VAR %s not found",buffer);	break;
 				case 4 : snprintf(error_buffer,100,"PARAMETER VAR %s not found",buffer);	break;
+				default:
+					snprintf(error_buffer,100,"UNKNOWN NameSpace VAR %s not found",buffer);	break;
+					
 			}
 			setWSVariableString(var,error_buffer);
 			return var;
