@@ -60,7 +60,12 @@ SPDX-License-Identifier: MPL-2.0
 
 #define TIME_TYPE time_t
 
-#define FILE_OFFSET __off_t
+#ifdef __MUSL__
+	#define FILE_OFFSET off_t
+#else
+	#define FILE_OFFSET __off_t
+#endif
+	
 #define FILE_OFF_PRINT_HEX "jX"
 #define FILE_OFF_PRINT_INT "lu"
 

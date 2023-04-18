@@ -45,8 +45,11 @@ SPDX-License-Identifier: MPL-2.0
 #include <errno.h>
 
 #include <linux/unistd.h>       /* for _syscallX macros/related stuff */
-#include <linux/kernel.h>       /* for struct sysinfo */
+#ifndef __MUSL__
+	#include <linux/kernel.h>       /* for struct sysinfo */
+#endif
 #include <linux/types.h>
+
 #include <sys/sysinfo.h>
 
 #include <sys/stat.h>
