@@ -204,14 +204,21 @@ void printHeaderChunk(socket_info* sock, const char *fmt, ... ) {
 int vprintHTMLChunk(socket_info* sock, const char *fmt, va_list argptr) {
 	int l;
 	char *tmp;
+	va_list argcopy;
 	
 	if (sock == 0){
 		return 0;
 	}
 	
+	// Kopie von argptr erstellen. ansonsten funktionert das zweite vsnprintf() nicht
+	// weil argptr schon auf dem letzten argument steht
+	va_copy(argcopy, argptr);
+
 	l = vsnprintf( 0, 0, fmt, argptr);
 	tmp = WebserverMalloc( l + 1 ); // +1 wegen dem \0
-	l = vsnprintf(tmp, l + 1 , fmt, argptr);
+
+	l = vsnprintf(tmp, l + 1 , fmt, argcopy);
+
 	writeChunk(&sock->html_chunk_list, (unsigned char*) tmp, l );
 	WebserverFree( tmp );
 	return l;
