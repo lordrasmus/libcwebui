@@ -282,6 +282,11 @@ char*  getPostData(dummy_handler* s);
 char *getRequestURL(dummy_handler* s);
 
 /*
+      Host des Requests
+*/
+char *getRequestHost(dummy_handler* s);
+
+/*
       Ob der Request über eine SSL Verbindung kam
 */
 char isRequestSecure(dummy_handler *s);

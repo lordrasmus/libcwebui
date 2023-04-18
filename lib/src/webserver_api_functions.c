@@ -358,6 +358,11 @@ char *getRequestURL(dummy_handler* s) {
 	return s1->header->url;
 }
 
+char *getRequestHost(dummy_handler* s) {
+	http_request* s1 = (http_request*) s;
+	return s1->header->Host;
+}
+
 char isRequestSecure(dummy_handler *s) {
 #ifdef WEBSERVER_USE_SSL
 	return ((http_request*) s)->socket->use_ssl;
