@@ -319,7 +319,7 @@ void initEvents( void ) {
 	int pos = 0, i = 0;
 	struct event_config *config;
 
-	event_enable_debug_mode();
+	//event_enable_debug_mode();
 
 #ifdef EVTHREAD_USE_PTHREADS_IMPLEMENTED
 	evthread_use_pthreads();
