@@ -183,14 +183,26 @@ int isChunkListbigger(list_t* liste, int bytes){
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"
 static void vprintHeaderChunk(socket_info* sock, const char *fmt, va_list argptr) {
 	int l;
-	char tmp[1000];
-	l = vsnprintf(tmp, 1000, fmt, argptr);
+	char *tmp;
+	va_list argcopy;
+	
+	va_copy(argcopy, argptr);
+
+	l = vsnprintf( 0, 0, fmt, argptr);
+	tmp = WebserverMalloc( l + 1 ); // +1 wegen dem \0
+	
+	l = vsnprintf(tmp, l +1, fmt, argcopy);
+	
+	
 	writeChunk(&sock->header_chunk_list, (unsigned char*) tmp, l);
+	
+	WebserverFree( tmp );
 }
 #pragma GCC diagnostic warning "-Wformat-nonliteral"
 
 void printHeaderChunk(socket_info* sock, const char *fmt, ... ) {
 	va_list argptr;
+	
 	if (sock == 0){
 		return;
 	}
@@ -238,13 +250,23 @@ int printHTMLChunk(socket_info* sock, const char *fmt, ... ) {
 
 static void vprintWebsocketChunk(socket_info* sock, const char *fmt, va_list argptr) {
 	int l;
-	// TODO Funktion ist auf 1000 Zeichen begrenzt
-	char tmp[1000];
+	char *tmp;
+	va_list argcopy;
+	
 	if (sock == 0){
 		return;
 	}
-	l = vsnprintf(tmp, 1000, fmt, argptr);
+	
+	va_copy(argcopy, argptr);
+	
+	l = vsnprintf( 0, 0, fmt, argptr);
+	tmp = WebserverMalloc( l + 1 ); // +1 wegen dem \0
+	
+	l = vsnprintf(tmp, l + 1, fmt, argcopy);
+	
 	writeChunk(&sock->websocket_chunk_list, (unsigned char*) tmp, l);
+	
+	WebserverFree( tmp );
 }
 
 void printWebsocketChunk(socket_info* sock, const char *fmt, ... ) {
