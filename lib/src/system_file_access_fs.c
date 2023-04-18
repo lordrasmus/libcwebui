@@ -75,7 +75,7 @@ int local_file_system_check_file_modified( WebserverFileInfo *file ){
 
 	}else{
 
-		printf("local_file_system:  file change %s File System -> FS_LOCAL_FILE_SYSTEM ( RAM cached )\n", file->FilePath );
+		//printf("local_file_system:  file change %s File System -> FS_LOCAL_FILE_SYSTEM ( RAM cached )\n", file->FilePath );
 
 		// Datei ist im RAM cache
 		PlatformOpenDataReadStream( file->FilePath );
