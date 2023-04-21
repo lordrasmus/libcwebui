@@ -383,8 +383,14 @@ static PyMODINIT_FUNC py_init(void){
 
 int py_init_modules( void ){
 
+
 #if PY_MAJOR_VERSION >= 3
-	Py_SetProgramName((wchar_t*)"libcwebui");
+	wchar_t *program = Py_DecodeLocale("libcwebui", NULL);
+    if (program == NULL) {
+        fprintf(stderr, "Fatal error: cannot decode argv[0]\n");
+        exit(1);
+    }
+	Py_SetProgramName(program);
 #else
 	Py_SetProgramName("libcwebui");
 #endif
