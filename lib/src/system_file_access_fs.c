@@ -174,7 +174,8 @@ static struct dir_info *search_file_dir ( const char* name, char* real_path, int
 		if (0 == strncmp(tmp_var->name, name, tmp_var->name_len)) {
 			
 			if (strlen( name ) > tmp_var->name_len ) {
-				strncpy( real_path, dir_tmp->dir, real_path_length );
+				strncpy( real_path, dir_tmp->dir, real_path_length - 1 );
+				real_path[ real_path_length - 1 ] = 0;
 				
 				int l = real_path_length - strlen( real_path );
 			

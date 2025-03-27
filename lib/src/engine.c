@@ -480,13 +480,15 @@ int processHTML(http_request* s, const char* prefix, const char *pagename, const
 				s->socket->enable_print_funcs = 1;
 
 				if (s->engine_current->func.parameter[0].text != 0){
-					strncpy(s->socket->print_func_prefix, s->engine_current->func.parameter[0].text, 50);
+					strncpy(s->socket->print_func_prefix, s->engine_current->func.parameter[0].text, 49);
+					s->socket->print_func_prefix[49] = 0;
 				}else{
 					strncpy(s->socket->print_func_prefix, "", 50);
 				}
 
 				if (s->engine_current->func.parameter[1].text != 0){
-					strncpy(s->socket->print_func_postfix, s->engine_current->func.parameter[1].text, 50);
+					strncpy(s->socket->print_func_postfix, s->engine_current->func.parameter[1].text, 49);
+					s->socket->print_func_postfix[49] = 0;
 				}else{
 					strncpy(s->socket->print_func_postfix, "", 50);
 				}
