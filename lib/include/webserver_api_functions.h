@@ -269,6 +269,7 @@ char*  getFileName(dummy_handler* s,int index);
 char*  getFileData(dummy_handler* s,int index);
 int    getFileSize(dummy_handler* s,int index);
 char*  getPostData(dummy_handler* s);
+int    getPostSize(dummy_handler* s);
 
 
 /***********************************************************************************************

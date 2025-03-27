@@ -357,18 +357,22 @@ char*     getPostData(dummy_handler* s){
 	return ((http_request*) s)->header->post_buffer;
 }
 
+int    getPostSize(dummy_handler* s){
+	return ((http_request*) s)->header->contentlenght;
+}
+
 /*****************************************************************************
  *
  *						Request Status Informationen
  *
  *****************************************************************************/
 
-char *getRequestURL(dummy_handler* s) {
+const char *getRequestURL(dummy_handler* s) {
 	http_request* s1 = (http_request*) s;
 	return s1->header->url;
 }
 
-char *getRequestHost(dummy_handler* s) {
+const char *getRequestHost(dummy_handler* s) {
 	http_request* s1 = (http_request*) s;
 	return s1->header->Host;
 }
