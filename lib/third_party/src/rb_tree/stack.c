@@ -24,7 +24,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #ifdef USE_EXTERNAL_RBTREE
-	#warning "using external RB Tree"
+	//#warning "using external RB Tree"
 #else
 
 #include "stack.h"
