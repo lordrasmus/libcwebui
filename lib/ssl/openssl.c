@@ -193,22 +193,57 @@ int initOpenSSL(void) {
 }*/
 
 int load_dh_params(SSL_CTX *ctx, char *file) {
-	DH *ret = 0;
-	BIO *bio;
+    BIO *bio;
+    
+    if ((bio = BIO_new_file(file, "r")) == NULL) {
+        LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "%s", "Couldn't open DH file");
+        return -1;
+    }
 
-	if ((bio = BIO_new_file(file, "r")) == NULL) {
-		LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "%s","Couldn't open DH file");
-		return -1;
-	}
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+    // Für OpenSSL 1.1.x: Veraltete Funktion verwenden
+    DH *dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
+    BIO_free(bio);
 
-	ret = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
-	BIO_free(bio);
-	if (SSL_CTX_set_tmp_dh(ctx, ret) < 0) {
-		LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "%s","Couldn't set DH parameters");
-		return -1;
-	}
+    if (dh == NULL) {
+        LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "%s", "Couldn't read DH parameters");
+        return -1;
+    }
 
-	return 1;
+    if (SSL_CTX_set_tmp_dh(ctx, dh) != 1) {
+        LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "%s", "Couldn't set DH parameters");
+        DH_free(dh); // Ressourcen freigeben
+        return -1;
+    }
+
+    DH_free(dh); // DH wird in OpenSSL 1.1.x kopiert, daher freigeben
+
+#else
+    // Für OpenSSL 3.0 und neuer: Die neue EVP_PKEY-basierte Methode
+    EVP_PKEY *pkey = PEM_read_bio_Parameters(bio, NULL);
+    BIO_free(bio);
+
+    if (pkey == NULL) {
+        LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "%s", "Couldn't read DH parameters");
+        return -1;
+    }
+
+    if (SSL_CTX_set0_tmp_dh_pkey(ctx, pkey) <= 0) {
+
+        unsigned long err_code = ERR_get_error(); // Fehlercode abrufen
+        char err_buf[256]; // Buffer für Fehlermeldung
+        ERR_error_string_n(err_code, err_buf, sizeof(err_buf)); // Fehler in lesbaren Text umwandeln
+
+
+        LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "%s", "Couldn't set DH parameters");
+        EVP_PKEY_free(pkey); // pkey freigeben, wenn das Setzen fehlschlägt
+        return -1;
+    }
+
+    // pkey gehört jetzt zu ctx, also wird es nicht hier freigegeben
+#endif
+
+    return 1;
 }
 
 
