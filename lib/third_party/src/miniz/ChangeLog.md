@@ -1,16 +1,94 @@
 ## Changelog
 
+### 3.0.2
+
+ - Fix buffer overrun in mz_utf8z_to_widechar on Windows
+
+### 3.0.1
+
+ - Fix compilation error with MINIZ_USE_UNALIGNED_LOADS_AND_STORES=1
+
+### 3.0.0
+
+ - Reduce memory usage for inflate. This changes `struct tinfl_decompressor_tag` and therefore requires a major version bump (breaks ABI compatibility)
+ - Add padding to structures so it continues to work if features differ. This also changes some structures
+ - Use _ftelli64, _fseeki64 and stat with MinGW32 and OpenWatcom
+ - Fix varios warnings with OpenWatcom compiler
+ - Avoid using unaligned memory access in UBSan builds
+ - Set MINIZ_LITTLE_ENDIAN only if not set
+ - Add MINIZ_NO_DEFLATE_APIS and MINIZ_NO_INFLATE_APIS
+ - Fix use of uninitialized memory in tinfl_decompress_mem_to_callback()
+ - Use wfopen on windows
+ - Use _wstat64 instead _stat64 on windows
+ - Use level_and_flags after MZ_DEFAULT_COMPRESSION has been handled
+ - Improve endianess detection
+ - Don't use unaligned stores and loads per default
+ - Fix function declaration if MINIZ_NO_STDIO is used
+ - Fix MZ_ZIP_GENERAL_PURPOSE_BIT_FLAG_UTF8 not being set
+ - Remove total files check (its 32-bit uint)
+ - tinfl_decompress: avoid NULL ptr arithmetic UB
+ - miniz_zip: fix mz_zip_reader_extract_to_heap to read correct sizes
+ - Eliminate 64-bit operations on 32-bit machines
+ - Disable treating warnings as error with MSVC
+ - Disable building shared lib via CMake by default
+ - Fixed alignment problems on MacOS
+ - Fixed get error string for MZ_ZIP_TOTAL_ERRORS
+ - Write correct FLEVEL 2-bit value in zlib header
+ - miniz.pc.in: fix include path not containing the "miniz" suffix
+ - Fix compatibility with FreeBSD
+ - pkg-config tweaks
+ - Fix integer overflow in header corruption check
+ - Fix some warnings
+ - tdefl_compress_normal: Avoid NULL ptr arithmetic UB
+ - replace use of stdint.h types with mz_ variants
+ 
+ 
+### 2.2.0
+
+ - Fix examples with amalgamation
+ - Modified cmake script to support shared library mode and find_package
+ - Fix for misleading doc comment on `mz_zip_reader_init_cfile` function
+ - Add include location tolerance and stop forcing `_GNU_SOURCE`
+ - Fix: mz_zip_reader_locate_file_v2 returns an mz_bool
+ - Fix large file system checks
+ - Add #elif to enable an external mz_crc32() to be linked in
+ - Write with dynamic size (size of file/data to be added not known before adding)
+ - Added uncompress2 for zlib compatibility
+ - Add support for building as a Meson subproject
+ - Added OSSFuzz support; Integrate with CIFuzz
+ - Add pkg-config file
+ - Fixed use-of-uninitialized value msan error when copying dist bytes with no output bytes written.
+ - mz_zip_validate_file(): fix memory leak on errors
+ - Fixed MSAN use-of-uninitialized in tinfl_decompress when invalid dist is decoded. In this instance dist was 31 which s_dist_base translates as 0
+ - Add flag to set (compressed) size in local file header
+ - avoid use of uninitialized value in tdefl_record_literal
+
+### 2.1.0
+
+ - More instances of memcpy instead of cast and use memcpy per default
+ - Remove inline for c90 support
+ - New function to read files via callback functions when adding them
+ - Fix out of bounds read while reading Zip64 extended information
+ - guard memcpy when n == 0 because buffer may be NULL
+ - Implement inflateReset() function
+ - Move comp/decomp alloc/free  prototypes under guarding #ifndef MZ_NO_MALLOC
+ - Fix large file support under Windows
+ - Don't warn if _LARGEFILE64_SOURCE is not defined to 1
+ - Fixes for MSVC warnings
+ - Remove check that path of file added to archive contains ':' or '\'
+ - Add !defined check on MINIZ_USE_ALIGNED_LOADS_AND_STORES
+
 ### 2.0.8
 
  - Remove unimplemented functions (mz_zip_locate_file and mz_zip_locate_file_v2)
  - Add license, changelog, readme and example files to release zip
  - Fix heap overflow to user buffer in tinfl_status tinfl_decompress
- - Fix corrupt archive if uncompressed file smaller than 4 byte and file is added by mz_zip_writer_add_mem*
+ - Fix corrupt archive if uncompressed file smaller than 4 byte and the file is added by mz_zip_writer_add_mem*
 
 ### 2.0.7
 
  - Removed need in C++ compiler in cmake build
- - Fixed loads of uninitilized value errors found with Valgrind by memsetting m_dict to 0 in tdefl_init.
+ - Fixed a lot of uninitialized value errors found with Valgrind by memsetting m_dict to 0 in tdefl_init
  - Fix resource leak in mz_zip_reader_init_file_v2
  - Fix assert with mz_zip_writer_add_mem* w/MZ_DEFAULT_COMPRESSION
  - cmake build: install library and headers
@@ -19,7 +97,7 @@
 ### 2.0.6
 
  - Improve MZ_ZIP_FLAG_WRITE_ZIP64 documentation
- - Remove check for cur_archive_file_ofs > UINT_MAX, because cur_archive_file_ofs is not used after this point
+ - Remove check for cur_archive_file_ofs > UINT_MAX because cur_archive_file_ofs is not used after this point
  - Add cmake debug configuration
  - Fix PNG height when creating png files
  - Add "iterative" file extraction method based on mz_zip_reader_extract_to_callback.
@@ -49,11 +127,12 @@
 
 ### 2.0.0 beta
 
-- Matthew Sitton merged to vogl ZIP64 changes. Miniz is now licensed as MIT since the vogl code base is MIT licensed
+- Matthew Sitton merged miniz 1.x to Rich Geldreich's vogl ZIP64 changes. Miniz is now licensed as MIT since the vogl code base is MIT licensed
 - Miniz is now split into several files
 - Miniz does now not seek backwards when creating ZIP files. That is the ZIP files can be streamed
-- Miniz automatically switches to the ZIP64 format the created ZIP files goes over ZIP file limits
+- Miniz automatically switches to the ZIP64 format when the created ZIP files goes over ZIP file limits
 - Similar to [SQLite](https://www.sqlite.org/amalgamation.html) the Miniz source code is amalgamated into one miniz.c/miniz.h pair in a build step (amalgamate.sh). Please use miniz.c/miniz.h in your projects
+- Miniz 2 is only source back-compatible with miniz 1.x. It breaks binary compatibility because structures changed
 
 ### v1.16 BETA Oct 19, 2013
 
@@ -66,7 +145,7 @@ The inflator now has a new failure status TINFL_STATUS_FAILED_CANNOT_MAKE_PROGRE
 - The inflator coroutine func. is subtle and complex so I'm being cautious about this release. I would greatly appreciate any help with testing or any feedback.
          I feel good about these changes, and they've been through several hours of automated testing, but they will probably not fix anything for the majority of prev. users so I'm
          going to mark this release as beta for a few weeks and continue testing it at work/home on various things.
-- The inflator in raw (non-zlib) mode is now usable on gzip or similiar data streams that have a bunch of bytes following the raw deflate data (problem discovered by rustyzip author williamw520).
+- The inflator in raw (non-zlib) mode is now usable on gzip or similar data streams that have a bunch of bytes following the raw deflate data (problem discovered by rustyzip author williamw520).
          This version should *never* read beyond the last byte of the raw deflate data independent of how many bytes you pass into the input buffer. This issue was caused by the various Huffman bitbuffer lookahead optimizations, and
          would not be an issue if the caller knew and enforced the precise size of the raw compressed data *or* if the compressed data was in zlib format (i.e. always followed by the byte aligned zlib adler32).
          So in other words, you can now call the inflator on deflate streams that are followed by arbitrary amounts of data and it's guaranteed that decompression will stop exactly on the last byte.
@@ -87,7 +166,7 @@ Merged over a few very minor bug fixes that I fixed in the zip64 branch. This is
 Interim bugfix release while I work on the next major release with zip64 and streaming compression/decompression support. Fixed the MZ_ZIP_FLAG_DO_NOT_SORT_CENTRAL_DIRECTORY bug (thanks kahmyong.moon@hp.com), which could cause the locate files func to not find files when this flag was specified. Also fixed a bug in mz_zip_reader_extract_to_mem_no_alloc() with user provided read buffers (thanks kymoon). I also merged lots of compiler fixes from various github repo branches and Google Code issue reports. I finally added cmake support (only tested under for Linux so far), compiled and tested with clang v3.3 and gcc 4.6 (under Linux), added defl_write_image_to_png_file_in_memory_ex() (supports Y flipping for OpenGL use, real-time compression), added a new PNG example (example6.c - Mandelbrot), and I added 64-bit file I/O support (stat64(), etc.) for glibc.
 
 - Critical fix for the MZ_ZIP_FLAG_DO_NOT_SORT_CENTRAL_DIRECTORY bug (thanks kahmyong.moon@hp.com) which could cause locate files to not find files. This bug
-        would only have occured in earlier versions if you explicitly used this flag, OR if you used mz_zip_extract_archive_file_to_heap() or mz_zip_add_mem_to_archive_file_in_place()
+        would only have occurred in earlier versions if you explicitly used this flag, OR if you used mz_zip_extract_archive_file_to_heap() or mz_zip_add_mem_to_archive_file_in_place()
         (which used this flag). If you can't switch to v1.15 but want to fix this bug, just remove the uses of this flag from both helper funcs (and of course don't use the flag).
 - Bugfix in mz_zip_reader_extract_to_mem_no_alloc() from kymoon when pUser_read_buf is not NULL and compressed size is > uncompressed size
 - Fixing mz_zip_reader_extract_*() funcs so they don't try to extract compressed data from directory entries, to account for weird zipfiles which contain zero-size compressed data on dir entries.
