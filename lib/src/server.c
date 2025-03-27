@@ -237,7 +237,7 @@ int check_url_functions(http_request* p){
 			// p->socket->use_output_compression = 1;
 			
 			// irgendwie erzeugt das einen absturtz
-			restoreSession( s, 1 , 1 );
+			restoreSession( p, 1 , 1 );
 			
 			
 			WS_FILE_TYPES ret = f->func( s, p->header->url );
