@@ -100,6 +100,8 @@ void freeWSVariableValue(ws_variable* var) {
 		break;
 	case VAR_TYPE_ULONG:
 		break;
+    case VAR_TYPE_LONG:
+		break;
 	case VAR_TYPE_EMPTY:
 		break;
 	case VAR_TYPE_REF:
@@ -179,6 +181,11 @@ void setWSVariableCustomData(ws_variable* var, var_free_handler handle, void* da
 }
 
 int getWSVariableString(ws_variable* var, char* buffer,	unsigned int buffer_length) {
+	
+	if( buffer_length > 0 ){
+		buffer[0] = 0;
+	}
+	
 	if (var == 0){
 		return -1;
 	}
@@ -199,8 +206,12 @@ int getWSVariableString(ws_variable* var, char* buffer,	unsigned int buffer_leng
 
 		case VAR_TYPE_INT:
 			return snprintf(buffer, buffer_length, "%d", var->val.value_int);
-		case VAR_TYPE_ULONG:
+		
+        case VAR_TYPE_ULONG:
 			return snprintf(buffer, buffer_length, "%"PRIu64, var->val.value_uint64_t);
+        
+        case VAR_TYPE_LONG:
+			return snprintf(buffer, buffer_length, "%"PRId64, var->val.value_int64_t);
 
 		case VAR_TYPE_CUSTOM_DATA:
 			return snprintf(buffer, buffer_length, "custom_data");
@@ -237,6 +248,16 @@ void setWSVariableULong(ws_variable* var, uint64_t value) {
 	var->val.value_uint64_t = value;
 }
 
+void setWSVariableLong(ws_variable* var, int64_t value) {
+	if (var == 0){
+		LOG( VARIABLE_LOG,ERROR_LEVEL,0,"%s","var pointer is 0");
+		return;
+	}
+	freeWSVariableValue(var);
+	var->type = VAR_TYPE_LONG;
+	var->val.value_int64_t = value;
+}
+
 int getWSVariableInt(ws_variable* var) {
 	int ret;
 	if ( var == 0 ){
@@ -255,6 +276,8 @@ int getWSVariableInt(ws_variable* var) {
 			return var->val.value_int;
 		case VAR_TYPE_ULONG:
 			return var->val.value_uint64_t;
+        case VAR_TYPE_LONG:
+			return var->val.value_int64_t;
 	}
 
 	return 0;
@@ -279,6 +302,34 @@ uint64_t getWSVariableULong(ws_variable* var) {
 			return var->val.value_int;
 		case VAR_TYPE_ULONG:
 			return var->val.value_uint64_t;
+        case VAR_TYPE_LONG:
+			return (uint64_t)var->val.value_int64_t;
+	}
+
+	return 0;
+
+}
+
+int64_t getWSVariableLong(ws_variable* var) {
+	int64_t ret;
+	if ( var == 0 ){
+		return 0;
+	}
+	switch (var->type) {
+		case VAR_TYPE_ARRAY:
+		case VAR_TYPE_EMPTY:
+		case VAR_TYPE_CUSTOM_DATA:
+		case VAR_TYPE_REF:
+			return 0;
+		case VAR_TYPE_STRING:
+			sscanf(var->val.value_string, "%"PRId64, &ret);
+			return ret;
+		case VAR_TYPE_INT:
+			return var->val.value_int;
+		case VAR_TYPE_ULONG:
+			return (int64_t)var->val.value_uint64_t;
+        case VAR_TYPE_LONG:
+			return var->val.value_int64_t;
 	}
 
 	return 0;

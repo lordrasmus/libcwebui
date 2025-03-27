@@ -221,12 +221,13 @@ void setVariableAsString(dummy_var* var, const char* text);
 */
 int getVariableAsInt(dummy_var* var);
 uint64_t getVariableAsULong(dummy_var* var);
-
+int64_t  getVariableAsLong(dummy_var* var);
 /*
 		Variablen Inhalt als Int schreiben
 */
 void setVariableAsInt(dummy_var* var, int value);
 void setVariableAsULong(dummy_var* var, uint64_t value);
+void setVariableAsLong(dummy_var* var, int64_t value);
 
 void setVariableToRef(dummy_var* var,dummy_var* ref);
 

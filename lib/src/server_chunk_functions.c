@@ -91,11 +91,15 @@ static void writeChunkVariable(list_t* liste, ws_variable* var) {
 		writeChunk(liste, (unsigned char*) var->val.value_string, var->extra.str_len);
 		break;
 	case VAR_TYPE_INT:
-		getWSVariableString(var, buffer, 20);
+		getWSVariableString(var, buffer, sizeof( buffer) );
 		writeChunk(liste, (unsigned char*) buffer, strlen(buffer));
 		break;
 	case VAR_TYPE_ULONG:
-		getWSVariableString(var, buffer, 20);
+		getWSVariableString(var, buffer, sizeof( buffer));
+		writeChunk(liste, (unsigned char*) buffer, strlen(buffer));
+		break;
+    case VAR_TYPE_LONG:
+		getWSVariableString(var, buffer, sizeof( buffer));
 		writeChunk(liste, (unsigned char*) buffer, strlen(buffer));
 		break;
 	case VAR_TYPE_REF:

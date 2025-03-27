@@ -264,6 +264,16 @@ void setVariableAsULong(dummy_var* var, uint64_t value){
 	setWSVariableULong((ws_variable*) var, value);
 }
 
+
+int64_t getVariableAsLong(dummy_var* var){
+	return getWSVariableLong((ws_variable*) var);
+}
+
+void setVariableAsLong(dummy_var* var, int64_t value){
+	setWSVariableLong((ws_variable*) var, value);
+}
+
+
 void setVariableToRef(dummy_var* var,dummy_var* ref){
 	setWSVariableRef((ws_variable*)var,(ws_variable*)ref);
 }

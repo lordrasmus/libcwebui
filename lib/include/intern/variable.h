@@ -28,6 +28,7 @@ typedef enum
     VAR_TYPE_STRING,
     VAR_TYPE_INT,
     VAR_TYPE_ULONG,
+    VAR_TYPE_LONG,
     VAR_TYPE_ARRAY,
 	VAR_TYPE_REF,
 	VAR_TYPE_CUSTOM_DATA
@@ -48,6 +49,7 @@ struct ws_variable_s
         char* value_string;
         int   value_int;
         uint64_t  value_uint64_t;
+        int64_t  value_int64_t;
 		struct ws_variable_store_s* value_array;
 		struct ws_variable_s* value_ref;
 	}val;
@@ -94,9 +96,14 @@ void		setWSVariableString(ws_variable* var, const char* text);
 int 		getWSVariableString(ws_variable* var, char* buffer,unsigned int buffer_length);
 
 void		setWSVariableULong(ws_variable* var, uint64_t value);
-void		setWSVariableInt(ws_variable* var, int value);
 uint64_t   	getWSVariableULong(ws_variable* var);
+
+void		setWSVariableLong(ws_variable* var, int64_t value);
+int64_t   	getWSVariableLong(ws_variable* var);
+
+void		setWSVariableInt(ws_variable* var, int value);
 int			getWSVariableInt(ws_variable* var);
+
 
 void		setWSVariableRef(ws_variable* var,ws_variable* ref);
 
