@@ -438,12 +438,6 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 
 
 	/* noch nicht verarbeitete header lines */
-	if (!strncmp( line, "User-Agent: ", 12)) {
-		return 0;
-	}
-	if (!strncmp( line, "Accept: ", 8)) {
-		return 0;
-	}
 	if (!strncmp( line, "Accept-Language: ", 17)) {
 		return 0;
 	}
@@ -451,12 +445,11 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 	if (!strncmp( line, "Accept-Charset: ", 16)) {
 		return 0;
 	}
+	
 	if (!strncmp( line, "Keep-Alive: ", 12)) {
 		return 0;
 	}
-	if (!strncmp( line, "Referer: ", 9)) {
-		return 0;
-	}
+	
 	if (!strncmp( line, "Cache-Control: ", 14)) {
 		return 0;
 	}
@@ -520,6 +513,15 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 	/*CHECK_HEADER_LINE("Host: ", Host)*/
 
 	CHECK_HEADER_LINE("Origin: ", Origin)
+	
+	CHECK_HEADER_LINE("Accept: ", Accept)
+	
+	CHECK_HEADER_LINE("User-Agent: ", UserAgent)
+	
+	CHECK_HEADER_LINE("Authorization: ", Authorization)
+	
+	CHECK_HEADER_LINE("Referer: ", Referer)
+
 
 
 #ifdef WEBSERVER_USE_WEBSOCKETS

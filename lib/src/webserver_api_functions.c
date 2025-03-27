@@ -389,6 +389,27 @@ dummy_var* getURLParameter(dummy_handler* s,const char* name) {
 	return (dummy_var*) getParameter((http_request*) s, name);
 }
 
+const char* getRequestHeader(dummy_handler *s, char* name){
+	http_request* sess = (http_request*) s;
+	
+	HttpRequestHeader* header = sess->header;
+	
+	
+	if( 0 == strcmp( name, "Host" ) ){			return header->Host;			}
+	if( 0 == strcmp( name, "User-Agent" ) ){	return header->UserAgent;		}
+	if( 0 == strcmp( name, "Accept" ) ){		return header->Accept;			}
+	if( 0 == strcmp( name, "Authorization" ) ){	return header->Authorization;	}
+	if( 0 == strcmp( name, "Origin" ) ){		return header->Origin;			}
+	if( 0 == strcmp( name, "Connection" ) ){	return header->Connection;		}
+	if( 0 == strcmp( name, "Upgrade" ) ){		return header->Upgrade;			}
+	if( 0 == strcmp( name, "Referer" ) ){		return header->Referer;			}
+	
+	
+	return 0;
+	
+	
+}
+
 char* getEngineParameter(dummy_handler* s, int index) {
 	FUNCTION_PARAS* f = &((http_request*)s)->engine_current->func;
 	if ( index >= MAX_FUNC_PARAS ){

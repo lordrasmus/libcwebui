@@ -190,6 +190,11 @@ typedef struct {
 	char *Accept_Encoding;
 	char isHttp1_1;
 	
+	char* UserAgent;
+	char* Accept;
+	char* Authorization;
+	char* Referer;
+	
 	char header_complete;
 	uint32_t parsed_bytes;
 

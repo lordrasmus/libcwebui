@@ -299,6 +299,11 @@ char isRequestSecure(dummy_handler *s);
 dummy_var* getURLParameter(dummy_handler* s,const char* name);
 
 /*
+      HTTP Header Zeilen abfragen
+*/
+const char* getRequestHeader(dummy_handler *s, char* name);
+
+/*
       Parameter die in der Templateengine mit {f:<name>:para1:para2:...} uebergeben wurden
 */
 char* getEngineParameter(dummy_handler* s,int index);
