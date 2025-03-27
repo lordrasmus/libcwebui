@@ -35,6 +35,12 @@ For more information, please refer to <http://unlicense.org>
 static char encoder[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 
+#if __GNUC__ >= 7
+	#define FALL_THROUGH __attribute__ ((fallthrough));
+#else
+	#define FALL_THROUGH ((void)0);
+#endif /* __GNUC__ >= 7 */
+		
 static int
 base64_encsize(int size)
 {
@@ -90,6 +96,7 @@ base64_encode(char *dest, int size, const unsigned char *src, int slen)
 	case 1:
 		dest[j - 2] = '=';
 		// fall through
+		FALL_THROUGH
 	case 2:
 		dest[j - 1] = '=';
 	}
