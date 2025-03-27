@@ -255,7 +255,7 @@ static int recv_post_payload( socket_info* sock, const char* buffer, uint32_t le
 
 		call_post_post_handler( sock );
 
-		return 1;
+		return 1;  
 	}
 
 	return 0;
@@ -264,17 +264,19 @@ static int recv_post_payload( socket_info* sock, const char* buffer, uint32_t le
 
 static int check_post_header( socket_info* sock ){
 
+	//LOG(CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"header->contentlenght %" PRIu64 " ",sock->header->contentlenght );
+
 	if ( sock->header->contentlenght > getConfigInt("max_post_size") ){
 		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"header->contentlenght > max_post_size ( %" PRIu64 " > %d ) ",sock->header->contentlenght, getConfigInt("max_post_size") );
 		return -1;
 	}
 
-	if ( sock->header->contenttype == 0 ){
+	/*if ( sock->header->contenttype == 0 ){
 		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s","header->contenttype == 0 ");
 		//LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s",sock->header_buffer);
 		// nicht einfach den Buffer ausgeben
 		return -1;
-	}
+	}*/
 
 	if ( ( sock->header->contenttype == MULTIPART_FORM_DATA ) && ( sock->header->boundary == 0 ) ){
 		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s","header->boundary == 0 ");
@@ -884,7 +886,7 @@ void handleServer(socket_info* sock) {
 #endif
 
 
-		strncpy(client_sock->client_ip_str, sock->client_ip_str, INET_ADDRSTRLEN);
+		snprintf(client_sock->client_ip_str, INET_ADDRSTRLEN, "%s", sock->client_ip_str);
 		client_sock->port = port;
 
 #ifdef WEBSERVER_USE_IPV6
