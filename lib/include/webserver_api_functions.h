@@ -281,12 +281,12 @@ int    getPostSize(dummy_handler* s);
 /*
       URL des Requests
 */
-char *getRequestURL(dummy_handler* s);
+const char *getRequestURL(dummy_handler* s);
 
 /*
       Host des Requests
 */
-char *getRequestHost(dummy_handler* s);
+const char *getRequestHost(dummy_handler* s);
 
 /*
       Ob der Request über eine SSL Verbindung kam
