@@ -84,5 +84,8 @@ void addLog ( LogChannels channel,LogLevels level,char* filename,int fileline,co
 	}
 	
 	printf( "\n" );
+
+#ifndef NUTTX    
 	fflush(stdout);
+#endif
 }

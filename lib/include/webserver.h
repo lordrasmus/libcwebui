@@ -28,7 +28,7 @@ SPDX-License-Identifier: MPL-2.0
 
 
 
-#ifdef LINUX
+#if defined( LINUX ) || defined( NUTTX )
 	#if !defined( USE_LIBEVENT ) && !defined( USE_SELECT ) && !defined( USE_EPOLL )
 		#error USE_LIBEVENT or USE_SELECT or USE_EPOLL required
 	#endif

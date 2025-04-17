@@ -453,7 +453,6 @@ int (*get_webserver_api_version)(void);
 		strcpy(plugin->error, a);
 
 int loadPlugin(const char* name, const char* path) {
-	
 
 #ifdef LINUX
 	#define PLUGIN_SUPPORT

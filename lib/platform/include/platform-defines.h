@@ -30,28 +30,33 @@ SPDX-License-Identifier: MPL-2.0
 	#define PLATFORM_DETECTED
 #endif
 
+#if defined( __NuttX__ ) && ! defined( PLATFORM_DETECTED )
+    #include "../nuttx/platform_includes.h"
+	#define PLATFORM_DETECTED
+#endif
 
-#if defined( __linux__ )
+
+#if defined( __linux__ ) && ! defined( PLATFORM_DETECTED )
 	#include "../linux/platform_includes.h"
 	#define PLATFORM_DETECTED
 #endif
 
-#if defined ( __APPLE__ )
+#if defined ( __APPLE__ ) && ! defined( PLATFORM_DETECTED )
 	#include "../osx/platform_includes.h"
 	#define PLATFORM_DETECTED
 #endif
 
-#ifdef BARRELFISH
+#if defined( BARRELFISH ) && ! defined( PLATFORM_DETECTED )
 	#include "../barrelfish/platform_includes.h"
 	#define PLATFORM_DETECTED
 #endif
 
-#ifdef __ZEPHYR__
+#if defined( __ZEPHYR__ ) && ! defined( PLATFORM_DETECTED )
 	#include "../zephyr/platform_includes.h"
 	#define PLATFORM_DETECTED
 #endif
 
-#ifdef BSD
+#if defined( BSD ) && ! defined( PLATFORM_DETECTED )
 #define WebServerPrintf printf
 #include <sys/socket.h>
 #include <stdlib.h>
@@ -59,14 +64,14 @@ SPDX-License-Identifier: MPL-2.0
 #endif
 
 
-#ifdef DSTni
+#if defined( DSTni )  && ! defined( PLATFORM_DETECTED )
 #include "config.h"
 #include "mt.h"
 #include "dsttypes.h"
 #define WebServerPrintf ConsolePrintf
 #endif
 
-#ifdef NET_OS
+#if defined( NET_OS ) && ! defined( PLATFORM_DETECTED )
 #define WebServerPrintf printf
 #endif
 
