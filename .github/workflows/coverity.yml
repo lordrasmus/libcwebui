@@ -12,7 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install dev packagea
-      run: sudo apt-get install -y libevent-dev python-dev
+      run: sudo apt-get install -y libevent-dev python3-dev
   
     - uses: vapier/coverity-scan-action@v1
       with:
