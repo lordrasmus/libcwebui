@@ -1,10 +1,5 @@
 SHELL=/bin/bash
 
-#ifeq ($(TRAVIS_BUILD),true)
-#    DEFS= -D${TRAVIS_OS_NAME}
-#else
-#    DEFS= -DLINUX
-#endif
 
 #
 #	WICHTIG muss beim compilieren UND linken gleich sein
@@ -12,11 +7,10 @@ SHELL=/bin/bash
 COMP_OPT= -O0 -ggdb3
 
 
-PY_FLAGS = $(shell python-config --includes)
-PY_LINK = $(shell python-config --libs)
+PYTHON_PKG := $(shell pkg-config --modversion python3 )
+PY_FLAGS = $(shell pkg-config --cflags python-$(PYTHON_PKG)-embed)
+PY_LINK  = $(shell pkg-config --libs   python-$(PYTHON_PKG)-embed)
 
-#PY_FLAGS = $(shell python3-config --includes)
-#PY_LINK = $(shell python3-config --libs)
 
 
 FLAGS= $(COMP_OPT) -Wall -fPIC -Wextra   -std=c99  -D_POSIX_SOURCE \
@@ -25,13 +19,9 @@ FLAGS= $(COMP_OPT) -Wall -fPIC -Wextra   -std=c99  -D_POSIX_SOURCE \
 	$(SIZE_OPTS) $(PY_FLAGS) -DUSE_NEW_LIST \
 	-Wno-return-type -Wno-pointer-sign -Wno-variadic-macros  -Wno-unused-parameter \
 	-Werror=implicit-function-declaration -Werror=return-type  -Werror=missing-declarations \
-	-Werror=old-style-definition -Werror=format -Wformat=2
+	-Werror=old-style-definition -Werror=format -Wformat=2 #-fopt-info #-fdiagnostics-format=json 
 
-ifneq ($(TRAVIS_BUILD),true)
-#	FLAGS += -fsanitize=address
-#	FLAGS += -fsanitize=thread
-#	FLAGS += -fsanitize=undefined
-endif
+
 	
 
 SIZE_OPTS= -finline -fno-inline-functions

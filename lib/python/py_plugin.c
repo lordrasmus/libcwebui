@@ -348,8 +348,24 @@ struct PyModuleDef py_libcwebui_module = {
 };
 #endif
 
+static void set_prog_name( void ){
+	#if PY_VERSION_HEX >= 0x030B0000 // Python 3.11+
+		PyConfig config;
+		PyConfig_InitPythonConfig(&config);
+		PyConfig_SetString(&config, &config.program_name, L"libcwebui");
+		Py_InitializeFromConfig(&config);
+		PyConfig_Clear(&config);
+	#elif PY_MAJOR_VERSION >= 3
+		Py_SetProgramName((wchar_t*)"libcwebui");
+	#else
+		Py_SetProgramName("libcwebui");
+	#endif
+}
+
 static PyMODINIT_FUNC py_init(void){
-	//printf("libcwebui Python Module Init\n");
+	printf("libcwebui py_init\n");
+
+	set_prog_name();
 
 	#if PY_MAJOR_VERSION >= 3
 		return PyModule_Create(&py_libcwebui_module);
@@ -362,17 +378,16 @@ static PyMODINIT_FUNC py_init(void){
 
 int py_init_modules( void ){
 
-#if PY_MAJOR_VERSION >= 3
-	Py_SetProgramName((wchar_t*)"libcwebui");
-#else
-	Py_SetProgramName("libcwebui");
-#endif
+	printf("libcwebui py_init_modules\n");
+	
 
 	if (PyImport_AppendInittab( "libcwebui", py_init) == -1){
 		printf("Failed to add libcwebui to the interpreter's builtin modules");
 		PyErr_Print();
 		return 1;
     }
+
+	set_prog_name();
 
 	Py_Initialize();
 	//PyEval_InitThreads();
