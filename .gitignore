@@ -123,8 +123,6 @@ Samples/OSX/MakeProject/main*
 
 tests/tscan/TscanCodeV2.14.24*
 tests/infer/infer-*
-tests/list/test.txt
-tests/list/test_list
 
 Debug
 
@@ -136,4 +134,5 @@ lib/third_party/src/is_utf8/*.o
 lib/third_party/src/rb_tree/*.o
 lib/third_party/src/miniz/*.o
 
-tests/list/.gdbhistory
+.cproject
+.settings/language.settings.xml
