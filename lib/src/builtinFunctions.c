@@ -153,7 +153,9 @@ static void getServerLinkStd ( http_request* s ) {
 			char host_tmp[1001];
 			strncpy( host_tmp, s->header->Host , 1000 );
 			tmp =strchr( host_tmp, ':' );
-			*tmp = '\0';
+			if( tmp != 0 ){
+				*tmp = '\0';
+			}
 			printHTMLChunk ( s->socket,"%s",host_tmp );
 		}else{
 			printHTMLChunk ( s->socket,"%s",s->header->Host );
