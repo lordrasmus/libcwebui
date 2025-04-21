@@ -139,7 +139,23 @@ int prepare_file_content(WebserverFileInfo* file) {
 				if ( file->Compressed == 2 ){
 					//printf("warning: decompressing file : %s\n", file->FilePath );
 					file->Data = WebserverMalloc( file->RealDataLenght );
-					tinfl_decompress_mem_to_mem( (char*)file->Data, file->RealDataLenght, file->CompressedData, file->CompressedDataLenght, 0 );
+
+					size_t decompressed = tinfl_decompress_mem_to_mem( (char*)file->Data, file->RealDataLenght, file->CompressedData, file->CompressedDataLenght, 0 );
+
+					if ( decompressed == TINFL_DECOMPRESS_MEM_TO_MEM_FAILED ){
+						printf("warning: decompressing file failed : %s\n", file->FilePath );
+						WebserverFree( ( void*) file->Data);
+						file->Data = 0;
+						return 0;
+					}
+
+					if ( (off_t) decompressed != file->RealDataLenght ){
+						printf("warning: decompressing file failed : %s ( %lu != %ld )\n", file->FilePath, decompressed, file->RealDataLenght );
+						WebserverFree( ( void*) file->Data);
+						file->Data = 0;
+						return 0;
+					}
+
 					file->DataLenght = file->RealDataLenght;
 				}
 				return 1;
