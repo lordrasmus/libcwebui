@@ -100,50 +100,84 @@ void py_print_trace( void ){
 
 	PyThreadState *tstate = PyThreadState_GET();
 
+#if PY_VERSION_HEX >= 0x030D0000 // Python 3.13+
+	if (NULL != tstate && NULL != PyThreadState_GetFrame(tstate)) {
+		PyFrameObject *frame = PyThreadState_GetFrame(tstate);
+		const char *filename;
+		const char *funcname;
+		PyObject* list = PyList_New(0);
+		const char* last_func = NULL;
+
+		printf("Traceback (most recent call last):\n");
+		while (NULL != frame) {
+			char buffer[200];
+			PyCodeObject *code = PyFrame_GetCode(frame);
+			
+			filename = PyUnicode_AsUTF8(code->co_filename);
+			funcname = PyUnicode_AsUTF8(code->co_name);
+
+			snprintf(buffer, 200, "  File \"%s\", line %d, in %s\n    %s",
+					filename,
+					PyFrame_GetLineNumber(frame),
+					funcname, last_func ? last_func : "register_function");
+
+			last_func = funcname;
+			
+			PyList_Append(list, PyUnicode_FromString(buffer));
+			
+			PyFrameObject *prev_frame = frame;
+			frame = PyFrame_GetBack(frame);
+			Py_DECREF(prev_frame);
+			Py_DECREF(code);
+		}
+
+		PyList_Reverse(list);
+
+		for (int i = 0; i < PyList_Size(list); i++) {
+			PyObject* item = PyList_GetItem(list, i);
+			puts(PyUnicode_AsUTF8(item));
+		}
+		
+		Py_DECREF(list);
+	}
+#else // Python < 3.13
 	if (NULL != tstate && NULL != tstate->frame) {
 		PyFrameObject *frame = tstate->frame;
-
-		//int line = PyFrame_GetLineNumber( frame);
 
 		const char *filename;
 		const char *funcname;
 
-		PyObject* list = PyList_New( 0 );
-
+		PyObject* list = PyList_New(0);
 
 		const char* last_func = NULL;
 
 		printf("Traceback (most recent call last):\n");
 		while (NULL != frame) {
-
 			char buffer[200];
 
 			filename = PyString_AsString(frame->f_code->co_filename);
 			funcname = PyString_AsString(frame->f_code->co_name);
 
-			snprintf(buffer, 200 , "  File \"%s\", line %d, in %s\n    %s",
+			snprintf(buffer, 200, "  File \"%s\", line %d, in %s\n    %s",
 					filename,
-					PyFrame_GetLineNumber( frame) ,
+					PyFrame_GetLineNumber(frame),
 					funcname, last_func ? last_func : "register_function");
 
 			last_func = funcname;
 
-			PyList_Append( list, PyString_FromString( buffer ));
+			PyList_Append(list, PyString_FromString(buffer));
 
 			frame = frame->f_back;
 		}
 
-		PyList_Reverse( list );
+		PyList_Reverse(list);
 
-		//printf("Size : %d\n",PyList_Size( list ));
-		for ( int i = 0 ; i < PyList_Size( list ); i++ ){
-			PyObject* item = PyList_GetItem( list, i );
-			puts( PyString_AsString( item ) );
+		for (int i = 0; i < PyList_Size(list); i++) {
+			PyObject* item = PyList_GetItem(list, i);
+			puts(PyString_AsString(item));
 		}
-
-		//printf("  File \"%s\", line %d, in %s\n", filename, line, funcname);
-
 	}
+#endif
 }
 
 PyObject *py_ws_var_to_py( ws_variable *var ){
