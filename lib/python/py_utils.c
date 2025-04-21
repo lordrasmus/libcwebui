@@ -141,8 +141,8 @@ void py_print_trace( void ){
 		Py_DECREF(list);
 	}
 #elif PY_VERSION_HEX >= 0x030B0000 // Python 3.11+
-	if (NULL != tstate && NULL != tstate->cframe) {
-		_PyInterpreterFrame *frame = tstate->cframe->current_frame;
+	if (NULL != tstate && NULL != PyThreadState_GetFrame(tstate)) {
+		PyFrameObject *frame = PyThreadState_GetFrame(tstate);
 		const char *filename;
 		const char *funcname;
 		PyObject* list = PyList_New(0);
@@ -151,21 +151,24 @@ void py_print_trace( void ){
 		printf("Traceback (most recent call last):\n");
 		while (NULL != frame) {
 			char buffer[200];
-			PyCodeObject *code = frame->f_code;
+			PyCodeObject *code = PyFrame_GetCode(frame);
 			
 			filename = PyUnicode_AsUTF8(code->co_filename);
 			funcname = PyUnicode_AsUTF8(code->co_name);
 
 			snprintf(buffer, 200, "  File \"%s\", line %d, in %s\n    %s",
 					filename,
-					PyFrame_GetLineNumber((PyFrameObject*)frame),
+					PyFrame_GetLineNumber(frame),
 					funcname, last_func ? last_func : "register_function");
 
 			last_func = funcname;
 			
 			PyList_Append(list, PyUnicode_FromString(buffer));
 			
-			frame = frame->previous;
+			PyFrameObject *prev_frame = frame;
+			frame = PyFrame_GetBack(frame);
+			Py_DECREF(prev_frame);
+			Py_DECREF(code);
 		}
 
 		PyList_Reverse(list);
