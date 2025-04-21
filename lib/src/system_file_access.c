@@ -152,6 +152,7 @@ int prepare_file_content(WebserverFileInfo* file) {
 		if ( file->Data != 0 ) {
 			printf("prepare_file_content:  File Data not 0 !!!! %s \n", file->FilePath );
 			WebserverFree( ( void*) file->Data);
+			file->Data = 0;
 		}
 	}
 
