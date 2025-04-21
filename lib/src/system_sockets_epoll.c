@@ -3,6 +3,8 @@
 //#include "webserver_events.h"
 #include "webserver.h" // Enthält socket_info und handleer()
 
+#if defined ( USE_EPOLL )
+
 #include <sys/epoll.h>
 #include <sys/timerfd.h>
 #include <unistd.h>
@@ -117,4 +119,6 @@ void deleteEvent(socket_info *sock) {
 void commitSslEventFlags(socket_info *sock) {
     modifyEpoll(sock, sock->ssl_event_flags, 1);
 }
+#endif
+
 #endif
