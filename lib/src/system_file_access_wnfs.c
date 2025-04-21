@@ -55,6 +55,13 @@ WebserverFileInfo* wnfs_get_file( const char* name ){
 		return 0;
 	}
 
+	#define MAX_FILE_SIZE 1 * 1024 * 1024 * 1024 // 1 GB
+	// Validierung einfügen!
+	if ( len > MAX_FILE_SIZE ){
+		printf("Invalid length received: %u > MAX_FILE_SIZE ( %d )\n", len, MAX_FILE_SIZE);
+		goto error_out;
+	}
+
 	WebserverFileInfo *file = create_empty_file( len );
 	uint32_t recv_bytes = 0;
 	while(1){
