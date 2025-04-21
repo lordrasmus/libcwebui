@@ -315,7 +315,7 @@ static int handleClientHeaderData(socket_info* sock) {
 
 	while (1) {
 
-		if (buffer_length - sock->header_buffer_pos > 0) {
+		if ((int)buffer_length - sock->header_buffer_pos > 0) {
 			int len = 0;
 			unsigned char* p =(unsigned char*) &sock->header_buffer[sock->header_buffer_pos];
 			int read_length = buffer_length - sock->header_buffer_pos;
