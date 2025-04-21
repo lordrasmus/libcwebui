@@ -1,6 +1,5 @@
 # libcwebui
 
-[![Build Status](https://ci.appveyor.com/api/projects/status/github/lordrasmus/libcwebui?branch=master&svg=true)](https://ci.appveyor.com/project/lordrasmus/libcwebui)
 [![Scan Status](https://scan.coverity.com/projects/7148/badge.svg?flat=1)](https://scan.coverity.com/projects/lordrasmus-libcwebui)
 ![license](https://img.shields.io/badge/license-MPL2-orange.svg)
 ![language](https://img.shields.io/badge/language-c-blue.svg)
