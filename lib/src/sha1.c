@@ -67,7 +67,16 @@ void SHA1(
 #define R4(v,w,x,y,z,i) z+=(w^x^y)+blk(i)+0xCA62C1D6+rol(v,5);w=rol(w,30);
 
 
+static inline void secure_memzero(void *ptr, size_t len) {
+    volatile uint8_t *p = (volatile uint8_t *)ptr;
+    while (len--) {
+        *p++ = 0;
+    }
+}
+
+
 /* Hash a single 512-bit block. This is the core of the algorithm. */
+
 
 void SHA1Transform(
     uint32_t state[5],
@@ -190,7 +199,7 @@ void SHA1Transform(
     /* Wipe variables */
     a = b = c = d = e = 0;
 #ifdef SHA1HANDSOFF
-    memset(block, '\0', sizeof(block));
+    secure_memzero(block,sizeof(block));
 #endif
 }
 
