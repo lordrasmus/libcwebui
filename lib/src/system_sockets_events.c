@@ -344,10 +344,13 @@ void initEvents( void ) {
 	list = event_get_supported_methods();
 
 	while (list[i] != 0) {
-		int n = snprintf(&buffer[pos], 200 - pos, "%s ", list[i]);
-		if (n < 0 || n >= 200 - pos) {
+		
+		int n = snprintf(&buffer[pos], sizeof( buffer ) - pos, "%s ", list[i]);
+
+		if ( ( n < 0  ) || ( n >= (int)sizeof( buffer ) - pos) ) {
 			break; // Prevent buffer overflow
 		}
+
 		pos += n;
 		i++;
 	}
