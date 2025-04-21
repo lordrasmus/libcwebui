@@ -142,7 +142,7 @@ void py_print_trace( void ){
 	}
 #elif PY_VERSION_HEX >= 0x030B0000 // Python 3.11+
 	if (NULL != tstate && NULL != tstate->cframe) {
-		PyFrameObject *frame = tstate->cframe->current_frame;
+		_PyInterpreterFrame *frame = tstate->cframe->current_frame;
 		const char *filename;
 		const char *funcname;
 		PyObject* list = PyList_New(0);
@@ -158,14 +158,14 @@ void py_print_trace( void ){
 
 			snprintf(buffer, 200, "  File \"%s\", line %d, in %s\n    %s",
 					filename,
-					PyFrame_GetLineNumber(frame),
+					PyFrame_GetLineNumber((PyFrameObject*)frame),
 					funcname, last_func ? last_func : "register_function");
 
 			last_func = funcname;
 			
 			PyList_Append(list, PyUnicode_FromString(buffer));
 			
-			frame = frame->f_back;
+			frame = frame->previous;
 		}
 
 		PyList_Reverse(list);
