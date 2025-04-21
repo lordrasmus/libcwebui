@@ -43,11 +43,10 @@ FILES= \
 	../../../lib/third_party/src/miniz/miniz.c 
 
 
-PY_FLAGS = $(shell python-config --includes)
-PY_LINK = $(shell python-config --libs)
+PYTHON_PKG := $(shell pkg-config --modversion python3 )
 
-PY_FLAGS = $(shell python3-config --includes)
-PY_LINK = $(shell python3-config --libs)
+PY_FLAGS = $(shell pkg-config --cflags python-$(PYTHON_PKG)-embed)
+PY_LINK  = $(shell pkg-config --libs   python-$(PYTHON_PKG)-embed)
 
 
 
