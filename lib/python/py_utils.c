@@ -100,7 +100,7 @@ void py_print_trace( void ){
 
 	PyThreadState *tstate = PyThreadState_GET();
 
-#if PY_VERSION_HEX >= 0x030D0000 // Python 3.13+
+#if PY_VERSION_HEX >= 0x030B0000 // Python 3.13+
 	if (NULL != tstate && NULL != PyThreadState_GetFrame(tstate)) {
 		PyFrameObject *frame = PyThreadState_GetFrame(tstate);
 		const char *filename;
