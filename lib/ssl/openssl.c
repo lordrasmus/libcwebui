@@ -304,6 +304,7 @@ SSL_CTX *initialize_ctx( char *keyfile, char* keyfile_backup, char* ca, char *pa
 			SSL_CTX_use_PrivateKey_file(ctx, keyfile_backup, SSL_FILETYPE_PEM);
 		}else{
 			LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "Can't read keyfile backup file %s ", keyfile_backup);
+			SSL_CTX_free( ctx );
 			return NULL;
 		}
 	}
@@ -311,6 +312,7 @@ SSL_CTX *initialize_ctx( char *keyfile, char* keyfile_backup, char* ca, char *pa
 	if (!(SSL_CTX_load_verify_locations(ctx, ca, 0))) // Load the CAs we trust
 	{
 		LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "Can't read CA list %s", ca);
+		SSL_CTX_free( ctx );
 		return NULL;
 	}
 
@@ -337,6 +339,7 @@ SSL_CTX *initialize_ctx( char *keyfile, char* keyfile_backup, char* ca, char *pa
 
 	if (!SSL_CTX_set_cipher_list(ctx, CIPHER_LIST)) {
 		LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "Can't set cipher list %s", CIPHER_LIST);
+		SSL_CTX_free( ctx );
 		return NULL;
 	}
 
