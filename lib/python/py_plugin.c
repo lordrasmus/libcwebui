@@ -187,15 +187,12 @@ int py_load_python_plugin( const char* path ){
 
 	char cwd[PATH_MAX];
 	getcwd(cwd, sizeof(cwd));
-    //printf("Current working dir: %s\n", cwd);
-    
-    strcat( cwd, "/" );
-    strcat( cwd, path );
-    //printf("full path: %s\n", cwd);
-    dirname( cwd );
-    //printf(" Basename : %s\n",cwd );
-       
-    mod->exec_path = strdup( cwd );
+
+	char exec_path[PATH_MAX*2];
+	snprintf( exec_path, sizeof( exec_path ) , "%s/%s", cwd, path );
+	dirname( exec_path );
+
+	mod->exec_path = strdup( exec_path );
 	mod->path = strdup( path );
 
 	plugin_name = NULL;
