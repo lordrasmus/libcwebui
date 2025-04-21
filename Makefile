@@ -35,7 +35,7 @@ linux_tests:
 	$(MAKE) -C tests/config_variants/LinuxWebsocketSelect
 	$(MAKE) -C tests/config_variants/LinuxWebsocketNoSSL
 	$(MAKE) -C tests/config_variants/LinuxSelect
-#	$(MAKE) -C tests/config_variants/LinuxEpoll
+	$(MAKE) -C tests/config_variants/LinuxEpoll
 
 osx_tests:
 	$(MAKE) -C Samples/OSX/MakeProject
