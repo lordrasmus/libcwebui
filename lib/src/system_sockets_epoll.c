@@ -5,8 +5,7 @@
 
 #if defined ( USE_EPOLL )
 
-#include <sys/epoll.h>
-#include <sys/timerfd.h>
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,6 +16,8 @@
 
 static int epoll_fd = -1;
 static volatile int break_loop = 0;
+
+void _set_main_thread( void ){}
 
 void eventHandler(int fd, short flags, void *arg) {
     socket_info *sock = (socket_info *)arg;
