@@ -11,6 +11,7 @@ LinuxMain/out.dat
 lib/lib/
 lib/obj/
 
+*.su
 
 
 old_afl-1.94b/
