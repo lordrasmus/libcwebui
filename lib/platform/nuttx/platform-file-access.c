@@ -120,31 +120,18 @@ int PlatformGetFileInfo(WebserverFileInfo* file, int* time_changed, int *new_siz
 	struct tm *ts;
 	size_t len;
 	char* buffer;
-#ifdef __MUSL__
 	time_t f_sec;
 	time_t f_nsec;
-#else
-	__time_t f_sec;
-	__time_t f_nsec;
-#endif
 
 	if ( 0 > stat( (char*) file->FilePath, &st) ){
 		return 0;
 	}
 
-#ifdef __USE_MISC
-	f_sec = st.st_mtim.tv_sec;
-	f_nsec = st.st_mtim.tv_nsec;
-#else
-	f_sec  = st.st_mtime;
-	#ifdef __MUSL__
-		f_nsec = st.st_mtim.tv_nsec;
-	#else
-		f_nsec = st.st_mtimensec;
-	#endif
-#endif
 
+	f_sec  = st.st_mtime;
+	f_nsec = st.st_mtim.tv_nsec;
 	*new_size = st.st_size;
+	
 	*time_changed = 0;
 
 	if ( ( file->last_mod_sec != (unsigned long int)f_sec) || ( file->last_mod_nsec != (unsigned long int)f_nsec) ){

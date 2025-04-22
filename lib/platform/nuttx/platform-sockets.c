@@ -22,13 +22,13 @@ SPDX-License-Identifier: MPL-2.0
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
-#include <sys/socket.h>
+//#include <sys/socket.h>
 #include <sys/select.h>
 #include <sys/types.h>
-#include <sys/fcntl.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/ioctl.h>
+//#include <sys/fcntl.h>
+//#include <netinet/in.h>
+//#include <arpa/inet.h>
+//#include <sys/ioctl.h>
 
 
 #include "webserver.h"
@@ -127,12 +127,14 @@ int		PlatformGetSocket ( unsigned short port,int connections )
 #endif
     on = 1;
 
+	/*
     if ( 0 != setsockopt ( s, SOL_SOCKET, SO_REUSEADDR, ( char* ) &on, sizeof ( on ) ) ){
 		LOG ( CONNECTION_LOG,ERROR_LEVEL,0,"setsockopt() failed : %m %s"," " );
         WebserverFree( addr );
         close( s );
 		return -2;
 	}
+	*/
 
 
 #ifdef WEBSERVER_USE_IPV6

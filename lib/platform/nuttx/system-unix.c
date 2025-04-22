@@ -24,18 +24,8 @@ SPDX-License-Identifier: MPL-2.0
 #include <unistd.h>
 #include <time.h>
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/select.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
 #include <sys/types.h>
-#include <sys/ioctl.h>
-
-#include <netinet/in.h>
-#include <net/if.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -43,14 +33,6 @@ SPDX-License-Identifier: MPL-2.0
 
 #include <stdio.h>
 #include <errno.h>
-
-#include <linux/unistd.h>       /* for _syscallX macros/related stuff */
-#ifndef __MUSL__
-	#include <linux/kernel.h>       /* for struct sysinfo */
-#endif
-#include <linux/types.h>
-
-#include <sys/sysinfo.h>
 
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -64,20 +46,18 @@ SPDX-License-Identifier: MPL-2.0
 #include "webserver.h"
 
 
-#ifdef DMALLOC
-#include <dmalloc/dmalloc.h>
-#endif
 
 /* http://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html
  http://gcc.gnu.org/onlinedocs/cpp/Standard-Predefined-Macros.html
 */
 
-
+/*
 void __assert_fail(const char * assertion, const char * file, unsigned int line, const char * function){
 }
 
 int * __errno_location(void){
 }
+*/
 
 /**************************************************************
 *                                                             *
@@ -128,14 +108,8 @@ void	PlatformFree ( void *mem ) {
 
 
 TIME_TYPE PlatformGetTick ( void ) {
-	struct sysinfo s_info;
-	int error;
-
-	error = sysinfo(&s_info);
-	if(error != 0){
-		printf("code error = %d\n", error);
-	}
-	return s_info.uptime;
+	
+	return clock_systime_ticks();
 }
 
 unsigned long PlatformGetTicksPerSeconde ( void ) {

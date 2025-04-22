@@ -32,7 +32,6 @@ SPDX-License-Identifier: MPL-2.0
 
 #include <stdio.h>
 #include <ctype.h>
-#include <dlfcn.h>
 #include <errno.h>
 
 #include <limits.h>
@@ -41,21 +40,19 @@ SPDX-License-Identifier: MPL-2.0
 #include <inttypes.h>
 
 #include <pthread.h>
-#include <semaphore.h>
 #include <stdlib.h>
 
-#include <sys/sendfile.h>
 
 #include <string.h>
 #include <strings.h>
 
 #include <sys/types.h>
 #include <unistd.h>
-
-#include <netinet/in.h>
-
-#include <sys/ioctl.h>
 #include <sys/select.h>
+#include <sys/epoll.h>
+
+#include <netdb.h>
+
 
 
 #define SIZE_TYPE size_t
@@ -63,11 +60,7 @@ SPDX-License-Identifier: MPL-2.0
 
 #define TIME_TYPE time_t
 
-#ifdef __MUSL__
-	#define FILE_OFFSET off_t
-#else
-	#define FILE_OFFSET __off_t
-#endif
+#define FILE_OFFSET off_t
 	
 #define FILE_OFF_PRINT_HEX "jX"
 #define FILE_OFF_PRINT_INT "lu"
