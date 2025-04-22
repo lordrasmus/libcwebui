@@ -79,9 +79,7 @@ SPDX-License-Identifier: MPL-2.0
 #include "is_utf8.h"
 #include "miniz.h"
 
-#ifdef WEBSERVER_USE_SSL
-	#include "intern/webserver_ssl.h"
-#endif
+#include "intern/webserver_ssl.h"
 
 #ifdef WEBSERVER_USE_PYTHON
 	#include "intern/py_plugin.h"

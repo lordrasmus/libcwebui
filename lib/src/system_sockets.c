@@ -1114,14 +1114,11 @@ void handleer( int a, short b, void *t ) {
 			if ( ret == 2 ){ // Websocket wurde behandelt
 				return;
 			}
+
 			if( ( ret == 0 ) && ( WebserverSSLPending ( sock ) == 0 ) ){  // Header unvollständig weitere daten lesen
 				addEventSocketRead( sock );
 				return;
 			}
-
-			#ifndef WEBSERVER_USE_SSL
-				#define  WebserverSSLPending( a ) 0
-			#endif
 
 			while(( sock->header_buffer_pos > 0) || ( WebserverSSLPending ( sock ) == 1 ) ){
 

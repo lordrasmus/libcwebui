@@ -38,6 +38,10 @@ SOCKET_SEND_STATUS	WebserverSSLSendNonBlocking(socket_info* s, const unsigned ch
 int					WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, unsigned len, int flags);
 int					WebserverSSLCloseSockets(socket_info *s);
 
+#else
+
+	#define  WebserverSSLPending( a ) 0
+
 #endif
 
 
