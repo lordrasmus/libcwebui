@@ -22,21 +22,12 @@ SPDX-License-Identifier: MPL-2.0
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
-//#include <sys/socket.h>
 #include <sys/select.h>
 #include <sys/types.h>
-//#include <sys/fcntl.h>
-//#include <netinet/in.h>
-//#include <arpa/inet.h>
-//#include <sys/ioctl.h>
+#include <arpa/inet.h>
 
 
 #include "webserver.h"
-
-
-#ifdef DMALLOC
-#include <dmalloc/dmalloc.h>
-#endif
 
 
 fd_set read_fds;
@@ -96,7 +87,7 @@ int		PlatformSetBlocking ( int socket )
 
 int		PlatformGetSocket ( unsigned short port,int connections )
 {
-    int on;
+    //int on;
 
 #ifdef WEBSERVER_USE_IPV6
     struct sockaddr_in6 *addr = ( struct sockaddr_in6 * ) WebserverMalloc ( sizeof ( struct sockaddr_in6 ) );
@@ -125,7 +116,7 @@ int		PlatformGetSocket ( unsigned short port,int connections )
     addr->sin_port = (uint16_t)	htons ( port );
     addr->sin_family = AF_INET;
 #endif
-    on = 1;
+    //on = 1;
 
 	/*
     if ( 0 != setsockopt ( s, SOL_SOCKET, SO_REUSEADDR, ( char* ) &on, sizeof ( on ) ) ){
