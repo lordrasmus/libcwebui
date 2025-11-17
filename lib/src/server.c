@@ -224,14 +224,22 @@ int check_url_functions(http_request* p){
 	struct url_functions *f = url_funcs;
 	
 	while( f != 0 ){
-		
+
 		char* f_url = f->url;
-		
+		int is_prefix_match = 0;
+
 		if ( f->url[0] == '/' ){
 			f_url = &f->url[1];
 		}
-	
-		if ( 0 == strcmp( p->header->url, f_url ) ){
+
+		// Check if URL ends with '/' - if so, treat as prefix match
+		int url_len = strlen(f_url);
+		if ( url_len > 0 && f_url[url_len - 1] == '/' ){
+			is_prefix_match = 1;
+		}
+
+		if ( (is_prefix_match && 0 == strncmp( p->header->url, f_url, url_len )) ||
+		     (!is_prefix_match && 0 == strcmp( p->header->url, f_url )) ){
 			
 			// nochmal nachsehen wie man das anmachen kann
 			// p->socket->use_output_compression = 1;
