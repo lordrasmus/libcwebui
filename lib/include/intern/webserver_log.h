@@ -34,7 +34,8 @@ typedef enum {
 	SSL_LOG,
 	WEBSOCKET_LOG,
 	VARIABLE_LOG,
-	CONFIG_LOG
+	CONFIG_LOG,
+	PROXY_LOG
 }LogChannels;
 
 typedef enum {

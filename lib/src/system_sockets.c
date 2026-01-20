@@ -299,7 +299,14 @@ static int check_post_header( socket_info* sock ){
  */
 
 static int handleClientHeaderData(socket_info* sock) {
-	int len2;
+	/*
+	 * len2 must be initialized to -6 (no complete line recognized).
+	 * When the header buffer is full, recv() is skipped and we jump directly
+	 * to the ParseHeader check. If header_complete == 1 (e.g. during POST body
+	 * handling), ParseHeader is also skipped, and len2 would be uninitialized.
+	 * With -6 as default, we safely return 0 and wait for more data.
+	 */
+	int len2 = -6;
 	unsigned int buffer_length = WEBSERVER_MAX_HEADER_LINE_LENGHT * 1;
 	unsigned int parsed = 0;
 
