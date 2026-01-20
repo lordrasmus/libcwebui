@@ -365,33 +365,22 @@ static void addCSPHeaderLines(http_request* s){
  *********************************************************************************/
 
 static void addSessionCookies(http_request* s,WebserverFileInfo *info){
+	(void)info;
 #ifdef WEBSERVER_USE_SESSIONS
 
 	#ifdef WEBSERVER_USE_SSL
 
-	if ((s->create_cookie == 1) && (info->FileType == FILE_TYPE_HTML)) { /* Nur bei HTML Seiten Session cookies senden */
-		/*
-		printHeaderChunk(s->socket, "Set-Cookie: session-id=%s; Version=\"1\"; Path=\"/\"; Discard; HttpOnly; domain=%s\r\n", s->guid,s->header->Host);
-		printHeaderChunk(s->socket, "Set-Cookie: session-id=%s; Discard; domain=%s\r\n", s->guid,s->header->Host);
-		printHeaderChunk(s->socket, "Set-Cookie: session-id=%s; Path=\"/\"; Discard\r\n", s->guid);	// Working but IE
-		*/
-
-		printHeaderChunk(s->socket, "Set-Cookie: session-id=%s; HttpOnly; Version=1; Path=/; Discard\r\n", s->guid); /* Working IE 11 , Opera 20 , Firefox, Chrome */
+	if (s->create_cookie == 1) {
+		printHeaderChunk(s->socket, "Set-Cookie: session-id=%s; HttpOnly; Version=1; Path=/; Discard\r\n", s->guid);
 	}
 
-	if ((s->create_cookie_ssl == 1) && (s->socket->use_ssl == 1 && (info->FileType == FILE_TYPE_HTML))) {
-		/*
-		printHeaderChunk(s->socket, "Set-Cookie: session-id-ssl=%s; Version=\"1\"; Path=\"/\"; Discard; Secure; HttpOnly; domain=%s\r\n",s->guid_ssl, s->header->Host);
-		printHeaderChunk(s->socket, "Set-Cookie: session-id-ssl=%s; Path=\"/\"; Discard\r\n",s->guid_ssl, s->header->Host);
-		*/
+	if ((s->create_cookie_ssl == 1) && (s->socket->use_ssl == 1)) {
 		printHeaderChunk(s->socket, "Set-Cookie: session-id-ssl=%s; HttpOnly; Version=1; Path=/; Discard; Secure\r\n",s->guid_ssl);
-
 	}
 
 	#else
 
-	if ((s->create_cookie == 1) && (info->FileType == FILE_TYPE_HTML)) { /* Nur bei HTML Seiten Session cookies senden */
-		//printHeaderChunk(s->socket, "Set-Cookie: session-id=%s; Version=1; Path=/; Discard; HttpOnly; domain=http://%s\r\n", s->guid,s->header->Host);
+	if (s->create_cookie == 1) {
 		printHeaderChunk(s->socket, "Set-Cookie: session-id=%s; Version=1; Path=/; Discard; HttpOnly\r\n", s->guid);
 	}
 

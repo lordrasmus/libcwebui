@@ -266,7 +266,7 @@ static int check_post_header( socket_info* sock ){
 
 	//LOG(CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"header->contentlenght %" PRIu64 " ",sock->header->contentlenght );
 
-	if ( sock->header->contentlenght > getConfigInt("max_post_size") ){
+	if ( sock->header->contentlenght > (uint64_t)getConfigInt("max_post_size") ){
 		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"header->contentlenght > max_post_size ( %" PRIu64 " > %d ) ",sock->header->contentlenght, getConfigInt("max_post_size") );
 		return -1;
 	}
