@@ -108,7 +108,7 @@ typedef struct reverse_proxy_connection {
     struct timespec time_first_response;  /* Erste Response-Bytes empfangen */
     struct timespec time_done;            /* Proxy fertig */
 #endif
-    char request_url[256];                /* URL für Logging */
+    char request_url[512];                /* URL für Logging */
 
 } reverse_proxy_connection_t;
 
