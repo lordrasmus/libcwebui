@@ -28,6 +28,7 @@ SPDX-License-Identifier: MPL-2.0
 #include "webserver.h"
 
 #include "intern/system_file_access.h"
+#include "intern/reverse_proxy.h"
 #include "is_utf8.h"
 
 
@@ -248,6 +249,7 @@ void setVariableAsString(dummy_var* var, const char* text) {
 	setWSVariableString((ws_variable*) var, text);
 }
 
+
 int getVariableAsInt(dummy_var* var) {
 	return getWSVariableInt((ws_variable*) var);
 }
@@ -255,6 +257,7 @@ int getVariableAsInt(dummy_var* var) {
 void setVariableAsInt(dummy_var* var, int value){
 	setWSVariableInt((ws_variable*) var, value);
 }
+
 
 uint64_t getVariableAsULong(dummy_var* var){
 	return getWSVariableULong((ws_variable*) var);
@@ -534,6 +537,13 @@ void WebserverConfigSetText(const char* name, const char* text){
 	setConfigText(name,text);
 }
 
+void WebserverConfigGetText(const char* name, char* text, int text_size){
+    
+    char *value = getConfigText(name);
+    
+    snprintf( text, text_size, "%s", value );
+}
+
 void WebserverRegisterPluginErrorHandler(plugin_error_handler f){
 	RegisterPluginErrorHandler(f);
 }
@@ -598,6 +608,15 @@ void ws_url_decode(char *line){
 
 void ws_register_url_function( char* url, url_handler_func func ){
 	register_url_function( url, func );
+}
+
+
+/*
+ *		Reverse Proxy API
+ */
+
+void ws_reverse_proxy_register_uds(const char* method, const char* url_prefix, const char* backend_path){
+	reverse_proxy_register_uds_internal( method, url_prefix, backend_path );
 }
 
 

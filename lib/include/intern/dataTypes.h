@@ -258,6 +258,10 @@ typedef struct{
 
 typedef struct {
 	int socket;
+	
+	int reverse_proxy_checked;
+	int reverse_proxy_error;
+	
 
 #ifdef WEBSERVER_USE_IPV6
 	char client_ip_str[INET6_ADDRSTRLEN];
@@ -290,10 +294,8 @@ typedef struct {
 	int ssl_pending_bytes;
 #endif
 
-#if defined( USE_LIBEVENT )
+#ifdef USE_LIBEVENT
 	struct event *my_ev;
-#elif defined ( USE_EPOLL )
-    int registered;
 #else
 	EVENT_TYPES event_types;
 	char event_persist;

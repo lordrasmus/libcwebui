@@ -16,6 +16,7 @@ SPDX-License-Identifier: MPL-2.0
 
 
 #include "webserver.h"
+#include "intern/reverse_proxy.h"
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -586,6 +587,7 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
  *		-4  = Methode nicht erlaubt
  *		-3  = Header zuende aber noch weitere daten vorhanden
  * 		-2  = Header ist zuende und keine weiteren Daten vorhanden
+ * 		-7  = Reverse Proxy Handler
  *
  *
  *
@@ -643,12 +645,18 @@ int ParseHeader(socket_info* sock, HttpRequestHeader* header, char* buffer, unsi
 		if ((buffer[i] == '\n') && (buffer[i - 1] == '\r')){
 
 			back = buffer[i - 1];
+			
+			if ( checkReverseProxy( sock, buffer, length ) == 0 ){
+				return -7;
+			}
+			
 			buffer[i - 1] = '\0';
 			line_length = &buffer[i - 1] - pos;
 			if ( analyseHeaderLine(sock, pos, line_length, header) < 0 ){
 				buffer[i - 1] = back;
 				return -4;
 			}
+
 			pos = &buffer[i + 1];
 			last_line_end = i + 1;
 			buffer[i - 1] = back;

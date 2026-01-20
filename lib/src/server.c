@@ -22,6 +22,7 @@ SPDX-License-Identifier: MPL-2.0
 #include "webserver.h"
 
 #include "intern/system_file_access.h"
+#include "intern/reverse_proxy.h"
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -210,7 +211,6 @@ void register_url_function( char* url, url_handler_func func ){
 		
 		entry->next = f;
 	}
-	
 }
 
 int check_url_functions(http_request* p){
@@ -361,6 +361,12 @@ int getHttpRequest(socket_info* sock) {
 #ifdef _WEBSERVER_DEBUG_
 		WebServerPrintf ( "  ... OK builtin Site\n" );
 #endif
+	} else if ( sock->reverse_proxy_error == 1 ) {
+		WebServerPrintf ( "  ... OK Reverse Proxy Error\n" );
+		
+		
+		reverse_proxy_gen_error_msg( &s );
+		
 	} else {
 		ws_variable *download;
 

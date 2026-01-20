@@ -381,6 +381,7 @@ void WebserverShutdownHandler(void);
 void WebserverConfigSetInt(const char* name, int value);
 int  WebserverConfigGetInt(const char* name);
 void WebserverConfigSetText(const char* name, const char* text);
+void WebserverConfigGetText(const char* name, char* text, int text_size);
 
 void WebserverInjectExternFD(int fd, extern_handler handle );
 
@@ -404,6 +405,9 @@ typedef enum {
 
 typedef WS_FILE_TYPES (*url_handler_func)( dummy_handler* s, const char* url );
 void ws_register_url_function( char* url, url_handler_func func );
+
+void ws_reverse_proxy_register_uds( const char* method, const char* url, const char* path );
+
 
 /*
  *		Python API
