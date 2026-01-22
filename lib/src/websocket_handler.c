@@ -100,8 +100,7 @@ static int handleWebsocket(socket_info* sock, EVENT_TYPES type) {
 
 				/* Der Buffer konnte nur teilweise gesendet werden */
 				if ((status == SOCKET_SEND_NO_MORE_DATA) && (send_bytes < to_send)) {
-					// TODO muss das nicht eher addiert werden ??
-					sock->websocket_send_pos = send_bytes;
+					sock->websocket_send_pos += send_bytes;
 					break;
 				}
 				

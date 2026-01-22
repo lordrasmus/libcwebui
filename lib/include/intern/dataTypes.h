@@ -256,6 +256,19 @@ typedef struct{
 
 } output_struct;
 
+/* WebSocket Streaming - forward declaration and internal types */
+struct websocket_stream_context;  /* Full definition in webserver_api_functions.h */
+
+typedef struct websocket_stream_handler_entry {
+    char* url;
+    void (*on_start)(struct websocket_stream_context* ctx);
+    void (*on_chunk)(struct websocket_stream_context* ctx,
+                     const unsigned char* data,
+                     uint32_t length);
+    void (*on_end)(struct websocket_stream_context* ctx,
+                   int success);
+} websocket_stream_handler_entry;
+
 typedef struct {
 	int socket;
 	
@@ -330,6 +343,15 @@ typedef struct {
 	unsigned int websocket_buffer_offset;
 	char *websocket_guid;
 	char *websocket_store_guid;
+
+	/* Streaming state */
+	char websocket_streaming_active;           /* Are we in the middle of a stream? */
+	char websocket_stream_fragmented;          /* 1 if streaming fragmented frames (fin=0 + CONTINUE) */
+	uint64_t websocket_stream_remaining;       /* Bytes still to receive (0 for fragmented = unknown total) */
+	unsigned char websocket_stream_mask[4];    /* Mask for unmasking */
+	uint64_t websocket_stream_mask_offset;     /* Position in mask cycle */
+	struct websocket_stream_context* websocket_stream_ctx;
+	websocket_stream_handler_entry* websocket_stream_handler;
 #endif
 
 	WebserverFileInfo *send_file_info;
