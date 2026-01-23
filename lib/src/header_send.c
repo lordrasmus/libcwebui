@@ -27,6 +27,18 @@ SPDX-License-Identifier: MPL-2.0
 
 // https://www.html5rocks.com/static/images/cors_server_flowchart.png
 
+/* Sanitize header values to prevent HTTP Response Splitting (CR/LF injection) */
+static void sanitize_header_value(char* dest, const char* src, unsigned int dest_size) {
+	unsigned int i, j = 0;
+	if (dest_size == 0 || src == 0) return;
+	for (i = 0; src[i] != '\0' && j < dest_size - 1; i++) {
+		if (src[i] != '\r' && src[i] != '\n') {
+			dest[j++] = src[i];
+		}
+	}
+	dest[j] = '\0';
+}
+
 static cors_handler cors_handle_func = 0;
 
 void setCORS_Handler( cors_handler handler ){
@@ -98,13 +110,15 @@ int sendHeaderWebsocket(socket_info* sock) {
 
 
 static void addConnectionStatusLines(socket_info* socket) {
+	char sanitized[512];
 
 	if (socket->header->Connection != 0) {
 		if (strcmp(socket->header->Connection, "close") == 0) {
 			printHeaderChunk(socket, "Connection: close\r\n");
 			return;
 		}
-		printHeaderChunk(socket, "Connection: %s\r\n",socket->header->Connection);
+		sanitize_header_value(sanitized, socket->header->Connection, sizeof(sanitized));
+		printHeaderChunk(socket, "Connection: %s\r\n", sanitized);
 	} else {
 		/* HTTP/1.1 default is keep-alive, HTTP/1.0 default is close */
 		if (socket->header->isHttp1_1 == 1) {
@@ -118,7 +132,8 @@ static void addConnectionStatusLines(socket_info* socket) {
 	// Access-Control-Expose-Headers
 
 	if ( ( socket->header->Origin != 0 ) && ( COND_TRUE == checkCORS( CORS_ALLOW_ORIGIN, socket ) ) ){
-		printHeaderChunk(socket, "Access-Control-Allow-Origin: %s\r\n",socket->header->Origin);
+		sanitize_header_value(sanitized, socket->header->Origin, sizeof(sanitized));
+		printHeaderChunk(socket, "Access-Control-Allow-Origin: %s\r\n", sanitized);
 	}
 
 	if ( COND_TRUE == checkCORS( CORS_ALLOW_CREDENTIALS, socket ) ){
@@ -128,6 +143,7 @@ static void addConnectionStatusLines(socket_info* socket) {
 }
 
 int sendPreflightAllowed(socket_info *sock) {
+	char sanitized[512];
 
 	if ( sock->header->isHttp1_1 ){
 		printHeaderChunk( sock, "HTTP/1.1 204 No Content\r\n");
@@ -138,17 +154,20 @@ int sendPreflightAllowed(socket_info *sock) {
 
 
 	if ( ( sock->header->Access_Control_Request_Method != 0 ) && ( COND_TRUE == checkCORS( CORS_ALLOW_METHODS, sock ) ) ){
-		printHeaderChunk( sock, "Access-Control-Allow-Methods: %s\r\n",sock->header->Access_Control_Request_Method);
+		sanitize_header_value(sanitized, sock->header->Access_Control_Request_Method, sizeof(sanitized));
+		printHeaderChunk( sock, "Access-Control-Allow-Methods: %s\r\n", sanitized);
 	}
 
 	if ( ( sock->header->Access_Control_Request_Headers != 0 ) && ( COND_TRUE == checkCORS( CORS_ALLOW_HEADERS, sock ) ) ){
-		printHeaderChunk( sock, "Access-Control-Allow-Headers: %s\r\n",sock->header->Access_Control_Request_Headers);
+		sanitize_header_value(sanitized, sock->header->Access_Control_Request_Headers, sizeof(sanitized));
+		printHeaderChunk( sock, "Access-Control-Allow-Headers: %s\r\n", sanitized);
 	}
 
 	// Access-Control-Max-Age
 
 	if ( ( sock->header->Origin != 0 ) && ( COND_TRUE == checkCORS( CORS_ALLOW_ORIGIN, sock ) ) ){
-		printHeaderChunk( sock, "Access-Control-Allow-Origin: %s\r\n",sock->header->Origin);
+		sanitize_header_value(sanitized, sock->header->Origin, sizeof(sanitized));
+		printHeaderChunk( sock, "Access-Control-Allow-Origin: %s\r\n", sanitized);
 	}
 
 	if ( COND_TRUE == checkCORS( CORS_ALLOW_CREDENTIALS, sock ) ){
@@ -325,27 +344,35 @@ static void addContentTypeLines(http_request *s, WebserverFileInfo *info) {
 static void addCSPHeaderLines(http_request* s){
 
 	char buff[1000];
+	char host_sanitized[256];
 	int offset = 0;
 
 	if ( getConfigInt( "use_csp") == 0 ){
 		return;
 	}
 
+	/* Sanitize Host header to prevent CSP injection */
+	if ( s->header->Host != 0 ){
+		sanitize_header_value(host_sanitized, s->header->Host, sizeof(host_sanitized));
+	} else {
+		host_sanitized[0] = '\0';
+	}
+
 	/* ; style-src 'self' ; img-src 'self' ; script-src 'self' */
 
 #ifdef WEBSERVER_USE_SSL
 
-	offset += snprintf(&buff[offset],1000-offset,"default-src http://%s https://%s; ",s->header->Host ,s->header->Host);
-	offset += snprintf(&buff[offset],1000-offset,"script-src 'self' 'unsafe-eval' 'unsafe-inline' http://%s https://%s; ",s->header->Host ,s->header->Host);
-	offset += snprintf(&buff[offset],1000-offset,"style-src 'unsafe-inline' http://%s https://%s; ",s->header->Host ,s->header->Host);
-	          snprintf(&buff[offset],1000-offset,"connect-src ws://%s http://%s wss://%s https://%s ; ",s->header->Host ,s->header->Host,s->header->Host ,s->header->Host );
+	offset += snprintf(&buff[offset],1000-offset,"default-src http://%s https://%s; ", host_sanitized, host_sanitized);
+	offset += snprintf(&buff[offset],1000-offset,"script-src 'self' 'unsafe-eval' 'unsafe-inline' http://%s https://%s; ", host_sanitized, host_sanitized);
+	offset += snprintf(&buff[offset],1000-offset,"style-src 'unsafe-inline' http://%s https://%s; ", host_sanitized, host_sanitized);
+	          snprintf(&buff[offset],1000-offset,"connect-src ws://%s http://%s wss://%s https://%s ; ", host_sanitized, host_sanitized, host_sanitized, host_sanitized);
 
 #else
 
-	offset += snprintf(&buff[offset],1000-offset,"default-src http://%s; ",s->header->Host );
-	offset += snprintf(&buff[offset],1000-offset,"script-src 'self' 'unsafe-eval' 'unsafe-inline' http://%s; ",s->header->Host );
-	offset += snprintf(&buff[offset],1000-offset,"style-src 'unsafe-inline' http://%s; ",s->header->Host );
-	          snprintf(&buff[offset],1000-offset,"connect-src ws://%s http://%s; ",s->header->Host ,s->header->Host );
+	offset += snprintf(&buff[offset],1000-offset,"default-src http://%s; ", host_sanitized);
+	offset += snprintf(&buff[offset],1000-offset,"script-src 'self' 'unsafe-eval' 'unsafe-inline' http://%s; ", host_sanitized);
+	offset += snprintf(&buff[offset],1000-offset,"style-src 'unsafe-inline' http://%s; ", host_sanitized);
+	          snprintf(&buff[offset],1000-offset,"connect-src ws://%s http://%s; ", host_sanitized, host_sanitized);
 
 #endif
 
