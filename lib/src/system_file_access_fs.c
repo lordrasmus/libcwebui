@@ -262,12 +262,13 @@ static WebserverFileInfo* getFileInformation( const char *name) {
 WebserverFileInfo *getFileLocalFileSystem( const char *url_name) {
 	WebserverFileInfo *file = 0;
 	int a,b;
-	
+
 	char name[512];
 	strncpy( name, url_name, 512 );
 	name[511] = '\0';
-	
-	url_decode( name );
+
+	/* URL is already decoded in header_parser.c - do NOT decode again!
+	 * Double decoding allows directory traversal via %252e%252e */
 
 #ifdef _WEBSERVER_FILESYSTEM_DEBUG_
 	LOG (FILESYSTEM_LOG,NOTICE_LEVEL, 0,"getFileLocalFileSystem : %s",name );

@@ -464,7 +464,13 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 	}
 
 	if ( (!strncasecmp( line, "Content-Length: ", 16)) && ( strlen( &line[15]  ) > 1  ) ) {
-		header->contentlenght = atol( &line[16]);
+		const char* val = &line[16];
+		/* Reject negative values and non-numeric input */
+		if (*val == '-' || *val < '0' || *val > '9') {
+			header->contentlenght = 0;
+		} else {
+			header->contentlenght = strtoull(val, NULL, 10);
+		}
 		return 0;
 	}
 

@@ -373,20 +373,23 @@ static void addSessionCookies(http_request* s,WebserverFileInfo *info){
 	(void)info;
 #ifdef WEBSERVER_USE_SESSIONS
 
+	/* SameSite: Lax (default) or Strict (if cookie_samesite_strict=1) */
+	const char* samesite = (getConfigInt("cookie_samesite_strict") == 1) ? "Strict" : "Lax";
+
 	#ifdef WEBSERVER_USE_SSL
 
 	if (s->create_cookie == 1) {
-		printHeaderChunk(s->socket, "Set-Cookie: session-id=%s; HttpOnly; Version=1; Path=/; Discard\r\n", s->guid);
+		printHeaderChunk(s->socket, "Set-Cookie: session-id=%s; HttpOnly; Version=1; Path=/; Discard; SameSite=%s\r\n", s->guid, samesite);
 	}
 
 	if ((s->create_cookie_ssl == 1) && (s->socket->use_ssl == 1)) {
-		printHeaderChunk(s->socket, "Set-Cookie: session-id-ssl=%s; HttpOnly; Version=1; Path=/; Discard; Secure\r\n",s->guid_ssl);
+		printHeaderChunk(s->socket, "Set-Cookie: session-id-ssl=%s; HttpOnly; Version=1; Path=/; Discard; Secure; SameSite=%s\r\n", s->guid_ssl, samesite);
 	}
 
 	#else
 
 	if (s->create_cookie == 1) {
-		printHeaderChunk(s->socket, "Set-Cookie: session-id=%s; Version=1; Path=/; Discard; HttpOnly\r\n", s->guid);
+		printHeaderChunk(s->socket, "Set-Cookie: session-id=%s; Version=1; Path=/; Discard; HttpOnly; SameSite=%s\r\n", s->guid, samesite);
 	}
 
 	#endif
