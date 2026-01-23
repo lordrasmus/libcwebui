@@ -431,6 +431,13 @@ static int handleClientHeaderData(socket_info* sock) {
 					LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","POST Method Header Error" );
 					return -1;
 				}
+
+				/* POST ohne Body (Content-Length: 0) direkt verarbeiten */
+				if ( sock->header->contentlenght == 0 ) {
+					sock->header->header_complete = 0;
+					return 1;
+				}
+
 				// Das muss hier sein weil noch Teil der Daten im Header Buffer sein können
 				if ( 1 == recv_post_payload( sock, sock->header_buffer, sock->header_buffer_pos )){
 					sock->header->header_complete = 0;
@@ -453,6 +460,12 @@ static int handleClientHeaderData(socket_info* sock) {
 					sendMethodBadRequest(sock);
 					LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","POST Method Header Error" );
 					return -1;
+				}
+
+				/* POST ohne Body (Content-Length: 0) direkt verarbeiten */
+				if ( sock->header->contentlenght == 0 ) {
+					sock->header->header_complete = 0;
+					return 1;
 				}
 
 				/* Header ist zuende aber der POST Payload fehlt noch */
