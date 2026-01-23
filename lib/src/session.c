@@ -138,19 +138,23 @@ static void checkSessionTimeout(void) {
 
 }
 
+/* Timing-safe comparison to prevent timing attacks on session IDs.
+ * Always compares all WEBSERVER_GUID_LENGTH bytes regardless of content. */
 static char guid_cmp(const char* a, const char* b) {
 	int i;
+	unsigned char result = 0;
+
 	if (a[0] == 0){
 		return 0;
 	}
-	for (i = 0; i < WEBSERVER_GUID_LENGTH; i++) {
-		if ( ( a[i] == b[i] ) && ( a[i] == 0 ) ) break;
 
-		if (a[i] != b[i]){
-			return 0;
-		}
+	/* XOR all bytes - any difference sets bits in result */
+	for (i = 0; i < WEBSERVER_GUID_LENGTH; i++) {
+		result |= (unsigned char)(a[i] ^ b[i]);
 	}
-	return 1;
+
+	/* result is 0 only if all bytes matched */
+	return (result == 0) ? 1 : 0;
 }
 
 int checkUserRegistered(http_request* s) {
