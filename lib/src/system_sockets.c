@@ -218,8 +218,9 @@ static int recv_post_payload( socket_info* sock, const char* buffer, uint32_t le
 	*/
 
 	if ( sock->header->post_buffer == 0 ){
+		/* WebserverMalloc ruft exit(1) bei Fehler auf, kann nicht NULL zurückgeben */
 		sock->header->post_buffer = WebserverMalloc( sock->header->contentlenght + 1 );
-		/* um Payload Buffer neim Debug ausgeben zu können */
+		/* um Payload Buffer beim Debug ausgeben zu können */
 		sock->header->post_buffer[sock->header->contentlenght] = '\0';
 
 		call_pre_post_handler( sock );
