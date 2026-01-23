@@ -469,6 +469,8 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 		if (*val == '-' || *val < '0' || *val > '9') {
 			header->contentlenght = 0;
 		} else {
+			/* Note: strtoull overflow returns ULLONG_MAX which is safely rejected
+			 * by the max_post_size check in check_post_header() */
 			header->contentlenght = strtoull(val, NULL, 10);
 		}
 		return 0;
