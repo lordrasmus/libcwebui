@@ -201,11 +201,15 @@ static int header_attr_compare( char* text, unsigned int text_length, char* line
 #define CHECK_HEADER_LINE2(a,b)  h_len = strlen(a); \
 if (!strncmp((char*)line2,a,h_len)) \
 { \
-	len = stringfind(line2, "\r\n") - h_len - 1; \
-	if ( header->b != 0) WebserverFree(header->b); \
-    header->b = (char*)WebserverMalloc( len + 1 ); \
-    Webserver_strncpy((char*)header->b,len+1,(char*)&line2[h_len],len); \
-    line2 = &line2[h_len + len ]; length2 -= h_len + len ; continue ; \
+	int crlf_pos = stringfind(line2, "\r\n"); \
+	if (crlf_pos > (int)h_len) { \
+		len = crlf_pos - h_len - 1; \
+		if ( header->b != 0) WebserverFree(header->b); \
+		header->b = (char*)WebserverMalloc( len + 1 ); \
+		Webserver_strncpy((char*)header->b,len+1,(char*)&line2[h_len],len); \
+		line2 = &line2[h_len + len ]; length2 -= h_len + len ; \
+	} \
+	continue ; \
 }
 
 int analyseFormDataLine(socket_info* sock, char *line, unsigned int length, HttpRequestHeader *header) {
@@ -300,22 +304,21 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 		}
 #endif
 
-		pos = stringfind(&line[5], "?");
-		if (pos == 0) /* keine parameter */
+		char* qmark = strchr(&line[5], '?');
+		if (qmark == NULL) /* keine parameter */
 		{
 			pos = stringfind(&line[5], " ");
 			header->url = (char *) WebserverMalloc( pos + 1 );
-			Webserver_strncpy( header->url, pos + 1, &line[5], pos); /* -4 wegen dem GET am anfang */
+			Webserver_strncpy( header->url, pos + 1, &line[5], pos);
 		} else /* mit parametern */
 		{
 			*c_pos = '\0';
-			//printf("%s\n",c_pos);
-			//fflush( stdout );
 
+			pos = qmark - &line[5];
 			header->url = (char *) WebserverMalloc( pos + 1 );
-			Webserver_strncpy( header->url, pos + 1, &line[5], pos); /* -4 wegen dem GET am anfang */
+			Webserver_strncpy( header->url, pos + 1, &line[5], pos);
 
-			char* start = ( &line[5] ) + pos + 1;
+			char* start = qmark + 1;
 			int l = c_pos - start;
 			recieveParameterFromGet(start , header, l);
 
@@ -345,20 +348,21 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 
 		header->method=HTTP_POST;
 
-		pos = stringfind(&line[6], "?");
-		if (pos == 0) /* keine parameter */
+		char* qmark_post = strchr(&line[6], '?');
+		if (qmark_post == NULL) /* keine parameter */
 		{
 			pos = stringfind(&line[6], " ");
 			header->url = (char *) WebserverMalloc( pos + 1 );
-			Webserver_strncpy( header->url, pos + 1, &line[6], pos); /* -4 wegen dem GET am anfang */
+			Webserver_strncpy( header->url, pos + 1, &line[6], pos);
 		} else /* mit parametern */
 		{
 			*c_pos = '\0';
 
+			pos = qmark_post - &line[6];
 			header->url = (char *) WebserverMalloc( pos + 1 );
-			Webserver_strncpy( header->url, pos + 1, &line[6], pos); /* -4 wegen dem GET am anfang */
+			Webserver_strncpy( header->url, pos + 1, &line[6], pos);
 
-			char* start = ( &line[6] ) + pos + 1;
+			char* start = qmark_post + 1;
 			int l = c_pos - start;
 
 			recieveParameterFromGet(start , header, l);
@@ -382,22 +386,21 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 	if ( ( header->method == 0 ) && (!strncmp( line, "OPTIONS ", 8)) ) {
 		header->method = HTTP_OPTIONS;
 
-		pos = stringfind(&line[9], "?");
-		if (pos == 0) /* keine parameter */
+		char* qmark_opt = strchr(&line[9], '?');
+		if (qmark_opt == NULL) /* keine parameter */
 		{
 			pos = stringfind(&line[9], " ");
 			header->url = (char *) WebserverMalloc( pos + 1 );
-			Webserver_strncpy( header->url, pos + 1, &line[9], pos); /* -4 wegen dem GET am anfang */
+			Webserver_strncpy( header->url, pos + 1, &line[9], pos);
 		} else /* mit parametern */
 		{
 			*c_pos = '\0';
-			//printf("%s\n",c_pos);
-			//fflush( stdout );
 
+			pos = qmark_opt - &line[9];
 			header->url = (char *) WebserverMalloc( pos + 1 );
-			Webserver_strncpy( header->url, pos + 1,  &line[9], pos); /* -4 wegen dem GET am anfang */
+			Webserver_strncpy( header->url, pos + 1,  &line[9], pos);
 
-			char* start = ( &line[9] ) + pos + 1;
+			char* start = qmark_opt + 1;
 			int l = c_pos - start;
 			recieveParameterFromGet(start , header, l);
 
@@ -439,35 +442,35 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 
 
 	/* noch nicht verarbeitete header lines */
-	if (!strncmp( line, "Accept-Language: ", 17)) {
-		return 0;
-	}
-	
-	if (!strncmp( line, "Accept-Charset: ", 16)) {
-		return 0;
-	}
-	
-	if (!strncmp( line, "Keep-Alive: ", 12)) {
-		return 0;
-	}
-	
-	if (!strncmp( line, "Cache-Control: ", 14)) {
+	if (!strncasecmp( line, "Accept-Language: ", 17)) {
 		return 0;
 	}
 
-	if (!strncmp( line, "Cookie: ", 8)) {
+	if (!strncasecmp( line, "Accept-Charset: ", 16)) {
+		return 0;
+	}
+
+	if (!strncasecmp( line, "Keep-Alive: ", 12)) {
+		return 0;
+	}
+
+	if (!strncasecmp( line, "Cache-Control: ", 14)) {
+		return 0;
+	}
+
+	if (!strncasecmp( line, "Cookie: ", 8)) {
 		parseCookies(line, length, header);
 		return 0;
 	}
 
-	if ( (!strncmp( line, "Content-Length: ", 16)) && ( strlen( &line[15]  ) > 1  ) ) {
+	if ( (!strncasecmp( line, "Content-Length: ", 16)) && ( strlen( &line[15]  ) > 1  ) ) {
 		header->contentlenght = atol( &line[16]);
 		return 0;
 	}
 
 
 	h_len = strlen("Host: ");
-	if (!strncmp( line,"Host: ",h_len)){
+	if (!strncasecmp( line,"Host: ",h_len)){
 		len = length - h_len;
 		if ( header->Host != 0){
 			WebserverFree(header->Host);

@@ -285,6 +285,27 @@ int check_url_functions(http_request* p){
 
 
 /****************************************************************************
+ *
+ *   Sanitize string for use in HTTP headers - removes CR/LF to prevent
+ *   HTTP Response Splitting attacks
+ *
+ ***************************************************************************/
+
+static void sanitize_header_value(char* dest, const char* src, size_t dest_size) {
+	size_t j = 0;
+
+	if (dest_size == 0) return;
+
+	for (size_t i = 0; src[i] != '\0' && j < dest_size - 1; i++) {
+		/* Filter CR, LF to prevent header injection */
+		if (src[i] != '\r' && src[i] != '\n') {
+			dest[j++] = src[i];
+		}
+	}
+	dest[j] = '\0';
+}
+
+/****************************************************************************
  *																	 	    *
  *	  getHttpRequest(int sock)	:   Hauptfunktion des Servers 			    *
  *																		    *
@@ -382,9 +403,12 @@ int getHttpRequest(socket_info* sock) {
 		if ( file && download ) {
 			file->ForceDownload = 1;
 			if ( download->type == VAR_TYPE_STRING ){
-				strncpy((char*)file->ForceDownloadName,download->val.value_string,FORCE_DOWNLOAD_NAME_LENGTH-1);
+				/* Sanitize to prevent HTTP Response Splitting via CR/LF injection */
+				sanitize_header_value((char*)file->ForceDownloadName,
+				                      download->val.value_string,
+				                      FORCE_DOWNLOAD_NAME_LENGTH);
 			}else{
-				strcpy((char*)file->ForceDownloadName,"");
+				file->ForceDownloadName[0] = '\0';
 			}
 		}
 

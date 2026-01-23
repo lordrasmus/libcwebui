@@ -106,7 +106,12 @@ static void addConnectionStatusLines(socket_info* socket) {
 		}
 		printHeaderChunk(socket, "Connection: %s\r\n",socket->header->Connection);
 	} else {
-		printHeaderChunk(socket, "Connection: close\r\n");
+		/* HTTP/1.1 default is keep-alive, HTTP/1.0 default is close */
+		if (socket->header->isHttp1_1 == 1) {
+			printHeaderChunk(socket, "Connection: keep-alive\r\n");
+		} else {
+			printHeaderChunk(socket, "Connection: close\r\n");
+		}
 	}
 
 

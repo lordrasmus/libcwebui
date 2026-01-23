@@ -171,7 +171,7 @@ int sendWebsocketFrameReal(const char* guid, const unsigned char* in, const WEBS
 
 }
 
-void sendCloseFrameWithStatus(const char* guid, uint16_t status_code) {
+static void sendCloseFrameWithStatus(const char* guid, uint16_t status_code) {
 	unsigned char buffer[2];
 	buffer[0] = (status_code >> 8) & 0xFF;
 	buffer[1] = status_code & 0xFF;
