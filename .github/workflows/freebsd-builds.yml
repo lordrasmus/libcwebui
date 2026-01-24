@@ -30,6 +30,6 @@ jobs:
           pkg install -y python3 libevent openssl pkgconf gmake
 
         run: |
-          cd Samples/Linux/SingleMain
+          cd Samples/FreeBSD/SingleMain
           gmake clean
           gmake
