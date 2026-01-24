@@ -525,9 +525,6 @@ int WebserverSSLAccept(socket_info* s) {
 			}
 		}
 	}
-
-	s->use_ssl = 0;
-	return NO_SSL_CONNECTION_ERROR;
 }
 
 int WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, unsigned int len, UNUSED_PARA int flags) {
