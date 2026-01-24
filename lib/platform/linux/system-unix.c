@@ -254,6 +254,10 @@ int PlatformCreateSem(WS_SEMAPHORE_TYPE* sem, int init_value){
 	return sem_init( sem, 0, init_value);
 }
 
+int PlatformDestroySem(WS_SEMAPHORE_TYPE* sem){
+	return sem_destroy( sem );
+}
+
 int PlatformPostSem(WS_SEMAPHORE_TYPE* sem) {
 	return sem_post( sem );
 }

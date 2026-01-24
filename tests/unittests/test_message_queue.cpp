@@ -19,8 +19,7 @@ protected:
     }
 
     void TearDown() override {
-        // Note: There's no ws_destroyMessageQueue, so we can't clean up properly
-        // This is a potential memory leak in the library
+        ws_destroyMessageQueue(queue);
     }
 };
 
