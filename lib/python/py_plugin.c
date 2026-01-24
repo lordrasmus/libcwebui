@@ -292,16 +292,33 @@ void py_call_engine_function( http_request *s, user_func_s *func , FUNCTION_PARA
 
 				context = func->plugin->py_plugin;
 
-				//PyObject* last_namespace = context->global_namespace;
+				/*
+				 * TODO: Memory Leak beim Plugin-Reload
+				 *
+				 * Problem: Neuer Namespace wird geholt, alter geht verloren.
+				 * - PyModule_GetDict() gibt borrowed reference zurück (kein DECREF möglich)
+				 * - Alter Namespace enthält noch Funktionsobjekte
+				 * - Engine hält noch func->py_func Referenzen auf alte Funktionen
+				 *
+				 * Warum neuer Namespace? Um alte Funktionen zu entfernen die im
+				 * neuen Code nicht mehr existieren (sauberer Zustand).
+				 *
+				 * Richtige Lösung:
+				 * 1. unregister_plugin_functions(plugin) - alle Funktionen des Plugins entfernen
+				 * 2. PyDict_New() - eigenen Namespace erstellen (owned, nicht borrowed)
+				 * 3. PyDict_SetItemString(ns, "__builtins__", PyEval_GetBuiltins())
+				 * 4. PyRun_File() mit neuem Namespace
+				 * 5. Py_XDECREF(old_namespace) - jetzt sicher freigeben
+				 *
+				 * Einfache Alternative: Bestehenden Namespace wiederverwenden statt
+				 * neuen holen. Dann überschreiben neue Definitionen die alten,
+				 * aber alte Funktionen bleiben erhalten.
+				 */
+				#warning mem leak wegen neuem namespace - siehe TODO Kommentar
 
 				context->global_namespace = PyModule_GetDict( PyImport_AddModule("__main__") );
-				
+
 				PyRun_File( fp,func->plugin->path , Py_file_input, context->global_namespace,  context->global_namespace );
-				
-				//Py_XDECREF(last_namespace);
-				#warning mem leak wegen neuem namspace
-				// alter namspace kann aber nicht einfach gelöscht werden
-				// noch eine verbindung zum interpreter ?
 
 				PyErr_Print();
 
