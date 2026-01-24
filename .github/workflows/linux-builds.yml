@@ -31,3 +31,24 @@ jobs:
         make clean
         make
 
+  config-variants:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ['ubuntu-22.04', 'ubuntu-24.04']
+        variant: ['LinuxEpoll', 'LinuxSelect', 'LinuxWebsocketNoSSL', 'LinuxWebsocketSelect']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential python3-dev libevent-dev
+
+    - name: Build
+      run: |
+        cd tests/config_variants/${{ matrix.variant }}
+        make clean
+        make
+

@@ -307,11 +307,10 @@ typedef struct {
 	int ssl_pending_bytes;
 #endif
 
-#ifdef USE_LIBEVENT
+#if defined( USE_LIBEVENT )
 	struct event *my_ev;
-#else
-	EVENT_TYPES event_types;
-	char event_persist;
+#elif defined( USE_EPOLL )
+	int registered;
 #endif
 	char closeSocket;
 

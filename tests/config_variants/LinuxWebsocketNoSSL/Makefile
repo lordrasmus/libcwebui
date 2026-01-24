@@ -1,7 +1,6 @@
 
-
 FILES= \
-    ../../../lib/src/base64.c \
+	../../../lib/src/base64.c                       ../../../lib/src/sha1.c \
     ../../../lib/src/builtinFunctions.c             ../../../lib/src/convert.c \
     ../../../lib/src/cookie.c                       ../../../lib/src/conditions.c \
     ../../../lib/src/engine.c                       ../../../lib/src/engine_api_extensions.c \
@@ -20,15 +19,16 @@ FILES= \
 	../../../lib/src/system_sockets_container.c     ../../../lib/src/system_sockets_events.c \
 	../../../lib/src/system_sockets_epoll.c         ../../../lib/src/system_sockets_send.c \
 	../../../lib/src/system_sockets_recv.c          ../../../lib/src/system_memory.c \
-	../../../lib/src/system_memory_gcc.c            ../../../lib/src/sha1.c \
+	../../../lib/src/system_memory_gcc.c \
 	../../../lib/src/utils.c                        ../../../lib/src/variable.c \
 	../../../lib/src/variable_global.c              ../../../lib/src/variable_render.c \
 	../../../lib/src/variable_store.c               ../../../lib/src/webserver_api_functions.c \
 	../../../lib/src/websocket_handler.c            ../../../lib/src/websockets.c \
-	../../../lib/src/websockets_send_recv.c         ../../../lib/ssl/openssl.c \
-	../../../lib/platform/platform-file-access.c \
-	../../../lib/platform/platform-sockets.c \
-	../../../lib/platform/platform.c \
+	../../../lib/src/websockets_send_recv.c         ../../../lib/src/websockets_streaming.c \
+	../../../lib/src/reverse_proxy.c                ../../../lib/ssl/openssl.c \
+	../../../lib/platform/linux/platform-file-access.c \
+	../../../lib/platform/linux/platform-sockets.c \
+	../../../lib/platform/linux/system-unix.c \
 	../../../lib/python/py_utils.c \
 	../../../lib/python/py_plugin.c  \
 	../../../lib/python/py_api_functions.c  \
@@ -36,11 +36,13 @@ FILES= \
 	../../../lib/third_party/src/rb_tree/stack.c \
 	../../../lib/third_party/src/rb_tree/misc.c \
 	../../../lib/third_party/src/is_utf8/is_utf8.c \
-	../../../lib/third_party/src/miniz/miniz.c 
+	../../../lib/third_party/src/miniz/miniz.c
 
 
-PY_FLAGS = $(shell python-config --includes)
-PY_LINK = $(shell python-config --libs)
+PYTHON_PKG := $(shell pkg-config --modversion python3 )
+
+PY_FLAGS = $(shell pkg-config --cflags python-$(PYTHON_PKG)-embed)
+PY_LINK  = $(shell pkg-config --libs   python-$(PYTHON_PKG)-embed)
 
 
 FLAGS= -I . -I../../../lib/include -I../../../lib/third_party/src/miniz/ -I../../../lib/third_party/src/rb_tree/ \
