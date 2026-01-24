@@ -7,10 +7,10 @@ SPDX-License-Identifier: MPL-2.0
 
  Projekt URL : https://github.com/lordrasmus/libcwebui
 
- 
+
  This Source Code Form is subject to the terms of the Mozilla Public
  License, v. 2.0. If a copy of the MPL was not distributed with this
- file, You can obtain one at https://mozilla.org/MPL/2.0/. 
+ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 */
 
@@ -20,9 +20,7 @@ SPDX-License-Identifier: MPL-2.0
 #define _PLATFORM_INCLUDES_H_
 
 
-#define OSX 
-
-#define _C99_SOURCE // needed for snprintf
+#define FREEBSD
 
 #include <stdio.h>
 #include <ctype.h>
@@ -51,7 +49,6 @@ SPDX-License-Identifier: MPL-2.0
 
 #include <sys/ioctl.h>
 #include <sys/select.h>
-#include <dispatch/dispatch.h>
 
 
 #define SIZE_TYPE size_t
@@ -59,13 +56,13 @@ SPDX-License-Identifier: MPL-2.0
 
 #define TIME_TYPE time_t
 
-#define FILE_OFFSET __darwin_off_t
+#define FILE_OFFSET off_t
 #define FILE_OFF_CAST(x) ((intmax_t)(x))
 #define FILE_OFF_PRINT_HEX PRIxMAX
 #define FILE_OFF_PRINT_INT PRIdMAX
 
 #define WS_MUTEX_TYPE		pthread_mutex_t
-#define WS_SEMAPHORE_TYPE	dispatch_semaphore_t
+#define WS_SEMAPHORE_TYPE	sem_t
 #define WS_THREAD			pthread_t
 
 #define WebServerPrintf printf
