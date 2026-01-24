@@ -67,8 +67,8 @@ TEST_F(SecurityTest, ScriptTagEncoded) {
 
 TEST_F(SecurityTest, ScriptTagInParameter) {
     parseHeaderLine("GET /page?name=<script>alert(1)</script> HTTP/1.1");
-    // URL should be parsed, but value contains script
-    // This tests if the URL itself is flagged
+    // Script tag in parameter should be detected
+    EXPECT_EQ(header->error, 1);
 }
 
 // Null Byte Injection Tests
@@ -83,6 +83,42 @@ TEST_F(SecurityTest, NullByteInUrl) {
     }
 }
 
+// Null byte injection for extension bypass
+// Attacker tries: /secret.txt%00.html to bypass .html-only filter
+TEST_F(SecurityTest, NullByteExtensionBypass) {
+    parseHeaderLine("GET /secret.txt%00.html HTTP/1.1");
+    // After URL decode, this becomes "secret.txt\0.html"
+    // If the sanity check sees ".html" but the filesystem sees ".txt",
+    // that's a security bypass
+    if (header->url != nullptr) {
+        // The URL after decode should be checked for null bytes
+        // Either reject the request OR ensure no null bytes remain
+        bool hasNullByte = (memchr(header->url, '\0', 256) != nullptr &&
+                           strlen(header->url) < 256);
+        // If null byte is present in middle, request should be rejected
+        if (hasNullByte) {
+            EXPECT_EQ(header->error, 1) << "Null byte in URL should be rejected";
+        }
+    }
+}
+
+// Double-encoded null byte
+TEST_F(SecurityTest, DoubleEncodedNullByte) {
+    parseHeaderLine("GET /test%2500.html HTTP/1.1");
+    // %25 = %, so %2500 -> %00 after first decode
+    // Library only decodes once, so result should be "test%00.html"
+    // This is correct behavior - no double-decode vulnerability
+    EXPECT_EQ(header->error, 0);
+    EXPECT_NE(header->url, nullptr);
+}
+
+// Null byte in path traversal
+TEST_F(SecurityTest, NullByteWithTraversal) {
+    parseHeaderLine("GET /../%00/etc/passwd HTTP/1.1");
+    // Combining null byte with traversal
+    EXPECT_EQ(header->error, 1);
+}
+
 // Buffer/Length Tests
 TEST_F(SecurityTest, VeryLongUrl) {
     // Create a very long URL
@@ -93,7 +129,9 @@ TEST_F(SecurityTest, VeryLongUrl) {
     longUrl += " HTTP/1.1";
 
     // Should not crash, may reject or truncate
-    parseHeaderLine(longUrl.c_str());
+    int result = parseHeaderLine(longUrl.c_str());
+    // Either successfully parsed or rejected - both are valid
+    EXPECT_TRUE(result == 0 || result == 1 || header->error == 1);
 }
 
 TEST_F(SecurityTest, VeryLongHeaderValue) {
@@ -104,8 +142,9 @@ TEST_F(SecurityTest, VeryLongHeaderValue) {
         longHeader += "x";
     }
 
-    // Should not crash
-    parseHeaderLine(longHeader.c_str());
+    // Should not crash, header may be ignored
+    int result = parseHeaderLine(longHeader.c_str());
+    EXPECT_TRUE(result == 0 || result == 1);
 }
 
 TEST_F(SecurityTest, VeryLongParameterValue) {
@@ -116,7 +155,8 @@ TEST_F(SecurityTest, VeryLongParameterValue) {
     longParam += " HTTP/1.1";
 
     // Should not crash
-    parseHeaderLine(longParam.c_str());
+    int result = parseHeaderLine(longParam.c_str());
+    EXPECT_TRUE(result == 0 || result == 1 || header->error == 1);
 }
 
 // Malformed Input Tests
@@ -136,31 +176,36 @@ TEST_F(SecurityTest, OnlyMethod) {
 }
 
 TEST_F(SecurityTest, EmptyRequest) {
-    parseHeaderLine("");
-    // Should handle gracefully
+    int result = parseHeaderLine("");
+    // Empty request should be handled - either ignored or error
+    EXPECT_TRUE(result == 0 || result == 1 || header->error == 1);
 }
 
 TEST_F(SecurityTest, GarbageData) {
-    parseHeaderLine("\xff\xfe\x00\x01\x02\x03");
-    // Should not crash
+    int result = parseHeaderLine("\xff\xfe\x00\x01\x02\x03");
+    // Garbage should be rejected or ignored
+    EXPECT_TRUE(result == 0 || result == 1 || header->error == 1);
 }
 
 TEST_F(SecurityTest, HeaderWithoutColon) {
     parseHeaderLine("GET / HTTP/1.1");
-    parseHeaderLine("InvalidHeaderNoColon");
-    // Should not crash, header should be ignored
+    int result = parseHeaderLine("InvalidHeaderNoColon");
+    // Invalid header should be ignored (return 0) or rejected
+    EXPECT_TRUE(result == 0 || result == 1);
 }
 
 TEST_F(SecurityTest, HeaderWithEmptyName) {
     parseHeaderLine("GET / HTTP/1.1");
-    parseHeaderLine(": value");
-    // Should not crash
+    int result = parseHeaderLine(": value");
+    // Empty header name should be ignored or rejected
+    EXPECT_TRUE(result == 0 || result == 1);
 }
 
 TEST_F(SecurityTest, HeaderWithOnlyColon) {
     parseHeaderLine("GET / HTTP/1.1");
-    parseHeaderLine(":");
-    // Should not crash
+    int result = parseHeaderLine(":");
+    // Should be ignored or rejected
+    EXPECT_TRUE(result == 0 || result == 1);
 }
 
 // Content-Length Manipulation
@@ -173,7 +218,11 @@ TEST_F(SecurityTest, NegativeContentLength) {
 TEST_F(SecurityTest, HugeContentLength) {
     parseHeaderLine("GET / HTTP/1.1");
     parseHeaderLine("Content-Length: 99999999999999999999");
-    // Should handle overflow gracefully
+    // Should handle overflow - either cap at max value or reject
+    // Must not overflow to a small number that could cause issues
+    EXPECT_TRUE(header->contentlenght == 0 ||
+                header->contentlenght >= 1000000000 ||
+                header->error == 1);
 }
 
 TEST_F(SecurityTest, NonNumericContentLength) {
@@ -185,7 +234,37 @@ TEST_F(SecurityTest, NonNumericContentLength) {
 TEST_F(SecurityTest, ContentLengthWithSpaces) {
     parseHeaderLine("GET / HTTP/1.1");
     parseHeaderLine("Content-Length:    123   ");
-    // May or may not parse, but should not crash
+    // Leading/trailing spaces should be handled - either parse 123 or reject
+    EXPECT_TRUE(header->contentlenght == 123 ||
+                header->contentlenght == 0 ||
+                header->error == 1);
+}
+
+// BUG: Content-Length with trailing garbage - HTTP Request Smuggling risk
+// "Content-Length: 123a456" should be rejected, not parsed as 123
+TEST_F(SecurityTest, ContentLengthWithTrailingGarbage) {
+    parseHeaderLine("GET / HTTP/1.1");
+    parseHeaderLine("Content-Length: 123a456");
+    // RFC 7230: Content-Length must be purely numeric
+    // Accepting "123" here can lead to HTTP Request Smuggling
+    // This SHOULD either:
+    // - Reject the request (error = 1), OR
+    // - Parse the full string and fail on non-numeric
+    // It should NOT silently accept 123
+    EXPECT_TRUE(header->error == 1 || header->contentlenght != 123);
+}
+
+TEST_F(SecurityTest, ContentLengthWithLeadingGarbage) {
+    parseHeaderLine("GET / HTTP/1.1");
+    parseHeaderLine("Content-Length: a123");
+    EXPECT_EQ(header->contentlenght, 0u);
+}
+
+TEST_F(SecurityTest, ContentLengthMixed) {
+    parseHeaderLine("GET / HTTP/1.1");
+    parseHeaderLine("Content-Length: 12ab34");
+    // Should not parse as 12
+    EXPECT_TRUE(header->error == 1 || header->contentlenght != 12);
 }
 
 // Host Header Attacks
@@ -198,13 +277,19 @@ TEST_F(SecurityTest, HostHeaderWithPort) {
 TEST_F(SecurityTest, HostHeaderMalformed) {
     parseHeaderLine("GET / HTTP/1.1");
     parseHeaderLine("Host: :8080");
-    // Should handle gracefully
+    // Empty hostname with port - should handle gracefully
+    // Either set empty hostname or reject
+    EXPECT_TRUE(header->HostName == nullptr ||
+                header->HostName[0] == '\0' ||
+                strcmp(header->HostName, ":8080") == 0);
 }
 
 TEST_F(SecurityTest, HostHeaderMultipleColons) {
     parseHeaderLine("GET / HTTP/1.1");
     parseHeaderLine("Host: example.com:8080:extra");
-    // Should handle gracefully
+    // Multiple colons - should extract hostname before first colon
+    EXPECT_NE(header->HostName, nullptr);
+    EXPECT_STREQ(header->HostName, "example.com");
 }
 
 // URL Encoding Edge Cases
@@ -228,7 +313,10 @@ TEST_F(UrlDecodeSecurityTest, DoubleEncoding) {
 
 TEST_F(UrlDecodeSecurityTest, InvalidHexChars) {
     decodeAndCheck("%GG%ZZ");
-    // Invalid hex should be handled gracefully
+    // Invalid hex - library produces empty string (removes invalid sequences)
+    // This is acceptable behavior - not a security issue
+    // Just verify it doesn't crash (ASan will catch buffer issues)
+    EXPECT_TRUE(strlen(buffer) == 0 || strcmp(buffer, "%GG%ZZ") == 0);
 }
 
 TEST_F(UrlDecodeSecurityTest, PartialEncoding) {
@@ -244,5 +332,7 @@ TEST_F(UrlDecodeSecurityTest, PercentAtEnd) {
 
 TEST_F(UrlDecodeSecurityTest, MixedValidInvalid) {
     decodeAndCheck("%20%GG%20");
-    // Space, invalid, space
+    // First %20 -> space, %GG invalid (kept or skipped), last %20 -> space
+    // Result should contain at least the valid decoded spaces
+    EXPECT_NE(strchr(buffer, ' '), nullptr);
 }
