@@ -166,13 +166,15 @@ PyObject* py_set_plugin_name( PyObject* self, PyObject *args )
 
 int py_load_python_plugin( const char* path ){
 
-	if ( 0 != access( path , F_OK ) ){
+	/* Open file first to avoid TOCTOU race condition (no separate access() check) */
+	FILE* fp = fopen(path, "r");
+	if ( !fp ){
 		printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 		printf("loading python plugin : %s  not found \n",path);
 		printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 		return 0;
 	}
-	
+
 	last_py_plugin_path = path;
 
 	struct web_py_plugin * mod = malloc( sizeof( struct web_py_plugin ) );
@@ -218,27 +220,17 @@ int py_load_python_plugin( const char* path ){
 	printf("size : %d\n",mod->size);
 	printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 
-	FILE* fp = fopen(path,"r");
-	if ( fp ){
+	context = mod;
 
-		context = mod;
-		//context = NULL;
+	char run[1000];
+	sprintf( run, "import sys\n" "sys.path.append('%s')\n", mod->exec_path );
 
-		
-		getcwd(cwd, sizeof(cwd));
-		//chdir( mod->exec_path );
-		
-		char run[1000];
-		sprintf( run, "import sys\n" "sys.path.append('%s')\n", mod->exec_path );
-		
-		PyRun_SimpleString( run );
-		PyRun_File( fp,path , Py_file_input, mod->global_namespace,  mod->global_namespace );
-		//chdir( cwd );
-		
-		context = NULL;
+	PyRun_SimpleString( run );
+	PyRun_File( fp, path, Py_file_input, mod->global_namespace, mod->global_namespace );
 
-		fclose(fp);
-	}
+	context = NULL;
+
+	fclose(fp);
 
 	PyErr_Print();
 
