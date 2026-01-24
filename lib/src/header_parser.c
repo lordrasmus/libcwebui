@@ -33,6 +33,10 @@ static void createParameter(HttpRequestHeader *header, char* name, unsigned int 
 
 	if (value != 0) {
 		url_decode(value);
+		/* Check for script injection in parameter values (XSS prevention) */
+		if (stringfind(value, "<script>") > 0 || stringfind(value, "</script>") > 0) {
+			header->error = 1;
+		}
 		setWSVariableString(var, value);
 	}
 
@@ -157,7 +161,18 @@ static void recieveParameterFromGet(char *line, HttpRequestHeader *header, int l
 static void url_sanity_check( HttpRequestHeader *header ){
 	int pos;
 
+	/* Preserve existing error (e.g., from parameter validation) */
+	if (header->error == 1) {
+		return;
+	}
 	header->error = 0;
+
+	// Check for null byte injection BEFORE decode (%00 becomes \0 which terminates strings)
+	pos = stringfind(header->url, "%00");
+	if (pos > 0) {
+		header->error = 1;
+		return;
+	}
 
 	// URL decode FIRST, then check for malicious patterns
 	// This prevents bypass via URL encoding (e.g., %3Cscript%3E)
@@ -475,7 +490,13 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 		} else {
 			/* Note: strtoull overflow returns ULLONG_MAX which is safely rejected
 			 * by the max_post_size check in check_post_header() */
-			header->contentlenght = strtoull(val, NULL, 10);
+			char* endptr;
+			header->contentlenght = strtoull(val, &endptr, 10);
+			/* Reject trailing garbage after number (HTTP Request Smuggling prevention) */
+			if (*endptr != '\0' && *endptr != '\r' && *endptr != '\n' && *endptr != ' ') {
+				header->contentlenght = 0;
+				header->error = 1;
+			}
 		}
 		return 0;
 	}
