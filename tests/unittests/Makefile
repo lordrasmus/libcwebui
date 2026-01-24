@@ -1,6 +1,9 @@
 
-CXX_OPTS= -std=c++17 -ggdb3
-C_OPTS= -std=c99 -ggdb3
+# Sanitizer flags (Address + Undefined Behavior)
+SANITIZER_FLAGS= -fsanitize=address,undefined -fno-sanitize-recover=all
+
+CXX_OPTS= -std=c++17 -ggdb3 ${SANITIZER_FLAGS}
+C_OPTS= -std=c99 -ggdb3 ${SANITIZER_FLAGS}
 
 INCLUDES=-I. -I../../lib/ -I../../lib/include/ -I../../lib/include/intern/ -I../../lib/third_party/src/simclist/ \
 	-I../../lib/third_party/src/rb_tree/ -I../../lib/third_party/src/is_utf8/ \
@@ -74,7 +77,8 @@ TEST_FILES= \
 	test_main.cpp \
 	test_cookie.cpp \
 	test_sha1.cpp \
-	test_base64.cpp
+	test_base64.cpp \
+	test_list.cpp
 
 C_OBJS=$(C_FILES:.c=.o)
 
