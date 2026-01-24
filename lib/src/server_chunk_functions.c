@@ -199,8 +199,9 @@ static void vprintHeaderChunk(socket_info* sock, const char *fmt, va_list argptr
 	
 	
 	writeChunk(&sock->header_chunk_list, (unsigned char*) tmp, l);
-	
+
 	WebserverFree( tmp );
+	va_end(argcopy);
 }
 #pragma GCC diagnostic warning "-Wformat-nonliteral"
 
