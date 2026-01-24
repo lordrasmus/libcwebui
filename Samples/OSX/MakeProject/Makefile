@@ -54,7 +54,7 @@ FLAGS= -I . -I../../../lib/include -I../../../lib/third_party/src/miniz/ -I../..
 	-Werror=format -Wformat-nonliteral \
 	-DMINIZ_NO_ARCHIVE_APIS -DMINIZ_NO_ZLIB_COMPATIBLE_NAMES -DENABLE_LAUNCHER=OFF -DENABLE_EDITOR=OFF 
 
-LIBS=-lc  -ldl -lpthread -levent -levent_pthreads -lz -lstdc++ # -lssl -lcrypto
+LIBS=-lc  -ldl -lpthread -levent -levent_pthreads -lstdc++ # -lssl -lcrypto
 
 .SILENT:
 

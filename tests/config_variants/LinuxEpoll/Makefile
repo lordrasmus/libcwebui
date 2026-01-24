@@ -13,7 +13,7 @@ FLAGS= -I . -I../../../lib/include -I../../../lib/third_party/src/miniz/ -I../..
 
 CFLAGS_EXTRA= -Werror=old-style-definition
 
-LIBS=-lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads -lz -lstdc++
+LIBS=-lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads -lstdc++
 
 .SILENT:
 all:
