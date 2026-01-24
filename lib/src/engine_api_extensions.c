@@ -223,7 +223,7 @@ void engine_platformFunction(http_request *s, FUNCTION_PARAS* func) {
 	}
 
 #ifdef WEBSERVER_USE_PYTHON
-	if ( tmp->type == 1 )
+	if ( tmp->type == 1 && tmp->plugin != 0 )
 		py_call_engine_function( s, tmp, func );
 #endif
 
