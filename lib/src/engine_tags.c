@@ -119,9 +119,16 @@ int find_tag_end_pos ( const char *pagedata,int datalenght,const char *start_tag
     if ( pos2>0 ){
       level++;
     }
+
+    /* Overflow check: ensure offset stays within data bounds */
+    if ( pos1 > datalenght - offset ) {
+      LOG ( TEMPLATE_LOG,ERROR_LEVEL,0,"%s","Tag parsing overflow detected" );
+      return -1;
+    }
     offset+=pos1;
   } while ( level > 0 );
 
+  /* offset is guaranteed <= datalenght, so offset+1 won't overflow */
   return offset+1;
 
 }
