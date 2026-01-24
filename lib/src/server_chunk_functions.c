@@ -420,7 +420,7 @@ void generateOutputBuffer(socket_info* sock) {
 #endif
 
 #ifdef _WEBSERVER_DEBUG_
-	LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket, "compiled HTML Size %d ",size );
+	LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket, "compiled HTML Size %ld ",size );
 #endif
 	output->body.buffer = buffer;
 	output->body.buffer_size = offset;

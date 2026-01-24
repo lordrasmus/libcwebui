@@ -54,7 +54,7 @@ static int handleWebsocket(socket_info* sock, EVENT_TYPES type) {
 			  ausserdem liest nur der Hauptthread vom socket
 			*/
 			#if _WEBSERVER_WEBSOCKET_DEBUG_ > 4
-				LOG( WEBSOCKET_LOG, ERROR_LEVEL, 0, "Event Type EVENT_READ", "");
+				LOG( WEBSOCKET_LOG, ERROR_LEVEL, 0, "Event Type EVENT_READ");
 			#endif
 			if (recFrame(sock) < 0) {
 				return -1;
@@ -64,7 +64,7 @@ static int handleWebsocket(socket_info* sock, EVENT_TYPES type) {
 		case EVENT_WRITE: /* WRITE */
 
 			#if _WEBSERVER_WEBSOCKET_DEBUG_ > 4
-				LOG( WEBSOCKET_LOG, ERROR_LEVEL, 0, "Event Type EVENT_WRITE", "");
+				LOG( WEBSOCKET_LOG, ERROR_LEVEL, 0, "Event Type EVENT_WRITE");
 			#endif
 
 			PlatformLockMutex(&sock->socket_mutex);

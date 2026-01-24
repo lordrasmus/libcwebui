@@ -180,7 +180,7 @@ void WebserverConnectionManagerCloseRequest(socket_info* sock) {
 		insert_websocket_input_queue( msg);
 		
 #if _WEBSERVER_CONNECTION_DEBUG_ > 1
-		LOG ( CONNECTION_LOG,NOTICE_LEVEL, sock->socket, "Websocket Close Request","" );
+		LOG ( CONNECTION_LOG,NOTICE_LEVEL, sock->socket, "Websocket Close Request" );
 #endif
 	}
 #endif
@@ -338,7 +338,7 @@ static int handleClientHeaderData(socket_info* sock) {
 
 			if ((len == CLIENT_DISCONNECTED) || (len == CLIENT_UNKNOWN_ERROR) || (len == SSL_PROTOCOL_ERROR)) {
 #if _WEBSERVER_CONNECTION_DEBUG_ > 1
-				LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"Client Disconnected","" );
+				LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"Client Disconnected" );
 #endif
 				sock->closeSocket = 1;
 				return -1;
@@ -522,7 +522,7 @@ static int handleClient(socket_info* sock) {
 	int ret;
 
 #ifdef _WEBSERVER_SOCKET_DEBUG_
-	LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"Client Data","" );
+	LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"Client Data" );
 #endif
 
 
@@ -541,7 +541,7 @@ static int handleClient(socket_info* sock) {
 		if ( sock->header->isWebsocket == 1 )
 		{
 			#if _WEBSERVER_CONNECTION_DEBUG_ > 1
-				LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"Websocket Connected","" );
+				LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"Websocket Connected" );
 			#endif
 			initWebsocketStructures(sock);
 			sock->isWebsocket = 1;
@@ -554,7 +554,7 @@ static int handleClient(socket_info* sock) {
 		if ( sock->header->isWebsocket == 2 )
 		{
 			#if _WEBSERVER_CONNECTION_DEBUG_ > 2
-				LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"isWebsocket 2","" );
+				LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"isWebsocket 2" );
 			#endif
 			generateOutputBuffer(sock);
 			addEventSocketWritePersist(sock);
@@ -564,7 +564,7 @@ static int handleClient(socket_info* sock) {
 #endif
 
 #if _WEBSERVER_HANDLER_DEBUG_ > 4
-		LOG ( HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Handle Web Request","" );
+		LOG ( HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Handle Web Request" );
 #endif
 		sock->use_output_compression = 0;
 		/* das hier tritt auf wenn mehrer requests ueber einen Socket im Burst gesendet werden */
@@ -745,7 +745,7 @@ static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendOutputBuffer(socket_inf
 	int ret;
 
 #ifdef _WEBSERVER_CONNECTION_SEND_DEBUG_
-	LOG ( CONNECTION_LOG,ERROR_LEVEL,sock->socket,"handleClientWriteData Send Output Buffer ","" );
+	LOG ( CONNECTION_LOG,ERROR_LEVEL,sock->socket,"handleClientWriteData Send Output Buffer" );
 #endif
 
 
@@ -789,9 +789,8 @@ static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendOutputBuffer(socket_inf
 
 	if (output->file_infos.file_info != 0) {
 
-		//TODO Die Meldung fixen
 		#ifdef _WEBSERVER_CONNECTION_SEND_DEBUG_
-			LOG ( CONNECTION_LOG,ERROR_LEVEL,sock->socket,"handleClientWriteData Send File  Bytes %ld Pos %ld", sock->file_infos.file_info->DataLenght,sock->file_infos.file_send_pos );
+			LOG ( CONNECTION_LOG,ERROR_LEVEL,sock->socket,"handleClientWriteData Send File  Bytes %ld Pos %ld", (long)output->file_infos.file_info->DataLenght,(long)output->file_infos.file_send_pos );
 		#endif
 
 		if (output->file_infos.file_info->RamCached == 1) {
@@ -922,12 +921,12 @@ int WebserverCloseSocket(socket_info* sock) {
 #ifdef WEBSERVER_USE_WEBSOCKETS
 	if ( sock->isWebsocket == 1 ) {
 #if _WEBSERVER_CONNECTION_DEBUG_ > 1
-		LOG( CONNECTION_LOG, NOTICE_LEVEL, sock->socket, "Closing Websocket Connection", "");
+		LOG( CONNECTION_LOG, NOTICE_LEVEL, sock->socket, "Closing Websocket Connection" );
 #endif
 	}else{
 #endif
 #if _WEBSERVER_CONNECTION_DEBUG_ > 1
-		LOG( CONNECTION_LOG, NOTICE_LEVEL, sock->socket, "Closing Client Connection", "");
+		LOG( CONNECTION_LOG, NOTICE_LEVEL, sock->socket, "Closing Client Connection" );
 #endif
 #ifdef WEBSERVER_USE_WEBSOCKETS
 	}
@@ -953,7 +952,7 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* so
 	unsigned char *buffer;
 
 #ifdef _WEBSERVER_FILESYSTEM_DEBUG_
-		LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"Send File from Disk Soll %d Pos %d",sock->file_infos.file_info->DataLenght,sock->file_infos.file_send_pos );
+		LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"Send File from Disk Soll %ld Pos %ld",file->file_info->DataLenght,file->file_send_pos );
 #endif
 
 	buffer = (unsigned char *) WebserverMalloc( WRITE_DATA_SIZE );
@@ -979,7 +978,7 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* so
 		switch (status) {
 		case SOCKET_SEND_NO_MORE_DATA:
 #if _WEBSERVER_CONNECTION_DEBUG_ >= 5
-			LOG ( SOCKET_LOG,NOTICE_LEVEL,sock->socket,"SOCKET_SEND_NO_MORE_DATA : %d status : %d ret : %d",sock->file_infos.file_send_pos,status,ret );
+			LOG ( SOCKET_LOG,NOTICE_LEVEL,sock->socket,"SOCKET_SEND_NO_MORE_DATA : %ld status : %d ret : %d",file->file_send_pos,status,ret );
 #endif
 			file->file_send_pos += ret;
 			if ( file->file_info->DataLenght == file->file_send_pos) {
@@ -1048,9 +1047,9 @@ void handleer( int a, short b, void *t ) {
 
 #if _WEBSERVER_HANDLER_DEBUG_ > 3
 
-	if ( b == EVENT_TIMEOUT ){ LOG ( HANDLER_LOG,NOTICE_LEVEL,sock->socket,"EV_TIMEOUT","" ); }
-	if ( b == EVENT_READ ) {   LOG ( HANDLER_LOG,NOTICE_LEVEL,sock->socket,"EV_READ","" );    }
-	if ( b == EVENT_WRITE ) {  LOG ( HANDLER_LOG,NOTICE_LEVEL,sock->socket,"EV_WRITE","" );   }
+	if ( b == EVENT_TIMEOUT ){ LOG ( HANDLER_LOG,NOTICE_LEVEL,sock->socket,"EV_TIMEOUT" ); }
+	if ( b == EVENT_READ ) {   LOG ( HANDLER_LOG,NOTICE_LEVEL,sock->socket,"EV_READ" );    }
+	if ( b == EVENT_WRITE ) {  LOG ( HANDLER_LOG,NOTICE_LEVEL,sock->socket,"EV_WRITE" );   }
 
 #endif
 
@@ -1169,7 +1168,7 @@ void handleer( int a, short b, void *t ) {
 			switch (status_ret) {
 			case NO_MORE_DATA:
 #if _WEBSERVER_CONNECTION_DEBUG_ > 4
-				LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"request finished","" );
+				LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"request finished" );
 #endif
 				delEventSocketWritePersist(sock);
 
@@ -1208,7 +1207,7 @@ void handleer( int a, short b, void *t ) {
 				break;
 			case CLIENT_DICONNECTED:
 #ifdef _WEBSERVER_CONNECTION_DEBUG_
-				LOG ( CONNECTION_LOG,WARNING_LEVEL,sock->socket,"%d","request finished client disconnected" );
+				LOG ( CONNECTION_LOG,WARNING_LEVEL,sock->socket,"%s","request finished client disconnected" );
 #endif
 				delEventSocketWritePersist(sock);
 				WebserverConnectionManagerCloseRequest(sock);

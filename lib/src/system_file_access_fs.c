@@ -231,7 +231,7 @@ static WebserverFileInfo* getFileInformation( const char *name) {
 	setFileType(file);
 
 #ifdef _WEBSERVER_FILESYSTEM_CACHE_DEBUG_
-	LOG (FILESYSTEM_LOG,NOTICE_LEVEL,0, "Add File Info Node","" );
+	LOG (FILESYSTEM_LOG,NOTICE_LEVEL,0, "Add File Info Node" );
 #endif
 
 	file->DataLenght = PlatformGetFileSize();

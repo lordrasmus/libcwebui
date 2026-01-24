@@ -232,7 +232,7 @@ void engine_platformFunction(http_request *s, FUNCTION_PARAS* func) {
 	}
 
 #ifdef _WEBSERVER_ENGINE_PLUGINS_DEBUG_
-	LOG( TEMPLATE_LOG, NOTICE_LEVEL, s->socket->socket, "Calling Plugin Function %s exit", func->para[0]);
+	LOG( TEMPLATE_LOG, NOTICE_LEVEL, s->socket->socket, "Calling Plugin Function %s exit", func->parameter[0].text ? func->parameter[0].text : "(null)");
 #endif
 
 }
