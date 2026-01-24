@@ -139,7 +139,10 @@ static void proxy_send_error_response(reverse_proxy_connection_t* proxy) {
     if (proxy != NULL && proxy->client_sock != NULL) {
         int fd = proxy->client_sock->socket;
         if (fd >= 0) {
-            send(fd, response, response_len, 0);
+            ssize_t sent = send(fd, response, response_len, 0);
+            if (sent < 0) {
+                LOG(PROXY_LOG, ERROR_LEVEL, fd, "Failed to send error response: %s", strerror(errno));
+            }
         }
     }
 }
