@@ -232,6 +232,7 @@ int PlatformUnlockMutex(WS_MUTEX* m){
 		return EINVAL;
 	}
 
+	/* coverity[missing_lock] - locked is debug-only counter, caller holds lock */
 	m->locked--;
 	return pthread_mutex_unlock( &m->handle );
 }
