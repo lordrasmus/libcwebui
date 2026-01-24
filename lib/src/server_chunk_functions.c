@@ -238,6 +238,7 @@ int vprintHTMLChunk(socket_info* sock, const char *fmt, va_list argptr) {
 
 	writeChunk(&sock->html_chunk_list, (unsigned char*) tmp, l );
 	WebserverFree( tmp );
+	va_end(argcopy);
 	return l;
 }
 #pragma GCC diagnostic warning "-Wformat-nonliteral"
