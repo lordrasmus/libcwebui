@@ -78,7 +78,18 @@ TEST_FILES= \
 	test_cookie.cpp \
 	test_sha1.cpp \
 	test_base64.cpp \
-	test_list.cpp
+	test_list.cpp \
+	test_url_decode.cpp \
+	test_utils.cpp \
+	test_convert.cpp \
+	test_variable.cpp \
+	test_header_parser.cpp \
+	test_engine.cpp \
+	test_security.cpp \
+	test_websocket.cpp \
+	test_session.cpp \
+	test_message_queue.cpp \
+	test_file_manager.cpp
 
 C_OBJS=$(C_FILES:.c=.o)
 
