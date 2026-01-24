@@ -158,21 +158,25 @@ static void url_sanity_check( HttpRequestHeader *header ){
 	int pos;
 
 	header->error = 0;
+
+	// URL decode FIRST, then check for malicious patterns
+	// This prevents bypass via URL encoding (e.g., %3Cscript%3E)
+	url_decode( header->url );
+
+	// Check for directory traversal
+	pos = stringfind(header->url, "..");
+	if (pos > 0) {
+		header->error = 1;
+		return;
+	}
+
+	// Check for script injection (XSS)
 	pos = stringfind(header->url, "<script>");
 	if (pos > 0) {
 		header->error = 1;
 		return;
-	} else {
-		pos = stringfind(header->url, "</script>");
-		if (pos > 0) {
-			header->error = 1;
-			return;
-		}
 	}
-
-	// TODO die Fehlermeldung überarbeiten die hier von kommt
-	url_decode( header->url );
-	pos = stringfind(header->url, "..");
+	pos = stringfind(header->url, "</script>");
 	if (pos > 0) {
 		header->error = 1;
 		return;
