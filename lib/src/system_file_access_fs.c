@@ -88,7 +88,7 @@ int local_file_system_check_file_modified( WebserverFileInfo *file ){
 
 		FILE_OFFSET ret = PlatformReadBytes( ( unsigned char*) file->Data, file->DataLenght);
 		if ( ret != file->DataLenght ){
-			printf("Error: file size mismatch1 %"FILE_OFF_PRINT_INT" != %"FILE_OFF_PRINT_INT"\n",ret,file->DataLenght);
+			printf("Error: file size mismatch1 %"FILE_OFF_PRINT_INT" != %"FILE_OFF_PRINT_INT"\n",FILE_OFF_CAST(ret),FILE_OFF_CAST(file->DataLenght));
 		}
 
 		PlatformCloseDataStream();
@@ -108,7 +108,7 @@ int local_file_system_read_content( WebserverFileInfo *file ){
 
 		FILE_OFFSET ret = PlatformReadBytes( ( unsigned char*) file->Data, file->DataLenght);
 		if ( ret != file->DataLenght ){
-			printf("Error: file size mismatch2 %"FILE_OFF_PRINT_INT" != %"FILE_OFF_PRINT_INT"\n",ret,file->DataLenght);
+			printf("Error: file size mismatch2 %"FILE_OFF_PRINT_INT" != %"FILE_OFF_PRINT_INT"\n",FILE_OFF_CAST(ret),FILE_OFF_CAST(file->DataLenght));
 		}
 
 		PlatformCloseDataStream();
@@ -243,7 +243,7 @@ static WebserverFileInfo* getFileInformation( const char *name) {
 
 		FILE_OFFSET ret = PlatformReadBytes( template_header,  sizeof( template_v1_header ) -1 );
 		if ( ret !=  sizeof( template_v1_header ) -1 ){
-			printf("Error: file size mismatch3 %"FILE_OFF_PRINT_INT" != %zu\n",ret, sizeof( template_v1_header ) -1 );
+			printf("Error: file size mismatch3 %"FILE_OFF_PRINT_INT" != %zu\n",FILE_OFF_CAST(ret), sizeof( template_v1_header ) -1 );
 		}
 
 		if ( 0 == memcmp( template_v1_header, template_header, sizeof( template_v1_header ) -1 ) ){

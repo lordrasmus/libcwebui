@@ -649,7 +649,7 @@ static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendRamFile(socket_info* so
 		file->file_send_pos = 0;
 		file->file_info = 0;
 		LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "unhandled send status file ram pos : %"FILE_OFF_PRINT_INT" status : %d",
-				file->file_send_pos, ret);
+				FILE_OFF_CAST(file->file_send_pos), ret);
 		return CLIENT_DICONNECTED;
 	}
 	file->file_send_pos = 0;
@@ -763,7 +763,7 @@ static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendOutputBuffer(socket_inf
 				goto client_diconnected_header;
 			default:
 				LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "unhandled send status output_header_buffer pos : %"FILE_OFF_PRINT_INT" status : %d",
-						output->header.buffer_send_pos, ret);
+						FILE_OFF_CAST(output->header.buffer_send_pos), ret);
 				goto client_diconnected_header;
 		}
 	}
@@ -782,7 +782,7 @@ static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendOutputBuffer(socket_inf
 				goto client_diconnected_main;
 			default:
 				LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "unhandled send status output_main_buffer pos : %"FILE_OFF_PRINT_INT" status : %d",
-						output->body.buffer_send_pos, ret);
+						FILE_OFF_CAST(output->body.buffer_send_pos), ret);
 				goto client_diconnected_main;
 		}
 	}
@@ -970,7 +970,7 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* so
 
 		FILE_OFFSET ret2 = PlatformReadBytes(buffer, to_read);
 		if ( ret2 != to_read ){
-			printf("Error: read mismatch %"FILE_OFF_PRINT_INT" != %d\n",ret2,to_read);
+			printf("Error: read mismatch %"FILE_OFF_PRINT_INT" != %d\n",FILE_OFF_CAST(ret2),to_read);
 		}
 
 		status = WebserverSend(sock, buffer, to_read, 0, &ret);
@@ -1000,7 +1000,7 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* so
 
 		default:
 			LOG(SOCKET_LOG, ERROR_LEVEL, sock->socket, "unhandled send status file file pos : %"FILE_OFF_PRINT_INT" status : %d",
-					file->file_send_pos, status);
+					FILE_OFF_CAST(file->file_send_pos), status);
 			ret_v = CLIENT_DICONNECTED;
 			goto send_ende;
 		}
