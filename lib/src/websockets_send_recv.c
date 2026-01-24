@@ -438,6 +438,12 @@ static int recFrameV8(socket_info *sock) {
 
 				if ( wsf.fin == 1 ){
 					if ( wsf.opcode == WSF_TEXT ){
+						/* Defensive overflow check for +1 (null terminator) */
+						if (wsf.real_length >= WEBSOCKET_MAX_INBUFFER_SIZE) {
+							LOG(WEBSOCKET_LOG, ERROR_LEVEL, sock->socket,
+								"Text frame too large: %llu >= %d", (unsigned long long)wsf.real_length, WEBSOCKET_MAX_INBUFFER_SIZE);
+							goto close_socket_error;
+						}
 						msg = create_websocket_input_queue_msg(WEBSOCKET_SIGNAL_MSG, sock->websocket_guid, sock->header->url, wsf.real_length + 1 );
 					}else{
 						msg = create_websocket_input_queue_msg(WEBSOCKET_SIGNAL_MSG, sock->websocket_guid, sock->header->url, wsf.real_length );
@@ -607,6 +613,12 @@ static int recFrameV8(socket_info *sock) {
 
 					if ( wsf.fin == 1 ){
 						if ( sock->websocket_fragment_start_opcode == WSF_TEXT ){
+							/* Defensive overflow check for +1 (null terminator) */
+							if (sock->websocket_fragments_length >= WEBSOCKET_MAX_INBUFFER_SIZE) {
+								LOG(WEBSOCKET_LOG, ERROR_LEVEL, sock->socket,
+									"Fragmented text frame too large: %u >= %d", sock->websocket_fragments_length, WEBSOCKET_MAX_INBUFFER_SIZE);
+								goto close_socket_error;
+							}
 							msg = create_websocket_input_queue_msg(WEBSOCKET_SIGNAL_MSG, sock->websocket_guid, sock->header->url, sock->websocket_fragments_length + 1 );
 						}else{
 							msg = create_websocket_input_queue_msg(WEBSOCKET_SIGNAL_MSG, sock->websocket_guid, sock->header->url, sock->websocket_fragments_length );
