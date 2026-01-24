@@ -124,13 +124,9 @@ int PlatformGetFileInfo(WebserverFileInfo* file, int* time_changed, int *new_siz
 		return 0;
 	}
 
-#ifdef __USE_MISC
+	/* FreeBSD supports POSIX.1-2008 st_mtim */
 	f_sec = st.st_mtim.tv_sec;
 	f_nsec = st.st_mtim.tv_nsec;
-#else
-	f_sec  = st.st_mtime;
-	f_nsec = st.st_mtimensec;
-#endif
 
 	*new_size = st.st_size;
 	*time_changed = 0;

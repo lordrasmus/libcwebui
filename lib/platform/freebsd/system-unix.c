@@ -7,15 +7,38 @@ SPDX-License-Identifier: MPL-2.0
 
  Projekt URL : https://github.com/lordrasmus/libcwebui
 
- 
+
  This Source Code Form is subject to the terms of the Mozilla Public
  License, v. 2.0. If a copy of the MPL was not distributed with this
- file, You can obtain one at https://mozilla.org/MPL/2.0/. 
+ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 */
 
 
 #include "platform_includes.h"
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <time.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/select.h>
+#include <sys/ioctl.h>
+
+#include <netinet/in.h>
+#include <net/if.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <pthread.h>
+
+#include <errno.h>
+
+#include <sys/stat.h>
+#include <fcntl.h>
+
 
 #ifdef WEBSERVER_USE_SSL
 #include <openssl/rand.h>
@@ -23,10 +46,6 @@ SPDX-License-Identifier: MPL-2.0
 
 #include "webserver.h"
 
-
-#include <MacTypes.h>
-#include <mach/mach_time.h>
-#include <CoreFoundation/CFUUID.h>
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -82,56 +101,73 @@ void	PlatformFree ( void *mem ) {
 *********************************************************************/
 
 
+
 TIME_TYPE PlatformGetTick ( void ) {
-	enum { NANOSECONDS_IN_SEC = 1000 * 1000 * 1000 };
-    static double multiply = 0;
-    if (multiply == 0)
-    {
-        mach_timebase_info_data_t s_timebase_info;
-        kern_return_t result = mach_timebase_info(&s_timebase_info);
-        assert(result == noErr);
-        // multiply to get value in the nano seconds
-        multiply = (double)s_timebase_info.numer / (double)s_timebase_info.denom;
-        // multiply to get value in the seconds
-        multiply /= NANOSECONDS_IN_SEC;
-    }
-    return mach_absolute_time() * multiply;
+	struct timespec ts;
+
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
+		printf("clock_gettime error: %s\n", strerror(errno));
+		return 0;
+	}
+	return ts.tv_sec;
 }
 
 unsigned long PlatformGetTicksPerSeconde ( void ) {
     return (unsigned long)1;
 }
 
-#ifdef WEBSERVER_USE_SESSIONS
+
 void 	PlatformGetGUID ( char* buf,SIZE_TYPE length ) {
-	
-	if ( buf == 0 ){
-    	return;
-    }
-    
-    //CFAllocatorRef alloc_def = CFAllocatorGetDefault();
 
-	CFUUIDRef uuid = CFUUIDCreate( 0 );
-	CFStringRef uuid_str = CFUUIDCreateString( 0, uuid);
-	
-	CFStringEncoding encodingMethod = CFStringGetSystemEncoding();
-	const char *uuid_c = CFStringGetCStringPtr( uuid_str, encodingMethod);
-	
-	int ret;
-    
+	int i,off=0;
+	unsigned char uuid[16];
+
 	memset( buf, 0 , length);
-    ret = snprintf ( buf, length, "%s", uuid_c );
-    buf[length-1]='\0';
-    
-    #warning is free correct ?
-    free( (void *)uuid_str );
-    free( (void *)uuid );
+
+	int fd = open("/dev/urandom",O_RDONLY);
+	if ( fd < 0 ){
+		printf("\nERROR: cant open /dev/urandom\n\n");
+		exit(1);
+	}
+	int ret = 0;
+	while( ret < 16 ){
+		ssize_t n = read( fd, &uuid[ret], 16 - ret );
+		if ( n < 0 ) {
+			if (errno == EINTR) continue;  /* Signal interrupt, retry */
+			printf("\nERROR: read /dev/urandom failed: %s\n\n", strerror(errno));
+			close(fd);
+			exit(1);
+		}
+		if ( n == 0 ) {
+			printf("\nERROR: /dev/urandom unexpected EOF\n\n");
+			close(fd);
+			exit(1);
+		}
+		ret += n;
+	}
+	close( fd );
+
+	// UUID Version 4
+	uuid[6] = (uuid[6] & 0x0F) | 0x40;
+
+	// UUID Variant DCE
+	uuid[8] = (uuid[8] & 0x3F) | 0x80;
+
+	for( i = 0 ; i < 4; i++ ){ off += sprintf( &buf[off],"%02X", uuid[i]); }
+	off += sprintf( &buf[off],"-");
+
+	for( ; i < 6; i++ ){ off += sprintf( &buf[off],"%02X", uuid[i]); }
+	off += sprintf( &buf[off],"-");
+
+	for( ; i < 8; i++ ){ off += sprintf( &buf[off],"%02X", uuid[i]); }
+	off += sprintf( &buf[off],"-");
+
+	for( ; i < 10; i++ ){ off += sprintf( &buf[off],"%02X", uuid[i]); }
+	off += sprintf( &buf[off],"-");
+
+	for( ; i < 16; i++ ){ off += sprintf( &buf[off],"%02X", uuid[i]); }
+
 }
-#endif
-
-
-
-
 
 
 /********************************************************************
@@ -156,7 +192,7 @@ int PlatformCreateMutex(WS_MUTEX* m){
 
 int PlatformLockMutex(WS_MUTEX* m){
 	/*printf("Locking %X\n",m);*/
-	int ret;	
+	int ret;
 	if ( m == 0 ){
 		printf("PlatformLockMutex wurde nicht initialisiert\n");
 		return EINVAL;
@@ -176,6 +212,7 @@ int PlatformUnlockMutex(WS_MUTEX* m){
 		return EINVAL;
 	}
 
+	/* coverity[missing_lock] - locked is debug-only counter, caller holds lock */
 	m->locked--;
 	return pthread_mutex_unlock( &m->handle );
 }
@@ -194,18 +231,21 @@ int PlatformDestroyMutex(WS_MUTEX* m){
 
 
 int PlatformCreateSem(WS_SEMAPHORE_TYPE* sem, int init_value){
-	*sem = dispatch_semaphore_create( init_value );
-	return 0;
+	return sem_init( sem, 0, init_value);
 }
 
 int PlatformPostSem(WS_SEMAPHORE_TYPE* sem) {
-	dispatch_semaphore_signal( *sem );
-	return 0;
+	return sem_post( sem );
 }
 
 int PlatformWaitSem(WS_SEMAPHORE_TYPE* sem) {
-	dispatch_semaphore_wait( *sem, DISPATCH_TIME_FOREVER );
-	return 0;
+	int r;
+
+    do {
+            r = sem_wait( sem );
+    } while (r == -1 && errno == EINTR);
+
+	return r;
 }
 
 static void* run_thread( void* ptr ){
@@ -223,6 +263,8 @@ int		PlatformClose(int socket){
 	return close( socket );
 }
 
+
 int PlatformGetPID( void ){
 	return getpid();
 }
+
