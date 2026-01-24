@@ -70,33 +70,39 @@ C_FILES= \
 	../../lib/third_party/src/rb_tree/stack.c \
 	../../lib/third_party/src/rb_tree/misc.c
 
-all: test_cookie
-
-test: test_cookie
-	./test_cookie
+TEST_FILES= \
+	test_main.cpp \
+	test_cookie.cpp \
+	test_sha1.cpp \
+	test_base64.cpp
 
 C_OBJS=$(C_FILES:.c=.o)
 
 %.o: %.c
 	gcc ${C_FLAGS} -fno-omit-frame-pointer -c $< -o $@
 
-test_cookie: ${C_OBJS} test_cookie.cpp
-	g++ ${CXX_FLAGS} -fno-omit-frame-pointer test_cookie.cpp ${C_OBJS} -o test_cookie \
+all: run_tests
+
+test: run_tests
+	./run_tests
+
+run_tests: ${C_OBJS} ${TEST_FILES}
+	g++ ${CXX_FLAGS} -fno-omit-frame-pointer ${TEST_FILES} ${C_OBJS} -o run_tests \
 		-lgtest -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
 
 # Run with JUnit XML output for CI
-test-ci: test_cookie
-	./test_cookie --gtest_output=xml:test_results.xml
+test-ci: run_tests
+	./run_tests --gtest_output=xml:test_results.xml
 
 # List all tests
-list: test_cookie
-	./test_cookie --gtest_list_tests
+list: run_tests
+	./run_tests --gtest_list_tests
 
-# Run filtered tests (usage: make filter FILTER="Cookie*")
-filter: test_cookie
-	./test_cookie --gtest_filter=${FILTER}
+# Run filtered tests (usage: make filter FILTER="CookieParser*")
+filter: run_tests
+	./run_tests --gtest_filter=${FILTER}
 
 clean:
-	rm -f test_cookie test_results.xml ${C_OBJS}
+	rm -f run_tests test_results.xml ${C_OBJS}
 
 .PHONY: all test test-ci list filter clean

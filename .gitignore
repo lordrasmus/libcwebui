@@ -41,6 +41,8 @@ tests/parse_header/main.clang
 tests/url_decode/main.gcc
 tests/cookie/test_cookie
 tests/cookie/test_results.xml
+tests/unittests/run_tests
+tests/unittests/test_results.xml
 tests/list/test_list
 tests/list/test.txt
 tests/base64/base64_test

@@ -1,4 +1,3 @@
-
 #include <gtest/gtest.h>
 #include <cstring>
 
@@ -159,9 +158,4 @@ TEST_F(CookieParserTest, LongValue) {
 
     EXPECT_EQ(checkCookie((char*)"token", value, header), 1);
     EXPECT_STREQ(value, "abcdefghijklmnopqrstuvwxyz0123456789");
-}
-
-int main(int argc, char **argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
 }

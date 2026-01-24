@@ -18,9 +18,9 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y libgtest-dev libevent-dev libssl-dev
 
-    - name: Build and run cookie tests
+    - name: Build and run tests
       run: |
-        cd tests/cookie
+        cd tests/unittests
         make test-ci
 
     - name: Upload test results
@@ -28,12 +28,12 @@ jobs:
       if: always()
       with:
         name: test-results
-        path: tests/cookie/test_results.xml
+        path: tests/unittests/test_results.xml
 
     - name: Test Report
       uses: dorny/test-reporter@v1
       if: always()
       with:
-        name: Cookie Parser Tests
-        path: tests/cookie/test_results.xml
+        name: Unit Tests
+        path: tests/unittests/test_results.xml
         reporter: java-junit
