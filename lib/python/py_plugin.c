@@ -300,13 +300,21 @@ void py_call_engine_function( http_request *s, user_func_s *func , FUNCTION_PARA
 				 * - Alter Namespace enthält noch Funktionsobjekte
 				 * - Engine hält noch func->py_func Referenzen auf alte Funktionen
 				 *
-				 * Warum neuer Namespace? Um alte Funktionen zu entfernen die im
-				 * neuen Code nicht mehr existieren (sauberer Zustand).
+				 * Warum __main__ Namespace statt PyDict_New()?
+				 * Mit leerem Dict funktioniert "import" nicht - __builtins__ fehlt.
+				 * __main__ hat alles was Python braucht, daher wurde das verwendet.
+				 *
+				 * Warum neuer Namespace beim Reload? Um alte Funktionen zu entfernen
+				 * die im neuen Code nicht mehr existieren (sauberer Zustand).
 				 *
 				 * Richtige Lösung:
 				 * 1. unregister_plugin_functions(plugin) - alle Funktionen des Plugins entfernen
 				 * 2. PyDict_New() - eigenen Namespace erstellen (owned, nicht borrowed)
-				 * 3. PyDict_SetItemString(ns, "__builtins__", PyEval_GetBuiltins())
+				 * 3. Namespace initialisieren (testen was wirklich gebraucht wird):
+				 *    - __builtins__: PyEval_GetBuiltins() - KRITISCH für import/print/etc
+				 *    - __name__: "__main__" - für "if __name__ == '__main__'" checks
+				 *    - __file__: Pfad zum Script - falls Script seinen Pfad braucht
+				 *    - __package__: NULL/None - für relative imports
 				 * 4. PyRun_File() mit neuem Namespace
 				 * 5. Py_XDECREF(old_namespace) - jetzt sicher freigeben
 				 *
