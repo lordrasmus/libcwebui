@@ -396,27 +396,24 @@ static PyMODINIT_FUNC py_init(void){
 
 int py_init_modules( void ){
 
-
-#if PY_MAJOR_VERSION >= 3
-	wchar_t *program = Py_DecodeLocale("libcwebui", NULL);
-    if (program == NULL) {
-        fprintf(stderr, "Fatal error: cannot decode argv[0]\n");
-        exit(1);
-    }
-	Py_SetProgramName(program);
-#else
-	Py_SetProgramName("libcwebui");
-#endif
-
 	if (PyImport_AppendInittab( "libcwebui", py_init) == -1){
 		printf("Failed to add libcwebui to the interpreter's builtin modules");
 		PyErr_Print();
 		return 1;
     }
 
+#if PY_VERSION_HEX >= 0x030B0000
+	// Python 3.11+: set_prog_name() uses PyConfig and initializes Python
 	set_prog_name();
-
+#elif PY_MAJOR_VERSION >= 3
+	// Python 3.0 - 3.10
+	Py_SetProgramName(L"libcwebui");
 	Py_Initialize();
+#else
+	// Python 2.x
+	Py_SetProgramName("libcwebui");
+	Py_Initialize();
+#endif
 	
 	//PyEval_InitThreads();
 
