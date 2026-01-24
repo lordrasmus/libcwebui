@@ -324,7 +324,7 @@ void generateEtag(WebserverFileInfo* file) {
 	#error FILE_OFF_PRINT_HEX not defined for platform
 #endif
 		
-		file->etagLength = sprintf((char*)file->etag, "%08"FILE_OFF_PRINT_HEX"%08X%08X", file->DataLenght, crc, adler);
+		file->etagLength = sprintf((char*)file->etag, "%08"FILE_OFF_PRINT_HEX"%08X%08X", FILE_OFF_CAST(file->DataLenght), crc, adler);
 
 		PlatformCloseDataStream();
 		WebserverFree(data);
