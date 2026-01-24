@@ -271,8 +271,9 @@ static void vprintWebsocketChunk(socket_info* sock, const char *fmt, va_list arg
 	l = vsnprintf(tmp, l + 1, fmt, argcopy);
 	
 	writeChunk(&sock->websocket_chunk_list, (unsigned char*) tmp, l);
-	
+
 	WebserverFree( tmp );
+	va_end(argcopy);
 }
 
 void printWebsocketChunk(socket_info* sock, const char *fmt, ... ) {
