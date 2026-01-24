@@ -23,6 +23,34 @@ jobs:
         cd tests/unittests
         make test-ci
 
+    - name: Generate test summary
+      if: always()
+      run: |
+        # Extract test counts from JUnit XML
+        TESTS=$(grep -oP 'tests="\K[0-9]+' tests/unittests/test_results.xml | head -1)
+        FAILURES=$(grep -oP 'failures="\K[0-9]+' tests/unittests/test_results.xml | head -1)
+        ERRORS=$(grep -oP 'errors="\K[0-9]+' tests/unittests/test_results.xml | head -1 || echo "0")
+        TIME=$(grep -oP 'time="\K[0-9.]+' tests/unittests/test_results.xml | head -1)
+
+        # Calculate passed
+        PASSED=$((TESTS - FAILURES - ERRORS))
+
+        # Generate summary
+        echo "## 🧪 Unit Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        if [ "$FAILURES" = "0" ] && [ "$ERRORS" = "0" ]; then
+          echo "### ✅ All $TESTS tests passed" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "### ❌ $FAILURES failed, $PASSED passed out of $TESTS tests" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+        echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Total Tests | $TESTS |" >> $GITHUB_STEP_SUMMARY
+        echo "| Passed | $PASSED |" >> $GITHUB_STEP_SUMMARY
+        echo "| Failed | $FAILURES |" >> $GITHUB_STEP_SUMMARY
+        echo "| Time | ${TIME}s |" >> $GITHUB_STEP_SUMMARY
+
     - name: Upload test results
       uses: actions/upload-artifact@v4
       if: always()
