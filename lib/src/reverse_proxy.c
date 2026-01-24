@@ -1079,7 +1079,11 @@ static int proxy_connect_backend(reverse_proxy_connection_t* proxy) {
 
     /* Non-blocking setzen */
     flags = fcntl(sock_fd, F_GETFL, 0);
-    fcntl(sock_fd, F_SETFL, flags | O_NONBLOCK);
+    if (flags < 0 || fcntl(sock_fd, F_SETFL, flags | O_NONBLOCK) < 0) {
+        LOG(PROXY_LOG, ERROR_LEVEL, 0, "Failed to set non-blocking on UDS socket: %s", strerror(errno));
+        close(sock_fd);
+        return -1;
+    }
 
     memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;
