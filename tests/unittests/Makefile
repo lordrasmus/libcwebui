@@ -89,7 +89,9 @@ TEST_FILES= \
 	test_websocket.cpp \
 	test_session.cpp \
 	test_message_queue.cpp \
-	test_file_manager.cpp
+	test_file_manager.cpp \
+	test_server_config.cpp \
+	test_conditions.cpp
 
 C_OBJS=$(C_FILES:.c=.o)
 

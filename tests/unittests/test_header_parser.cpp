@@ -320,3 +320,188 @@ TEST_F(HeaderParserTest, InvalidMethod) {
     EXPECT_EQ(header->error, 1);
     EXPECT_STREQ(header->error_method, "INVALID");
 }
+
+// If-Modified-Since header tests
+TEST_F(HeaderParserTest, IfModifiedSinceHeader) {
+    parseHeaderLine("GET / HTTP/1.1");
+    parseHeaderLine("If-Modified-Since: Wed, 21 Oct 2015 07:28:00 GMT");
+
+    EXPECT_NE(header->If_Modified_Since, nullptr);
+    EXPECT_STREQ(header->If_Modified_Since, "Wed, 21 Oct 2015 07:28:00 GMT");
+}
+
+TEST_F(HeaderParserTest, IfModifiedSinceEmpty) {
+    parseHeaderLine("GET / HTTP/1.1");
+    // No If-Modified-Since header
+    EXPECT_EQ(header->If_Modified_Since, nullptr);
+}
+
+// ETag header tests
+TEST_F(HeaderParserTest, ETagHeader) {
+    parseHeaderLine("GET / HTTP/1.1");
+    parseHeaderLine("ETag: \"abc123\"");
+
+    // Note: etag field stores the ETag value if parsed
+    // Check if parsing doesn't crash
+    EXPECT_EQ(header->error, 0);
+}
+
+// Authorization header tests
+TEST_F(HeaderParserTest, AuthorizationBasic) {
+    parseHeaderLine("GET / HTTP/1.1");
+    parseHeaderLine("Authorization: Basic dXNlcjpwYXNz");
+
+    EXPECT_NE(header->Authorization, nullptr);
+    EXPECT_STREQ(header->Authorization, "Basic dXNlcjpwYXNz");
+}
+
+TEST_F(HeaderParserTest, AuthorizationBearer) {
+    parseHeaderLine("GET / HTTP/1.1");
+    parseHeaderLine("Authorization: Bearer eyJhbGciOiJIUzI1NiJ9");
+
+    EXPECT_NE(header->Authorization, nullptr);
+    EXPECT_TRUE(strstr(header->Authorization, "Bearer") != nullptr);
+}
+
+// Accept header tests
+TEST_F(HeaderParserTest, AcceptHeader) {
+    parseHeaderLine("GET / HTTP/1.1");
+    parseHeaderLine("Accept: text/html, application/json");
+
+    EXPECT_NE(header->Accept, nullptr);
+    EXPECT_STREQ(header->Accept, "text/html, application/json");
+}
+
+// Parameter parsing edge cases
+TEST_F(HeaderParserTest, DuplicateParamKeys) {
+    parseHeaderLine("GET /test?key=first&key=second HTTP/1.1");
+
+    ws_variable* param = getVariable(header->parameter_store, "key");
+    ASSERT_NE(param, nullptr);
+    // Second value should overwrite first
+    char buf[100];
+    getWSVariableString(param, buf, sizeof(buf));
+    EXPECT_STREQ(buf, "second");
+}
+
+TEST_F(HeaderParserTest, ManyParameters) {
+    parseHeaderLine("GET /test?a=1&b=2&c=3&d=4&e=5 HTTP/1.1");
+
+    char buf[100];
+    ws_variable* param;
+
+    param = getVariable(header->parameter_store, "a");
+    ASSERT_NE(param, nullptr);
+    getWSVariableString(param, buf, sizeof(buf));
+    EXPECT_STREQ(buf, "1");
+
+    param = getVariable(header->parameter_store, "e");
+    ASSERT_NE(param, nullptr);
+    getWSVariableString(param, buf, sizeof(buf));
+    EXPECT_STREQ(buf, "5");
+}
+
+TEST_F(HeaderParserTest, ParamIncompletePercent) {
+    // Incomplete percent encoding at end
+    parseHeaderLine("GET /test?data=test%2 HTTP/1.1");
+
+    ws_variable* param = getVariable(header->parameter_store, "data");
+    ASSERT_NE(param, nullptr);
+    // Should handle gracefully
+}
+
+TEST_F(HeaderParserTest, ParamInvalidPercent) {
+    // Invalid hex chars in percent encoding
+    parseHeaderLine("GET /test?data=%GG HTTP/1.1");
+
+    ws_variable* param = getVariable(header->parameter_store, "data");
+    ASSERT_NE(param, nullptr);
+    // Should handle gracefully without crash
+}
+
+TEST_F(HeaderParserTest, ParamOnlyAmpersands) {
+    parseHeaderLine("GET /test?&&& HTTP/1.1");
+    // Should handle gracefully without crash
+    EXPECT_EQ(header->error, 0);
+}
+
+TEST_F(HeaderParserTest, ParamEmptyName) {
+    parseHeaderLine("GET /test?=value HTTP/1.1");
+    // Empty parameter name - should handle gracefully
+    EXPECT_EQ(header->error, 0);
+}
+
+// CORS-related headers
+TEST_F(HeaderParserTest, AccessControlRequestMethod) {
+    parseHeaderLine("OPTIONS / HTTP/1.1");
+    parseHeaderLine("Access-Control-Request-Method: POST");
+
+    // Check if header is parsed (depends on implementation)
+    EXPECT_EQ(header->method, HTTP_OPTIONS);
+}
+
+TEST_F(HeaderParserTest, AccessControlRequestHeaders) {
+    parseHeaderLine("OPTIONS / HTTP/1.1");
+    parseHeaderLine("Access-Control-Request-Headers: X-Custom-Header");
+
+    EXPECT_EQ(header->method, HTTP_OPTIONS);
+}
+
+// WebSocket headers
+TEST_F(HeaderParserTest, SecWebSocketKey) {
+    parseHeaderLine("GET /ws HTTP/1.1");
+    parseHeaderLine("Upgrade: websocket");
+    parseHeaderLine("Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==");
+
+    EXPECT_NE(header->SecWebSocketKey, nullptr);
+    EXPECT_STREQ(header->SecWebSocketKey, "dGhlIHNhbXBsZSBub25jZQ==");
+}
+
+TEST_F(HeaderParserTest, SecWebSocketVersion) {
+    parseHeaderLine("GET /ws HTTP/1.1");
+    parseHeaderLine("Sec-WebSocket-Version: 13");
+
+    EXPECT_EQ(header->SecWebSocketVersion, 13);
+}
+
+TEST_F(HeaderParserTest, SecWebSocketProtocol) {
+    parseHeaderLine("GET /ws HTTP/1.1");
+    parseHeaderLine("Sec-WebSocket-Protocol: chat, superchat");
+
+    EXPECT_NE(header->SecWebSocketProtocol, nullptr);
+}
+
+// Range header tests
+TEST_F(HeaderParserTest, RangeHeader) {
+    parseHeaderLine("GET /file.bin HTTP/1.1");
+    parseHeaderLine("Range: bytes=0-1023");
+
+    // Check if range is parsed (if supported)
+    EXPECT_EQ(header->error, 0);
+}
+
+// Connection header tests
+TEST_F(HeaderParserTest, ConnectionKeepAlive) {
+    parseHeaderLine("GET / HTTP/1.1");
+    parseHeaderLine("Connection: keep-alive");
+
+    EXPECT_NE(header->Connection, nullptr);
+    EXPECT_STREQ(header->Connection, "keep-alive");
+}
+
+TEST_F(HeaderParserTest, ConnectionClose) {
+    parseHeaderLine("GET / HTTP/1.1");
+    parseHeaderLine("Connection: close");
+
+    EXPECT_NE(header->Connection, nullptr);
+    EXPECT_STREQ(header->Connection, "close");
+}
+
+TEST_F(HeaderParserTest, ConnectionUpgrade) {
+    parseHeaderLine("GET /ws HTTP/1.1");
+    parseHeaderLine("Connection: Upgrade");
+    parseHeaderLine("Upgrade: websocket");
+
+    EXPECT_NE(header->Connection, nullptr);
+    EXPECT_STREQ(header->Connection, "Upgrade");
+}
