@@ -1,12 +1,15 @@
 
-OPTS= -std=c99 -ggdb3
-#-O2
+CXX_OPTS= -std=c++17 -ggdb3
+C_OPTS= -std=c99 -ggdb3
 
-FLAGS=-I. -I../../lib/ -I../../lib/include/ -I../../lib/include/intern/ -I../../lib/third_party/src/simclist/ \
+INCLUDES=-I. -I../../lib/ -I../../lib/include/ -I../../lib/include/intern/ -I../../lib/third_party/src/simclist/ \
 	-I../../lib/third_party/src/rb_tree/ -I../../lib/third_party/src/is_utf8/ \
-	-I../../lib/third_party/src/miniz/ -I../../lib/platform/include/ ${OPTS}
+	-I../../lib/third_party/src/miniz/ -I../../lib/platform/include/
 
-FILES= \
+CXX_FLAGS=${INCLUDES} ${CXX_OPTS}
+C_FLAGS=${INCLUDES} ${C_OPTS}
+
+C_FILES= \
 	../../lib/src/base64.c \
 	../../lib/src/builtinFunctions.c \
 	../../lib/src/convert.c \
@@ -65,20 +68,35 @@ FILES= \
 	../../lib/third_party/src/miniz/miniz.c \
 	../../lib/third_party/src/rb_tree/red_black_tree.c \
 	../../lib/third_party/src/rb_tree/stack.c \
-	../../lib/third_party/src/rb_tree/misc.c \
-	
+	../../lib/third_party/src/rb_tree/misc.c
 
-all: main.gcc #main.clang
+all: test_cookie
 
-#-fsanitize=address
-main.gcc: ${FILES} main.c
-	gcc ${FLAGS}  -fno-omit-frame-pointer main.c ${FILES} -o main.gcc -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
+test: test_cookie
+	./test_cookie
 
-main.clang: ${FILES} main.c
-	clang ${FLAGS} -fsanitize=address -fno-omit-frame-pointer main.c ${FILES} -o main.clang -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
+C_OBJS=$(C_FILES:.c=.o)
+
+%.o: %.c
+	gcc ${C_FLAGS} -fno-omit-frame-pointer -c $< -o $@
+
+test_cookie: ${C_OBJS} test_cookie.cpp
+	g++ ${CXX_FLAGS} -fno-omit-frame-pointer test_cookie.cpp ${C_OBJS} -o test_cookie \
+		-lgtest -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
+
+# Run with JUnit XML output for CI
+test-ci: test_cookie
+	./test_cookie --gtest_output=xml:test_results.xml
+
+# List all tests
+list: test_cookie
+	./test_cookie --gtest_list_tests
+
+# Run filtered tests (usage: make filter FILTER="Cookie*")
+filter: test_cookie
+	./test_cookie --gtest_filter=${FILTER}
 
 clean:
-	rm -f main.gcc main.clang
+	rm -f test_cookie test_results.xml ${C_OBJS}
 
-tun_test:
-	./run_tests.py 
+.PHONY: all test test-ci list filter clean

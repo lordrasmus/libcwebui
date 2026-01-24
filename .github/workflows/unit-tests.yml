@@ -1,0 +1,39 @@
+name: Unit Tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgtest-dev libevent-dev libssl-dev
+
+    - name: Build and run cookie tests
+      run: |
+        cd tests/cookie
+        make test-ci
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: tests/cookie/test_results.xml
+
+    - name: Test Report
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Cookie Parser Tests
+        path: tests/cookie/test_results.xml
+        reporter: java-junit
