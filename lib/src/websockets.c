@@ -328,10 +328,12 @@ long getWebsocketStoreTimeout ( char* guid ){
 		return -1;
 	}
 
-	long timeout = getConfigInt("session_timeout") - tmp;
-	if ( timeout < 0 ){
+	long session_timeout = getConfigInt("session_timeout");
+	/* Check before subtraction to avoid potential overflow */
+	if ( tmp > session_timeout ){
 		return -1;
 	}
+	long timeout = session_timeout - tmp;
 
 	/*http_request *s = sock->s;
 	if ( s == 0 ) return ULONG_MAX;
