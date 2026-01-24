@@ -151,7 +151,19 @@ void 	PlatformGetGUID ( char* buf,SIZE_TYPE length ) {
 	}
 	int ret = 0;
 	while( ret < 16 ){
-		ret += read( fd, uuid, 16 - ret );
+		ssize_t n = read( fd, &uuid[ret], 16 - ret );
+		if ( n < 0 ) {
+			if (errno == EINTR) continue;  /* Signal interrupt, retry */
+			printf("\nERROR: read /dev/urandom failed: %s\n\n", strerror(errno));
+			close(fd);
+			exit(1);
+		}
+		if ( n == 0 ) {
+			printf("\nERROR: /dev/urandom unexpected EOF\n\n");
+			close(fd);
+			exit(1);
+		}
+		ret += n;
 	}
 	close( fd );
 
