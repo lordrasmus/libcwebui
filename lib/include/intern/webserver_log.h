@@ -35,7 +35,8 @@ typedef enum {
 	WEBSOCKET_LOG,
 	VARIABLE_LOG,
 	CONFIG_LOG,
-	PROXY_LOG
+	PROXY_LOG,
+	SESSION_LOG
 }LogChannels;
 
 typedef enum {
