@@ -333,7 +333,9 @@ static void addContentTypeLines(http_request *s, WebserverFileInfo *info) {
 		printHeaderChunk(s->socket, "%s", "Content-Type: text/x-c\r\n");
 		break;
 
-
+	case FILE_TYPE_CUSTOM:
+		/* Content-Type set via ws_set_response_header() */
+		break;
 
 	default:
 		LOG(FILESYSTEM_LOG, ERROR_LEVEL, s->socket->socket, "Webserver Error : Unbekannter Filetyp %d", info->FileType);
@@ -431,6 +433,7 @@ static void addSessionCookies(http_request* s,WebserverFileInfo *info){
  * 	p_lenght ist wichtig für die Template Engine
  */
 int sendHeader(http_request* s, WebserverFileInfo *info, int p_lenght) {
+	custom_response_header* h_info;
 
 	if( s->header->isHttp1_1 ){
 		printHeaderChunk(s->socket, "HTTP/1.1 200 OK\r\n");
@@ -442,7 +445,7 @@ int sendHeader(http_request* s, WebserverFileInfo *info, int p_lenght) {
 	addSessionCookies( s , info );
 
 	printHeaderChunk(s->socket, "Accept-Ranges: bytes\r\n");
-	
+
 	if ( s->socket->use_output_compression == 0 ){
 		printHeaderChunk(s->socket, "%s %d\r\n", "Content-Length:", p_lenght);
 	}
@@ -452,6 +455,13 @@ int sendHeader(http_request* s, WebserverFileInfo *info, int p_lenght) {
 	addContentTypeLines(s, info);
 	addCacheControlLines(s, info);
 	addConnectionStatusLines(s->socket);
+
+	/* Custom response headers */
+	ws_list_iterator_start(&s->custom_response_headers);
+	while( ( h_info = (custom_response_header*)ws_list_iterator_next(&s->custom_response_headers) ) ){
+		printHeaderChunk(s->socket, "%s: %s\r\n", h_info->name, h_info->value);
+	}
+	ws_list_iterator_stop(&s->custom_response_headers);
 
 	if ( info->ForceDownload == 1){
 		printHeaderChunk(s->socket, "Content-Description: File Transfer\r\n");

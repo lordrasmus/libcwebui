@@ -82,6 +82,16 @@ void sendHTML(dummy_handler* s, const char* text, const unsigned int length){
 	sendHTMLChunk( ((http_request*) s)->socket, text, length);
 }
 
+void ws_set_response_header(dummy_handler* s, const char* name, const char* value){
+	http_request* req = (http_request*) s;
+	custom_response_header* header = WebserverMalloc(sizeof(custom_response_header));
+	header->name = WebserverMalloc(strlen(name) + 1);
+	strcpy(header->name, name);
+	header->value = WebserverMalloc(strlen(value) + 1);
+	strcpy(header->value, value);
+	ws_list_append(&req->custom_response_headers, header, 0);
+}
+
 
 /*****************************************************************************
  *

@@ -42,6 +42,8 @@ typedef enum {
 	FILE_TYPE_PDF, FILE_TYPE_JSON, FILE_TYPE_WOFF, FILE_TYPE_EOT, FILE_TYPE_TTF,
 	FILE_TYPE_C_SRC,
 
+	FILE_TYPE_CUSTOM,  /* Custom headers via ws_set_response_header() */
+
 	FILE_TYPE_ALL
 } FILE_TYPES;
 
@@ -373,6 +375,11 @@ typedef struct{
 	uint64_t length;
 }upload_file_info;
 
+typedef struct{
+	char* name;
+	char* value;
+}custom_response_header;
+
 typedef struct {
 	FUNCTION_PARAS func;
 	char *prefix;
@@ -400,6 +407,7 @@ typedef struct {
 
 
 	list_t upload_files;
+	list_t custom_response_headers;
 
 }http_request;
 

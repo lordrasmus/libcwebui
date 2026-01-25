@@ -106,6 +106,12 @@ void sendHTMLVariable(dummy_handler* s,dummy_var* var);
 */
 void sendHTML(dummy_handler* s, const char* text, const unsigned int length);
 
+/*
+		Custom Response Header setzen (für WS_FILE_TYPE_CUSTOM)
+		Muss vor sendHTML() aufgerufen werden.
+*/
+void ws_set_response_header(dummy_handler* s, const char* name, const char* value);
+
 
 /*
 		Globalen Variablen locken / unlocken
@@ -455,7 +461,8 @@ typedef enum {
 	WS_FILE_TYPE_XML,
 	WS_FILE_TYPE_XSL,
 	WS_FILE_TYPE_SVG,
-	WS_FILE_TYPE_JSON
+	WS_FILE_TYPE_JSON,
+	WS_FILE_TYPE_CUSTOM   /* Custom headers set via setResponseHeader() */
 
 } WS_FILE_TYPES;
 

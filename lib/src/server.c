@@ -36,6 +36,7 @@ void WebserverPrintShortInfos(void);
 
 static void endHTTPRequest(http_request *s) {
 	upload_file_info * f_info;
+	custom_response_header * h_info;
 
 	clearRenderVariables(s);
 	if (s->store != 0){
@@ -52,8 +53,15 @@ static void endHTTPRequest(http_request *s) {
 		WebserverFree(f_info->data);
 		WebserverFree(f_info);
 	}
-
 	ws_list_iterator_stop(&s->upload_files);
+
+	ws_list_iterator_start(&s->custom_response_headers);
+	while( ( h_info = (custom_response_header*)ws_list_iterator_next(&s->custom_response_headers) ) ){
+		WebserverFree(h_info->name);
+		WebserverFree(h_info->value);
+		WebserverFree(h_info);
+	}
+	ws_list_iterator_stop(&s->custom_response_headers);
 }
 
 
@@ -256,14 +264,15 @@ int check_url_functions(http_request* p){
 			
 			info.FileType = FILE_TYPE_PLAIN;
 			switch ( ret ){
-				case WS_FILE_TYPE_PLAIN: info.FileType = FILE_TYPE_PLAIN; break;
-				case WS_FILE_TYPE_JSON:  info.FileType = FILE_TYPE_JSON; break;
-				case WS_FILE_TYPE_HTML:  info.FileType = FILE_TYPE_HTML; break;
-				case WS_FILE_TYPE_CSS:   info.FileType = FILE_TYPE_CSS; break;
-				case WS_FILE_TYPE_JS:    info.FileType = FILE_TYPE_JS; break;
-				case WS_FILE_TYPE_XML:   info.FileType = FILE_TYPE_XML; break;
-				case WS_FILE_TYPE_XSL:   info.FileType = FILE_TYPE_XSL; break;
-				case WS_FILE_TYPE_SVG:   info.FileType = FILE_TYPE_SVG; break;
+				case WS_FILE_TYPE_PLAIN:  info.FileType = FILE_TYPE_PLAIN; break;
+				case WS_FILE_TYPE_JSON:   info.FileType = FILE_TYPE_JSON; break;
+				case WS_FILE_TYPE_HTML:   info.FileType = FILE_TYPE_HTML; break;
+				case WS_FILE_TYPE_CSS:    info.FileType = FILE_TYPE_CSS; break;
+				case WS_FILE_TYPE_JS:     info.FileType = FILE_TYPE_JS; break;
+				case WS_FILE_TYPE_XML:    info.FileType = FILE_TYPE_XML; break;
+				case WS_FILE_TYPE_XSL:    info.FileType = FILE_TYPE_XSL; break;
+				case WS_FILE_TYPE_SVG:    info.FileType = FILE_TYPE_SVG; break;
+				case WS_FILE_TYPE_CUSTOM: info.FileType = FILE_TYPE_CUSTOM; break;
 			}
 			
 			
@@ -321,6 +330,7 @@ int getHttpRequest(socket_info* sock) {
 	memset(&s, 0, sizeof(http_request));
 
 	ws_list_init(&s.upload_files);
+	ws_list_init(&s.custom_response_headers);
 
 	initRenderVariable(&s);
 
