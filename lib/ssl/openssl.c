@@ -615,15 +615,23 @@ int WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, unsigned int
 		case SSL_ERROR_WANT_X509_LOOKUP:
 		case SSL_ERROR_WANT_CONNECT:
 		case SSL_ERROR_WANT_ACCEPT:
+			return SSL_PROTOCOL_ERROR;
+
 		case SSL_ERROR_SSL:
-			// A failure in the SSL library occurred, usually a protocol error. The OpenSSL error queue contains more information on the error.
+			// A failure in the SSL library occurred, usually a protocol error.
+			err_code = ERR_get_error();
+			// Suppress harmless errors (client disconnect without close_notify, etc.)
+			if (ERR_GET_REASON(err_code) == SSL_R_UNEXPECTED_EOF_WHILE_READING) {
+				return CLIENT_DISCONNECTED;
+			}
+			ERR_error_string(err_code, buffer);
+			LOG(CONNECTION_LOG, ERROR_LEVEL, s->socket, "SSL Error: %s", buffer);
+			return SSL_PROTOCOL_ERROR;
+
 		default:
 			err_code = ERR_get_error();
 			ERR_error_string(err_code, buffer);
-			//ERR_error_string(r2,buffer);
-//#ifdef _WEBSERVER_CONNECTION_DEBUG_
-			LOG ( CONNECTION_LOG,ERROR_LEVEL,s->socket,"Unhandled SSL Error ( %d ) %s",r2,buffer );
-//#endif
+			LOG(CONNECTION_LOG, ERROR_LEVEL, s->socket, "Unhandled SSL Error ( %d ) %s", r2, buffer);
 			return SSL_PROTOCOL_ERROR;
 		}
 		if ((unsigned int)l == len) {
