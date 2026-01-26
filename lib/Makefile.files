@@ -53,7 +53,8 @@ LIB_SOURCES := 	src/builtinFunctions.c \
 			src/websockets_streaming.c \
 			src/websocket_handler.c \
 			ssl/openssl.c \
-			ssl/mbedtls.c \
+			ssl/mbedtls2.c \
+			ssl/mbedtls3.c \
 			python/py_utils.c \
 			python/py_plugin.c \
 			python/py_api_functions.c \
