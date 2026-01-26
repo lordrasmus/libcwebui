@@ -99,10 +99,12 @@ typedef struct{
 	uint16_t length;
 } parameter_info;
 
+/* Forward declaration */
+typedef struct user_func_s user_func_s;
 
 typedef struct {
 	ENGINE_FUNCTIONS function;
-	rb_red_blk_node    *platform_function;
+	user_func_s        *platform_function;
 	parameter_info parameter[MAX_FUNC_PARAS];
 	unsigned char  parameter_count;
 } FUNCTION_PARAS;
@@ -459,7 +461,7 @@ typedef struct {
 
 typedef void (*user_function)(http_request *s, FUNCTION_PARAS* func);
 
-typedef struct {
+struct user_func_s {
 
 	char* name;
 	plugin_s* plugin;
@@ -473,7 +475,7 @@ typedef struct {
 
 	user_function uf;
 
-} user_func_s;
+};
 
 typedef enum {
 	WEBSOCKET_SIGNAL_CONNECT = 1, WEBSOCKET_SIGNAL_MSG = 2, WEBSOCKET_SIGNAL_DISCONNECT = 3

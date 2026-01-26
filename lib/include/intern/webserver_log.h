@@ -36,7 +36,8 @@ typedef enum {
 	VARIABLE_LOG,
 	CONFIG_LOG,
 	PROXY_LOG,
-	SESSION_LOG
+	SESSION_LOG,
+	HASHMAP_LOG
 }LogChannels;
 
 typedef enum {

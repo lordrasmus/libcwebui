@@ -245,3 +245,34 @@ void generateGUID(char* buf, int length) {
 	PlatformGetGUID(buf, length);
 }
 
+char* Webserver_strndup(const char* src, uint32_t max_len) {
+	uint32_t len;
+	char* copy;
+
+	if (src == NULL || max_len == 0) {
+		return NULL;
+	}
+
+	/* Find string length, but never read more than max_len bytes */
+	for (len = 0; len < max_len; len++) {
+		if (src[len] == '\0') {
+			break;
+		}
+	}
+
+	/* Overflow check for len + 1 */
+	if (len == UINT32_MAX) {
+		return NULL;
+	}
+
+	copy = (char*)WebserverMalloc(len + 1);
+	if (copy == NULL) {
+		return NULL;
+	}
+
+	memcpy(copy, src, len);
+	copy[len] = '\0';
+
+	return copy;
+}
+

@@ -42,6 +42,7 @@ LIB_SOURCES := 	src/builtinFunctions.c \
 			src/system_file_cache.c \
 			src/webserver_api_functions.c \
 			src/utils.c \
+			src/hashmap.c \
 			src/log.c \
 			src/variable.c \
 			src/variable_global.c \
