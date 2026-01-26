@@ -6,6 +6,7 @@ TEMPLATE_V1
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{get:render;"title"} - libcwebui</title>
     <link rel="stylesheet" href="/css/test.css">
+    <script type="text/javascript" src="js.js"></script>
 </head>
 <body>
 
