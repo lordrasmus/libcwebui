@@ -498,16 +498,16 @@ int WebserverSSLAccept(socket_info* s) {
 				return SSL_PROTOCOL_ERROR;
 			case SSL_ERROR_SSL:{
 					int r3 = ERR_get_error();
-					if ( r3 == 336151574 ){
-						// error:14094416:SSL routines:ssl3_read_bytes:sslv3 alert certificate unknown
-						// ( 336151574 / 0x14094416 )
-						// the client reports that the certificate is unknown, do not print that error
-						return SSL_PROTOCOL_ERROR;
+
+					// Suppress expected errors when clients reject self-signed certificates
+					switch (r3) {
+						case 336151574:  // 0x14094416 - OpenSSL 1.x: sslv3 alert certificate unknown
+						case 336151576:  // 0x14094418 - OpenSSL 1.x: tlsv1 alert unknown ca
+						case 167773206:  // 0x0A000416 - OpenSSL 3.x: sslv3 alert certificate unknown
+						case 167773208:  // 0x0A000418 - OpenSSL 3.x: tlsv1 alert unknown ca
+							return SSL_PROTOCOL_ERROR;
 					}
-					if ( r3 == 336151576 ){
-						// error:14094418:SSL routines:ssl3_read_bytes:tlsv1 alert unknown ca
-						return SSL_PROTOCOL_ERROR;
-					}
+
 					LOG( CONNECTION_LOG, ERROR_LEVEL, s->socket, "%s","SSL_ERROR_SSL");
 
 					char buffer[256];
