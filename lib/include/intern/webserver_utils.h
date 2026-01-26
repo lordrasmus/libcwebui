@@ -18,14 +18,11 @@ SPDX-License-Identifier: MPL-2.0
 #ifndef _WEBSERVER_UTILS_H_
 #define _WEBSERVER_UTILS_H_
 
-#include "red_black_tree.h"
 #include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-rb_red_blk_tree* initStringRBTree(void);
 
 unsigned int readInt( void );
 

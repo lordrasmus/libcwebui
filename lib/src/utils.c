@@ -24,43 +24,6 @@ SPDX-License-Identifier: MPL-2.0
 #endif
 
 
-static void StringDest( UNUSED_PARA void* a) {
-	/* free((int*) a); */
-}
-
-static int StringComp(const void* a, const void* b) {
-	int ret;
-	char *p_a = (char*) a;
-	char *p_b = (char*) b;
-
-	if ( ( p_a == 0 ) || ( p_b == 0 ) ){
-		return 0;
-	}
-
-	ret = strcmp(p_a, p_b);
-	if (ret < 0){
-		return -1;
-	}
-	if (ret > 0){
-		return 1;
-	}
-	return 0;
-}
-
-static void StringPrint(const void* a) {
-	printf("%s", (char*) a);
-}
-
-static void StringInfoPrint( UNUSED_PARA void* a) {
-}
-
-static void StringInfoDest( UNUSED_PARA void *a) {
-}
-
-rb_red_blk_tree* initStringRBTree(void) {
-	return RBTreeCreate(StringComp, StringDest, StringInfoDest, StringPrint, StringInfoPrint);
-}
-
 unsigned int readInt(void) {
 	unsigned char intbuffer[4];
 	unsigned int tmp;
