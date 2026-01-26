@@ -805,23 +805,31 @@ int dumpSessionStore( http_request* s ) {
 		s2 = getVariableStoreSize(s->store_ssl->vars);
 	}
 
-	printHTMLChunk(s->socket, "<table border=1><tr><th>Store %"PRIu32" Byte<th>SSLStore %"PRIu32" Byte<tr valign=top><td>", s1, s2);
+	/* Two-column layout for Store and SSL Store */
+	printHTMLChunk(s->socket,
+		"<table>"
+			"<tr>"
+				"<th>Store (%"PRIu32" bytes)</th>"
+				"<th>SSL Store (%"PRIu32" bytes)</th>"
+			"</tr>"
+			"<tr valign=\"top\"><td>",
+		s1, s2);
 
 	if (s->store != 0) {
 		dumpStore(s, s->store->vars);
 	} else {
-		printHTMLChunk(s->socket, "keine Session Variablen verf&uuml;gbar");
+		printHTMLChunk(s->socket, "<span class=\"text-muted\">No session variables</span>");
 	}
 
-	printHTMLChunk(s->socket, "<td>");
+	printHTMLChunk(s->socket, "</td><td>");
 
 	if (s->store_ssl != 0) {
 		dumpStore(s, s->store_ssl->vars);
 	} else {
-		printHTMLChunk(s->socket, "keine SSL Session Variablen verf&uuml;gbar");
+		printHTMLChunk(s->socket, "<span class=\"text-muted\">No SSL session variables</span>");
 	}
 
-	printHTMLChunk(s->socket, "</table>");
+	printHTMLChunk(s->socket, "</td></tr></table>");
 
 	return 0;
 }
@@ -832,40 +840,62 @@ void dumpSessions(http_request* s) {
 	ws_variable *var;
 	stk_stack* stack;
 	rb_red_blk_node* node;
+	int first = 1;
 
 	stack = RBEnumerate(session_store_tree, (void*)"0", (void*)"z");
+
+	/* Table header */
+	printHTMLChunk(s->socket,
+		"<table>"
+			"<tr>"
+				"<th>Session ID</th>"
+				"<th>Type</th>"
+				"<th>Size</th>"
+				"<th>Timeout</th>"
+				"<th>Variables</th>"
+			"</tr>");
 
 	while (0 != StackNotEmpty(stack)) {
 		node = (rb_red_blk_node*) StackPop(stack);
 		ss = (sessionStore*) node->info;
 		size = getVariableStoreSize(ss->vars);
 		size += sizeof(sessionStore);
-		/* size -= sizeof(ws_variable_store); // ist in getVariableStoreSize schon mit drin */
 
-		printHTMLChunk(s->socket, "<table border=1>");
-		char guid[25];
-		memcpy(guid,ss->guid,15);
-		guid[14]='.';
-		guid[15]='.';
-		guid[16]='\0';
-		printHTMLChunk(s->socket, "<tr><th>Store %"PRIu32" Byte<th>%s", size, guid);
-
+		/* Calculate remaining timeout */
 		ticks = PlatformGetTick() - ss->last_use;
 		ticks = (getConfigInt("session_timeout") * PlatformGetTicksPerSeconde()) - ticks;
 		ticks /= PlatformGetTicksPerSeconde();
 
-		printHTMLChunk(s->socket, "<tr><th>Timeout<th>%"PRIu32" s", ticks);
-		printHTMLChunk(s->socket, "<tr><th>Name<th>Value");
+		/* Session row */
+		printHTMLChunk(s->socket,
+			"<tr>"
+				"<td class=\"mono\">%s</td>"
+				"<td>%s</td>"
+				"<td>%"PRIu32" B</td>"
+				"<td>%"PRIu32" s</td>"
+				"<td>",
+			ss->guid,
+			ss->ssl ? "SSL" : "HTTP",
+			size, ticks);
 
+		/* Variables as name=value pairs, one per line */
 		var = getFirstVariable(ss->vars);
+		first = 1;
 		while (var != 0) {
-			printHTMLChunk(s->socket, "<tr><td>%s<td>", var->name);
+			printHTMLChunk(s->socket, "<span class=\"mono\">%s</span>=", var->name);
 			sendHTMLChunkVariable(s->socket, var);
+			printHTMLChunk(s->socket, "<br>");
+			first = 0;
 			var = getNextVariable(ss->vars);
 		}
+		if (first) {
+			printHTMLChunk(s->socket, "<span class=\"text-muted\">-</span>");
+		}
 
-		printHTMLChunk(s->socket, "</table>");
+		printHTMLChunk(s->socket, "</td></tr>");
 	}
+
+	printHTMLChunk(s->socket, "</table>");
 	free(stack);
 }
 

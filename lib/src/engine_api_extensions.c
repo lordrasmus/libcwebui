@@ -237,39 +237,42 @@ static void print_registered_func_cb(const char* key, void* value, void* user_da
 	user_func_s *uf = (user_func_s*) value;
 	print_func_ctx_t *ctx = (print_func_ctx_t*) user_data;
 	int status = 0;
-	char buffer[100];
-	char type[10];
+	const char *status_text;
+	const char *status_class;
+	const char *type_str;
+	const char *plugin_name;
 	(void)key;
 
 	/* Filter: internal vs plugin */
 	if (ctx->print_internal && uf->plugin != 0) return;
 	if (!ctx->print_internal && uf->plugin == 0) return;
 
+	/* Check function status */
+	plugin_name = (uf->plugin == 0) ? "internal" : uf->plugin->name;
 	if (error_handler != 0) {
-		if (uf->plugin == 0){
-			status = error_handler(PLUGIN_FUNCTION_CHECK_ERROR, "internal", uf->name, "crashed");
-		} else {
-			status = error_handler(PLUGIN_FUNCTION_CHECK_ERROR, uf->plugin->name, uf->name, "crashed");
-		}
+		status = error_handler(PLUGIN_FUNCTION_CHECK_ERROR, plugin_name, uf->name, "crashed");
 	}
 
-	if (status == 0){
-		sprintf(buffer, "<FONT color=green>ok</font>");
-	}else{
-		sprintf(buffer, "<FONT color=red>crashed</font>");
-	}
-
-	if( uf->type == 0 ){
-		sprintf(type,"C");
+	if (status == 0) {
+		status_text = "ok";
+		status_class = "status-ok";
 	} else {
-		sprintf(type,"Python");
+		status_text = "crashed";
+		status_class = "status-error";
 	}
 
-	if (uf->plugin == 0){
-		printHTMLChunk(ctx->s->socket, "<tr><td>internal<td>%s<td>%s<td>%s<td>%d<td>%s", uf->name, type, uf->file, uf->line, buffer);
-	} else {
-		printHTMLChunk(ctx->s->socket, "<tr><td>%s<td>%s<td>%s<td>%s<td>%d<td>%s", uf->plugin->name, uf->name, type, uf->file, uf->line, buffer);
-	}
+	type_str = (uf->type == 0) ? "C" : "Python";
+
+	printHTMLChunk(ctx->s->socket,
+		"<tr>"
+			"<td>%s</td>"
+			"<td class=\"mono\">%s</td>"
+			"<td>%s</td>"
+			"<td class=\"mono\">%s</td>"
+			"<td>%d</td>"
+			"<td><span class=\"%s\">%s</span></td>"
+		"</tr>",
+		plugin_name, uf->name, type_str, uf->file, uf->line, status_class, status_text);
 }
 
 void printRegisteredFunctions(http_request* s) {
@@ -295,28 +298,36 @@ static void print_registered_cond_cb(const char* key, void* value, void* user_da
 	user_condition_s *uc = (user_condition_s*) value;
 	http_request *s = (http_request*) user_data;
 	int status = 0;
-	char buffer[100];
+	const char *status_text;
+	const char *status_class;
+	const char *plugin_name;
 	(void)key;
 
+	/* Check condition status */
+	plugin_name = (uc->plugin == 0) ? "internal" : uc->plugin->name;
 	if (error_handler != 0) {
-		if (uc->plugin == 0){
-			status = error_handler(PLUGIN_FUNCTION_CHECK_ERROR, "internal", uc->name, "crashed");
-		}else{
-			status = error_handler(PLUGIN_FUNCTION_CHECK_ERROR, uc->plugin->name, uc->name, "crashed");
-		}
+		status = error_handler(PLUGIN_FUNCTION_CHECK_ERROR, plugin_name, uc->name, "crashed");
 	}
 
-	if (status == 0){
-		sprintf(buffer, "<FONT color=green>ok</font>");
-	}else{
-		sprintf(buffer, "<FONT color=red>crashed</font>");
+	if (status == 0) {
+		status_text = "ok";
+		status_class = "status-ok";
+	} else {
+		status_text = "crashed";
+		status_class = "status-error";
 	}
 
-	if (uc->plugin == 0){
-		printHTMLChunk(s->socket, "<tr><td>internal<td>%s<td>%s<td>%d<td>%s", uc->name, uc->file, uc->line, buffer);
-	}else{
-		printHTMLChunk(s->socket, "<tr><td>%s<td>%s<td>%s<td>%d<td>%s", uc->plugin->name, uc->name, uc->file, uc->line, buffer);
-	}
+	/* Note: Conditions don't have a type field, so we use "-" */
+	printHTMLChunk(s->socket,
+		"<tr>"
+			"<td>%s</td>"
+			"<td class=\"mono\">%s</td>"
+			"<td>-</td>"
+			"<td class=\"mono\">%s</td>"
+			"<td>%d</td>"
+			"<td><span class=\"%s\">%s</span></td>"
+		"</tr>",
+		plugin_name, uc->name, uc->file, uc->line, status_class, status_text);
 }
 
 void printRegisteredConditions(http_request* s) {

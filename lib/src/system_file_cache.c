@@ -135,61 +135,59 @@ void dumpLoadedFiles(http_request *s) {
 	WebserverFileInfo *wfi;
 	stk_stack* stack;
 	rb_red_blk_node* node;
+	const char *fs_type_str;
+	const char *compressed_str;
 
 	stack = RBEnumerate(file_cache, (void*)"0", (void*)"z");
 
 	while (0 != StackNotEmpty(stack)) {
 		node = (rb_red_blk_node*) StackPop(stack);
 		wfi = (WebserverFileInfo*) node->info;
+
+		/* Calculate file size */
 		filesize = wfi->etagLength;
 		filesize += wfi->lastmodifiedLength;
-		if (wfi->RamCached == 1){
+		if (wfi->RamCached == 1) {
 			filesize += wfi->DataLenght;
 		}
 		filesize += wfi->FilePathLengt;
 		filesize += sizeof(WebserverFileInfo);
-		
-		printHTMLChunk(s->socket, "<tr><td>%s", wfi->Url);
-		if ( filesize > 1024 ){
-			printHTMLChunk(s->socket, "<td>%d kB", filesize / 1024);
-		}else{
-			printHTMLChunk(s->socket, "<td>%d B", filesize );
+
+		/* Determine filesystem type */
+		switch (wfi->fs_type) {
+			case FS_BINARY:            fs_type_str = "binary"; break;
+			case FS_LOCAL_FILE_SYSTEM: fs_type_str = "local";  break;
+			case FS_WNFS:              fs_type_str = "wnfs";   break;
+			default:                   fs_type_str = "-";      break;
 		}
-		
-		switch ( wfi->fs_type ){
-			case FS_BINARY: printHTMLChunk(s->socket, "<td>binary"); break;
-			case FS_LOCAL_FILE_SYSTEM: printHTMLChunk(s->socket, "<td>fs"); break;
-			case FS_WNFS: printHTMLChunk(s->socket, "<td>wnfs"); break;
+
+		/* Determine compression type */
+		switch (wfi->Compressed) {
+			case 1:  compressed_str = "gzip";    break;
+			case 2:  compressed_str = "deflate"; break;
+			default: compressed_str = "-";       break;
 		}
-		
-		if ( wfi->RamCached == 1 ){
-			printHTMLChunk(s->socket, "<td>true");
-		}else{
-			printHTMLChunk(s->socket, "<td>false");
-		}
-		
-		if ( wfi->auth_only == 1 ){
-			printHTMLChunk(s->socket, "<td>true");
-		}else{
-			printHTMLChunk(s->socket, "<td>false");
-		}
-			
-		switch ( wfi->Compressed  ){
-			case 0 : printHTMLChunk(s->socket, "<td>"); break;
-			case 1 : printHTMLChunk(s->socket, "<td><font color=green>gzip</font>"); break;
-			case 2 : printHTMLChunk(s->socket, "<td><font color=green>deflate</font>"); break;
-		}
-			
-		if ( wfi->TemplateFile == 1 ){
-			printHTMLChunk(s->socket, "<td><font color=green>true</font>");
-		}else{
-			printHTMLChunk(s->socket, "<td>");
-		}
-		
-			
-		
+
+		printHTMLChunk(s->socket,
+			"<tr>"
+				"<td class=\"mono\">%s</td>"
+				"<td>%d %s</td>"
+				"<td>%s</td>"
+				"<td>%s</td>"
+				"<td>%s</td>"
+				"<td>%s</td>"
+				"<td>%s</td>"
+			"</tr>",
+			wfi->Url,
+			(filesize > 1024) ? (filesize / 1024) : filesize,
+			(filesize > 1024) ? "kB" : "B",
+			fs_type_str,
+			(wfi->RamCached == 1) ? "yes" : "-",
+			(wfi->auth_only == 1) ? "yes" : "-",
+			compressed_str,
+			(wfi->TemplateFile == 1) ? "yes" : "-");
 	}
-	
+
 	free(stack);
 }
 
