@@ -58,6 +58,7 @@ C_FILES= \
 	../../lib/src/system_file_access_binary.c \
 	../../lib/src/variable_store.c \
 	../../lib/src/variable.c \
+	../../lib/src/hashmap.c \
 	../../lib/src/websockets_send_recv.c \
 	../../lib/src/websockets_streaming.c \
 	../../lib/src/websocket_handler.c \

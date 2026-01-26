@@ -37,6 +37,7 @@ FILES= \
 	../../testSite/src/var_test.c  \
 	../../testSite/src/websocket_api.c \
 	../../testSite/src/webserver_api.c  \
+	../../../lib/src/hashmap.c \
 	../../../lib/third_party/src/rb_tree/red_black_tree.c \
 	../../../lib/third_party/src/rb_tree/stack.c \
 	../../../lib/third_party/src/rb_tree/misc.c \
