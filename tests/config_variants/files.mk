@@ -29,6 +29,11 @@ FILES= \
 	../../../lib/src/websockets.c                   ../../../lib/src/websockets_send_recv.c \
 	../../../lib/src/websockets_streaming.c         ../../../lib/src/reverse_proxy.c \
 	../../../lib/ssl/openssl.c \
+	../../../lib/ssl/mbedtls2.c \
+	../../../lib/ssl/mbedtls3.c \
+	../../../lib/ssl/gnutls.c \
+	../../../lib/ssl/yassl.c \
+	../../../lib/src/hashmap.c \
 	../../../lib/platform/linux/platform-file-access.c \
 	../../../lib/platform/linux/platform-sockets.c \
 	../../../lib/platform/linux/system-unix.c \

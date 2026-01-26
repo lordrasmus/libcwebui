@@ -20,7 +20,7 @@ SPDX-License-Identifier: MPL-2.0
 
 #include "WebserverConfig.h"
 
-#ifdef WEBSERVER_USE_MBEDTLS_CRYPTO
+#ifdef WEBSERVER_USE_MBEDTLS2_CRYPTO
 
 #include "webserver.h"
 #include "mbedtls/version.h"
@@ -28,11 +28,13 @@ SPDX-License-Identifier: MPL-2.0
 #include "mbedtls/ssl_cookie.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
-#include "mbedtls/certs.h"
+#include "mbedtls/x509_crt.h"
+#include "mbedtls/pk.h"
 #include "mbedtls/platform.h"
 #include "mbedtls/timing.h"
 #include "mbedtls/net_sockets.h"
 #include "mbedtls/debug.h"
+#include "mbedtls/error.h"
 
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
@@ -43,8 +45,8 @@ SPDX-License-Identifier: MPL-2.0
 	#error "SHA Digest Length mismatch"
 #endif*/
 
-#if (MBEDTLS_VERSION_NUMBER < 0x02040200)
-	#error "Must use mbed TLS 2.4.2 or later"
+#if (MBEDTLS_VERSION_NUMBER < 0x03000000)
+	#error "Must use mbed TLS 3.0.0 or later"
 #endif
 
 
