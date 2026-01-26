@@ -621,9 +621,11 @@ int WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, unsigned int
 			// A failure in the SSL library occurred, usually a protocol error.
 			err_code = ERR_get_error();
 			// Suppress harmless errors (client disconnect without close_notify, etc.)
+#ifdef SSL_R_UNEXPECTED_EOF_WHILE_READING
 			if (ERR_GET_REASON(err_code) == SSL_R_UNEXPECTED_EOF_WHILE_READING) {
 				return CLIENT_DISCONNECTED;
 			}
+#endif
 			ERR_error_string(err_code, buffer);
 			LOG(CONNECTION_LOG, ERROR_LEVEL, s->socket, "SSL Error: %s", buffer);
 			return SSL_PROTOCOL_ERROR;
