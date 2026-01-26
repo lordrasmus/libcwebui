@@ -31,8 +31,6 @@ FILES= \
 	../../../lib/ssl/openssl.c \
 	../../../lib/ssl/mbedtls2.c \
 	../../../lib/ssl/mbedtls3.c \
-	../../../lib/ssl/gnutls.c \
-	../../../lib/ssl/yassl.c \
 	../../../lib/src/hashmap.c \
 	../../../lib/platform/linux/platform-file-access.c \
 	../../../lib/platform/linux/platform-sockets.c \

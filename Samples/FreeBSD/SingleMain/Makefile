@@ -26,7 +26,8 @@ FILES= \
 	../../../lib/src/variable_store.c               ../../../lib/src/webserver_api_functions.c \
 	../../../lib/src/websocket_handler.c            ../../../lib/src/websockets.c \
 	../../../lib/src/websockets_send_recv.c         ../../../lib/src/websockets_streaming.c \
-	../../../lib/src/reverse_proxy.c                ../../../lib/ssl/openssl.c \
+	../../../lib/src/reverse_proxy.c                ../../../lib/src/hashmap.c \
+	../../../lib/ssl/openssl.c \
 	../../../lib/platform/freebsd/platform-file-access.c \
 	../../../lib/platform/freebsd/platform-sockets.c \
 	../../../lib/platform/freebsd/system-unix.c \
