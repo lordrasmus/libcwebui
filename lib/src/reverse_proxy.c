@@ -404,15 +404,17 @@ void reverse_proxy_client_handler(int fd, void* ptr) {
                 }
 
                 /* Defensive check: recv should never return more than requested */
-                if (bytes_read > (int)(proxy->request_buffer_size - proxy->request_buffer_pos)) {
-                    LOG(PROXY_LOG, ERROR_LEVEL, 0, "recv returned %d bytes, but only %d requested",
-                        bytes_read, (int)(proxy->request_buffer_size - proxy->request_buffer_pos));
+                /* Also prevents overflow: if bytes_read fits in remaining space, addition is safe */
+                if (proxy->request_buffer_pos > proxy->request_buffer_size ||
+                    (uint32_t)bytes_read > proxy->request_buffer_size - proxy->request_buffer_pos) {
+                    LOG(PROXY_LOG, ERROR_LEVEL, 0, "recv returned %d bytes, but only %u space available",
+                        bytes_read, proxy->request_buffer_size - proxy->request_buffer_pos);
                     proxy->state = PROXY_STATE_ERROR;
                     proxy_process_state(proxy);
                     return;
                 }
 
-                proxy->request_buffer_pos += bytes_read;
+                proxy->request_buffer_pos += (uint32_t)bytes_read;
 #if _WEBSERVER_PROXY_DEBUG_ >= 5
                 LOG(PROXY_LOG, NOTICE_LEVEL, 0, "Received %d bytes from client, total=%d",
                           bytes_read, proxy->request_buffer_pos);
@@ -521,14 +523,16 @@ void reverse_proxy_backend_handler(int fd, void* ptr) {
                     }
 #endif
                     /* Defensive check: recv should never return more than requested */
-                    if (bytes_read > (int)(proxy->response_buffer_size - proxy->response_buffer_pos)) {
-                        LOG(PROXY_LOG, ERROR_LEVEL, proxy->backend_fd, "recv returned %d bytes, but only %d requested",
-                            bytes_read, (int)(proxy->response_buffer_size - proxy->response_buffer_pos));
+                    /* Also prevents overflow: if bytes_read fits in remaining space, addition is safe */
+                    if (proxy->response_buffer_pos > proxy->response_buffer_size ||
+                        (uint32_t)bytes_read > proxy->response_buffer_size - proxy->response_buffer_pos) {
+                        LOG(PROXY_LOG, ERROR_LEVEL, proxy->backend_fd, "recv returned %d bytes, but only %u space available",
+                            bytes_read, proxy->response_buffer_size - proxy->response_buffer_pos);
                         proxy->state = PROXY_STATE_ERROR;
                         proxy_process_state(proxy);
                         return;
                     }
-                    proxy->response_buffer_pos += bytes_read;
+                    proxy->response_buffer_pos += (uint32_t)bytes_read;
 #if _WEBSERVER_PROXY_DEBUG_ >= 5
                     LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "Received %d bytes from backend, total=%d",
                               bytes_read, proxy->response_buffer_pos);

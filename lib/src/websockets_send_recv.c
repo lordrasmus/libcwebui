@@ -439,7 +439,8 @@ static int recFrameV8(socket_info *sock) {
 				if ( wsf.fin == 1 ){
 					if ( wsf.opcode == WSF_TEXT ){
 						/* Defensive overflow check for +1 (null terminator) */
-						if (wsf.real_length >= WEBSOCKET_MAX_INBUFFER_SIZE) {
+						if (wsf.real_length >= WEBSOCKET_MAX_INBUFFER_SIZE ||
+						    wsf.real_length > UINT32_MAX - 1) {
 							LOG(WEBSOCKET_LOG, ERROR_LEVEL, sock->socket,
 								"Text frame too large: %llu >= %d", (unsigned long long)wsf.real_length, WEBSOCKET_MAX_INBUFFER_SIZE);
 							goto close_socket_error;
