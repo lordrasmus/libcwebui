@@ -55,6 +55,7 @@ LIB_SOURCES := 	src/builtinFunctions.c \
 			ssl/openssl.c \
 			ssl/mbedtls2.c \
 			ssl/mbedtls3.c \
+			ssl/wolfssl.c \
 			python/py_utils.c \
 			python/py_plugin.c \
 			python/py_api_functions.c \
