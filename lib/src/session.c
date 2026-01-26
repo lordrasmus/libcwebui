@@ -329,7 +329,11 @@ char setUserRegistered(http_request* s, char status) {
 #ifdef _WEBSERVER_SESSION_DEBUG_
 			LOG(SESSION_LOG, DEBUG_LEVEL, s->socket->socket, "setUserRegistered: buf1 = %s", buf1);
 			LOG(SESSION_LOG, DEBUG_LEVEL, s->socket->socket, "setUserRegistered: s->store = %p, s->store_ssl = %p", (void*)s->store, (void*)s->store_ssl);
+#ifdef WEBSERVER_USE_SSL
 			LOG(SESSION_LOG, DEBUG_LEVEL, s->socket->socket, "setUserRegistered: s->socket->use_ssl = %d", s->socket->use_ssl);
+#else
+			LOG(SESSION_LOG, DEBUG_LEVEL, s->socket->socket, "setUserRegistered: SSL disabled");
+#endif
 #endif
 			PlatformLockMutex( &session_mutex );
 			int_setSessionValue(s, SESSION_STORE, (char*) "session-id", buf1);
