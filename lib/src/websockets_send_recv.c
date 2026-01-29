@@ -449,6 +449,7 @@ static int recFrameV8(socket_info *sock) {
 					}else{
 						msg = create_websocket_input_queue_msg(WEBSOCKET_SIGNAL_MSG, sock->websocket_guid, sock->header->url, wsf.real_length );
 					}
+					msg->binary = (wsf.opcode == WSF_BINARY) ? 1 : 0;
 
 					for (ui = 0; ui < wsf.real_length; ui++){
 						if (wsf.mask_bit == 1) {
@@ -624,6 +625,7 @@ static int recFrameV8(socket_info *sock) {
 						}else{
 							msg = create_websocket_input_queue_msg(WEBSOCKET_SIGNAL_MSG, sock->websocket_guid, sock->header->url, sock->websocket_fragments_length );
 						}
+						msg->binary = (sock->websocket_fragment_start_opcode == WSF_BINARY) ? 1 : 0;
 
 						offset2=0;
 						ws_list_iterator_start(&sock->websocket_fragments);

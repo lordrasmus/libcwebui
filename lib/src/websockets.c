@@ -56,7 +56,7 @@ static void websocket_input_thread_function( void ) {
 	while (1) {
 		msg = (websocket_queue_msg*) ws_popQueue(websocket_input_queue);
 
-		handleWebsocketConnection(msg->signal, msg->guid, msg->url,1 , (char*)msg->msg, msg->len);
+		handleWebsocketConnection(msg->signal, msg->guid, msg->url, msg->binary, (char*)msg->msg, msg->len);
 
 		WebserverFree(msg->guid);
 		WebserverFree(msg->msg);

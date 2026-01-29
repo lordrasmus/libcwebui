@@ -47,6 +47,7 @@ typedef struct {
 	char* url;
 	unsigned char* msg;
 	WEBSOCK_LEN_T len;
+	char binary;
 }websocket_queue_msg WEBSOCK_LEN_ALLIGN ;
 
 #ifdef __cplusplus
