@@ -436,11 +436,7 @@ void _print_response_code(http_request* s, int code) {
 		default:
 		case 200: text = "OK"; break;
 	}
-	if ( s->header->isHttp1_1 ){
-		printHeaderChunk(s->socket, "HTTP/1.1 %d %s\r\n", code, text);
-	}else{
-		printHeaderChunk(s->socket, "HTTP/1.0 %d %s\r\n", code, text);
-	}
+	printHeaderChunk(s->socket, "HTTP/1.%c %d %s\r\n", '0' + !!isRequestHttp1_1(s), code, text);
 }
 
 /*
