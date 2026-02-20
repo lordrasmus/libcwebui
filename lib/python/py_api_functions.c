@@ -203,6 +203,49 @@ static PyObject*  py_get_client_ip( PyObject* obj, PyObject *args ){
 	return PyString_FromString( py_cur_s->socket->client_ip_str );
 }
 
+
+/***********************************************************************************************
+*                                                                                              *
+*          POST File Upload                                                                    *
+*                                                                                              *
+************************************************************************************************/
+
+static PyObject* py_getFileCount( PyObject* obj, PyObject *args ){
+	(void)obj; (void)args;
+	PY_CONTEXT_CHECK
+	return PyLong_FromLong( getFileCount( (dummy_handler*)py_cur_s ) );
+}
+
+static PyObject* py_getFileName( PyObject* obj, PyObject *args ){
+	int index;
+	(void)obj;
+	PY_CONTEXT_CHECK
+	if ( ! PyArg_ParseTuple( args, "i", &index ) ) return NULL;
+	char *name = getFileName( (dummy_handler*)py_cur_s, index );
+	if ( !name ) Py_RETURN_NONE;
+	return PyString_FromString( name );
+}
+
+static PyObject* py_getFileSize( PyObject* obj, PyObject *args ){
+	int index;
+	(void)obj;
+	PY_CONTEXT_CHECK
+	if ( ! PyArg_ParseTuple( args, "i", &index ) ) return NULL;
+	return PyLong_FromLong( getFileSize( (dummy_handler*)py_cur_s, index ) );
+}
+
+static PyObject* py_getFileData( PyObject* obj, PyObject *args ){
+	int index;
+	(void)obj;
+	PY_CONTEXT_CHECK
+	if ( ! PyArg_ParseTuple( args, "i", &index ) ) return NULL;
+	char *data = getFileData( (dummy_handler*)py_cur_s, index );
+	int size   = getFileSize( (dummy_handler*)py_cur_s, index );
+	if ( !data ) Py_RETURN_NONE;
+	return PyBytes_FromStringAndSize( data, size );
+}
+
+
 PyMethodDef py_libcwebui_methods[] =
 {
 	{"register_function", py_register_function,  METH_VARARGS, "A simple example of an embedded function."},
@@ -219,11 +262,11 @@ PyMethodDef py_libcwebui_methods[] =
 	{"getURLParameter", py_getURLParameter, METH_VARARGS, "A simple example of an embedded function."},
 	
 	{"get_client_ip", py_get_client_ip, METH_VARARGS, "A simple example of an embedded function."},
-	
-	//setGlobalVar
-	//getGlobalVar
 
-	//setVariable
+	{"getFileCount", py_getFileCount, METH_NOARGS,  "Return number of uploaded files."},
+	{"getFileName",  py_getFileName,  METH_VARARGS, "Return filename of uploaded file at index."},
+	{"getFileSize",  py_getFileSize,  METH_VARARGS, "Return size of uploaded file at index."},
+	{"getFileData",  py_getFileData,  METH_VARARGS, "Return raw bytes of uploaded file at index."},
 
 	{ NULL }
 };
