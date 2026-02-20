@@ -39,7 +39,7 @@ SPDX-License-Identifier: MPL-2.0
 extern "C" {
 #endif
 
-int sendHeader(http_request* s, WebserverFileInfo *info,int p_lenght);
+int sendHeader(http_request* s, WebserverFileInfo *info, FILE_OFFSET p_lenght);
 int sendHeaderNotModified(http_request* s, WebserverFileInfo *info);
 int sendHeaderWebsocket(socket_info* sock);
 int sendPreflightAllowed(socket_info *sock);

@@ -592,7 +592,7 @@ static int handleClient(socket_info* sock) {
 
 static char sendData(socket_info* sock, const unsigned char *buffer, const unsigned long buffer_size, FILE_OFFSET *buffer_send_pos) {
 	int ret;
-	int to_send;
+	FILE_OFFSET to_send;
 	SOCKET_SEND_STATUS status;
 
 	while( *buffer_send_pos < (FILE_OFFSET)buffer_size ) {
@@ -662,7 +662,9 @@ static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendRamFile(socket_info* so
 #ifdef LINUX
 static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendFileSystem_sendfile(socket_info* sock, socket_file_infos* file) {
 	FILE_OFFSET offset;
-	int fd, diff, send;
+	int fd;
+	FILE_OFFSET diff;
+	ssize_t send;
 
 	offset = file->file_send_pos;
 
@@ -673,7 +675,7 @@ static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendFileSystem_sendfile(soc
 	fd = PlatformOpenDataReadStream( file->file_info->FilePath);
 	diff = file->file_info->DataLenght - file->file_send_pos;
 
-	//printf("handleClientWriteDataSendFileSystem_sendfile: Diff %d DataLenght %d\n", diff, sock->file_infos.file_info->DataLenght );
+	//printf("handleClientWriteDataSendFileSystem_sendfile: Diff %"FILE_OFF_PRINT_INT" DataLenght %"FILE_OFF_PRINT_INT"\n", diff, sock->file_infos.file_info->DataLenght );
 
 	send = sendfile(sock->socket, fd, &offset, diff);
 

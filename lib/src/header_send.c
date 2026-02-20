@@ -432,7 +432,7 @@ static void addSessionCookies(http_request* s,WebserverFileInfo *info){
 /*
  * 	p_lenght ist wichtig für die Template Engine
  */
-int sendHeader(http_request* s, WebserverFileInfo *info, int p_lenght) {
+int sendHeader(http_request* s, WebserverFileInfo *info, FILE_OFFSET p_lenght) {
 	custom_response_header* h_info;
 
 	if( s->header->isHttp1_1 ){
@@ -447,7 +447,7 @@ int sendHeader(http_request* s, WebserverFileInfo *info, int p_lenght) {
 	printHeaderChunk(s->socket, "Accept-Ranges: bytes\r\n");
 
 	if ( s->socket->use_output_compression == 0 ){
-		printHeaderChunk(s->socket, "%s %d\r\n", "Content-Length:", p_lenght);
+		printHeaderChunk(s->socket, "%s %"FILE_OFF_PRINT_INT"\r\n", "Content-Length:", p_lenght);
 	}
 
 	addCSPHeaderLines(s);

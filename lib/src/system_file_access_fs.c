@@ -48,7 +48,7 @@ void free_local_file_system( void ){
 int local_file_system_check_file_modified( WebserverFileInfo *file ){
 
 	int time_changed = 0;
-	int new_size = 0;
+	FILE_OFFSET new_size = 0;
 
 	// TODO(lordrasmus) : Problem mit clients die die datei noch laden lösen
 
@@ -261,7 +261,8 @@ static WebserverFileInfo* getFileInformation( const char *name) {
 
 WebserverFileInfo *getFileLocalFileSystem( const char *url_name) {
 	WebserverFileInfo *file = 0;
-	int a,b;
+	int a;
+	FILE_OFFSET b;
 
 	char name[512];
 	strncpy( name, url_name, 512 );
