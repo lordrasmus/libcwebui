@@ -109,7 +109,7 @@ static int handleWebsocket(socket_info* sock, EVENT_TYPES type) {
 					return -1;
 				}				
 				
-				LOG( WEBSOCKET_LOG, ERROR_LEVEL, sock->socket, "Darf hier niemals ankommen  status: %d  send_bytes: %d  to_send: %d", status,send_bytes,to_send);
+				LOG( WEBSOCKET_LOG, ERROR_LEVEL, sock->socket, "Darf hier niemals ankommen  status: %d  send_bytes: %zu  to_send: %zu", status,send_bytes,to_send);
 				PlatformUnlockMutex(&sock->socket_mutex);
 				return -1;
 			}

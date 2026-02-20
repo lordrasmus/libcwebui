@@ -447,7 +447,7 @@ int sendHeader(http_request* s, WebserverFileInfo *info, FILE_OFFSET p_lenght) {
 	printHeaderChunk(s->socket, "Accept-Ranges: bytes\r\n");
 
 	if ( s->socket->use_output_compression == 0 ){
-		printHeaderChunk(s->socket, "%s %"FILE_OFF_PRINT_INT"\r\n", "Content-Length:", p_lenght);
+		printHeaderChunk(s->socket, "%s %"FILE_OFF_PRINT_INT"\r\n", "Content-Length:", FILE_OFF_CAST(p_lenght));
 	}
 
 	addCSPHeaderLines(s);

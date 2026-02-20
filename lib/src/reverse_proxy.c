@@ -641,7 +641,7 @@ void reverse_proxy_backend_handler(int fd, void* ptr) {
                     return;
                 }
 #if _WEBSERVER_PROXY_DEBUG_ >= 5
-                LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "WebSocket tunnel: forwarded %d bytes to client", sent);
+                LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "WebSocket tunnel: forwarded %zu bytes to client", sent);
 #endif
             }
             return;
@@ -903,7 +903,7 @@ static void proxy_process_state(reverse_proxy_connection_t* proxy) {
                                    &proxy->response_buffer[proxy->send_pos],
                                    to_send, 0, &sent);
 #if _WEBSERVER_PROXY_DEBUG_ >= 5
-                        LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "STREAMING header: sent %d/%d bytes, status=%d", sent, to_send, status);
+                        LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "STREAMING header: sent %zu/%zu bytes, status=%d", sent, to_send, status);
 #endif
                         if (status == SOCKET_SEND_SEND_BUFFER_FULL) {
                             proxy->state = PROXY_STATE_STREAMING_WAIT_WRITE;
@@ -971,7 +971,7 @@ static void proxy_process_state(reverse_proxy_connection_t* proxy) {
                     proxy->send_pos += sent;
                     proxy->response_body_sent += sent;
 #if _WEBSERVER_PROXY_DEBUG_ >= 5
-                    LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "STREAMING body: sent %d bytes, total: %lu",
+                    LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "STREAMING body: sent %zu bytes, total: %lu",
                               sent, (unsigned long)proxy->response_body_sent);
 #endif
                 }

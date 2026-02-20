@@ -277,8 +277,8 @@ void generateEtag(WebserverFileInfo* file) {
 
 
 	if (file->etag == 0) {
-		file->etag = (char *) WebserverMalloc( 34 );
-		memset((void*)file->etag, 0, 34);
+		file->etag = (char *) WebserverMalloc( 40 );
+		memset((void*)file->etag, 0, 40);
 	}
 	
 	if (file->RamCached == 1) {

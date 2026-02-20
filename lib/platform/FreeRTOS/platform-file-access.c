@@ -30,7 +30,7 @@ int PlatformOpenDataReadStream( const char* name ) {
 }
 
 
-int PlatformGetFileSize(void) {
+FILE_OFFSET PlatformGetFileSize(void) {
 	return 0;
 }
 
@@ -42,7 +42,7 @@ void PlatformResetDataStream(void) {
 	
 }
 
-int PlatformReadBytes(unsigned char *data, FILE_OFFSET lenght) {
+FILE_OFFSET PlatformReadBytes(unsigned char *data, FILE_OFFSET lenght) {
 	return 0;
 }
 
@@ -55,7 +55,7 @@ void PlatformSeekToPosition(long position) {
 }
 
 
-int PlatformGetFileInfo(WebserverFileInfo* file, int* time_changed, int *new_size) {
+int PlatformGetFileInfo(WebserverFileInfo* file, int* time_changed, FILE_OFFSET *new_size) {
 
 	return 1;
 }

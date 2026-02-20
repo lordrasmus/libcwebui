@@ -62,13 +62,13 @@ SOCKET_SEND_STATUS WebserverSend(socket_info* sock, const unsigned char *buffer,
 		}
 
 		#if _WEBSERVER_CONNECTION_DEBUG_ > 0
-			LOG(SOCKET_LOG, WARNING_LEVEL, sock->socket, "SOCKET_SEND_NO_MORE_DATA    %d of %d send", ret, len);
+			LOG(SOCKET_LOG, WARNING_LEVEL, sock->socket, "SOCKET_SEND_NO_MORE_DATA    %zd of %zu send", ret, len);
 		#endif
 
 		return SOCKET_SEND_NO_MORE_DATA;
 	}
 
-	LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "Status %d\n", ret);
+	LOG(CONNECTION_LOG, ERROR_LEVEL, sock->socket, "Status %zd\n", ret);
 	return SOCKET_SEND_UNKNOWN_ERROR;
 }
 

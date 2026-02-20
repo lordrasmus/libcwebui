@@ -204,7 +204,7 @@ int py_load_python_plugin( const char* path ){
 	memset(&file,0,sizeof( WebserverFileInfo ));
 
 	int time_changed;
-	int new_size;
+	FILE_OFFSET new_size;
 
 	file.FilePath = path;
 	PlatformGetFileInfo( &file, &time_changed, &new_size);
@@ -258,7 +258,7 @@ void py_call_engine_function( http_request *s, user_func_s *func , FUNCTION_PARA
 
 		WebserverFileInfo file;
 		int time_changed;
-		int new_size;
+		FILE_OFFSET new_size;
 
 		file.lastmodified = 0;
 		file.FilePath = func->plugin->path;

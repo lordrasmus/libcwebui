@@ -200,6 +200,8 @@ static PyObject* py_getURLParameter( PyObject* obj, PyObject *args ){
 }
 
 static PyObject*  py_get_client_ip( PyObject* obj, PyObject *args ){
+	(void)obj; (void)args;
+	PY_CONTEXT_CHECK
 	return PyString_FromString( py_cur_s->socket->client_ip_str );
 }
 
@@ -221,6 +223,11 @@ static PyObject* py_getFileName( PyObject* obj, PyObject *args ){
 	(void)obj;
 	PY_CONTEXT_CHECK
 	if ( ! PyArg_ParseTuple( args, "i", &index ) ) return NULL;
+	int count = getFileCount( (dummy_handler*)py_cur_s );
+	if ( index < 0 || index >= count ) {
+		PyErr_SetString(PyExc_IndexError, "file index out of range");
+		return NULL;
+	}
 	char *name = getFileName( (dummy_handler*)py_cur_s, index );
 	if ( !name ) Py_RETURN_NONE;
 	return PyString_FromString( name );
@@ -231,6 +238,11 @@ static PyObject* py_getFileSize( PyObject* obj, PyObject *args ){
 	(void)obj;
 	PY_CONTEXT_CHECK
 	if ( ! PyArg_ParseTuple( args, "i", &index ) ) return NULL;
+	int count = getFileCount( (dummy_handler*)py_cur_s );
+	if ( index < 0 || index >= count ) {
+		PyErr_SetString(PyExc_IndexError, "file index out of range");
+		return NULL;
+	}
 	return PyLong_FromLong( getFileSize( (dummy_handler*)py_cur_s, index ) );
 }
 
@@ -239,6 +251,11 @@ static PyObject* py_getFileData( PyObject* obj, PyObject *args ){
 	(void)obj;
 	PY_CONTEXT_CHECK
 	if ( ! PyArg_ParseTuple( args, "i", &index ) ) return NULL;
+	int count = getFileCount( (dummy_handler*)py_cur_s );
+	if ( index < 0 || index >= count ) {
+		PyErr_SetString(PyExc_IndexError, "file index out of range");
+		return NULL;
+	}
 	char *data = getFileData( (dummy_handler*)py_cur_s, index );
 	int size   = getFileSize( (dummy_handler*)py_cur_s, index );
 	if ( !data ) Py_RETURN_NONE;

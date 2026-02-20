@@ -68,7 +68,7 @@ int PlatformOpenDataReadStream( const char* name ) {
 }
 
 
-int PlatformGetFileSize(void) {
+FILE_OFFSET PlatformGetFileSize(void) {
 	struct stat st;
 	if ( 0 != fstat(fileno(g_fp), &st) ){
 		printf("fstat error : %m\n");
@@ -87,7 +87,7 @@ void PlatformResetDataStream(void) {
 	fseek(g_fp, 0, SEEK_SET); /* Anfang der Datei */
 }
 
-int PlatformReadBytes(unsigned char *data, FILE_OFFSET lenght) {
+FILE_OFFSET PlatformReadBytes(unsigned char *data, FILE_OFFSET lenght) {
 	return fread(data, 1, lenght, g_fp);
 }
 
@@ -113,7 +113,7 @@ struct stat {
  };
 #endif
 
-int PlatformGetFileInfo(WebserverFileInfo* file, int* time_changed, int *new_size) {
+int PlatformGetFileInfo(WebserverFileInfo* file, int* time_changed, FILE_OFFSET *new_size) {
 
 	struct stat st;
 	//struct tm ts_var;

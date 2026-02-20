@@ -603,7 +603,7 @@ static char sendData(socket_info* sock, const unsigned char *buffer, const unsig
 
 		status = WebserverSend(sock, &buffer[ *buffer_send_pos ], to_send, 0, &ret);
 #if _WEBSERVER_CONNECTION_DEBUG_ > 4
-		LOG ( CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%d of %d %d",ret,to_send,status );
+		LOG ( CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%zu of %"FILE_OFF_PRINT_INT" %d",ret,FILE_OFF_CAST(to_send),status );
 #endif
 		switch (status) {
 		case SOCKET_SEND_NO_MORE_DATA:
@@ -981,7 +981,7 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* so
 		switch (status) {
 		case SOCKET_SEND_NO_MORE_DATA:
 #if _WEBSERVER_CONNECTION_DEBUG_ >= 5
-			LOG ( SOCKET_LOG,NOTICE_LEVEL,sock->socket,"SOCKET_SEND_NO_MORE_DATA : %ld status : %d ret : %d",file->file_send_pos,status,ret );
+			LOG ( SOCKET_LOG,NOTICE_LEVEL,sock->socket,"SOCKET_SEND_NO_MORE_DATA : %ld status : %d ret : %zu",file->file_send_pos,status,ret );
 #endif
 			file->file_send_pos += ret;
 			if ( file->file_info->DataLenght == file->file_send_pos) {

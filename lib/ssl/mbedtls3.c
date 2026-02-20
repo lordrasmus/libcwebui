@@ -384,7 +384,7 @@ SOCKET_SEND_STATUS WebserverSSLSendNonBlocking(socket_info *s, const unsigned ch
 
 	if (ret > 0) {
 		if (bytes_send) *bytes_send = ret;
-		if (ret == len) {
+		if ((size_t)ret == len) {
 			return SOCKET_SEND_NO_MORE_DATA;
 		}
 		return SOCKET_SEND_SEND_BUFFER_FULL;

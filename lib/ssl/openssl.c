@@ -647,7 +647,7 @@ int WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, unsigned int
 
 SOCKET_SEND_STATUS WebserverSSLSendNonBlocking(socket_info* s, const unsigned char *buf, size_t len, UNUSED_PARA int flags, size_t* bytes_send) {
 	int ret = 0;
-	int l = 0;
+	size_t l = 0;
 	int r2;
 	unsigned long err_code;
 	//unsigned short want_reads = 0;
