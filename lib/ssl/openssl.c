@@ -645,7 +645,7 @@ int WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, unsigned int
 	return SSL_PROTOCOL_ERROR;
 }
 
-SOCKET_SEND_STATUS WebserverSSLSendNonBlocking(socket_info* s, const unsigned char *buf, int len, UNUSED_PARA int flags, int* bytes_send) {
+SOCKET_SEND_STATUS WebserverSSLSendNonBlocking(socket_info* s, const unsigned char *buf, size_t len, UNUSED_PARA int flags, size_t* bytes_send) {
 	int ret = 0;
 	int l = 0;
 	int r2;

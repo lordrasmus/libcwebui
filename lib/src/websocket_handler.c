@@ -30,8 +30,8 @@ SPDX-License-Identifier: MPL-2.0
 
 static int handleWebsocket(socket_info* sock, EVENT_TYPES type) {
 	html_chunk* chunk;
-	int send_bytes;
-	int to_send;
+	size_t send_bytes;
+	size_t to_send;
 	SOCKET_SEND_STATUS status;
 
 

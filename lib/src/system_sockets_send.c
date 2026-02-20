@@ -24,8 +24,8 @@ SPDX-License-Identifier: MPL-2.0
 
 
 
-SOCKET_SEND_STATUS WebserverSend(socket_info* sock, const unsigned char *buffer, int len, int flags, int* bytes_send) {
-	int ret;
+SOCKET_SEND_STATUS WebserverSend(socket_info* sock, const unsigned char *buffer, size_t len, int flags, size_t* bytes_send) {
+	ssize_t ret;
 
 #ifdef WEBSERVER_USE_SSL
 	if (sock->use_ssl == 1) {

@@ -277,12 +277,12 @@ void generateEtag(WebserverFileInfo* file) {
 
 
 	if (file->etag == 0) {
-		file->etag = (char *) WebserverMalloc( 26 );
-		memset((void*)file->etag, 0, 26);
+		file->etag = (char *) WebserverMalloc( 34 );
+		memset((void*)file->etag, 0, 34);
 	}
 	
 	if (file->RamCached == 1) {
-		uint32_t length = file->DataLenght;
+		FILE_OFFSET length = file->DataLenght;
 		crc32_init();
 		crc32_update( (const char *) file->Data, file->DataLenght);
 		uint32_t crc = crc32_finish();
@@ -290,7 +290,7 @@ void generateEtag(WebserverFileInfo* file) {
 		adler32_update(file->Data, file->DataLenght);
 		uint32_t adler = adler32_finish();
 
-		file->etagLength = sprintf((char*)file->etag, "%08X%08X%08X", length, crc, adler);
+		file->etagLength = sprintf((char*)file->etag, "%08"FILE_OFF_PRINT_HEX"%08X%08X", FILE_OFF_CAST(length), crc, adler);
 	}
 	else {
 		if (!PlatformOpenDataReadStream(file->FilePath)) {
@@ -350,7 +350,7 @@ void generateEtag(WebserverFileInfo* file) {
 #endif
 		struct sha_context* sha_context;
 		uint32_t to_read;
-		uint64_t diff;
+		FILE_OFFSET diff;
 		FILE_OFFSET pos;
 		unsigned char *data;
 

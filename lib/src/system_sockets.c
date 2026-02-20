@@ -591,7 +591,7 @@ static int handleClient(socket_info* sock) {
 
 
 static char sendData(socket_info* sock, const unsigned char *buffer, const unsigned long buffer_size, FILE_OFFSET *buffer_send_pos) {
-	int ret;
+	size_t ret;
 	FILE_OFFSET to_send;
 	SOCKET_SEND_STATUS status;
 
@@ -947,10 +947,11 @@ int WebserverCloseSocket(socket_info* sock) {
 }
 
 CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* sock, socket_file_infos* file) {
-	int ret;
+	size_t ret;
 	CLIENT_WRITE_DATA_STATUS ret_v;
 	SOCKET_SEND_STATUS status;
-	uint32_t to_read, diff;
+	uint32_t to_read;
+	FILE_OFFSET diff;
 	unsigned char *buffer;
 
 #ifdef _WEBSERVER_FILESYSTEM_DEBUG_

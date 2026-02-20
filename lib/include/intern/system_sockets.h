@@ -50,7 +50,7 @@ extern "C" {
 
 	int		WebserverAccept(void);
 	int   	WebserverRecv(socket_info* sock,unsigned char *buf, int len, int flags);
-	SOCKET_SEND_STATUS 	WebserverSend(socket_info* sock,const unsigned char *buffer, int len, int flags,int* bytes_send);
+	SOCKET_SEND_STATUS 	WebserverSend(socket_info* sock,const unsigned char *buffer, size_t len, int flags, size_t* bytes_send);
 	int   	WebserverCloseSocket(socket_info* sock);
 
 

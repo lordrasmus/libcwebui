@@ -631,7 +631,7 @@ void reverse_proxy_backend_handler(int fd, void* ptr) {
                 }
 
                 /* Client-Socket: WebserverSend für SSL-Unterstützung */
-                int sent = 0;
+                size_t sent = 0;
                 SOCKET_SEND_STATUS status = WebserverSend(proxy->client_sock,
                                                           tunnel_buf, bytes_read, 0, &sent);
                 if (status == SOCKET_SEND_CLIENT_DISCONNECTED) {
@@ -891,8 +891,8 @@ static void proxy_process_state(reverse_proxy_connection_t* proxy) {
         case PROXY_STATE_STREAMING:
             /* Streaming: Daten sofort an Client weiterleiten */
             {
-                int to_send;
-                int sent = 0;
+                size_t to_send;
+                size_t sent = 0;
                 SOCKET_SEND_STATUS status;
 
                 /* Noch Header zu senden? */
