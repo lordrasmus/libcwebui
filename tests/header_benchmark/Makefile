@@ -1,6 +1,6 @@
 
-OPTS= -std=c99 -ggdb3
-#-O2
+OPTS= -std=c99 -O2
+#-ggdb3
 
 FLAGS=-I. -I../../lib/ -I../../lib/include/ -I../../lib/include/intern/ -I../../lib/third_party/src/simclist/ \
 	-I../../lib/third_party/src/rb_tree/ -I../../lib/third_party/src/is_utf8/ \
@@ -66,20 +66,15 @@ FILES= \
 	../../lib/third_party/src/miniz/miniz.c \
 	../../lib/third_party/src/rb_tree/red_black_tree.c \
 	../../lib/third_party/src/rb_tree/stack.c \
-	../../lib/third_party/src/rb_tree/misc.c \
-	
+	../../lib/third_party/src/rb_tree/misc.c
 
-all: main.gcc #main.clang
+INPUT=../../fuzzing/parse_header/input/POST4
 
-#-fsanitize=address
-main.gcc: ${FILES} main.c
-	gcc ${FLAGS}  -fno-omit-frame-pointer main.c ${FILES} -o main.gcc -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
+all: bench
 
-main.clang: ${FILES} main.c
-	clang ${FLAGS} -fsanitize=address -fno-omit-frame-pointer main.c ${FILES} -o main.clang -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
+bench: ${FILES} main.c
+	gcc ${FLAGS} main.c ${FILES} -o bench -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
+	./bench $(INPUT)
 
 clean:
-	rm -f main.gcc main.clang
-
-tun_test:
-	./run_tests.py 
+	rm -f bench

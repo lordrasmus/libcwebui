@@ -18,10 +18,32 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y libgtest-dev libevent-dev libssl-dev
 
-    - name: Build and run tests
+    - name: Build and run unit tests
       run: |
         cd tests/unittests
         make test-ci
+
+    - name: Build and run parse_header tests
+      run: |
+        cd tests/parse_header
+        make clean
+        make
+        FAILED=0
+        for input in ../../fuzzing/parse_header/input/*; do
+          name=$(basename "$input")
+          [ "$name" = "README.txt" ] && continue
+          result="results/$name"
+          [ ! -f "$result" ] && continue
+          ./main.gcc < "$input" > /tmp/test_out
+          if ! diff -u /tmp/test_out "$result" > /dev/null 2>&1; then
+            echo "FAIL: $name"
+            diff -u "$result" /tmp/test_out || true
+            FAILED=1
+          else
+            echo "pass: $name"
+          fi
+        done
+        exit $FAILED
 
     - name: Generate test summary
       if: always()

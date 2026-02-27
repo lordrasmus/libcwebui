@@ -217,7 +217,7 @@ static int header_attr_compare( char* text, unsigned int text_length, char* line
 }
 
 
-#define CHECK_HEADER_LINE2(a,b)  h_len = strlen(a); \
+#define CHECK_HEADER_LINE2(a,b)  h_len = sizeof(a) - 1; \
 if (!strncmp((char*)line2,a,h_len)) \
 { \
 	int crlf_pos = stringfind(line2, "\r\n"); \
@@ -268,19 +268,10 @@ int analyseFormDataLine(socket_info* sock, char *line, unsigned int length, Http
 }
 
 
-#define CHECK_HEADER_LINE(a,b)  h_len = strlen(a); \
-if (header_attr_compare( a, h_len, line, length)) \
-{ \
-	len = length - h_len; \
-	if ( header->b != 0) WebserverFree(header->b); \
-    header->b = (char*)WebserverMalloc( len + 1 ); \
-    Webserver_strncpy((char*)header->b,len+1,(char*)&line[h_len],len); \
-    return 0; \
-}
+
+static int matchHeaderFields(char *line, unsigned int length, HttpRequestHeader *header);
 
 int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRequestHeader *header) {
-	unsigned long len;
-	SIZE_TYPE h_len;
 	int pos;
 	char* c_pos = 0;
 #ifdef _WEBSERVER_HEADER_DEBUG_
@@ -460,156 +451,173 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 
 
 
-	/* noch nicht verarbeitete header lines */
-	if (!strncasecmp( line, "Accept-Language: ", 17)) {
-		return 0;
-	}
+	return matchHeaderFields(line, length, header);
+}
 
-	if (!strncasecmp( line, "Accept-Charset: ", 16)) {
-		return 0;
-	}
 
-	if (!strncasecmp( line, "Keep-Alive: ", 12)) {
-		return 0;
-	}
+#define CHECK_HEADER_LINE(a,b)  h_len = sizeof(a) - 1; \
+if (header_attr_compare( a, h_len, line, length)) \
+{ \
+	len = length - h_len; \
+	if ( header->b != 0) WebserverFree(header->b); \
+    header->b = (char*)WebserverMalloc( len + 1 ); \
+    Webserver_strncpy((char*)header->b,len+1,(char*)&line[h_len],len); \
+    return 0; \
+}
 
-	if (!strncasecmp( line, "Cache-Control: ", 14)) {
-		return 0;
-	}
+static int matchHeaderFields(char *line, unsigned int length, HttpRequestHeader *header) {
+	unsigned long len;
+	SIZE_TYPE h_len;
 
-	if (!strncasecmp( line, "Cookie: ", 8)) {
-		parseCookies(line, length, header);
-		return 0;
-	}
+	switch( tolower(line[0]) ){
 
-	if ( (!strncasecmp( line, "Content-Length: ", 16)) && ( strlen( &line[15]  ) > 1  ) ) {
-		const char* val = &line[16];
-		/* Reject negative values and non-numeric input */
-		if (*val == '-' || *val < '0' || *val > '9') {
-			header->contentlenght = 0;
-		} else {
-			/* Note: strtoull overflow returns ULLONG_MAX which is safely rejected
-			 * by the max_post_size check in check_post_header() */
-			char* endptr;
-			header->contentlenght = strtoull(val, &endptr, 10);
-			/* Reject trailing garbage after number (HTTP Request Smuggling prevention) */
-			if (*endptr != '\0' && *endptr != '\r' && *endptr != '\n' && *endptr != ' ') {
+	/*   ---------------------- a block ----------------------  */
+	case 'a':
+		if (!strncasecmp( line, "Accept-Language: ", 17)) return 0;
+		if (!strncasecmp( line, "Accept-Charset: ", 16)) return 0;
+		CHECK_HEADER_LINE("Accept-Encoding: ",Accept_Encoding )
+		CHECK_HEADER_LINE("Accept: ", Accept)
+		CHECK_HEADER_LINE("Access-Control-Request-Method: ",Access_Control_Request_Method )
+		CHECK_HEADER_LINE("Access-Control-Request-Headers: ",Access_Control_Request_Headers )
+		CHECK_HEADER_LINE("Authorization: ", Authorization)
+		break;
+
+	/*   ---------------------- c block ----------------------  */
+	case 'c':
+		if (!strncasecmp( line, "Cache-Control: ", 14)) return 0;
+
+		if (!strncasecmp( line, "Cookie: ", 8)) {
+			parseCookies(line, length, header);
+			return 0;
+		}
+
+		if ( (!strncasecmp( line, "Content-Length: ", 16)) && ( strlen( &line[15]  ) > 1  ) ) {
+			const char* val = &line[16];
+			/* Reject negative values and non-numeric input */
+			if (*val == '-' || *val < '0' || *val > '9') {
 				header->contentlenght = 0;
-				header->error = 1;
-			}
-		}
-		return 0;
-	}
-
-
-	h_len = strlen("Host: ");
-	if (!strncasecmp( line,"Host: ",h_len)){
-		len = length - h_len;
-		if ( header->Host != 0){
-			WebserverFree(header->Host);
-		}
-
-		if ( header->HostName != 0){
-			WebserverFree(header->HostName);
-		}
-
-		header->Host = (char*)WebserverMalloc( len + 1 );
-		Webserver_strncpy( header->Host,len+1, &line[h_len],len);
-
-		char* doppelpunkt = strstr(line + h_len, ":");
-		if( doppelpunkt ) {
-
-			len = doppelpunkt - ( line + h_len );
-
-			header->HostName = (char*)WebserverMalloc( len + 1 );
-			Webserver_strncpy( header->HostName,len+1, &line[h_len],len);
-		}else{
-			header->HostName = (char*)WebserverMalloc( len + 1 );
-			Webserver_strncpy( header->HostName,len+1, &line[h_len],len);
-		}
-
-		//printf("HostName : %s ( %d )  \n",header->HostName);
-
-
-		return 0;
-	}
-
-	CHECK_HEADER_LINE("Access-Control-Request-Method: ",Access_Control_Request_Method )
-	CHECK_HEADER_LINE("Access-Control-Request-Headers: ",Access_Control_Request_Headers )
-	
-	CHECK_HEADER_LINE("Accept-Encoding: ",Accept_Encoding )
-
-	CHECK_HEADER_LINE("If-Modified-Since: ", If_Modified_Since) /* Wed, 12 Dec 2007 13:13:08 GMT */
-
-	CHECK_HEADER_LINE("If-None-Match: ", etag)
-
-	CHECK_HEADER_LINE("Upgrade: ", Upgrade)
-
-	CHECK_HEADER_LINE("Connection: ", Connection)
-
-	/*CHECK_HEADER_LINE("Host: ", Host)*/
-
-	CHECK_HEADER_LINE("Origin: ", Origin)
-	
-	CHECK_HEADER_LINE("Accept: ", Accept)
-	
-	CHECK_HEADER_LINE("User-Agent: ", UserAgent)
-	
-	CHECK_HEADER_LINE("Authorization: ", Authorization)
-	
-	CHECK_HEADER_LINE("Referer: ", Referer)
-
-
-
-#ifdef WEBSERVER_USE_WEBSOCKETS
-
-	CHECK_HEADER_LINE("Sec-WebSocket-Key: ",SecWebSocketKey)
-
-	CHECK_HEADER_LINE("Sec-WebSocket-Protocol: ",SecWebSocketProtocol)
-
-	/* CHECK_HEADER_LINE("Sec-WebSocket-Version: ",SecWebSocketVersion) */
-
-	h_len = strlen("Sec-WebSocket-Version: ");
-	if (!strncmp( line,"Sec-WebSocket-Version: ",h_len))
-	{
-		//len = length - h_len; // // clang Dead store
-		sscanf(&line[h_len],"%d",&header->SecWebSocketVersion);
-		return 0;
-	}
-#endif
-
-	
-	if ( header_attr_compare("Content-Type: ",strlen("Content-Type: "), line , length ) ){
-		if(stringfind(&line[14],"multipart/form-data") > 0){
-			int i2=stringfind(line,"boundary=");
-			header->contenttype=MULTIPART_FORM_DATA;
-
-			i2++;
-			unsigned int i;
-			for( i=i2;i<length;i++){
-				if(line[i]=='\r'){
-					break;
+			} else {
+				/* Note: strtoull overflow returns ULLONG_MAX which is safely rejected
+				 * by the max_post_size check in check_post_header() */
+				char* endptr;
+				header->contentlenght = strtoull(val, &endptr, 10);
+				/* Reject trailing garbage after number (HTTP Request Smuggling prevention) */
+				if (*endptr != '\0' && *endptr != '\r' && *endptr != '\n' && *endptr != ' ') {
+					header->contentlenght = 0;
+					header->error = 1;
 				}
 			}
+			return 0;
+		}
 
-			header->boundary=(char*)WebserverMalloc( ( i - i2 )  + 3 ); /* + 2 für -- , +1 \0 */
-			memcpy(header->boundary,"--",2);		/* nach http://www.w3.org/Protocols/rfc1341/7_2_Multipart.html */
-			memcpy(header->boundary+2,&line[i2],i-i2);	/* kommt vor die boundary -- */
-			header->boundary[i-i2+2]='\0';
+		if ( header_attr_compare("Content-Type: ",sizeof("Content-Type: ") - 1, line , length ) ){
+			if(stringfind(&line[14],"multipart/form-data") > 0){
+				int i2=stringfind(line,"boundary=");
+				header->contenttype=MULTIPART_FORM_DATA;
+
+				i2++;
+				unsigned int i;
+				for( i=i2;i<length;i++){
+					if(line[i]=='\r'){
+						break;
+					}
+				}
+
+				header->boundary=(char*)WebserverMalloc( ( i - i2 )  + 3 ); /* + 2 für -- , +1 \0 */
+				memcpy(header->boundary,"--",2);		/* nach http://www.w3.org/Protocols/rfc1341/7_2_Multipart.html */
+				memcpy(header->boundary+2,&line[i2],i-i2);	/* kommt vor die boundary -- */
+				header->boundary[i-i2+2]='\0';
 #ifdef ENABLE_DEVEL_WARNINGS
-			#warning Noch mehr Fehlerprüfungen
+				#warning Noch mehr Fehlerprüfungen
 #endif
-			return 0;
+				return 0;
+			}
+
+			if(!strncmp(&line[14],"application/x-www-form-urlencoded",sizeof("application/x-www-form-urlencoded") - 1)){
+				header->contenttype=APPLICATION_X_WWW_FORM_URLENCODED;
+				return 0;
+			}
 		}
 
-		if(!strncmp(&line[14],"application/x-www-form-urlencoded",strlen("application/x-www-form-urlencoded"))){
-			header->contenttype=APPLICATION_X_WWW_FORM_URLENCODED;
+		CHECK_HEADER_LINE("Connection: ", Connection)
+		break;
+
+	/*   ---------------------- h block ----------------------  */
+	case 'h':
+		h_len = sizeof("Host: ") - 1;
+		if (!strncasecmp( line,"Host: ",h_len)){
+			len = length - h_len;
+			if ( header->Host != 0){
+				WebserverFree(header->Host);
+			}
+
+			if ( header->HostName != 0){
+				WebserverFree(header->HostName);
+			}
+
+			header->Host = (char*)WebserverMalloc( len + 1 );
+			Webserver_strncpy( header->Host,len+1, &line[h_len],len);
+
+			char* doppelpunkt = strstr(line + h_len, ":");
+			if( doppelpunkt ) {
+
+				len = doppelpunkt - ( line + h_len );
+
+				header->HostName = (char*)WebserverMalloc( len + 1 );
+				Webserver_strncpy( header->HostName,len+1, &line[h_len],len);
+			}else{
+				header->HostName = (char*)WebserverMalloc( len + 1 );
+				Webserver_strncpy( header->HostName,len+1, &line[h_len],len);
+			}
+
 			return 0;
 		}
+		break;
+
+	/*   ---------------------- i block ----------------------  */
+	case 'i':
+		CHECK_HEADER_LINE("If-Modified-Since: ", If_Modified_Since) /* Wed, 12 Dec 2007 13:13:08 GMT */
+		CHECK_HEADER_LINE("If-None-Match: ", etag)
+		break;
+
+	/*   ---------------------- k block ----------------------  */
+	case 'k':
+		if (!strncasecmp( line, "Keep-Alive: ", 12)) return 0;
+		break;
+
+	/*   ---------------------- o block ----------------------  */
+	case 'o':
+		CHECK_HEADER_LINE("Origin: ", Origin)
+		break;
+
+	/*   ---------------------- r block ----------------------  */
+	case 'r':
+		CHECK_HEADER_LINE("Referer: ", Referer)
+		break;
+
+	/*   ---------------------- s block ----------------------  */
+#ifdef WEBSERVER_USE_WEBSOCKETS
+	case 's':
+		CHECK_HEADER_LINE("Sec-WebSocket-Key: ",SecWebSocketKey)
+		CHECK_HEADER_LINE("Sec-WebSocket-Protocol: ",SecWebSocketProtocol)
+
+		h_len = sizeof("Sec-WebSocket-Version: ") - 1;
+		if (!strncmp( line,"Sec-WebSocket-Version: ",h_len))
+		{
+			sscanf(&line[h_len],"%d",&header->SecWebSocketVersion);
+			return 0;
+		}
+		break;
+#endif
+
+	/*   ---------------------- u block ----------------------  */
+	case 'u':
+		CHECK_HEADER_LINE("Upgrade: ", Upgrade)
+		CHECK_HEADER_LINE("User-Agent: ", UserAgent)
+		break;
 	}
 
 	return 0;
-
 }
 
 /*
