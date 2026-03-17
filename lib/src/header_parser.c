@@ -602,7 +602,7 @@ static int matchHeaderFields(char *line, unsigned int length, HttpRequestHeader 
 		CHECK_HEADER_LINE("Sec-WebSocket-Protocol: ",SecWebSocketProtocol)
 
 		h_len = sizeof("Sec-WebSocket-Version: ") - 1;
-		if (!strncmp( line,"Sec-WebSocket-Version: ",h_len))
+		if (!strncasecmp( line,"Sec-WebSocket-Version: ",h_len))
 		{
 			sscanf(&line[h_len],"%d",&header->SecWebSocketVersion);
 			return 0;
