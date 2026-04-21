@@ -218,7 +218,7 @@ static int header_attr_compare( char* text, unsigned int text_length, char* line
 
 
 #define CHECK_HEADER_LINE2(a,b)  h_len = sizeof(a) - 1; \
-if (!strncmp((char*)line2,a,h_len)) \
+if (!strncasecmp((char*)line2,a,h_len)) \
 { \
 	int crlf_pos = stringfind(line2, "\r\n"); \
 	if (crlf_pos > (int)h_len) { \
@@ -511,7 +511,7 @@ static int matchHeaderFields(char *line, unsigned int length, HttpRequestHeader 
 		}
 
 		if ( header_attr_compare("Content-Type: ",sizeof("Content-Type: ") - 1, line , length ) ){
-			if(stringfind(&line[14],"multipart/form-data") > 0){
+			if(stringfindCaseInsensitive(&line[14],"multipart/form-data") > 0){
 				int i2=stringfind(line,"boundary=");
 				header->contenttype=MULTIPART_FORM_DATA;
 
@@ -533,7 +533,7 @@ static int matchHeaderFields(char *line, unsigned int length, HttpRequestHeader 
 				return 0;
 			}
 
-			if(!strncmp(&line[14],"application/x-www-form-urlencoded",sizeof("application/x-www-form-urlencoded") - 1)){
+			if(!strncasecmp(&line[14],"application/x-www-form-urlencoded",sizeof("application/x-www-form-urlencoded") - 1)){
 				header->contenttype=APPLICATION_X_WWW_FORM_URLENCODED;
 				return 0;
 			}

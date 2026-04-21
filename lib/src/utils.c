@@ -61,6 +61,26 @@ int stringfind(const char *buffer, const char *pattern) {
 
 }
 
+int stringfindCaseInsensitive(const char *buffer, const char *pattern) {
+	int length;
+	int i, i2 = 0;
+	if ( buffer == 0){
+		return 0;
+	}
+	length = (int) strlen((char*) buffer);
+	for (i = 0; i < length; i++){
+		if (tolower((unsigned char)buffer[i]) == tolower((unsigned char)pattern[i2])) {
+			i2++;
+			if (pattern[i2] == '\0'){
+				return i;
+			}
+		} else {
+			i2 = 0;
+		}
+	}
+	return 0;
+}
+
 long stringnfind(const char *buffer, const char *pattern, unsigned int buffer_length) {
 	unsigned int i, i2 = 0;
 	
