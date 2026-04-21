@@ -416,6 +416,11 @@ static int handleClientHeaderData(socket_info* sock) {
 			sock->closeSocket = 1;
 			return -1;
 		}
+
+		/* Reverse Proxy hat die Verbindung übernommen */
+		if (len2 == -7) {
+			return 2;
+		}
 #ifdef WEBSERVER_USE_WEBSOCKETS
 		if ( 1 == checkIskWebsocketConnection(sock) ){
 			sock->header->header_complete = 0;
@@ -536,6 +541,10 @@ static int handleClient(socket_info* sock) {
 	if (ret == 0) {
 		return 0;
 	}
+	/* Reverse Proxy hat die Verbindung übernommen */
+	if (ret == 2) {
+		return 2;
+	}
 	if (ret == 1) {
 #ifdef WEBSERVER_USE_WEBSOCKETS
 		if ( sock->header->isWebsocket == 1 )
@@ -578,6 +587,7 @@ static int handleClient(socket_info* sock) {
 		}
 
 		WebserverResetHttpRequestHeader(sock->header);
+		sock->reverse_proxy_checked = 0;
 		return 1;
 
 	}
@@ -1069,7 +1079,19 @@ void handleer( int a, short b, void *t ) {
 
 	if ( sock->extern_handle != 0 )
 	{
-		sock->extern_handle(sock->socket, sock->extern_handle_data_ptr);
+		do {
+			sock->extern_handle(sock->socket, sock->extern_handle_data_ptr);
+			/* Nach extern_handle prüfen ob Socket geschlossen werden soll
+			 * (z.B. Reverse Proxy DONE/ERROR) */
+			if (sock->closeSocket == 1) {
+				WebserverConnectionManagerCloseRequest(sock);
+				return;
+			}
+			/* extern_handle könnte sich selbst deregistriert haben (z.B. Proxy DONE) */
+			if (sock->extern_handle == 0) {
+				break;
+			}
+		} while ( WebserverSSLPending(sock) );
 		return;
 	}
 
@@ -1134,7 +1156,18 @@ void handleer( int a, short b, void *t ) {
 				return;
 			}
 			// TODO Websocket handling testen
-			if ( ret == 2 ){ // Websocket wurde behandelt
+			if ( ret == 2 ){ // Websocket/Proxy hat die Verbindung übernommen
+				/* SSL Pending Bytes verarbeiten (z.B. POST Body im SSL Buffer) */
+				while (sock->extern_handle != 0 && WebserverSSLPending(sock)) {
+					sock->extern_handle(sock->socket, sock->extern_handle_data_ptr);
+					if (sock->closeSocket == 1) {
+						WebserverConnectionManagerCloseRequest(sock);
+						return;
+					}
+					if (sock->extern_handle == 0) {
+						break;
+					}
+				}
 				return;
 			}
 

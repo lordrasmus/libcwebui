@@ -76,6 +76,7 @@ SPDX-License-Identifier: MPL-2.0
 #include "intern/webserver_utils.h"
 #include "intern/hashmap.h"
 #include "intern/websockets.h"
+#include "intern/reverse_proxy.h"
 
 #include "is_utf8.h"
 #include "miniz.h"

@@ -121,6 +121,8 @@ void WebserverFreeSocketInfo(socket_info* sock) {
 
 	}
 
+	reverse_proxy_cleanup(sock);
+
 	PlatformDestroyMutex(&sock->socket_mutex);
 
 	WebserverFree(sock);

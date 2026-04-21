@@ -57,7 +57,7 @@ static reverse_proxy_registration_t* g_proxy_registrations = NULL;
 /*
  * Forward Declarations
  */
-static void proxy_process_state(reverse_proxy_connection_t* proxy);
+static int proxy_process_state(reverse_proxy_connection_t* proxy);
 static void proxy_cleanup_connection(reverse_proxy_connection_t* proxy);
 static int proxy_connect_backend(reverse_proxy_connection_t* proxy);
 static int proxy_parse_response_header(reverse_proxy_connection_t* proxy);
@@ -351,8 +351,12 @@ int checkReverseProxy(socket_info* s, char* buffer, int length) {
     s->extern_handle_data_ptr = proxy;
     s->reverse_proxy_checked = 1;
 
-    /* Sofort den vorhandenen Request verarbeiten */
-    proxy_process_state(proxy);
+    /* Sofort den vorhandenen Request verarbeiten
+     * proxy_process_state gibt -1 zurück wenn proxy/s nicht mehr safe zugreifbar sind
+     * (ERROR/DONE: closeSocket gesetzt, Cleanup läuft deferred über den Event-Loop) */
+    if (proxy_process_state(proxy) < 0) {
+        return 0;
+    }
 
     /* Falls noch nicht fertig, Event für weiteres Lesen registrieren */
     if (proxy->state == PROXY_STATE_RECV_CLIENT_HEADER ||
@@ -381,7 +385,10 @@ void reverse_proxy_client_handler(int fd, void* ptr) {
         case PROXY_STATE_RECV_CLIENT_HEADER:
         case PROXY_STATE_RECV_CLIENT_BODY:
             /* Weitere Daten vom Client lesen (mit SSL-Unterstützung für Client-Socket) */
-            if (proxy->request_buffer_pos < proxy->request_buffer_size) {
+            do {
+                if (proxy->request_buffer_pos >= proxy->request_buffer_size) {
+                    break;
+                }
                 bytes_read = WebserverRecv(proxy->client_sock,
                                   &proxy->request_buffer[proxy->request_buffer_pos],
                                   proxy->request_buffer_size - proxy->request_buffer_pos,
@@ -400,7 +407,7 @@ void reverse_proxy_client_handler(int fd, void* ptr) {
                         proxy_process_state(proxy);
                         return;
                     }
-                    return;  /* EAGAIN - später nochmal versuchen */
+                    break;  /* EAGAIN - später nochmal versuchen */
                 }
 
                 /* Defensive check: recv should never return more than requested */
@@ -419,7 +426,7 @@ void reverse_proxy_client_handler(int fd, void* ptr) {
                 LOG(PROXY_LOG, NOTICE_LEVEL, 0, "Received %d bytes from client, total=%d",
                           bytes_read, proxy->request_buffer_pos);
 #endif
-            }
+            } while (WebserverSSLPending(proxy->client_sock));
             break;
 
         case PROXY_STATE_STREAMING_WAIT_WRITE:
@@ -434,7 +441,7 @@ void reverse_proxy_client_handler(int fd, void* ptr) {
 
         case PROXY_STATE_WEBSOCKET_TUNNEL:
             /* WebSocket Tunnel: Daten vom Client zum Backend */
-            {
+            do {
                 unsigned char tunnel_buf[4096];
                 /* Client-Socket: WebserverRecv für SSL-Unterstützung */
                 bytes_read = WebserverRecv(proxy->client_sock, tunnel_buf, sizeof(tunnel_buf), 0);
@@ -448,7 +455,7 @@ void reverse_proxy_client_handler(int fd, void* ptr) {
                         proxy_process_state(proxy);
                         return;
                     }
-                    return;
+                    break;  /* EAGAIN */
                 }
 
                 /* Direkt ans Backend weiterleiten (UDS - kein SSL nötig) */
@@ -464,7 +471,7 @@ void reverse_proxy_client_handler(int fd, void* ptr) {
                     LOG(PROXY_LOG, NOTICE_LEVEL, 0, "WebSocket tunnel: forwarded %d bytes to backend", sent);
 #endif
                 }
-            }
+            } while (WebserverSSLPending(proxy->client_sock));
             return;
 
         default:
@@ -656,7 +663,7 @@ void reverse_proxy_backend_handler(int fd, void* ptr) {
 /*
  * State Machine Processing
  */
-static void proxy_process_state(reverse_proxy_connection_t* proxy) {
+static int proxy_process_state(reverse_proxy_connection_t* proxy) {
     int ret;
 
     switch (proxy->state) {
@@ -665,7 +672,7 @@ static void proxy_process_state(reverse_proxy_connection_t* proxy) {
             ret = proxy_find_header_end(proxy->request_buffer, proxy->request_buffer_pos);
             if (ret < 0) {
                 /* Header noch nicht komplett, weiter lesen */
-                return;
+                return 0;
             }
             
             proxy->request_header_end = ret;
@@ -688,7 +695,7 @@ static void proxy_process_state(reverse_proxy_connection_t* proxy) {
 #endif
                     if (proxy->request_body_received < proxy->request_content_length) {
                         proxy->state = PROXY_STATE_RECV_CLIENT_BODY;
-                        return;
+                        return 0;
                     }
                 } else if (proxy_check_chunked_encoding(proxy->request_buffer,
                                                          proxy->request_header_end)) {
@@ -706,8 +713,7 @@ static void proxy_process_state(reverse_proxy_connection_t* proxy) {
             }
 
             proxy->state = PROXY_STATE_CONNECT_BACKEND;
-            proxy_process_state(proxy);
-            break;
+            return proxy_process_state(proxy);
 
         case PROXY_STATE_RECV_CLIENT_BODY:
             /* Prüfen ob Body komplett */
@@ -719,7 +725,7 @@ static void proxy_process_state(reverse_proxy_connection_t* proxy) {
 #endif
             if (proxy->request_body_received >= proxy->request_content_length) {
                 proxy->state = PROXY_STATE_CONNECT_BACKEND;
-                proxy_process_state(proxy);
+                return proxy_process_state(proxy);
             }
             break;
 
@@ -730,8 +736,7 @@ static void proxy_process_state(reverse_proxy_connection_t* proxy) {
             ret = proxy_connect_backend(proxy);
             if (ret < 0) {
                 proxy->state = PROXY_STATE_ERROR;
-                proxy_process_state(proxy);
-                return;
+                return proxy_process_state(proxy);
             }
 #if _WEBSERVER_PROXY_DEBUG_ >= 2
             /* Timing: Backend verbunden */
@@ -744,8 +749,7 @@ static void proxy_process_state(reverse_proxy_connection_t* proxy) {
             if (proxy_inject_forwarded_headers(proxy) < 0) {
                 LOG(PROXY_LOG, ERROR_LEVEL, 0, "%s", "Failed to inject forwarded headers");
                 proxy->state = PROXY_STATE_ERROR;
-                proxy_process_state(proxy);
-                return;
+                return proxy_process_state(proxy);
             }
 
 #if _WEBSERVER_PROXY_DEBUG_ >= 6
@@ -753,8 +757,7 @@ static void proxy_process_state(reverse_proxy_connection_t* proxy) {
 #endif
 
             proxy->state = PROXY_STATE_SEND_TO_BACKEND;
-            proxy_process_state(proxy);
-            break;
+            return proxy_process_state(proxy);
             
         case PROXY_STATE_SEND_TO_BACKEND:
             /* Request an Backend senden */
@@ -766,12 +769,11 @@ static void proxy_process_state(reverse_proxy_connection_t* proxy) {
 
                 if (sent < 0) {
                     if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                        return;  /* Später nochmal */
+                        return 0;  /* Später nochmal */
                     }
                     LOG(PROXY_LOG, ERROR_LEVEL, 0, "Backend send error: %s", strerror(errno));
                     proxy->state = PROXY_STATE_ERROR;
-                    proxy_process_state(proxy);
-                    return;
+                    return proxy_process_state(proxy);
                 }
 
                 proxy->send_pos += sent;
@@ -805,7 +807,7 @@ static void proxy_process_state(reverse_proxy_connection_t* proxy) {
             /* Prüfen ob Response Header komplett */
             ret = proxy_find_header_end(proxy->response_buffer, proxy->response_buffer_pos);
             if (ret < 0) {
-                return;  /* Header noch nicht komplett */
+                return 0;  /* Header noch nicht komplett */
             }
 
             proxy->response_header_end = ret;
@@ -827,8 +829,7 @@ static void proxy_process_state(reverse_proxy_connection_t* proxy) {
 #endif
                 /* Header senden, dann Tunnel - KEIN Connection: close bei WebSockets! */
                 proxy->state = PROXY_STATE_STREAMING;
-                proxy_process_state(proxy);
-                return;
+                return proxy_process_state(proxy);
             }
 
             /* Connection: close injizieren für sauberes Verbindungsende (nicht bei WebSockets) */
@@ -885,8 +886,7 @@ static void proxy_process_state(reverse_proxy_connection_t* proxy) {
             proxy->send_pos = 0;
             proxy->response_header_sent = 0;
             proxy->response_body_sent = 0;
-            proxy_process_state(proxy);
-            break;
+            return proxy_process_state(proxy);
 
         case PROXY_STATE_STREAMING:
             /* Streaming: Daten sofort an Client weiterleiten */
@@ -908,12 +908,11 @@ static void proxy_process_state(reverse_proxy_connection_t* proxy) {
                         if (status == SOCKET_SEND_SEND_BUFFER_FULL) {
                             proxy->state = PROXY_STATE_STREAMING_WAIT_WRITE;
                             addEventSocketWritePersist(proxy->client_sock);
-                            return;
+                            return 0;
                         }
                         if (status == SOCKET_SEND_CLIENT_DISCONNECTED) {
                             proxy->state = PROXY_STATE_ERROR;
-                            proxy_process_state(proxy);
-                            return;
+                            return proxy_process_state(proxy);
                         }
 
                         proxy->send_pos += sent;
@@ -921,7 +920,7 @@ static void proxy_process_state(reverse_proxy_connection_t* proxy) {
                             /* Keine Daten gesendet, später nochmal versuchen */
                             proxy->state = PROXY_STATE_STREAMING_WAIT_WRITE;
                             addEventSocketWritePersist(proxy->client_sock);
-                            return;
+                            return 0;
                         }
                     }
                     proxy->response_header_sent = 1;
@@ -939,7 +938,7 @@ static void proxy_process_state(reverse_proxy_connection_t* proxy) {
                         delEventSocketAll(proxy->backend_sock);
                         addEventSocketReadPersist(proxy->client_sock);
                         addEventSocketReadPersist(proxy->backend_sock);
-                        return;
+                        return 0;
                     }
                 }
 
@@ -953,19 +952,18 @@ static void proxy_process_state(reverse_proxy_connection_t* proxy) {
                     if (status == SOCKET_SEND_SEND_BUFFER_FULL) {
                         proxy->state = PROXY_STATE_STREAMING_WAIT_WRITE;
                         addEventSocketWritePersist(proxy->client_sock);
-                        return;
+                        return 0;
                     }
                     if (status == SOCKET_SEND_CLIENT_DISCONNECTED) {
                         proxy->state = PROXY_STATE_ERROR;
-                        proxy_process_state(proxy);
-                        return;
+                        return proxy_process_state(proxy);
                     }
 
                     if (sent == 0) {
                         /* Keine Daten gesendet, später nochmal versuchen */
                         proxy->state = PROXY_STATE_STREAMING_WAIT_WRITE;
                         addEventSocketWritePersist(proxy->client_sock);
-                        return;
+                        return 0;
                     }
 
                     proxy->send_pos += sent;
@@ -994,12 +992,11 @@ static void proxy_process_state(reverse_proxy_connection_t* proxy) {
                             proxy->state = PROXY_STATE_WEBSOCKET_TUNNEL;
                             addEventSocketReadPersist(proxy->client_sock);
                             addEventSocketReadPersist(proxy->backend_sock);
-                            return;
+                            return 0;
                         }
 
                         proxy->state = PROXY_STATE_DONE;
-                        proxy_process_state(proxy);
-                        return;
+                        return proxy_process_state(proxy);
                     }
                 }
                 /* Für BODY_MODE_CLOSE warten wir bis Backend schließt */
@@ -1015,24 +1012,24 @@ static void proxy_process_state(reverse_proxy_connection_t* proxy) {
             LOG(PROXY_LOG, NOTICE_LEVEL, 0, "%s", "Proxy error state, cleaning up");
 #endif
             {
-                socket_info* client = proxy->client_sock;
-
                 /* 502 Error senden wenn noch keine Response gesendet wurde */
                 if (proxy->response_header_sent == 0) {
                     LOG(PROXY_LOG, NOTICE_LEVEL, 0, "Sending 502 Bad Gateway for %s", proxy->request_url);
                     proxy_send_error_response(proxy);
                 }
 
-                client->reverse_proxy_error = 1;
-                /* extern_handle_data_ptr auf NULL setzen BEVOR cleanup,
-                 * um Rekursion bei WebserverConnectionManagerCloseRequest zu vermeiden */
-                client->extern_handle_data_ptr = NULL;
-                client->extern_handle = NULL;
-                proxy_cleanup_connection(proxy);
-                /* Client Socket schließen über ConnectionManager */
-                WebserverConnectionManagerCloseRequest(client);
+                proxy->client_sock->reverse_proxy_error = 1;
+                proxy->client_sock->closeSocket = 1;
+                proxy->client_sock->extern_handle = NULL;
+                /* Backend Events sofort deregistrieren */
+                if (proxy->backend_sock != NULL) {
+                    delEventSocketAll(proxy->backend_sock);
+                }
+                /* Read Event registrieren damit der Event-Handler closeSocket prüft */
+                addEventSocketRead(proxy->client_sock);
+                /* Restlicher Proxy Cleanup über reverse_proxy_cleanup() in WebserverFreeSocketInfo */
             }
-            break;
+            return -1;
 
         case PROXY_STATE_DONE:
 #if _WEBSERVER_PROXY_DEBUG_ >= 2
@@ -1053,21 +1050,22 @@ static void proxy_process_state(reverse_proxy_connection_t* proxy) {
 #if _WEBSERVER_PROXY_DEBUG_ >= 2
             LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "%s", "Proxy done, cleaning up");
 #endif
-            {
-                socket_info* client = proxy->client_sock;
-                /* extern_handle_data_ptr auf NULL setzen BEVOR cleanup */
-                client->extern_handle_data_ptr = NULL;
-                client->extern_handle = NULL;
-                proxy_cleanup_connection(proxy);
-                /* Client Socket schließen über ConnectionManager */
-                WebserverConnectionManagerCloseRequest(client);
+            proxy->client_sock->closeSocket = 1;
+            proxy->client_sock->extern_handle = NULL;
+            /* Backend Events sofort deregistrieren */
+            if (proxy->backend_sock != NULL) {
+                delEventSocketAll(proxy->backend_sock);
             }
-            break;
-            
+            /* Read Event registrieren damit der Event-Handler closeSocket prüft */
+            addEventSocketRead(proxy->client_sock);
+            /* Restlicher Proxy Cleanup über reverse_proxy_cleanup() in WebserverFreeSocketInfo */
+            return -1;
+
         default:
             LOG(PROXY_LOG, ERROR_LEVEL, 0, "Unknown state: %d", proxy->state);
             break;
     }
+    return 0;
 }
 
 /*
@@ -1499,6 +1497,9 @@ static void proxy_cleanup_connection(reverse_proxy_connection_t* proxy) {
     if (proxy->backend_sock != NULL) {
         delEventSocketAll(proxy->backend_sock);
         deleteSocket(proxy->backend_sock);
+        /* extern_handle_data_ptr vor WebserverFreeSocketInfo auf NULL setzen,
+         * um Rekursion über reverse_proxy_cleanup zu vermeiden */
+        proxy->backend_sock->extern_handle_data_ptr = NULL;
         if (proxy->backend_fd >= 0) {
             close(proxy->backend_fd);
             proxy->backend_fd = -1;
