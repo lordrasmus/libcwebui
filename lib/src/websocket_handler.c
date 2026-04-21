@@ -114,10 +114,10 @@ static int handleWebsocket(socket_info* sock, EVENT_TYPES type) {
 				return -1;
 			}
 
-			if (ws_list_empty(&sock->websocket_chunk_list) == 1) {
-				delEventSocketAll(sock);
-				addEventSocketReadPersist(sock);
-			}
+			/* Nach dem Senden Events anpassen:
+			 * Liste leer -> nur READ (WRITE deregistrieren, sonst Busy-Loop)
+			 * Liste nicht leer (partial send) -> READ+WRITE (damit restliche Daten gesendet werden) */
+			updateWebsocketEventFlags(sock, ws_list_empty(&sock->websocket_chunk_list));
 
 			PlatformUnlockMutex(&sock->socket_mutex);
 			break;

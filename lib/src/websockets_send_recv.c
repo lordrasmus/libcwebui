@@ -130,18 +130,16 @@ int sendWebsocketFrame(const Opcodes op_code, const char* guid,const  char* in, 
 }
 
 static void insert_websocket_output_chunk(socket_info *sock, const unsigned char* in, const WEBSOCK_LEN_T length){
-	int ret;
-	ret = ws_list_empty(&sock->websocket_chunk_list);
+	int was_empty;
+	was_empty = ws_list_empty(&sock->websocket_chunk_list);
 
 	sendWebsocketChunk(sock, in, length);
 
-	PlatformUnlockMutex(&sock->socket_mutex);
-
-	/* Write Event nur hinzufuegen wenn noch keine frames in der liste waren */
-	if (ret == 1) {
-		delEventSocketAll(sock);
-		addEventSocketReadWritePersist(sock);
+	if (was_empty == 1) {
+		activateEventSocketWrite(sock);
 	}
+
+	PlatformUnlockMutex(&sock->socket_mutex);
 }
 
 /*

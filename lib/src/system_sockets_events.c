@@ -306,6 +306,37 @@ void delEventSocketAll(socket_info* sock) {
 	return event_pending(sock->my_ev, EV_TIMEOUT | EV_READ | EV_WRITE | EV_SIGNAL, NULL );
 }*/
 
+void activateEventSocketWrite(socket_info* sock){
+	/* ACHTUNG: event_active() ist zwar thread-safe (evthread_use_pthreads),
+	 * aber es gibt ein Race-Condition Problem:
+	 * - Aufruf innerhalb socket_mutex -> ABBA Deadlock mit libevent internem Lock
+	 * - Aufruf nach socket_mutex unlock -> Socket kann zwischen Unlock und
+	 *   event_active() bereits geschlossen/freigegeben worden sein (use-after-free)
+	 * Fuer eine korrekte Loesung muesste man eventfd oder eine pipe nutzen
+	 * um den Event-Loop Thread sicher aufzuwecken. */
+	if (sock->my_ev != 0) {
+		event_active(sock->my_ev, EV_WRITE, 1);
+	}
+}
+
+void updateWebsocketEventFlags(socket_info* sock, int list_empty){
+	/* Websocket Verbindung ist bereits aufgebaut, SSL Handshake abgeschlossen,
+	 * daher kein SSL-Blocking Check noetig. */
+	if (list_empty) {
+		if (event_pending(sock->my_ev, EV_WRITE, NULL)) {
+			event_del(sock->my_ev);
+			event_assign(sock->my_ev, base, sock->socket, EV_READ | EV_PERSIST, eventHandler, sock);
+			event_add(sock->my_ev, NULL);
+		}
+	} else {
+		if (!event_pending(sock->my_ev, EV_WRITE, NULL)) {
+			event_del(sock->my_ev);
+			event_assign(sock->my_ev, base, sock->socket, EV_READ | EV_WRITE | EV_PERSIST, eventHandler, sock);
+			event_add(sock->my_ev, NULL);
+		}
+	}
+}
+
 void deleteEvent(socket_info* sock){
 	if ( sock->my_ev != 0){
 		event_free(sock->my_ev);
@@ -358,7 +389,7 @@ void initEvents( void ) {
 	free(list);
 
 	/* LOG(MESSAGE_LOG, NOTICE_LEVEL, 0, "libEvent %s using %s ( Methods: %s )", event_get_version() , event_get_method() , buffer); */
-	LOG(MESSAGE_LOG, NOTICE_LEVEL, 0, "libEvent %s ( Methods: %s )", event_get_version() , buffer);
+	LOG(MESSAGE_LOG, NOTICE_LEVEL, 0, "event dispatcher: libEvent %s ( Methods: %s )", event_get_version() , buffer);
 
 }
 

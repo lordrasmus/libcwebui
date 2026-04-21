@@ -51,6 +51,8 @@ void delEventSocketAll(socket_info* sock);
 
 void commitSslEventFlags( socket_info* sock );
 
+void activateEventSocketWrite(socket_info* sock);
+void updateWebsocketEventFlags(socket_info* sock, int list_empty);
 void deleteEvent(socket_info* sock);
 char checkEventSocket(socket_info* sock);
 char waitEvents(void);

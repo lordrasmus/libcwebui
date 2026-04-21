@@ -21,14 +21,25 @@ static volatile int break_loop = 0;
 void _set_main_thread( void ){}
 
 void eventHandler(int fd, short flags, void *arg) {
-    socket_info *sock = (socket_info *)arg;
-    short event_type = 0;
 
-    if (flags & EPOLLIN) event_type |= EVENT_READ;
-    if (flags & EPOLLOUT) event_type |= EVENT_WRITE;
-    if (flags & EPOLLERR || flags & EPOLLHUP) event_type |= EVENT_TIMEOUT;
+    if (flags & EPOLLERR || flags & EPOLLHUP) {
+        handleer(fd, EVENT_TIMEOUT, arg);
+        return;
+    }
 
-    handleer(fd, event_type, arg);
+    /* READ und WRITE getrennt dispatchen, da handleer/handleWebsocket
+     * ein switch(type) nutzt und kombinierte Flags nicht matcht. */
+    if (flags & EPOLLIN) {
+        handleer(fd, EVENT_READ, arg);
+        return;
+    }
+    if (flags & EPOLLOUT) {
+        handleer(fd, EVENT_WRITE, arg);
+    }
+
+    if (flags & ~(EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP)) {
+        printf("BUG: epoll unhandled flags 0x%X\n", flags);
+    }
 }
 
 void initEvents(void) {
@@ -37,6 +48,7 @@ void initEvents(void) {
         perror("epoll_create1 failed");
         exit(1);
     }
+    LOG(MESSAGE_LOG, NOTICE_LEVEL, 0, "%s", "event dispatcher: epoll");
 }
 
 void freeEvents(void) {
@@ -110,6 +122,20 @@ void delEventSocketAll(socket_info *sock) {
     if (sock->registered) {
         epoll_ctl(epoll_fd, EPOLL_CTL_DEL, sock->socket, NULL);
         sock->registered = 0;
+    }
+}
+
+void activateEventSocketWrite(socket_info *sock) {
+    /* epoll_ctl ist kernel-thread-safe, kein Deadlock moeglich.
+     * WRITE zu den aktuellen Events hinzufuegen. */
+    modifyEpoll(sock, EPOLLIN | EPOLLOUT, 1);
+}
+
+void updateWebsocketEventFlags(socket_info *sock, int list_empty) {
+    if (list_empty) {
+        modifyEpoll(sock, EPOLLIN, 1);
+    } else {
+        modifyEpoll(sock, EPOLLIN | EPOLLOUT, 1);
     }
 }
 
