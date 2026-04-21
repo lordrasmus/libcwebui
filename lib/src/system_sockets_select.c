@@ -385,6 +385,8 @@ void initEvents( void ) {
 		
 	FD_ZERO(&gesamt_lese_sockets);
 	FD_ZERO(&gesamt_schreibe_sockets);
+
+	LOG(MESSAGE_LOG, NOTICE_LEVEL, 0, "%s", "event dispatcher: select");
 }
 
 #if 0

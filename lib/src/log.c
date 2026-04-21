@@ -48,6 +48,9 @@ void addLog ( LogChannels channel,LogLevels level,char* filename,int fileline,co
 	len=0;
 
 	switch ( level ){
+		case DEBUG_LEVEL:
+			printf(" DEBUG   : ( %d ) : ",socket);
+			break;
 		case NOTICE_LEVEL:
 			printf(" NOTICE  : ( %d ) : ",socket);
 			break;
@@ -74,6 +77,7 @@ void addLog ( LogChannels channel,LogLevels level,char* filename,int fileline,co
 	printf( "%s", buff );
 	
 	switch ( level ){
+		case DEBUG_LEVEL:
 		case NOTICE_LEVEL:
 			break;
 		case INFO_LEVEL:
