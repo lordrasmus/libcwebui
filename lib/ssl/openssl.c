@@ -46,6 +46,8 @@ SPDX-License-Identifier: MPL-2.0
 #include "webserver.h"
 #endif
 
+#include <pthread.h>
+
 #ifdef DMALLOC
 #include <dmalloc/dmalloc.h>
 #endif
@@ -74,6 +76,7 @@ struct sha_context {
 };
 
 SSL_CTX *g_ctx;
+static pthread_mutex_t g_ctx_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 BIO *bio_err = 0;
@@ -86,6 +89,7 @@ static long sess_cache_mode;
 SSL_CTX *initialize_ctx( char *keyfile, char* keyfile_backup, char* ca, char *password );
 int load_dh_params(SSL_CTX *ctx, char *file);
 void printSSLErrorQueue(socket_info* s);
+static SSL_CTX *build_ssl_ctx(void);
 
 int initOpenSSL(void) {
 
@@ -137,39 +141,40 @@ int initOpenSSL(void) {
 	OpenSSL_add_all_algorithms(); // load & register cryptos
 	SSL_load_error_strings(); // load all error messages
 
-	g_ctx = initialize_ctx(
+	g_ctx = build_ssl_ctx();
+
+	if ( g_ctx == NULL ){
+		LOG( SSL_LOG, ERROR_LEVEL, 0, "%s","SSL fehler init ctx, SSL disabled");
+		return -1;
+	}
+
+	return 0;
+}
+
+static SSL_CTX *build_ssl_ctx(void) {
+
+	SSL_CTX *ctx = initialize_ctx(
 							getConfigText("ssl_key_file"),
 							getConfigText("ssl_key_file_backup"),
 							getConfigText("ssl_ca_list_file"),
 							getConfigText("ssl_key_file_password")
 						);
 
-	if ( g_ctx == NULL ){
-		LOG( SSL_LOG, ERROR_LEVEL, 0, "%s","SSL fehler init ctx, SSL disabled");
-		return -1;
+	if ( ctx == NULL ){
+		LOG( SSL_LOG, ERROR_LEVEL, 0, "%s","SSL fehler init ctx");
+		return NULL;
 	}
-	if (load_dh_params(g_ctx, getConfigText("ssl_dh_file") ) < 0) {
+
+	if (load_dh_params(ctx, getConfigText("ssl_dh_file") ) < 0) {
 		LOG( SSL_LOG, ERROR_LEVEL, 0,"%s", "SSL fehler dh_params");
-		return -1;
+		SSL_CTX_free( ctx );
+		return NULL;
 	}
 
-	//cache_mode = SSL_SESS_CACHE_OFF; // No session caching for client or server takes place.
+	sess_cache_mode = SSL_CTX_get_session_cache_mode(ctx);
 
-	//sess_cache_mode = SSL_SESS_CACHE_SERVER|SSL_SESS_CACHE_NO_INTERNAL;
-	//SSL_CTX_set_session_cache_mode(g_ctx, sess_cache_mode);
-
-
-	sess_cache_mode = SSL_CTX_get_session_cache_mode(g_ctx);
-
-	//printf("sess_cache_mode: 0x%X\n",sess_cache_mode);
-
-	//SSL_CTX_sess_set_new_cb(ctx,    ssl_callback_NewSessionCacheEntry);
-	//SSL_CTX_sess_set_get_cb(ctx,    ssl_callback_GetSessionCacheEntry);
-	//SSL_CTX_sess_set_remove_cb(ctx, ssl_callback_DelSessionCacheEntry);
-
-
-	SSL_CTX_set_mode(g_ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
-	SSL_CTX_set_read_ahead(g_ctx, 1);
+	SSL_CTX_set_mode(ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+	SSL_CTX_set_read_ahead(ctx, 1);
 
 	int ops = 0;
 	if ( 1 == getConfigInt("ssl_disable_SSLv2") )   ops |= SSL_OP_NO_SSLv2;
@@ -177,13 +182,36 @@ int initOpenSSL(void) {
 	if ( 1 == getConfigInt("ssl_disable_TLSv1.0") ) ops |= SSL_OP_NO_TLSv1;
 	if ( 1 == getConfigInt("ssl_disable_TLSv1.1") ) ops |= SSL_OP_NO_TLSv1_1;
 
-
 	// SSLv2, SSLv3 deaktivieren , testen :   nmap --script ssl-cert,ssl-enum-ciphers -p 443 192.168.11.94
-	SSL_CTX_set_options(g_ctx, ops );
+	SSL_CTX_set_options(ctx, ops );
 
+	return ctx;
+}
+
+#pragma GCC visibility push(default)
+int WebserverSSLReload(void) {
+
+	SSL_CTX *new_ctx = build_ssl_ctx();
+
+	if ( new_ctx == NULL ){
+		LOG( SSL_LOG, ERROR_LEVEL, 0, "%s","SSL Reload fehlgeschlagen, Zertifikat unveraendert");
+		return -1;
+	}
+
+	pthread_mutex_lock( &g_ctx_mutex );
+	SSL_CTX *old_ctx = g_ctx;
+	g_ctx = new_ctx;
+	pthread_mutex_unlock( &g_ctx_mutex );
+
+	if ( old_ctx != NULL ){
+		SSL_CTX_free( old_ctx );
+	}
+
+	LOG( SSL_LOG, NOTICE_LEVEL, 0, "%s","SSL Zertifikat neu geladen");
 
 	return 0;
 }
+#pragma GCC visibility pop
 
 /*static int password_cb(char *buf, int num, UNUSED_PARA int rwflag, UNUSED_PARA void *userdata) {
 	if (num < (int) strlen(pass) + 1) return (0);
@@ -363,7 +391,9 @@ int WebserverSSLInit(socket_info* s) {
 		 s->ssl_context = (struct ssl_store_s*) WebserverMalloc ( sizeof ( struct ssl_store_s ) );
 	}
 
+	pthread_mutex_lock( &g_ctx_mutex );
 	s->ssl_context->ssl = SSL_new(g_ctx);
+	pthread_mutex_unlock( &g_ctx_mutex );
 	if (s->ssl_context->ssl == 0){
 		LOG(CONNECTION_LOG, ERROR_LEVEL, s->socket,"%s", "WebserverSSLInit fehler");
 	}
