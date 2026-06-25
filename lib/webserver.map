@@ -2,7 +2,8 @@ WEBSERVER_1.0 {
   global: 	WebserverInit;
   			WebserverStart;
   			WebserverShutdown;
-  			WebserverShutdownHandler;  			
+  			WebserverShutdownHandler;
+  			WebserverSSLReload;
   			WebserverAddFileDir;
   			WebserverAddTemplateFilePostfix;
   			WebserverAddTemplateIgnoreFilePostfix;

@@ -439,6 +439,7 @@ int  WebserverInit(void);
 void WebserverStart(void);
 void WebserverShutdown(void);
 void WebserverShutdownHandler(void);
+int  WebserverSSLReload(void);
 
 void WebserverConfigSetInt(const char* name, int value);
 int  WebserverConfigGetInt(const char* name);
