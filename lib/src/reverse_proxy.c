@@ -395,19 +395,23 @@ void reverse_proxy_client_handler(int fd, void* ptr) {
                                   0);
 
                 if (bytes_read <= 0) {
-#if _WEBSERVER_PROXY_DEBUG_ >= 3
-                    if (bytes_read == 0) {
-                        LOG(PROXY_LOG, NOTICE_LEVEL, 0, "%s", "Client disconnected");
-                    } else if (errno != EAGAIN && errno != EWOULDBLOCK) {
-                        LOG(PROXY_LOG, NOTICE_LEVEL, 0, "Client recv error: %s", strerror(errno));
+                    /* "Wuerde blockieren": bei SSL liefert WebserverRecv
+                     * CLIENT_NO_MORE_DATA (0), bei Plain-Sockets -1 mit EAGAIN.
+                     * Alles andere (echter Fehler / Disconnect) -> beenden.
+                     * Wichtig fuer grosse HTTPS-Uploads, die ueber mehrere
+                     * Read-Events kommen. */
+                    int wouldblock;
+                    if (proxy->client_sock->use_ssl) {
+                        wouldblock = (bytes_read == CLIENT_NO_MORE_DATA);
+                    } else {
+                        wouldblock = (bytes_read < 0 && (errno == EAGAIN || errno == EWOULDBLOCK));
                     }
-#endif
-                    if (bytes_read == 0 || (errno != EAGAIN && errno != EWOULDBLOCK)) {
+                    if (!wouldblock) {
                         proxy->state = PROXY_STATE_ERROR;
                         proxy_process_state(proxy);
                         return;
                     }
-                    break;  /* EAGAIN - später nochmal versuchen */
+                    break;  /* wuerde blockieren - auf naechstes Read-Event warten */
                 }
 
                 /* Defensive check: recv should never return more than requested */
@@ -500,6 +504,12 @@ void reverse_proxy_backend_handler(int fd, void* ptr) {
 #endif
 
     switch (proxy->state) {
+        case PROXY_STATE_SEND_TO_BACKEND:
+            /* Backend wieder schreibbar: restlichen Request-Body senden
+             * (partieller Send bei grossen Uploads, siehe proxy_process_state). */
+            proxy_process_state(proxy);
+            break;
+
         case PROXY_STATE_RECV_BACKEND_HEADER:
             /* Daten vom Backend lesen - warten auf kompletten Header */
             if (proxy->response_buffer_pos < proxy->response_buffer_size) {
@@ -693,6 +703,28 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                               (unsigned long)proxy->request_content_length,
                               (unsigned long)proxy->request_body_received);
 #endif
+                    /* Request-Buffer auf die Upload-Groesse vergroessern (Default
+                     * 64 KB), gedeckelt auf 512 MB. Der Request wird komplett
+                     * gepuffert, bevor er ans Backend geht; ohne das Wachsen
+                     * werden Bodies > 64 KB abgeschnitten/blockiert. */
+                    {
+                        uint64_t needed = (uint64_t)proxy->request_header_end
+                                        + proxy->request_content_length + 1;
+                        const uint64_t cap = (uint64_t)512 * 1024 * 1024;
+                        if (needed > cap) needed = cap;
+                        if (needed > proxy->request_buffer_size) {
+                            unsigned char* nb = WebserverRealloc(proxy->request_buffer,
+                                                                 (unsigned long)needed);
+                            if (nb == NULL) {
+                                LOG(PROXY_LOG, ERROR_LEVEL, 0, "%s",
+                                    "Failed to grow request buffer for upload");
+                                proxy->state = PROXY_STATE_ERROR;
+                                return proxy_process_state(proxy);
+                            }
+                            proxy->request_buffer = nb;
+                            proxy->request_buffer_size = (uint32_t)needed;
+                        }
+                    }
                     if (proxy->request_body_received < proxy->request_content_length) {
                         proxy->state = PROXY_STATE_RECV_CLIENT_BODY;
                         return 0;
@@ -767,9 +799,16 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                                &proxy->request_buffer[proxy->send_pos],
                                to_send, 0);
 
+                /* Backend-Handler registrieren, damit Write-Events (partieller
+                 * Send / EAGAIN bei grossen Uploads) wieder hier landen und der
+                 * Rest gesendet wird (siehe backend_handler: SEND_TO_BACKEND). */
+                proxy->backend_sock->extern_handle = reverse_proxy_backend_handler;
+                proxy->backend_sock->extern_handle_data_ptr = proxy;
+
                 if (sent < 0) {
                     if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                        return 0;  /* Später nochmal */
+                        addEventSocketWritePersist(proxy->backend_sock);
+                        return 0;  /* auf Schreibbarkeit warten */
                     }
                     LOG(PROXY_LOG, ERROR_LEVEL, 0, "Backend send error: %s", strerror(errno));
                     proxy->state = PROXY_STATE_ERROR;
@@ -781,25 +820,26 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                 LOG(PROXY_LOG, NOTICE_LEVEL, 0, "Sent %d bytes to backend, total=%d/%d",
                           sent, proxy->send_pos, proxy->request_buffer_pos);
 #endif
-                
-                if (proxy->send_pos >= proxy->request_buffer_pos) {
-                    /* Alles gesendet */
-#if _WEBSERVER_PROXY_DEBUG_ >= 2
-                    /* Timing: Request vollständig gesendet */
-                    clock_gettime(CLOCK_MONOTONIC, &proxy->time_request_sent);
-#endif
 
-                    proxy->send_pos = 0;
-                    proxy->state = PROXY_STATE_RECV_BACKEND_HEADER;
-                    
-                    /* Backend Socket Event registrieren */
-                    proxy->backend_sock->extern_handle = reverse_proxy_backend_handler;
-                    proxy->backend_sock->extern_handle_data_ptr = proxy;
-                    addEventSocketReadPersist(proxy->backend_sock);
-                    
-                    /* Client Socket Event deaktivieren (erstmal) */
-                    delEventSocketReadPersist(proxy->client_sock);
+                if (proxy->send_pos < proxy->request_buffer_pos) {
+                    /* Partieller Send (grosser Upload > Socket-Sendepuffer): Rest
+                     * senden, sobald das Backend wieder schreibbar ist. */
+                    addEventSocketWritePersist(proxy->backend_sock);
+                    return 0;
                 }
+
+                /* Alles gesendet */
+#if _WEBSERVER_PROXY_DEBUG_ >= 2
+                /* Timing: Request vollständig gesendet */
+                clock_gettime(CLOCK_MONOTONIC, &proxy->time_request_sent);
+#endif
+                delEventSocketWritePersist(proxy->backend_sock);
+                proxy->send_pos = 0;
+                proxy->state = PROXY_STATE_RECV_BACKEND_HEADER;
+                addEventSocketReadPersist(proxy->backend_sock);
+
+                /* Client Socket Event deaktivieren (erstmal) */
+                delEventSocketReadPersist(proxy->client_sock);
             }
             break;
             
