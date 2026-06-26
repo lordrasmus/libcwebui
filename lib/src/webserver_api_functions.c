@@ -374,6 +374,12 @@ int    getPostSize(dummy_handler* s){
 	return ((http_request*) s)->header->contentlenght;
 }
 
+const char* ws_get_client_ip(dummy_handler* s){
+	http_request* r = (http_request*) s;
+	if ( r == NULL || r->socket == NULL ) return "";
+	return r->socket->client_ip_str;
+}
+
 /*****************************************************************************
  *
  *						Request Status Informationen
