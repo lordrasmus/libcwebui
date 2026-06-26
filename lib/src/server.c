@@ -54,6 +54,7 @@ static void endHTTPRequest(http_request *s) {
 		WebserverFree(f_info);
 	}
 	ws_list_iterator_stop(&s->upload_files);
+	ws_list_clear(&s->upload_files);   /* Iterator gibt nur Payloads frei, nicht die Knoten */
 
 	ws_list_iterator_start(&s->custom_response_headers);
 	while( ( h_info = (custom_response_header*)ws_list_iterator_next(&s->custom_response_headers) ) ){
@@ -62,6 +63,7 @@ static void endHTTPRequest(http_request *s) {
 		WebserverFree(h_info);
 	}
 	ws_list_iterator_stop(&s->custom_response_headers);
+	ws_list_clear(&s->custom_response_headers);
 }
 
 

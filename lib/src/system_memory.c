@@ -92,6 +92,20 @@ void WebserverFreeSocketInfo(socket_info* sock) {
 	WebserverFree(sock->websocket_buffer);
 	WebserverFree(sock->websocket_guid);
 	WebserverFree(sock->websocket_store_guid);
+
+	/* WebSocket-Fragmente und Streaming-Kontext beim Disconnect freigeben —
+	 * sonst bleiben Referenzen auf geschlossene Verbindungen haengen und
+	 * sammeln sich (Speicher + Event-Verarbeitung fuer tote Verbindungen). */
+	{
+		unsigned char* frag;
+		while ((frag = (unsigned char*)ws_list_extract_at(&sock->websocket_fragments, 0)) != NULL) {
+			WebserverFree(frag);
+		}
+	}
+	if (sock->websocket_stream_ctx != NULL) {
+		freeWebsocketStreamContext(sock->websocket_stream_ctx);
+		sock->websocket_stream_ctx = NULL;
+	}
 #endif
 
 	freeChunkList(&sock->header_chunk_list);
