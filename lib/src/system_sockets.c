@@ -138,6 +138,33 @@ int WebserverStartConnectionManager(void) {
 }
 
 
+#if defined(__linux__)
+#include <sys/socket.h>
+#include <netinet/tcp.h>
+#endif
+
+/* TCP-Keepalive auf akzeptierten Client-Sockets: erkennt tot verschwundene Peers
+ * (Client/Agent ohne FIN) viel schneller als der Kernel-Default (2h bis zur 1.
+ * Probe) und haelt nebenbei NAT-Mappings warm. Erkennung ~ IDLE + PROBES*INTVL. */
+#define TCP_KEEPALIVE_IDLE_SEC   60
+#define TCP_KEEPALIVE_INTVL_SEC  15
+#define TCP_KEEPALIVE_PROBES     4
+
+static void enable_tcp_keepalive(int s) {
+#if defined(__linux__)
+	int on = 1;
+	int idle = TCP_KEEPALIVE_IDLE_SEC;
+	int intvl = TCP_KEEPALIVE_INTVL_SEC;
+	int cnt = TCP_KEEPALIVE_PROBES;
+	setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on));
+	setsockopt(s, IPPROTO_TCP, TCP_KEEPIDLE, &idle, sizeof(idle));
+	setsockopt(s, IPPROTO_TCP, TCP_KEEPINTVL, &intvl, sizeof(intvl));
+	setsockopt(s, IPPROTO_TCP, TCP_KEEPCNT, &cnt, sizeof(cnt));
+#else
+	(void)s;
+#endif
+}
+
 static socket_info* addClientSocket(int s, char ssl) {
 	socket_info* info;
 	info = WebserverMallocSocketInfo();
@@ -151,6 +178,7 @@ static socket_info* addClientSocket(int s, char ssl) {
 		info->server = 0;
 		info->active = 1;
 		info->socket = s;
+		enable_tcp_keepalive(s);
 		addSocketContainer(info);
 		addEventSocketRead(info); /*  | EV_PERSIST| EV_WRITE */
 		return info;
