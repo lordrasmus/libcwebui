@@ -29,15 +29,15 @@ SPDX-License-Identifier: MPL-2.0
 
 
 #if defined( LINUX ) || defined( NUTTX )
-	#if !defined( USE_LIBEVENT ) && !defined( USE_SELECT ) && !defined( USE_EPOLL )
-		#error USE_LIBEVENT or USE_SELECT or USE_EPOLL required
+	#if !defined( USE_SELECT ) && !defined( USE_EPOLL )
+		#error USE_SELECT or USE_EPOLL required
 	#endif
 	#define EVENT_CHECKED
 #endif
 
 #ifndef EVENT_CHECKED
-	#if !defined( USE_LIBEVENT ) && !defined( USE_SELECT ) && !defined( USE_KQUEUE )
-		#error USE_LIBEVENT or USE_SELECT or USE_KQUEUE required
+	#if !defined( USE_SELECT ) && !defined( USE_KQUEUE )
+		#error USE_SELECT or USE_KQUEUE required
 	#endif
 #endif
 
@@ -88,10 +88,6 @@ SPDX-License-Identifier: MPL-2.0
 #endif
 
 
-#ifdef USE_LIBEVENT
-	#include <event2/event.h>
-	#include <event2/thread.h>
-#endif
 
 #include "webserver_api_functions.h"
 

@@ -31,7 +31,7 @@ LIB_SOURCES := 	src/builtinFunctions.c \
 			src/system_sockets_recv.c \
 			src/system_sockets_send.c \
 			src/system_sockets_container.c \
-			src/system_sockets_events.c \
+			 \
 			src/system_sockets_select.c \
 			src/system_sockets_epoll.c \
 			src/system_sockets_kqueue.c \

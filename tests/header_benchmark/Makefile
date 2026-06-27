@@ -42,7 +42,7 @@ FILES= \
 	../../lib/src/engine_parser.c \
 	../../lib/src/variable_global.c \
 	../../lib/src/variable_render.c \
-	../../lib/src/system_sockets_events.c \
+	 \
 	../../lib/src/system.c \
 	../../lib/src/server.c \
 	../../lib/src/system_file_access.c \
@@ -73,7 +73,7 @@ INPUT=../../fuzzing/parse_header/input/POST4
 all: bench
 
 bench: ${FILES} main.c
-	gcc ${FLAGS} main.c ${FILES} -o bench -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
+	gcc ${FLAGS} main.c ${FILES} -o bench -lc -lssl -lcrypto -ldl -lpthread
 	./bench $(INPUT)
 
 clean:

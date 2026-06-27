@@ -42,7 +42,7 @@ FILES= \
 	../../lib/src/engine_parser.c \
 	../../lib/src/variable_global.c \
 	../../lib/src/variable_render.c \
-	../../lib/src/system_sockets_events.c \
+	 \
 	../../lib/src/system.c \
 	../../lib/src/server.c \
 	../../lib/src/system_file_access.c \
@@ -73,10 +73,10 @@ all: main.gcc #main.clang
 
 #-fsanitize=address
 main.gcc: ${FILES} main.c
-	gcc ${FLAGS}  -fno-omit-frame-pointer main.c ${FILES} -o main.gcc -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
+	gcc ${FLAGS}  -fno-omit-frame-pointer main.c ${FILES} -o main.gcc -lc -lssl -lcrypto -ldl -lpthread
 
 main.clang: ${FILES} main.c
-	clang ${FLAGS} -fsanitize=address -fno-omit-frame-pointer main.c ${FILES} -o main.clang -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
+	clang ${FLAGS} -fsanitize=address -fno-omit-frame-pointer main.c ${FILES} -o main.clang -lc -lssl -lcrypto -ldl -lpthread
 
 clean:
 	rm -f main.gcc main.clang

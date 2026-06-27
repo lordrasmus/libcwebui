@@ -22,13 +22,13 @@ afl-latest.tgz:
 
 CLANG_FLAGS= -fno-omit-frame-pointer  ${FLAGS}
 
-LIBS=-lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
+LIBS=-lc -lssl -lcrypto -ldl -lpthread
 
 main.gcc: ${FILES} main.c #afl-*/llvm_mode/afl-clang-fast
 	gcc ${FLAGS} main.c ${FILES} -o main.gcc ${LIBS}
 
 main.afl.clang: ${FILES} main.c 
-	$(AFL)/afl-clang-fast -DAFL_PER -O2 ${CLANG_FLAGS}  main.c ${FILES} -o main.afl.clang -lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
+	$(AFL)/afl-clang-fast -DAFL_PER -O2 ${CLANG_FLAGS}  main.c ${FILES} -o main.afl.clang -lc -lssl -lcrypto -ldl -lpthread
 
 
 run: export AFL_SKIP_CPUFREQ=1

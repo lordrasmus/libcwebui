@@ -77,11 +77,6 @@ void WebserverFreeSocketInfo(socket_info* sock) {
 		sock->header = 0;
 	}
 
-#ifdef USE_LIBEVENT
-	if (sock->my_ev != 0) {
-		deleteEvent(sock);
-	}
-#endif
 #ifdef WEBSERVER_USE_WEBSOCKETS
 	if (sock->isWebsocket == 1) {
 		WebserverFree(sock->s);

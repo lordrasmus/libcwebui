@@ -20,7 +20,7 @@ FILES= stubs.c ../lib/src/convert.c ../lib/src/variable_store.c ../lib/src/heade
 	../lib/third_party/src/is_utf8/is_utf8.c \
 	../lib/python/py_api_functions.c ../lib/python/py_plugin.c ../lib/python/py_utils.c
 
-#../lib/src/system.c  ../lib/src/system_sockets_container.c ../lib/src/system_sockets.c ../lib/src/system_sockets_events.c
+#../lib/src/system.c  ../lib/src/system_sockets_container.c ../lib/src/system_sockets.c 
 	
 
 all:

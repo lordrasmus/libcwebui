@@ -16,7 +16,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libgtest-dev libevent-dev libssl-dev
+        sudo apt-get install -y libgtest-dev libssl-dev
 
     - name: Build and run unit tests
       run: |

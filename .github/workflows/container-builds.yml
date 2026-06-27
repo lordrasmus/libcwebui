@@ -23,7 +23,7 @@ jobs:
     - name: Install dependencies
       run: |
         apt-get update
-        apt-get install -y build-essential python3-dev libevent-dev libssl-dev pkg-config
+        apt-get install -y build-essential python3-dev libssl-dev pkg-config
 
     - name: Build
       run: |
@@ -43,7 +43,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        dnf install -y gcc gcc-c++ make python3-devel libevent-devel openssl-devel pkg-config
+        dnf install -y gcc gcc-c++ make python3-devel openssl-devel pkg-config
 
     - name: Build
       run: |
@@ -63,7 +63,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        apk add --no-cache build-base python3-dev libevent-dev openssl-dev pkgconf linux-headers
+        apk add --no-cache build-base python3-dev openssl-dev pkgconf linux-headers
 
     - name: Build
       run: |

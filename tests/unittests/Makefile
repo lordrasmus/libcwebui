@@ -47,7 +47,7 @@ C_FILES= \
 	../../lib/src/engine_parser.c \
 	../../lib/src/variable_global.c \
 	../../lib/src/variable_render.c \
-	../../lib/src/system_sockets_events.c \
+	 \
 	../../lib/src/system.c \
 	../../lib/src/server.c \
 	../../lib/src/system_file_access.c \
@@ -106,7 +106,7 @@ test: run_tests
 
 run_tests: ${C_OBJS} ${TEST_FILES}
 	g++ ${CXX_FLAGS} -fno-omit-frame-pointer ${TEST_FILES} ${C_OBJS} -o run_tests \
-		-lgtest -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads
+		-lgtest -lssl -lcrypto -ldl -lpthread
 
 # Run with JUnit XML output for CI
 test-ci: run_tests

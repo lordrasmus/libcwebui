@@ -14,7 +14,7 @@ CFLAGS_EXTRA= -Werror=old-style-definition
 
 WOLFSSL_LIBS = $(WOLFSSL_DIR)/src/.libs/libwolfssl.a
 
-LIBS=-lc -ldl -lpthread -levent -levent_pthreads -lstdc++ -lm
+LIBS=-lc -ldl -lpthread -lstdc++ -lm
 
 # Exclude Python files from FILES
 FILES_NO_PYTHON = $(filter-out %py_utils.c %py_plugin.c %py_api_functions.c, $(FILES))

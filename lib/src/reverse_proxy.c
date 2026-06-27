@@ -976,7 +976,7 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                         LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "%s", "Entering WebSocket tunnel mode");
 #endif
                         proxy->state = PROXY_STATE_WEBSOCKET_TUNNEL;
-                        /* Events müssen erst entfernt werden bevor sie neu hinzugefügt werden (libevent requirement) */
+                        /* Event-Zustand sauber zuruecksetzen, bevor fuer den Tunnel-Modus neu registriert wird */
                         delEventSocketAll(proxy->client_sock);
                         delEventSocketAll(proxy->backend_sock);
                         addEventSocketReadPersist(proxy->client_sock);

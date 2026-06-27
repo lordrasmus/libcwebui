@@ -17,7 +17,7 @@ FILES= \
     ../../../lib/src/system_file_cache.c            ../../../lib/src/system_file_access_utils.c \
     ../../../lib/src/system_file_access_binary.c    ../../../lib/src/system_sockets.c \
     ../../../lib/src/system_sockets_select.c \
-	../../../lib/src/system_sockets_container.c     ../../../lib/src/system_sockets_events.c \
+	../../../lib/src/system_sockets_container.c      \
 	../../../lib/src/system_sockets_epoll.c         ../../../lib/src/system_sockets_send.c \
 	../../../lib/src/system_sockets_recv.c          ../../../lib/src/system_memory.c \
 	../../../lib/src/system_memory_gcc.c \
@@ -57,7 +57,7 @@ FLAGS= -I . -I../../../lib/include -I../../../lib/third_party/src/miniz/ -I../..
 	-DMINIZ_NO_ARCHIVE_APIS -DMINIZ_NO_ZLIB_COMPATIBLE_NAMES
 
 LIBS= -lwsock32
-#-lc -lssl -lcrypto -ldl -lpthread -levent -levent_pthreads -lz -lstdc++
+#-lc -lssl -lcrypto -ldl -lpthread -lz -lstdc++
 
 .SILENT:
 all: #testSite

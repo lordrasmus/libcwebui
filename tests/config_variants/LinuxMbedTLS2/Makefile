@@ -16,7 +16,7 @@ MBEDTLS_LIBS = $(MBEDTLS_DIR)/library/libmbedtls.a \
                $(MBEDTLS_DIR)/library/libmbedcrypto.a \
                $(MBEDTLS_DIR)/library/libmbedx509.a
 
-LIBS=-lc -ldl -lpthread -levent -levent_pthreads -lstdc++
+LIBS=-lc -ldl -lpthread -lstdc++
 
 # Exclude Python files from FILES
 FILES_NO_PYTHON = $(filter-out %py_utils.c %py_plugin.c %py_api_functions.c, $(FILES))

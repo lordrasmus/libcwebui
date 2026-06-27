@@ -23,7 +23,7 @@ all: ../../testSite/src/test_plugin.so ssl_certs
 	cp ../../../lib/lib/libWebserver.so .
 	
 	$(CXX) $(FLAGS) $(PY_FLAGS) -c main.cpp  -O0 -ggdb3 
-	$(CXX) $(FLAGS) main.o -O0 -ggdb3 -o main -lstdc++ -lWebserver -lssl -levent -levent_pthreads $(PY_LINK)  -L../../../lib/lib/ -Wl,-rpath=.
+	$(CXX) $(FLAGS) main.o -O0 -ggdb3 -o main -lstdc++ -lWebserver -lssl $(PY_LINK)  -L../../../lib/lib/ -Wl,-rpath=.
 	
 
 ../../../lib/lib/libWebserver.so:

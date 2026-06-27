@@ -17,7 +17,7 @@ FILES=../../lib/src/sha1.c ../../lib/src/base64.c ../../lib/src/convert.c ../../
 	../../lib/src/system_sockets_send.c ../../lib/platform/linux/platform-sockets.c ../../lib/src/log.c ../../lib/src/server_error_pages.c \
 	../../lib/ssl/openssl.c ../../lib/src/server_config.c ../../lib/src/system_sockets_epoll.c ../../lib/src/session.c \
 	../../lib/src/system_sockets_recv.c ../../lib/src/websockets_send_recv.c ../../lib/src/conditions.c ../../lib/src/globals.c \
-	../../lib/src/engine_parser.c ../../lib/src/variable_global.c ../../lib/src/variable_render.c ../../lib/src/system_sockets_events.c \
+	../../lib/src/engine_parser.c ../../lib/src/variable_global.c ../../lib/src/variable_render.c  \
 	../../lib/src/system.c ../../lib/src/websocket_handler.c ../../lib/src/server.c ../../lib/src/system_file_access.c ../../lib/src/system_file_access_fs.c \
 	../../lib/src/system_file_access_wnfs.c ../../lib/src/system_file_cache.c ../../lib/src/system_file_access_utils.c \
 	../../lib/src/builtinFunctions.c ../../lib/src/engine.c ../../lib/src/file_manager.c \

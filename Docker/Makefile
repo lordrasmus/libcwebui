@@ -21,7 +21,7 @@ run: all
 	${MAKE} -C ../testSite/src/
 
 main: main.cpp ../testSite/src/test_plugin.so
-	$(CXX) $(FLAGS) main.cpp -O3 -o main -lstdc++ -lWebserver -lssl -levent -levent_pthreads  -L../lib/lib/ -Wl,-rpath=.
+	$(CXX) $(FLAGS) main.cpp -O3 -o main -lstdc++ -lWebserver -lssl  -L../lib/lib/ -Wl,-rpath=.
 
 
 clean:

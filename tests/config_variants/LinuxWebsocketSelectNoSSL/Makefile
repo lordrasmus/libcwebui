@@ -14,7 +14,7 @@ FLAGS= -I . -I../../../lib/include -I../../../lib/third_party/src/miniz/ -I../..
 CFLAGS_EXTRA= -Werror=old-style-definition
 
 # No SSL libraries needed
-LIBS=-lc -ldl -lpthread -levent -levent_pthreads -lstdc++
+LIBS=-lc -ldl -lpthread -lstdc++
 
 .SILENT:
 all:
