@@ -7,10 +7,10 @@ SPDX-License-Identifier: MPL-2.0
 
  Projekt URL : https://github.com/lordrasmus/libcwebui
 
- 
+
  This Source Code Form is subject to the terms of the Mozilla Public
  License, v. 2.0. If a copy of the MPL was not distributed with this
- file, You can obtain one at https://mozilla.org/MPL/2.0/. 
+ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 */
 
@@ -43,6 +43,19 @@ static struct client_socket client_sock[FD_SETSIZE];
 static fd_set gesamt_lese_sockets;
 static fd_set gesamt_schreibe_sockets;
 static int sock_max = 0,max = 0;
+
+/* Schuetzt client_sock[], die globalen fd_sets sowie sock_max/max gegen
+ * gleichzeitigen Zugriff aus dem Event-Loop-Thread (waitEvents) und den
+ * Websocket-Threads (activateEventSocketWrite / updateWebsocketEventFlags).
+ *
+ * WICHTIG - Lock-Hierarchie: socket_mutex (aussen) > select_lock (innen).
+ * select_lock ist ein Blatt-Lock und wird NIEMALS ueber einen handleer()-
+ * Aufruf hinweg gehalten (handleer nimmt socket_mutex). Andernfalls entstuende
+ * derselbe ABBA-Deadlock, den das fruehere libevent-Backend hatte. Die public
+ * API nimmt select_lock am Eingang und ruft die lock-freien internen Helfer
+ * (delEventSocket{Read,Write,All}2); waitEvents haelt den Lock selbst und ruft
+ * ebenfalls nur diese internen Helfer. */
+static WS_MUTEX select_lock;
 
 
 
@@ -81,213 +94,90 @@ static void _read_select_pipe( void ){
 
 
 
-
-void addEventSocketRead(socket_info* sock) {
+/* Lock-freier interner Helfer: traegt sock mit den gegebenen flags in die
+ * client_sock-Tabelle ein. Der Aufrufer MUSS select_lock halten. */
+static void register_socket( socket_info* sock, uint16_t flags ) {
 	int i;
-	
-	#ifdef WEBSERVER_USE_SSL
-	if(sock->ssl_block_event_flags == 1){
-		sock->ssl_event_flags = EV_READ;
-		return;
-	}
-	#endif
-	
+
 	for( i=0; i< FD_SETSIZE; i++){
 		if(client_sock[i].socket < 0) {
 			client_sock[i].socket = sock->socket;
 			client_sock[i].sock = sock;
-			client_sock[i].flags = EVENT_READ;
-            break;
-		}
-	}
-          
-	if( i == FD_SETSIZE ){
-		printf("Maximale Anzahl an Sockets erreicht");
-		exit(1);
-	}
-	
-	if( sock->socket > sock_max )
-		sock_max = sock->socket;
-          
-    if( i > max )
-		max = i;
-		
-	FD_SET(sock->socket, &gesamt_lese_sockets);
-	
-	#ifdef DEBUG_SELECT
-		printf("\naddEventSocketRead : %d\n\n",sock->socket);
-	#endif
-	
-}
-
-void addEventSocketReadPersist(socket_info* sock) {
-	int i;
-	
-	#ifdef WEBSERVER_USE_SSL
-	if(sock->ssl_block_event_flags == 1){
-		sock->ssl_event_flags = EV_READ | EV_PERSIST;
-		return;
-	}
-	#endif
-	
-    for( i=0; i< FD_SETSIZE; i++){
-		if(client_sock[i].socket < 0) {
-			client_sock[i].socket = sock->socket;
-			client_sock[i].sock = sock;
-			client_sock[i].flags = EVENT_READ | EVENT_PERSIST;
-            break;
-		}
-	}
-          
-	if( i == FD_SETSIZE ){
-		printf("Maximale Anzahl an Sockets erreicht");
-		exit(1);
-	}
-	
-	if( sock->socket > sock_max )
-		sock_max = sock->socket;
-          
-    if( i > max )
-		max = i;
-		
-	FD_SET(sock->socket, &gesamt_lese_sockets);
-
-	#ifdef DEBUG_SELECT
-		printf("\naddEventSocketReadPersist : %d\n\n",sock->socket);
-	#endif
-
-}
-
-void addEventSocketWritePersist(socket_info* sock) {
-
-	int i;
-	
-	#ifdef WEBSERVER_USE_SSL
-	if(sock->ssl_block_event_flags == 1){
-		sock->ssl_event_flags = EV_WRITE | EV_PERSIST;
-		return;
-	}
-	#endif
-	
-    for( i=0; i< FD_SETSIZE; i++){
-		if(client_sock[i].socket < 0) {
-			client_sock[i].socket = sock->socket;
-			client_sock[i].sock = sock;
-			client_sock[i].flags = EVENT_WRITE | EVENT_PERSIST;
-            break;
-		}
-	}
-          
-	if( i == FD_SETSIZE ){
-		printf("Maximale Anzahl an Sockets erreicht");
-		exit(1);
-	}
-	
-	if( sock->socket > sock_max )
-		sock_max = sock->socket;
-          
-    if( i > max )
-		max = i;
-		
-	FD_SET(sock->socket, &gesamt_schreibe_sockets);
-
-	#ifdef DEBUG_SELECT
-		printf("\naddEventSocketWritePersist : %d\n\n",sock->socket);
-	#endif
-
-}
-
-void addEventSocketReadWritePersist(socket_info* sock) {
-	
-	int i;
-
-#ifdef WEBSERVER_USE_SSL
-	if (sock->ssl_block_event_flags == 1) {
-		sock->ssl_event_flags = EV_WRITE | EV_READ | EV_PERSIST;
-		return;
-	}
-#endif
-
-	for (i = 0; i < FD_SETSIZE; i++) {
-		if (client_sock[i].socket < 0) {
-			client_sock[i].socket = sock->socket;
-			client_sock[i].sock = sock;
-			client_sock[i].flags = EVENT_WRITE | EVENT_READ | EVENT_PERSIST;
+			client_sock[i].flags = flags;
 			break;
 		}
 	}
 
-	if (i == FD_SETSIZE) {
+	if( i == FD_SETSIZE ){
 		printf("Maximale Anzahl an Sockets erreicht");
 		exit(1);
 	}
 
-	if (sock->socket > sock_max)
+	if( sock->socket > sock_max )
 		sock_max = sock->socket;
 
-	if (i > max)
+	if( i > max )
 		max = i;
 
-	FD_SET(sock->socket, &gesamt_schreibe_sockets);
-	FD_SET(sock->socket, &gesamt_lese_sockets);
+	if ( flags & EVENT_READ )
+		FD_SET(sock->socket, &gesamt_lese_sockets);
+	if ( flags & EVENT_WRITE )
+		FD_SET(sock->socket, &gesamt_schreibe_sockets);
+}
+
+
+void addEventSocketRead(socket_info* sock) {
+	PlatformLockMutex(&select_lock);
+	register_socket( sock, EVENT_READ );
+	PlatformUnlockMutex(&select_lock);
+
+	#ifdef DEBUG_SELECT
+		printf("\naddEventSocketRead : %d\n\n",sock->socket);
+	#endif
+}
+
+void addEventSocketReadPersist(socket_info* sock) {
+	PlatformLockMutex(&select_lock);
+	register_socket( sock, EVENT_READ | EVENT_PERSIST );
+	PlatformUnlockMutex(&select_lock);
+
+	#ifdef DEBUG_SELECT
+		printf("\naddEventSocketReadPersist : %d\n\n",sock->socket);
+	#endif
+}
+
+void addEventSocketWritePersist(socket_info* sock) {
+	PlatformLockMutex(&select_lock);
+	register_socket( sock, EVENT_WRITE | EVENT_PERSIST );
+	PlatformUnlockMutex(&select_lock);
+
+	#ifdef DEBUG_SELECT
+		printf("\naddEventSocketWritePersist : %d\n\n",sock->socket);
+	#endif
+}
+
+void addEventSocketReadWritePersist(socket_info* sock) {
+	PlatformLockMutex(&select_lock);
+	register_socket( sock, EVENT_WRITE | EVENT_READ | EVENT_PERSIST );
+	PlatformUnlockMutex(&select_lock);
 
 	_signal_pipe();
 
-#ifdef DEBUG_SELECT
-	printf("\naddEventSocketWritePersist : %d\n\n", sock->socket);
-#endif
-
-
-}
-
-#ifdef WEBSERVER_USE_SSL
-	
-void commitSslEventFlags( socket_info* sock ) {
-	
-
-	
-	sock->ssl_block_event_flags = 0;
-	
-	printf("commitSslEventFlags 0x%X  %d\n", sock->ssl_event_flags, sock->socket );
-	
-	
-	
-	/*if ( sock->ssl_event_flags & EV_WRITE ){
-		if ( sock->ssl_event_flags & EV_PERSIST ) {
-			addEventSocketWritePersist( sock );
-		}else{
-			addEventSocketWrite( sock );
-		}
-	}
-	
-	if ( sock->ssl_event_flags & EV_READ ){
-		if ( sock->ssl_event_flags & EV_PERSIST ) {
-			addEventSocketReadPersist( sock );
-		}else{
-			addEventSocketRead( sock );
-		}
-	}*/
-	
-	
-}
-
-#endif
-
-
-void delEventSocketReadPersist(socket_info* sock) {
-	delEventSocketAll( sock );
+	#ifdef DEBUG_SELECT
+		printf("\naddEventSocketReadWritePersist : %d\n\n", sock->socket);
+	#endif
 }
 
 
 static void delEventSocketWrite2( int socket ) {
 	int i;
-	
+
     for( i=0; i< FD_SETSIZE; i++){
 		if( (client_sock[i].socket == socket) && ( (client_sock[i].flags & EVENT_WRITE ) == EVENT_WRITE ) ) {
 			client_sock[i].socket = -1;
 			client_sock[i].sock = 0;
 			client_sock[i].flags = 0;
-			
+
 			FD_CLR(socket, &gesamt_schreibe_sockets);
 
             #ifdef DEBUG_SELECT
@@ -302,21 +192,20 @@ static void delEventSocketWrite2( int socket ) {
 }
 
 void delEventSocketWritePersist(socket_info* sock) {
-
-	 /* printf("\ndelEventSocketWritePersist : %d\n\n",sock->socket); */
-
-	 delEventSocketWrite2( sock->socket );
+	PlatformLockMutex(&select_lock);
+	delEventSocketWrite2( sock->socket );
+	PlatformUnlockMutex(&select_lock);
 }
 
 static void delEventSocketRead2( int socket ) {
 	int i;
-	
+
     for( i=0; i< FD_SETSIZE; i++){
 		if( (client_sock[i].socket == socket) && ( (client_sock[i].flags & EVENT_READ ) == EVENT_READ ) ){
 			client_sock[i].socket = -1;
 			client_sock[i].sock = 0;
 			client_sock[i].flags = 0;
-			
+
 			FD_CLR(socket, &gesamt_lese_sockets);
 
             #ifdef DEBUG_SELECT
@@ -325,22 +214,22 @@ static void delEventSocketRead2( int socket ) {
             return;
 		}
 	}
-	
-	         
+
+
 	/* printf("\ndelEventSocketRead2 : not found %d\n\n",socket); */
 }
 
-	
+
 static void delEventSocketAll2( int socket ) {
-	
+
 	int i;
-	
+
     for( i=0; i< FD_SETSIZE; i++){
 		if(client_sock[i].socket == socket) {
 			client_sock[i].socket = -1;
 			client_sock[i].sock = 0;
 			client_sock[i].flags = 0;
-			
+
 			FD_CLR(socket, &gesamt_lese_sockets);
 			FD_CLR(socket, &gesamt_schreibe_sockets);
 
@@ -350,18 +239,27 @@ static void delEventSocketAll2( int socket ) {
             return;
 		}
 	}
-	
-	         
+
+
 	/* printf("\ndelEventSocketAll : not found %d\n\n",socket); */
 }
 
-void delEventSocketAll(socket_info* sock) {
+void delEventSocketReadPersist(socket_info* sock) {
+	PlatformLockMutex(&select_lock);
 	delEventSocketAll2( sock->socket );
+	PlatformUnlockMutex(&select_lock);
+}
+
+void delEventSocketAll(socket_info* sock) {
+	PlatformLockMutex(&select_lock);
+	delEventSocketAll2( sock->socket );
+	PlatformUnlockMutex(&select_lock);
 }
 
 static void updateEventSocketWrite( socket_info* sock, int enable ) {
 	int i;
 
+	PlatformLockMutex(&select_lock);
 	for( i=0; i< FD_SETSIZE; i++){
 		if( client_sock[i].socket == sock->socket ) {
 			if ( enable ) {
@@ -371,10 +269,12 @@ static void updateEventSocketWrite( socket_info* sock, int enable ) {
 				client_sock[i].flags &= ~EVENT_WRITE;
 				FD_CLR( sock->socket, &gesamt_schreibe_sockets );
 			}
-			_signal_pipe();
-			return;
+			break;
 		}
 	}
+	PlatformUnlockMutex(&select_lock);
+
+	_signal_pipe();
 }
 
 void activateEventSocketWrite(socket_info* sock) {
@@ -386,35 +286,26 @@ void updateWebsocketEventFlags(socket_info* sock, int list_empty) {
 }
 
 void deleteEvent(socket_info* sock){
-	delEventSocketAll( sock );
+	PlatformLockMutex(&select_lock);
+	delEventSocketAll2( sock->socket );
+	PlatformUnlockMutex(&select_lock);
 }
 
 void initEvents( void ) {
 	int i;
-	
+
+	PlatformCreateMutex(&select_lock);
+
 	for( i=0; i<FD_SETSIZE; i++){
 		client_sock[i].socket = -1;
 		client_sock[i].sock = 0;
 	}
-		
+
 	FD_ZERO(&gesamt_lese_sockets);
 	FD_ZERO(&gesamt_schreibe_sockets);
 
 	LOG(MESSAGE_LOG, NOTICE_LEVEL, 0, "%s", "event dispatcher: select");
 }
-
-#if 0
-static int check_sock_exists( int socket ){
-	int i;
-	
-	for( i=0; i< FD_SETSIZE; i++){
-		if(client_sock[i].socket == socket) {
-			return 1;
-		}
-	}
-	return 0;
-}
-#endif
 
 
 
@@ -422,31 +313,29 @@ char waitEvents( void ) {
 	int i;
 	int sock3;
 	int ready;
+	int local_sock_max;
+	int local_max;
 	fd_set lese_sock;
 	fd_set send_sock;
 
 	_check_select_pipe();
 
 	while( !break_loop ){
-		#ifdef DEBUG_SELECT
-			printf("select max : %d  sock_max : %d\n", max,  sock_max);
-			fflush(stdout);
-		
-			for(i=0; i<=max; i++) {
-				if ( client_sock[i].socket > -1 ){
-					printf("Sock %d : %d 0x%X ( %p )\n",i,client_sock[i].socket, client_sock[i].flags, client_sock[i].sock);
-				}
-			}
-		#endif
 
 		while(1){
 
+			/* fd_sets und die Grenzen konsistent unter Lock schnappschiessen,
+			 * damit select() und die Dispatch-Schleife denselben Stand sehen. */
+			PlatformLockMutex(&select_lock);
 			lese_sock = gesamt_lese_sockets;
 			send_sock = gesamt_schreibe_sockets;
+			local_sock_max = sock_max;
+			local_max = max;
+			PlatformUnlockMutex(&select_lock);
 
 			FD_SET( select_signal_pipe[0], &lese_sock );
 
-			ready = select( sock_max+1, &lese_sock, &send_sock, NULL, NULL );
+			ready = select( local_sock_max+1, &lese_sock, &send_sock, NULL, NULL );
 			if ( ready != EINTR )
 				break;
 		}
@@ -456,95 +345,56 @@ char waitEvents( void ) {
 			printf("select ret : %d\n",ready);
 			fflush(stdout);
 		#endif
-		
-		for(i=0; i<=max; i++) {
-			
-			if(( sock3 = client_sock[i].socket) < 0)
+
+		for(i=0; i<=local_max; i++) {
+
+			socket_info* read_sock  = 0;
+			socket_info* write_sock = 0;
+
+			/* Auswahl + ggf. Deregistrierung non-persistenter Events unter Lock,
+			 * dann Lock freigeben und erst danach handleer() aufrufen (das
+			 * socket_mutex nimmt) -> select_lock bleibt ein Blatt-Lock. */
+			PlatformLockMutex(&select_lock);
+
+			if(( sock3 = client_sock[i].socket) < 0){
+				PlatformUnlockMutex(&select_lock);
 				continue;
-
-
+			}
 
 			if(FD_ISSET(sock3, &lese_sock)){
-
-				socket_info *client_sock_info = client_sock[i].sock;
-
-				if ( ( client_sock[i].flags & EVENT_PERSIST ) == EVENT_PERSIST ){
-					#ifdef DEBUG_SELECT
-						printf("Socket %d ( %d ) Read\n",sock3,i);
-						fflush(stdout);
-					#endif
-					handleer(sock3 , EVENT_READ , client_sock[i].sock );
-				}else{
-					int socket = client_sock[i].sock->socket;
-					
-					#ifdef DEBUG_SELECT
-						printf("Socket %d Read not Persist\n",sock3);
-						fflush(stdout);
-					#endif
-
-					delEventSocketRead2( socket );
-
-					handleer(sock3 , EVENT_READ , client_sock_info );
-
+				read_sock = client_sock[i].sock;
+				if ( ( client_sock[i].flags & EVENT_PERSIST ) != EVENT_PERSIST ){
+					delEventSocketRead2( sock3 );
 				}
-
-#if 0 // Das Pending sollte nicht notwendig sein wenn select wirklich level trigged arbeitet
-
-	#ifdef __ZEPHYR__
-		#warning how to get pending bytes on the sockets ??
-	#else
-
-				if ( sock3 != select_signal_pipe[0] ){
-
-	#ifdef _WIN32
-					if (ioctlsocket(sock3, FIONREAD, &totalPending) == -1)
-	#else
-					if( ioctl( sock3, FIONREAD, &totalPending) == -1 )
-					#warning ist das wirklich nötig mit dem pending ? ?
-	#endif
-					{
-						if ( totalPending > 0 ){
-							/*#ifdef DEBUG_SELECT */
-								printf("\nPending ( %d ): %d\n\n", sock3, totalPending);
-								fflush(stdout);
-							/*#endif */
-
-							handleer(sock3 , EVENT_READ , client_sock_info );
-						}
-					}
-	#endif
-					if( --ready <= 0 )
-						break;
-				}
-#endif // PENDING
 			}
 
-			if(FD_ISSET(sock3, &send_sock)){
-				
-				if ( ( client_sock[i].flags & EVENT_PERSIST ) == EVENT_PERSIST ){
-					#ifdef DEBUG_SELECT
-						printf("Socket %d Write\n",sock3);
-						fflush(stdout);
-					#endif
-					handleer(sock3 , EVENT_WRITE , client_sock[i].sock );
-				}else{
-					int socket = client_sock[i].sock->socket;
-					
-					delEventSocketWrite2( socket );
-
-					#ifdef DEBUG_SELECT
-						printf("Socket %d Write not Persist\n",sock3);
-						fflush(stdout);
-					#endif
-
-					handleer(sock3 , EVENT_WRITE , client_sock[i].sock );
-
+			/* client_sock[i] kann durch delEventSocketRead2() oben geleert
+			 * worden sein -> erneut pruefen, bevor write behandelt wird. */
+			if( client_sock[i].socket == sock3 && FD_ISSET(sock3, &send_sock)){
+				write_sock = client_sock[i].sock;
+				if ( ( client_sock[i].flags & EVENT_PERSIST ) != EVENT_PERSIST ){
+					delEventSocketWrite2( sock3 );
 				}
-
-				if( --ready <= 0 )
-					break;
 			}
-			
+
+			PlatformUnlockMutex(&select_lock);
+
+			if ( read_sock != 0 ){
+				#ifdef DEBUG_SELECT
+					printf("Socket %d Read\n",sock3);
+					fflush(stdout);
+				#endif
+				handleer(sock3 , EVENT_READ , read_sock );
+			}
+
+			if ( write_sock != 0 ){
+				#ifdef DEBUG_SELECT
+					printf("Socket %d Write\n",sock3);
+					fflush(stdout);
+				#endif
+				handleer(sock3 , EVENT_WRITE , write_sock );
+			}
+
 		}
 
 		if(FD_ISSET(select_signal_pipe[0], &lese_sock)){
