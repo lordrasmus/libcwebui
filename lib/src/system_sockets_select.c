@@ -369,6 +369,32 @@ void delEventSocketAll(socket_info* sock) {
 	delEventSocketAll2( sock->socket );
 }
 
+static void updateEventSocketWrite( socket_info* sock, int enable ) {
+	int i;
+
+	for( i=0; i< FD_SETSIZE; i++){
+		if( client_sock[i].socket == sock->socket ) {
+			if ( enable ) {
+				client_sock[i].flags |= EVENT_WRITE;
+				FD_SET( sock->socket, &gesamt_schreibe_sockets );
+			} else {
+				client_sock[i].flags &= ~EVENT_WRITE;
+				FD_CLR( sock->socket, &gesamt_schreibe_sockets );
+			}
+			_signal_pipe();
+			return;
+		}
+	}
+}
+
+void activateEventSocketWrite(socket_info* sock) {
+	updateEventSocketWrite( sock, 1 );
+}
+
+void updateWebsocketEventFlags(socket_info* sock, int list_empty) {
+	updateEventSocketWrite( sock, list_empty ? 0 : 1 );
+}
+
 void deleteEvent(socket_info* sock){
 	printf("deleteEvent ");
 	printf("Nicht implementiert\n");
