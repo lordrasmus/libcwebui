@@ -401,9 +401,12 @@ void reverse_proxy_client_handler(int fd, void* ptr) {
                      * Wichtig fuer grosse HTTPS-Uploads, die ueber mehrere
                      * Read-Events kommen. */
                     int wouldblock;
+#ifdef WEBSERVER_USE_SSL
                     if (proxy->client_sock->use_ssl) {
                         wouldblock = (bytes_read == CLIENT_NO_MORE_DATA);
-                    } else {
+                    } else
+#endif
+                    {
                         wouldblock = (bytes_read < 0 && (errno == EAGAIN || errno == EWOULDBLOCK));
                     }
                     if (!wouldblock) {
