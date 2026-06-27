@@ -29,10 +29,6 @@ SPDX-License-Identifier: MPL-2.0
 
 /* #define DEBUG_SELECT */
 
-#ifdef WEBSERVER_USE_SSL
-	#error "SSL mit select nicht implementiert"
-#endif
-
 struct client_socket{
 	int socket;
 	uint16_t flags;
@@ -290,6 +286,17 @@ void deleteEvent(socket_info* sock){
 	delEventSocketAll2( sock->socket );
 	PlatformUnlockMutex(&select_lock);
 }
+
+#ifdef WEBSERVER_USE_SSL
+void commitSslEventFlags( socket_info* sock ) {
+	/* Wie beim epoll/kqueue-Backend wird der ssl_block/ssl_event_flags-Mechanismus
+	 * nicht benoetigt: der SSL-Ablauf (system_sockets.c) registriert seine Events
+	 * direkt ueber addEventSocketRead()/addEventSocketWritePersist(). Diese Funktion
+	 * wird im aktuellen Code nirgends aufgerufen und existiert nur zur
+	 * Vollstaendigkeit des Backend-Interfaces. */
+	(void)sock;
+}
+#endif
 
 void initEvents( void ) {
 	int i;

@@ -1,0 +1,30 @@
+<html>
+<head>
+<script>
+
+function websocket_test(){
+	var url  = "ws://" + document.location.host + "/TestSocket" 
+	document.ws = new WebSocket(url);
+	
+	document.ws.onmessage = function(messageEvent) {
+		document.getElementById("echo_answer").value = messageEvent.data ; 
+	};
+}
+
+function send_test(){
+	document.ws.send( document.getElementById("echo_text").value )
+}
+
+document.addEventListener("DOMContentLoaded", function(event) {
+	websocket_test();
+})
+		
+</script>
+</head>	
+	
+<h1>Websocket Test</h1>
+
+send : <input type=text id=echo_text><input type=button onclick=send_test() value="send"><br><br>
+recv : <input type=text id=echo_answer><br>
+
+</html>

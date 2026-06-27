@@ -36,7 +36,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-22.04', 'ubuntu-24.04', 'ubuntu-22.04-arm', 'ubuntu-24.04-arm']
-        variant: ['LinuxDebug', 'LinuxEpoll', 'LinuxEpollWebsockets', 'LinuxSelect', 'LinuxWebsocketNoSSL', 'LinuxWebsocketSelect', 'LinuxWebsocketSelectNoSSL']
+        variant: ['LinuxDebug', 'LinuxEpoll', 'LinuxEpollWebsockets', 'LinuxSelect', 'LinuxWebsocketNoSSL', 'LinuxWebsocketSelect', 'LinuxWebsocketSelectNoSSL', 'LinuxWebsocketSelectSSL']
 
     steps:
     - uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential python3-dev
+        sudo apt-get install -y build-essential python3-dev libssl-dev
 
     - name: Build
       run: |
