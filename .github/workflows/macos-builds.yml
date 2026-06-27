@@ -23,7 +23,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        brew install libevent openssl@3 python3
+        brew install openssl@3 python3
 
     - name: Build
       run: |

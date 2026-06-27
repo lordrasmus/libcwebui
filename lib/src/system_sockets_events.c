@@ -151,31 +151,6 @@ void addEventSocketReadPersist(socket_info* sock) {
 
 }
 
-void addEventSocketWrite(socket_info* sock) {
-
-#ifdef WEBSERVER_USE_SSL
-	if(sock->ssl_block_event_flags == 1){
-#if _WEBSERVER_HANDLER_DEBUG_ > 4
-		LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Add Event Write ( SSL Blocked )","");
-#endif
-		sock->ssl_event_flags = EV_WRITE;
-		return;
-	}
-#endif
-	
-#if _WEBSERVER_HANDLER_DEBUG_ > 4
-	LOG(HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Add Event Write","");
-#endif
-	
-	if (sock->my_ev == 0){
-		sock->my_ev = event_new(base, sock->socket, EV_WRITE, eventHandler, sock);
-	}else{
-		event_assign(sock->my_ev, base, sock->socket, EV_WRITE, eventHandler, sock);
-	}
-	event_add(sock->my_ev, NULL);
-
-}
-
 void addEventSocketWritePersist(socket_info* sock) {
 
 #ifdef WEBSERVER_USE_SSL

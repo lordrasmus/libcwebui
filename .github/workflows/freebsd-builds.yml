@@ -27,7 +27,7 @@ jobs:
         release: ${{ matrix.version }}
         usesh: true
         prepare: |
-          pkg install -y python3 libevent openssl pkgconf gmake
+          pkg install -y python3 openssl pkgconf gmake
 
         run: |
           cd Samples/FreeBSD/SingleMain

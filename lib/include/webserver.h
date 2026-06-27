@@ -36,8 +36,8 @@ SPDX-License-Identifier: MPL-2.0
 #endif
 
 #ifndef EVENT_CHECKED
-	#if !defined( USE_LIBEVENT ) && !defined( USE_SELECT )
-		#error USE_LIBEVENT or USE_SELECT required
+	#if !defined( USE_LIBEVENT ) && !defined( USE_SELECT ) && !defined( USE_KQUEUE )
+		#error USE_LIBEVENT or USE_SELECT or USE_KQUEUE required
 	#endif
 #endif
 

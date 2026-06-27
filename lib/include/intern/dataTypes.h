@@ -313,7 +313,7 @@ typedef struct {
 
 #if defined( USE_LIBEVENT )
 	struct event *my_ev;
-#elif defined( USE_EPOLL )
+#elif defined( USE_EPOLL ) || defined( USE_KQUEUE )
 	int registered;
 #endif
 	char closeSocket;

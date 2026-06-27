@@ -18,7 +18,8 @@ FILES= \
     ../../../lib/src/system_file_cache.c            ../../../lib/src/system_file_access_utils.c \
     ../../../lib/src/system_file_access_binary.c    ../../../lib/src/system_sockets.c \
 	../../../lib/src/system_sockets_container.c     ../../../lib/src/system_sockets_events.c \
-	../../../lib/src/system_sockets_epoll.c         ../../../lib/src/system_sockets_send.c \
+	../../../lib/src/system_sockets_epoll.c         ../../../lib/src/system_sockets_kqueue.c \
+	../../../lib/src/system_sockets_send.c \
 	../../../lib/src/system_sockets_recv.c          ../../../lib/src/system_memory.c \
 	../../../lib/src/system_memory_gcc.c \
 	../../../lib/src/utils.c                        ../../../lib/src/variable.c \
@@ -57,7 +58,7 @@ FLAGS= -I . -I../../../lib/include -I../../../lib/third_party/src/miniz/ -I../..
 	-Werror=format \
 	-DMINIZ_NO_ARCHIVE_APIS -DMINIZ_NO_ZLIB_COMPATIBLE_NAMES
 
-LIBS=-L/usr/local/lib -lc -lssl -lcrypto -lpthread -levent -levent_pthreads -lstdc++
+LIBS=-L/usr/local/lib -lc -lssl -lcrypto -lpthread -lstdc++
 
 .SILENT:
 all: testSite

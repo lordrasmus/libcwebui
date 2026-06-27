@@ -41,7 +41,6 @@ void handleer(int a,short b, void *t);
 
 void addEventSocketRead(socket_info* sock);
 void addEventSocketReadPersist(socket_info* sock);
-void addEventSocketWrite(socket_info* sock);
 void addEventSocketWritePersist(socket_info* sock);
 void addEventSocketReadWritePersist(socket_info* sock);
 

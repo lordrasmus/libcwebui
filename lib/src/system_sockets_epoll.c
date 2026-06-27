@@ -94,10 +94,6 @@ void addEventSocketRead(socket_info *sock) {
     modifyEpoll(sock, EPOLLIN, 0);
 }
 
-void addEventSocketWrite(socket_info *sock) {
-    modifyEpoll(sock, EPOLLOUT, 0);
-}
-
 void addEventSocketReadPersist(socket_info *sock) {
     modifyEpoll(sock, EPOLLIN, 1);
 }

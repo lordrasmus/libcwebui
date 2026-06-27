@@ -54,6 +54,8 @@ void _set_main_thread( void ){
 
 static int select_signal_pipe[2] = { 0 , 0 };
 
+static volatile int break_loop = 0;
+
 static void _check_select_pipe( void ){
 	if ( select_signal_pipe[0] == 0 ){
 		pipe( select_signal_pipe );
@@ -154,13 +156,6 @@ void addEventSocketReadPersist(socket_info* sock) {
 		printf("\naddEventSocketReadPersist : %d\n\n",sock->socket);
 	#endif
 
-}
-
-void addEventSocketWrite(socket_info* sock) {
-
-	printf("addEventSocketWrite ");
-	printf("Nicht implementiert\n");
-	exit(1);
 }
 
 void addEventSocketWritePersist(socket_info* sock) {
@@ -280,12 +275,7 @@ void commitSslEventFlags( socket_info* sock ) {
 
 
 void delEventSocketReadPersist(socket_info* sock) {
-	
-     
-	printf("delEventSocketReadPersist ");
-	printf("Nicht implementiert\n");
-	exit(1);
-	
+	delEventSocketAll( sock );
 }
 
 
@@ -396,9 +386,7 @@ void updateWebsocketEventFlags(socket_info* sock, int list_empty) {
 }
 
 void deleteEvent(socket_info* sock){
-	printf("deleteEvent ");
-	printf("Nicht implementiert\n");
-	exit(1);
+	delEventSocketAll( sock );
 }
 
 void initEvents( void ) {
@@ -439,7 +427,7 @@ char waitEvents( void ) {
 
 	_check_select_pipe();
 
-	while( 1 ){
+	while( !break_loop ){
 		#ifdef DEBUG_SELECT
 			printf("select max : %d  sock_max : %d\n", max,  sock_max);
 			fflush(stdout);
@@ -563,21 +551,33 @@ char waitEvents( void ) {
 			_read_select_pipe();
 		}
 	}
-    
+
+	break_loop = 0;
     return 0;
-    
+
 }
 
 void breakEvents(void){
-		printf("breakEvents ");
-	printf("Nicht implementiert\n");
-	exit(1);
+	break_loop = 1;
+
+	/* select() in waitEvents() blockiert ohne Timeout -> ueber die Signal-Pipe
+	 * aufwecken, damit die Schleife das gesetzte break_loop sieht. Direkter
+	 * Write (nicht _signal_pipe), da breakEvents auch aus dem Haupt-Thread
+	 * aufgerufen werden kann. */
+	_check_select_pipe();
+	if ( select_signal_pipe[1] != 0 ){
+		char t = 1;
+		write( select_signal_pipe[1] , &t , 1 );
+	}
 }
 
 void freeEvents( void ) {
-		printf("freeEvents");
-	printf(" Nicht implementiert\n");
-	exit(1);
+	if ( select_signal_pipe[0] != 0 ){
+		close( select_signal_pipe[0] );
+		close( select_signal_pipe[1] );
+		select_signal_pipe[0] = 0;
+		select_signal_pipe[1] = 0;
+	}
 }
 
 
