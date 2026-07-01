@@ -87,8 +87,13 @@ void startWebServer(void) {
 	int ssl_port = getConfigInt("ssl_port");
 
 	if ( ( ssl_port > 0 ) && (initOpenSSL() < 0) ) {
-		LOG( CONNECTION_LOG, ERROR_LEVEL, 0, "%s","Error : SSL konnte nicht gestartet werden");
-		return;
+		// SSL-Init fehlgeschlagen (z.B. Zertifikat fehlt und kein Backup). Kein
+		// return - das wuerde den kompletten Webserver (auch HTTP) nicht starten
+		// und das Geraet ueber Web unerreichbar machen. Stattdessen den SSL-Port
+		// deaktivieren, damit WebserverStartConnectionManager() nur den HTTP-Port
+		// bindet. So bleibt das Geraet ueber HTTP erreichbar.
+		LOG( CONNECTION_LOG, ERROR_LEVEL, 0, "%s","Error : SSL konnte nicht gestartet werden - starte nur HTTP");
+		setConfigInt( "ssl_port", 0 );
 	}
 #endif
 
