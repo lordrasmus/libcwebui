@@ -69,6 +69,8 @@ static int proxy_get_status_code(const unsigned char* header);
 static int proxy_inject_forwarded_headers(reverse_proxy_connection_t* proxy);
 static int proxy_inject_connection_close(reverse_proxy_connection_t* proxy);
 static int proxy_extract_host_header(const unsigned char* header, uint32_t header_len, char* host_buf, int host_buf_size);
+static int proxy_request_is_upgrade(const unsigned char* header, uint32_t header_len);
+static int proxy_force_connection_close(unsigned char* header, uint32_t header_len);
 
 #if _WEBSERVER_PROXY_DEBUG_ >= 2
 /*
@@ -1369,8 +1371,103 @@ static int proxy_extract_host_header(const unsigned char* header, uint32_t heade
 }
 
 /*
+ * Prueft ob der Request ein Protocol-Upgrade anfordert (z.B. WebSocket).
+ * Bei einem Upgrade darf dem Backend kein "Connection: close" untergeschoben
+ * werden, sonst kommt der Tunnel nicht zustande.
+ */
+static int proxy_request_is_upgrade(const unsigned char* header, uint32_t header_len) {
+    const unsigned char* p = header;
+    const unsigned char* end = header + header_len;
+
+    /* Erste Zeile ist die Request-Line, dort steht kein Header */
+    while (p < end && *p != '\n') {
+        p++;
+    }
+    if (p < end) {
+        p++;
+    }
+
+    while (p + 8 <= end) {
+        if (strncasecmp((const char*)p, "Upgrade:", 8) == 0) {
+            return 1;
+        }
+        while (p < end && *p != '\n') {
+            p++;
+        }
+        if (p >= end) {
+            break;
+        }
+        p++;
+    }
+
+    return 0;
+}
+
+/*
+ * Setzt einen bereits vorhandenen Connection-Header auf "close".
+ *
+ * Der Wert wird an Ort und Stelle ueberschrieben und mit Leerzeichen
+ * aufgefuellt, sodass sich die Header-Laenge nicht aendert und der Buffer
+ * nicht verschoben werden muss. Abschliessende Leerzeichen im Header-Wert
+ * werden von HTTP-Parsern ignoriert (RFC 7230, optional whitespace).
+ *
+ * Rueckgabe: 1 wenn ein Header gesetzt wurde, 0 wenn keiner vorhanden ist
+ * (dann muss der Aufrufer einen einfuegen).
+ */
+static int proxy_force_connection_close(unsigned char* header, uint32_t header_len) {
+    static const char name[] = "Connection:";
+    static const char value[] = " close";
+    const size_t name_len = sizeof(name) - 1;
+    const size_t value_len = sizeof(value) - 1;
+    unsigned char* p = header;
+    unsigned char* end = header + header_len;
+    unsigned char* line_end;
+
+    /* Erste Zeile ist Request-Line bzw. Status-Line, dort steht kein Header */
+    while (p < end && *p != '\n') {
+        p++;
+    }
+    if (p < end) {
+        p++;
+    }
+
+    while (p + name_len <= end) {
+        if (strncasecmp((const char*)p, name, name_len) == 0) {
+            p += name_len;
+            line_end = p;
+            while (line_end < end && *line_end != '\r' && *line_end != '\n') {
+                line_end++;
+            }
+            if ((size_t)(line_end - p) < value_len) {
+                /* Wert zu kurz zum Ueberschreiben - Aufrufer fuegt selbst ein */
+                return 0;
+            }
+            memcpy(p, value, value_len);
+            memset(p + value_len, ' ', (size_t)(line_end - p) - value_len);
+            return 1;
+        }
+        while (p < end && *p != '\n') {
+            p++;
+        }
+        if (p >= end) {
+            break;
+        }
+        p++;
+    }
+
+    return 0;
+}
+
+/*
  * Inject X-Forwarded-* headers into request before sending to backend
  * This modifies the request_buffer to add headers before the body
+ *
+ * Zusaetzlich wird dem Backend "Connection: close" aufgezwungen: der Proxy
+ * baut ohnehin pro Request eine neue UDS-Verbindung auf, Keep-Alive bringt
+ * also nichts. Ohne den Header beendet ein HTTP/1.1-Backend eine chunked
+ * Response nicht mit einem Verbindungsabbau, und weil der Proxy den
+ * abschliessenden Nullchunk nicht auswertet, bliebe die Verbindung fuer
+ * immer im Zustand STREAMING stehen (Client- und Backend-FD lecken).
  */
 static int proxy_inject_forwarded_headers(reverse_proxy_connection_t* proxy) {
     char host_buf[256];
@@ -1379,6 +1476,16 @@ static int proxy_inject_forwarded_headers(reverse_proxy_connection_t* proxy) {
     unsigned char* new_buffer;
     uint32_t new_size;
     const char* proto = "http";
+    const char* conn_close = "";
+
+    /* Connection: close erzwingen. Ist bereits ein Connection-Header vorhanden,
+     * wird dessen Wert ueberschrieben, sonst wird unten einer eingefuegt.
+     * Bei einem Upgrade-Request bleibt der Header unangetastet. */
+    if (proxy_request_is_upgrade(proxy->request_buffer, proxy->request_header_end) == 0) {
+        if (proxy_force_connection_close(proxy->request_buffer, proxy->request_header_end) == 0) {
+            conn_close = "Connection: close\r\n";
+        }
+    }
 
     /* Extract Host header from original request */
     proxy_extract_host_header(proxy->request_buffer, proxy->request_header_end,
@@ -1395,10 +1502,12 @@ static int proxy_inject_forwarded_headers(reverse_proxy_connection_t* proxy) {
     forwarded_len = snprintf(forwarded_headers, sizeof(forwarded_headers),
         "X-Forwarded-For: %s\r\n"
         "X-Forwarded-Host: %s\r\n"
-        "X-Forwarded-Proto: %s\r\n",
+        "X-Forwarded-Proto: %s\r\n"
+        "%s",
         proxy->client_sock->client_ip_str,
         host_buf[0] ? host_buf : "unknown",
-        proto);
+        proto,
+        conn_close);
 
     if (forwarded_len <= 0 || forwarded_len >= (int)sizeof(forwarded_headers)) {
         LOG(PROXY_LOG, ERROR_LEVEL, 0, "%s", "Failed to build forwarded headers");
@@ -1476,6 +1585,13 @@ static int proxy_inject_connection_close(reverse_proxy_connection_t* proxy) {
     int conn_len = strlen(conn_header);
     unsigned char* new_buffer;
     uint32_t new_size;
+
+    /* Hat das Backend bereits einen Connection-Header gesetzt (was es tut,
+     * seit der Request mit "Connection: close" rausgeht), nur dessen Wert
+     * anpassen - sonst stuenden zwei Connection-Header in der Response. */
+    if (proxy_force_connection_close(proxy->response_buffer, proxy->response_header_end) == 1) {
+        return 0;
+    }
 
     /* Calculate new buffer size */
     new_size = proxy->response_buffer_pos + conn_len;
