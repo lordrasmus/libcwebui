@@ -436,6 +436,10 @@ void reverse_proxy_client_handler(int fd, void* ptr) {
             LOG(PROXY_LOG, NOTICE_LEVEL, 0, "%s", "STREAMING_WAIT_WRITE - client writable again");
 #endif
             delEventSocketWritePersist(proxy->client_sock);
+            /* Backend-Read wieder scharf schalten, in WAIT_WRITE wurde es pausiert.
+             * Muss vor proxy_process_state passieren, damit zwischenzeitlich
+             * eingetroffene Backend-Daten ein Event ausloesen. */
+            addEventSocketReadPersist(proxy->backend_sock);
             proxy->state = PROXY_STATE_STREAMING;
             proxy_process_state(proxy);
             return;
@@ -948,6 +952,10 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
 #endif
                         if (status == SOCKET_SEND_SEND_BUFFER_FULL) {
                             proxy->state = PROXY_STATE_STREAMING_WAIT_WRITE;
+                            /* Backend-Read pausieren: in diesem Zustand liest niemand
+                             * vom Backend, epoll ist level-triggered und wuerde den
+                             * Backend-FD sonst endlos als lesbar melden (100 % CPU). */
+                            delEventSocketAll(proxy->backend_sock);
                             addEventSocketWritePersist(proxy->client_sock);
                             return 0;
                         }
@@ -960,6 +968,7 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                         if (sent == 0) {
                             /* Keine Daten gesendet, später nochmal versuchen */
                             proxy->state = PROXY_STATE_STREAMING_WAIT_WRITE;
+                            delEventSocketAll(proxy->backend_sock);  /* Backend-Read pausieren */
                             addEventSocketWritePersist(proxy->client_sock);
                             return 0;
                         }
@@ -992,6 +1001,7 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
 
                     if (status == SOCKET_SEND_SEND_BUFFER_FULL) {
                         proxy->state = PROXY_STATE_STREAMING_WAIT_WRITE;
+                        delEventSocketAll(proxy->backend_sock);  /* Backend-Read pausieren */
                         addEventSocketWritePersist(proxy->client_sock);
                         return 0;
                     }
@@ -1003,6 +1013,7 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                     if (sent == 0) {
                         /* Keine Daten gesendet, später nochmal versuchen */
                         proxy->state = PROXY_STATE_STREAMING_WAIT_WRITE;
+                        delEventSocketAll(proxy->backend_sock);  /* Backend-Read pausieren */
                         addEventSocketWritePersist(proxy->client_sock);
                         return 0;
                     }
