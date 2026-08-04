@@ -395,26 +395,20 @@ void reverse_proxy_client_handler(int fd, void* ptr) {
                                   0);
 
                 if (bytes_read <= 0) {
-                    /* "Wuerde blockieren": bei SSL liefert WebserverRecv
-                     * CLIENT_NO_MORE_DATA (0), bei Plain-Sockets -1 mit EAGAIN.
-                     * Alles andere (echter Fehler / Disconnect) -> beenden.
-                     * Wichtig fuer grosse HTTPS-Uploads, die ueber mehrere
-                     * Read-Events kommen. */
-                    int wouldblock;
-#ifdef WEBSERVER_USE_SSL
-                    if (proxy->client_sock->use_ssl) {
-                        wouldblock = (bytes_read == CLIENT_NO_MORE_DATA);
-                    } else
-#endif
-                    {
-                        wouldblock = (bytes_read < 0 && (errno == EAGAIN || errno == EWOULDBLOCK));
+                    /* WebserverRecv liefert feste Rueckgabecodes, kein errno:
+                     * CLIENT_NO_MORE_DATA (0)  = wuerde blockieren, EAGAIN wird
+                     *                            bereits in PlatformRecvSocketNonBlocking
+                     *                            bzw. im SSL-Wrapper ausgewertet
+                     * CLIENT_DISCONNECTED (-1) = Gegenstelle hat geschlossen
+                     * < -1                     = echter Fehler
+                     * Gilt fuer SSL und Plain gleichermassen. Wichtig fuer grosse
+                     * Uploads, die ueber mehrere Read-Events kommen. */
+                    if (bytes_read == CLIENT_NO_MORE_DATA) {
+                        break;  /* auf naechstes Read-Event warten */
                     }
-                    if (!wouldblock) {
-                        proxy->state = PROXY_STATE_ERROR;
-                        proxy_process_state(proxy);
-                        return;
-                    }
-                    break;  /* wuerde blockieren - auf naechstes Read-Event warten */
+                    proxy->state = PROXY_STATE_ERROR;
+                    proxy_process_state(proxy);
+                    return;
                 }
 
                 /* Defensive check: recv should never return more than requested */
@@ -454,15 +448,19 @@ void reverse_proxy_client_handler(int fd, void* ptr) {
                 bytes_read = WebserverRecv(proxy->client_sock, tunnel_buf, sizeof(tunnel_buf), 0);
 
                 if (bytes_read <= 0) {
-                    if (bytes_read == 0 || (errno != EAGAIN && errno != EWOULDBLOCK)) {
-#if _WEBSERVER_PROXY_DEBUG_ >= 3
-                        LOG(PROXY_LOG, NOTICE_LEVEL, 0, "%s", "WebSocket tunnel: client closed");
-#endif
-                        proxy->state = PROXY_STATE_DONE;
-                        proxy_process_state(proxy);
-                        return;
+                    /* Rueckgabecodes von WebserverRecv auswerten, kein errno.
+                     * CLIENT_NO_MORE_DATA (0) heisst nur "gerade nichts da" -
+                     * bei SSL kommt das z.B. bei einem unvollstaendigen TLS-Record,
+                     * der Tunnel darf deswegen nicht abgebrochen werden. */
+                    if (bytes_read == CLIENT_NO_MORE_DATA) {
+                        break;  /* auf naechstes Read-Event warten */
                     }
-                    break;  /* EAGAIN */
+#if _WEBSERVER_PROXY_DEBUG_ >= 3
+                    LOG(PROXY_LOG, NOTICE_LEVEL, 0, "%s", "WebSocket tunnel: client closed");
+#endif
+                    proxy->state = PROXY_STATE_DONE;
+                    proxy_process_state(proxy);
+                    return;
                 }
 
                 /* Direkt ans Backend weiterleiten (UDS - kein SSL nötig) */
