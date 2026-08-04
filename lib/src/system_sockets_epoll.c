@@ -22,7 +22,11 @@ void _set_main_thread( void ){}
 
 void eventHandler(int fd, short flags, void *arg) {
 
-    if (flags & EPOLLERR || flags & EPOLLHUP) {
+    /* EPOLLRDHUP: Gegenstelle hat ihre Schreibrichtung geschlossen (FIN).
+     * Wird wie ERR/HUP als EVENT_TIMEOUT gemeldet, damit der Handler die
+     * Verbindung abbaut. Muss vor EPOLLIN geprueft werden: bei einem FIN
+     * setzt der Kernel beide Flags, und ein Read wuerde hier nur 0 liefern. */
+    if (flags & EPOLLERR || flags & EPOLLHUP || flags & EPOLLRDHUP) {
         handleer(fd, EVENT_TIMEOUT, arg);
         return;
     }
@@ -37,7 +41,7 @@ void eventHandler(int fd, short flags, void *arg) {
         handleer(fd, EVENT_WRITE, arg);
     }
 
-    if (flags & ~(EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP)) {
+    if (flags & ~(EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
         printf("BUG: epoll unhandled flags 0x%X\n", flags);
     }
 }
@@ -104,6 +108,20 @@ void addEventSocketWritePersist(socket_info *sock) {
 
 void addEventSocketReadWritePersist(socket_info *sock) {
     modifyEpoll(sock, EPOLLIN | EPOLLOUT, 1);
+}
+
+/* Nur auf das FIN der Gegenstelle horchen, nicht auf Daten.
+ * Gedacht fuer Sockets, die gerade nicht bedient werden (z.B. der Client
+ * waehrend der Reverse Proxy auf das Backend wartet): eingehende Daten
+ * loesen kein Event aus, ein Verbindungsabbau dagegen sofort. Ohne das
+ * bleibt ein solcher Socket voellig unbeobachtet und ein Abbau faellt
+ * erst auf, wenn ihn zufaellig jemand anfasst.
+ *
+ * Achtung: EPOLLRDHUP feuert auch bei einem Half-Close (Gegenstelle hat nur
+ * shutdown(SHUT_WR) gemacht und will noch lesen). Wer das nicht als Abbruch
+ * werten will, muss das im Handler unterscheiden. */
+void addEventSocketPeerClosePersist(socket_info *sock) {
+    modifyEpoll(sock, EPOLLRDHUP, 1);
 }
 
 void delEventSocketReadPersist(socket_info *sock) {

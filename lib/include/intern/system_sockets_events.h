@@ -44,6 +44,11 @@ void addEventSocketReadPersist(socket_info* sock);
 void addEventSocketWritePersist(socket_info* sock);
 void addEventSocketReadWritePersist(socket_info* sock);
 
+/* Horcht nur auf den Verbindungsabbau der Gegenstelle, nicht auf Daten.
+ * Nur das epoll-Backend kann das (EPOLLRDHUP); bei select und kqueue
+ * verhaelt sich der Aufruf wie delEventSocketAll. */
+void addEventSocketPeerClosePersist(socket_info* sock);
+
 void delEventSocketWritePersist(socket_info* sock);
 void delEventSocketReadPersist(socket_info* sock);
 void delEventSocketAll(socket_info* sock);

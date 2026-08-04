@@ -164,6 +164,14 @@ void addEventSocketReadWritePersist(socket_info* sock) {
 	#endif
 }
 
+/* select() kann nicht zwischen "Daten lesbar" und "Gegenstelle hat
+ * geschlossen" unterscheiden - ein FIN zeigt sich einfach als lesbarer
+ * Socket. Ein Aequivalent zu EPOLLRDHUP gibt es hier also nicht, der
+ * Socket wird wie bisher komplett abgemeldet. */
+void addEventSocketPeerClosePersist(socket_info* sock) {
+	delEventSocketAll(sock);
+}
+
 
 static void delEventSocketWrite2( int socket ) {
 	int i;

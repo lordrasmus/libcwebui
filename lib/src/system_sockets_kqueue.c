@@ -140,6 +140,14 @@ void addEventSocketReadWritePersist(socket_info *sock) {
     modifyKqueue(sock, KQ_READ | KQ_WRITE, 1);
 }
 
+/* kqueue meldet ein FIN nur zusammen mit EVFILT_READ (Flag EV_EOF), ein
+ * reines "nur auf Verbindungsabbau horchen" wie EPOLLRDHUP gibt es hier
+ * nicht. Statt bei jedem eingehenden Byte zu feuern wird der Socket wie
+ * bisher komplett abgemeldet - der Abbau faellt dann erst spaeter auf. */
+void addEventSocketPeerClosePersist(socket_info *sock) {
+    delEventSocketAll(sock);
+}
+
 void delEventSocketReadPersist(socket_info *sock) {
     delEventSocketAll(sock);
 }

@@ -463,12 +463,41 @@ void reverse_proxy_client_handler(int fd, void* ptr) {
 #if _WEBSERVER_PROXY_DEBUG_ >= 4
             LOG(PROXY_LOG, NOTICE_LEVEL, 0, "%s", "STREAMING_WAIT_WRITE - client writable again");
 #endif
-            delEventSocketWritePersist(proxy->client_sock);
+            /* Write-Event ablegen und zurueck auf "nur Abbau beobachten" - die
+             * add-Funktionen setzen den Event-Satz absolut, das ersetzt EPOLLOUT
+             * direkt. */
+            addEventSocketPeerClosePersist(proxy->client_sock);
             /* Backend-Read wieder scharf schalten, in WAIT_WRITE wurde es pausiert.
              * Muss vor proxy_process_state passieren, damit zwischenzeitlich
              * eingetroffene Backend-Daten ein Event ausloesen. */
             addEventSocketReadPersist(proxy->backend_sock);
             proxy->state = PROXY_STATE_STREAMING;
+            proxy_process_state(proxy);
+            return;
+
+        case PROXY_STATE_RECV_BACKEND_HEADER:
+        case PROXY_STATE_STREAMING:
+            /* In diesen Zustaenden horcht der Client-Socket nur auf einen
+             * Verbindungsabbau (addEventSocketPeerClosePersist in
+             * SEND_TO_BACKEND), nicht auf Daten. Ein Event kann hier also nur
+             * bedeuten: der Client ist weg. Sofort abbauen - epoll meldet das
+             * level-triggered dauerhaft, ein Ignorieren waere eine Endlosschleife.
+             *
+             * Bewusste Einschraenkung: EPOLLRDHUP feuert auch bei einem
+             * Half-Close, also wenn ein Client nach dem Request nur seine
+             * Schreibrichtung schliesst (shutdown(SHUT_WR)) und die Antwort noch
+             * lesen will. Das ist laut HTTP erlaubt, aber unueblich - Browser und
+             * curl machen es nicht. Ein solcher Client bekommt hier keine Antwort
+             * mehr. Falls das je auftritt (Symptom: abgebrochene Responses bei
+             * einem exotischen Client, waehrend Browser normal funktionieren),
+             * muesste an dieser Stelle zusaetzlich geprueft werden, ob die
+             * Response schon vollstaendig raus ist, und nur dann abgebaut werden.
+             * Der Fall wurde gegen den Dauer-Leak abgewogen: ein unbeobachteter
+             * Client-Socket kostet zwei FDs pro Verbindung, dauerhaft. */
+#if _WEBSERVER_PROXY_DEBUG_ >= 3
+            LOG(PROXY_LOG, NOTICE_LEVEL, 0, "%s", "client closed while waiting for backend");
+#endif
+            proxy->state = PROXY_STATE_DONE;
             proxy_process_state(proxy);
             return;
 
@@ -871,8 +900,12 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                 proxy->state = PROXY_STATE_RECV_BACKEND_HEADER;
                 addEventSocketReadPersist(proxy->backend_sock);
 
-                /* Client Socket Event deaktivieren (erstmal) */
-                delEventSocketReadPersist(proxy->client_sock);
+                /* Client-Socket nicht mehr auf Daten beobachten, aber weiter auf
+                 * einen Verbindungsabbau horchen. Sonst ist der Client waehrend
+                 * der gesamten Backend-Phase unbeobachtet und ein FIN des
+                 * Browsers faellt nie auf - der Socket bleibt in CLOSE_WAIT
+                 * haengen und mit ihm die Backend-Verbindung. */
+                addEventSocketPeerClosePersist(proxy->client_sock);
             }
             break;
             
