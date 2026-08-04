@@ -121,6 +121,9 @@ static void proxy_send_error_response(reverse_proxy_connection_t* proxy) {
     char response[768];
     int body_len;
     int response_len;
+    size_t total_sent = 0;
+    size_t sent;
+    SOCKET_SEND_STATUS status;
     const char* backend_path = (proxy != NULL && proxy->backend_path != NULL) ? proxy->backend_path : "unknown";
 
     body_len = snprintf(body, sizeof(body),
@@ -138,13 +141,36 @@ static void proxy_send_error_response(reverse_proxy_connection_t* proxy) {
         "%s",
         body_len, body);
 
-    if (proxy != NULL && proxy->client_sock != NULL) {
-        int fd = proxy->client_sock->socket;
-        if (fd >= 0) {
-            ssize_t sent = send(fd, response, response_len, 0);
-            if (sent < 0) {
-                LOG(PROXY_LOG, ERROR_LEVEL, fd, "Failed to send error response: %s", strerror(errno));
-            }
+    if (proxy == NULL || proxy->client_sock == NULL || proxy->client_sock->socket < 0) {
+        return;
+    }
+
+    /* Ueber WebserverSend senden, nicht per rohem send(): auf einer
+     * HTTPS-Verbindung ginge die Fehlerseite sonst unverschluesselt in den
+     * TLS-Stream und der Browser meldet einen Protokollfehler statt die
+     * Seite anzuzeigen. */
+    while (total_sent < (size_t)response_len) {
+        sent = 0;
+        status = WebserverSend(proxy->client_sock,
+                               (const unsigned char*)&response[total_sent],
+                               (size_t)response_len - total_sent, 0, &sent);
+
+        /* sent auch bei BUFFER_FULL mitzaehlen - mbedTLS liefert dort
+         * bereits uebernommene Bytes, OpenSSL meldet 0 */
+        total_sent += sent;
+
+        if (status == SOCKET_SEND_CLIENT_DISCONNECTED) {
+            LOG(PROXY_LOG, NOTICE_LEVEL, proxy->client_sock->socket, "%s",
+                "client disconnected while sending 502");
+            return;
+        }
+
+        if (status == SOCKET_SEND_SEND_BUFFER_FULL || sent == 0) {
+            /* Sendepuffer voll. Die Verbindung wird gleich abgebaut, ein
+             * Write-Event dafuer zu registrieren lohnt nicht. */
+            LOG(PROXY_LOG, WARNING_LEVEL, proxy->client_sock->socket,
+                "502 response only partially sent: %zu of %d bytes", total_sent, response_len);
+            return;
         }
     }
 }
