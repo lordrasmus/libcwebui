@@ -1205,7 +1205,18 @@ static int proxy_connect_backend(reverse_proxy_connection_t* proxy) {
 
     memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, proxy->backend_path, sizeof(addr.sun_path) - 1);
+
+    /* snprintf instead of strncpy: the return value reveals a truncation.
+     * A silently truncated path would connect to a different socket instead
+     * of reporting the error. Null termination is guaranteed by snprintf
+     * (and additionally by the memset above). */
+    if (snprintf(addr.sun_path, sizeof(addr.sun_path), "%s", proxy->backend_path)
+            >= (int)sizeof(addr.sun_path)) {
+        LOG(PROXY_LOG, ERROR_LEVEL, 0, "Backend path too long (max %d): %s",
+            (int)sizeof(addr.sun_path) - 1, proxy->backend_path);
+        close(sock_fd);
+        return -1;
+    }
 
     if (connect(sock_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
         if (errno != EINPROGRESS) {
