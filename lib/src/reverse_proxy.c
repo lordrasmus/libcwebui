@@ -1066,6 +1066,11 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                         LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "STREAMING header: sent %zu/%zu bytes, status=%d", sent, to_send, status);
 #endif
                         if (status == SOCKET_SEND_SEND_BUFFER_FULL) {
+                            /* Account for what was already taken: mbedTLS reports
+                             * accepted bytes together with BUFFER_FULL, OpenSSL
+                             * reports 0. Skipping this would resend those bytes
+                             * on the next attempt. */
+                            proxy->send_pos += sent;
                             proxy->state = PROXY_STATE_STREAMING_WAIT_WRITE;
                             /* Backend-Read pausieren: in diesem Zustand liest niemand
                              * vom Backend, epoll ist level-triggered und wuerde den
@@ -1115,6 +1120,12 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                                to_send, 0, &sent);
 
                     if (status == SOCKET_SEND_SEND_BUFFER_FULL) {
+                        /* Same as above, and response_body_sent has to follow too:
+                         * it is what the Content-Length completion check compares
+                         * against, so losing bytes here would keep the response
+                         * from ever being recognised as finished. */
+                        proxy->send_pos += sent;
+                        proxy->response_body_sent += sent;
                         proxy->state = PROXY_STATE_STREAMING_WAIT_WRITE;
                         delEventSocketAll(proxy->backend_sock);  /* Backend-Read pausieren */
                         addEventSocketWritePersist(proxy->client_sock);
