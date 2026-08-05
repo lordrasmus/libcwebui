@@ -75,6 +75,36 @@ static int proxy_inject_connection_close(reverse_proxy_connection_t* proxy);
 static int proxy_extract_host_header(const unsigned char* header, uint32_t header_len, char* host_buf, int host_buf_size);
 static int proxy_request_is_upgrade(const unsigned char* header, uint32_t header_len);
 static int proxy_force_connection_close(unsigned char* header, uint32_t header_len);
+static void proxy_shutdown_client(reverse_proxy_connection_t* proxy);
+
+/*
+ * Shut the client connection down so the pending close actually happens.
+ *
+ * DONE and ERROR only set closeSocket and arm a read event; the teardown then
+ * waits for that event to fire. For a plain request it does, because the
+ * response carries Connection: close and the client closes. A websocket tunnel
+ * ended by the backend is different: the browser is not told anything, an idle
+ * tunnel sends nothing and closes nothing, so no event ever arrives and both
+ * descriptors stay around indefinitely.
+ *
+ * shutdown() makes the socket readable at EOF right away, so the armed event
+ * fires on the next loop iteration and handleer runs the normal teardown. It
+ * also tells the peer the connection is over instead of leaving it waiting.
+ *
+ * Data already handed to the kernel is still sent - shutdown does not discard
+ * the send buffer, the FIN goes out behind it. ENOTCONN is expected when the
+ * peer is already gone.
+ */
+static void proxy_shutdown_client(reverse_proxy_connection_t* proxy) {
+    if (proxy->client_sock == NULL || proxy->client_sock->socket < 0) {
+        return;
+    }
+
+    if (shutdown(proxy->client_sock->socket, SHUT_RDWR) != 0 && errno != ENOTCONN) {
+        LOG(PROXY_LOG, NOTICE_LEVEL, proxy->client_sock->socket,
+            "shutdown of client socket failed: %s", strerror(errno));
+    }
+}
 
 #if _WEBSERVER_PROXY_DEBUG_ >= 2
 /*
@@ -1203,6 +1233,7 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                 if (proxy->backend_sock != NULL) {
                     delEventSocketAll(proxy->backend_sock);
                 }
+                proxy_shutdown_client(proxy);
                 /* Read Event registrieren damit der Event-Handler closeSocket prüft */
                 addEventSocketRead(proxy->client_sock);
                 /* Restlicher Proxy Cleanup über reverse_proxy_cleanup() in WebserverFreeSocketInfo */
@@ -1234,6 +1265,7 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
             if (proxy->backend_sock != NULL) {
                 delEventSocketAll(proxy->backend_sock);
             }
+            proxy_shutdown_client(proxy);
             /* Read Event registrieren damit der Event-Handler closeSocket prüft */
             addEventSocketRead(proxy->client_sock);
             /* Restlicher Proxy Cleanup über reverse_proxy_cleanup() in WebserverFreeSocketInfo */
