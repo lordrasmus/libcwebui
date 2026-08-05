@@ -54,6 +54,12 @@ static void freeChunkList(list_t* liste) {
 socket_info* WebserverMallocSocketInfo(void) {
 	socket_info* sock = (socket_info*)WebserverMalloc(sizeof(socket_info));
 	memset(sock, 0, sizeof(socket_info));
+	/* Create the mutex here rather than at each call site: every socket_info
+	 * ends up in deleteSocket() (locks it) and WebserverFreeSocketInfo()
+	 * (destroys it), so it always has to be initialised. Callers used to do
+	 * this themselves and two of them forgot, leaving an all-zero mutex that
+	 * only works by accident on pthread platforms. */
+	PlatformCreateMutex(&sock->socket_mutex);
 	ws_list_init(&sock->header_chunk_list);
 	ws_list_init(&sock->html_chunk_list);
 	ws_list_init(&sock->output_list);

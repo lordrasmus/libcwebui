@@ -55,7 +55,6 @@ int WebserverStartConnectionManager(void) {
 	}
 
 	info = WebserverMallocSocketInfo();
-	PlatformCreateMutex(&info->socket_mutex);
 	info->active = 1;
 
 #ifdef WEBSERVER_USE_SSL
@@ -83,7 +82,6 @@ int WebserverStartConnectionManager(void) {
 		}
 
 		info = WebserverMallocSocketInfo();
-		PlatformCreateMutex(&info->socket_mutex);
 		info->active = 1;
 		info->use_ssl = 1;
 		info->port = ssl_port;
@@ -118,7 +116,6 @@ int WebserverStartConnectionManager(void) {
 	}
 
 	info = WebserverMallocSocketInfo();
-	PlatformCreateMutex(&info->socket_mutex);
 	info->active = 1;
 #ifdef WEBSERVER_USE_SSL
 	info->use_ssl = 0;
@@ -169,7 +166,6 @@ static socket_info* addClientSocket(int s, char ssl) {
 	socket_info* info;
 	info = WebserverMallocSocketInfo();
 	if (info != 0) {
-		PlatformCreateMutex(&info->socket_mutex);
 		info->header = WebserverMallocHttpRequestHeader();
 #ifdef WEBSERVER_USE_SSL
 		info->use_ssl = ssl;
