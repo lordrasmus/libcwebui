@@ -62,10 +62,14 @@ static void proxy_cleanup_connection(reverse_proxy_connection_t* proxy);
 static int proxy_connect_backend(reverse_proxy_connection_t* proxy);
 static int proxy_parse_response_header(reverse_proxy_connection_t* proxy);
 static int proxy_find_header_end(const unsigned char* buffer, uint32_t len);
-static int proxy_parse_content_length(const unsigned char* header, uint32_t header_len);
+/* Return values of proxy_parse_content_length() besides the length itself */
+#define PROXY_CL_MISSING   (-1)
+#define PROXY_CL_INVALID   (-2)
+
+static int64_t proxy_parse_content_length(const unsigned char* header, uint32_t header_len);
 static int proxy_check_chunked_encoding(const unsigned char* header, uint32_t header_len);
 static int proxy_check_websocket_upgrade(const unsigned char* header, uint32_t header_len);
-static int proxy_get_status_code(const unsigned char* header);
+static int proxy_get_status_code(const unsigned char* header, uint32_t header_len);
 static int proxy_inject_forwarded_headers(reverse_proxy_connection_t* proxy);
 static int proxy_inject_connection_close(reverse_proxy_connection_t* proxy);
 static int proxy_extract_host_header(const unsigned char* header, uint32_t header_len, char* host_buf, int host_buf_size);
@@ -753,7 +757,7 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
 #endif
             /* Content-Length oder Chunked? */
             {
-                int parsed_content_length = proxy_parse_content_length(
+                int64_t parsed_content_length = proxy_parse_content_length(
                     proxy->request_buffer, proxy->request_header_end);
 
                 if (parsed_content_length > 0) {
@@ -943,14 +947,16 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
 
             /* Body Mode bestimmen */
             {
-                int parsed_content_length = proxy_parse_content_length(
+                int64_t parsed_content_length = proxy_parse_content_length(
                     proxy->response_buffer, proxy->response_header_end);
 
                 /* Body Mode bestimmen
                  * HTTP 204 (No Content) und 304 (Not Modified) haben nie einen Body
                  * Content-Length: 0 bedeutet auch kein Body
                  * parsed_content_length >= 0 bedeutet Content-Length Header vorhanden
-                 * parsed_content_length == -1 bedeutet kein Content-Length Header */
+                 * PROXY_CL_MISSING means no Content-Length header,
+                 * PROXY_CL_INVALID an unusable value - both fall through to
+                 * chunked or read-until-close below */
                 if (proxy->response_status_code == 204 || proxy->response_status_code == 304) {
                     proxy->response_body_mode = BODY_MODE_CONTENT_LENGTH;
                     proxy->response_content_length = 0;
@@ -1255,7 +1261,8 @@ static int proxy_connect_backend(reverse_proxy_connection_t* proxy) {
  * Parse response header for status code and other info
  */
 static int proxy_parse_response_header(reverse_proxy_connection_t* proxy) {
-    proxy->response_status_code = proxy_get_status_code(proxy->response_buffer);
+    proxy->response_status_code = proxy_get_status_code(proxy->response_buffer,
+                                                       proxy->response_header_end);
     proxy->response_is_websocket_upgrade = proxy_check_websocket_upgrade(
         proxy->response_buffer, proxy->response_header_end);
 
@@ -1289,12 +1296,16 @@ static int proxy_find_header_end(const unsigned char* buffer, uint32_t len) {
 
 /*
  * Parse Content-Length header
+ *
+ * Returns the value, PROXY_CL_MISSING when there is no such header, or
+ * PROXY_CL_INVALID when the value is not a number or does not fit.
  */
-static int proxy_parse_content_length(const unsigned char* header, uint32_t header_len) {
+static int64_t proxy_parse_content_length(const unsigned char* header, uint32_t header_len) {
     const unsigned char* p = header;
     const unsigned char* end = header + header_len;
     const char* cl_str = "Content-Length:";
     int cl_len = strlen(cl_str);
+    uint64_t value;
 
     while (p < end - cl_len) {
         if (strncasecmp((const char*)p, cl_str, cl_len) == 0) {
@@ -1302,7 +1313,28 @@ static int proxy_parse_content_length(const unsigned char* header, uint32_t head
             while (p < end && (*p == ' ' || *p == '\t')) {
                 p++;
             }
-            return atoi((const char*)p);
+
+            /* Parse the digits by hand instead of using atoi()/strtoull():
+             * the header buffer is not null terminated, so those could read
+             * past its end, and atoi() has undefined behaviour on overflow.
+             * A backend answering with a bogus length must not wrap around
+             * into a small value here. */
+            if (p >= end || *p < '0' || *p > '9') {
+                LOG(PROXY_LOG, ERROR_LEVEL, 0, "%s", "Content-Length header without a number");
+                return PROXY_CL_INVALID;
+            }
+
+            value = 0;
+            while (p < end && *p >= '0' && *p <= '9') {
+                uint64_t digit = (uint64_t)(*p - '0');
+                if (value > ((uint64_t)INT64_MAX - digit) / 10) {
+                    LOG(PROXY_LOG, ERROR_LEVEL, 0, "%s", "Content-Length value too large");
+                    return PROXY_CL_INVALID;
+                }
+                value = value * 10 + digit;
+                p++;
+            }
+            return (int64_t)value;
         }
         /* Zur nächsten Zeile */
         while (p < end && *p != '\n') {
@@ -1313,7 +1345,7 @@ static int proxy_parse_content_length(const unsigned char* header, uint32_t head
         }
     }
 
-    return -1;  /* Kein Content-Length Header gefunden */
+    return PROXY_CL_MISSING;
 }
 
 /*
@@ -1353,7 +1385,7 @@ static int proxy_check_chunked_encoding(const unsigned char* header, uint32_t he
 static int proxy_check_websocket_upgrade(const unsigned char* header, uint32_t header_len) {
     const unsigned char* p;
     const unsigned char* end;
-    int status = proxy_get_status_code(header);
+    int status = proxy_get_status_code(header, header_len);
 
     if (status != 101) {
         return 0;
@@ -1386,20 +1418,38 @@ static int proxy_check_websocket_upgrade(const unsigned char* header, uint32_t h
 
 /*
  * Get HTTP status code from response
+ *
+ * Returns -1 when no status code can be read.
  */
-static int proxy_get_status_code(const unsigned char* header) {
+static int proxy_get_status_code(const unsigned char* header, uint32_t header_len) {
     /* Format: HTTP/1.x SSS ... */
     const unsigned char* p = header;
+    const unsigned char* end = header + header_len;
+    int status = 0;
+    int digits = 0;
 
     /* Skip "HTTP/1.x " */
-    while (*p && *p != ' ') {
+    while (p < end && *p != ' ') {
         p++;
     }
-    if (*p == ' ') {
+    if (p < end && *p == ' ') {
         p++;
     }
 
-    return atoi((const char*)p);
+    /* Read at most three digits, bounded by the buffer. The response header
+     * is not null terminated, so atoi() could read past its end - a backend
+     * answering without a space in the status line was enough to trigger it. */
+    while (p < end && digits < 3 && *p >= '0' && *p <= '9') {
+        status = status * 10 + (*p - '0');
+        p++;
+        digits++;
+    }
+
+    if (digits == 0) {
+        return -1;
+    }
+
+    return status;
 }
 
 /*
