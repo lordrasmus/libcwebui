@@ -83,15 +83,37 @@ char waitEvents(void) {
 
 static void modifyEpoll(socket_info *sock, uint32_t events, int persist) {
     struct epoll_event ev;
+    int op;
+
     ev.data.ptr = sock;
     ev.events = events | (persist ? 0 : EPOLLONESHOT);
 
-    if (sock->registered) {
-        epoll_ctl(epoll_fd, EPOLL_CTL_MOD, sock->socket, &ev);
-    } else {
-        epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sock->socket, &ev);
+    op = sock->registered ? EPOLL_CTL_MOD : EPOLL_CTL_ADD;
+    if (epoll_ctl(epoll_fd, op, sock->socket, &ev) == 0) {
         sock->registered = 1;
+        return;
     }
+
+    /* sock->registered can disagree with what the kernel has: it is kept
+     * without a lock while other threads (websocket_output_thread) register
+     * in parallel. Retry with the opposite operation rather than losing the
+     * requested events silently - a socket left without its registration
+     * only shows up later as a connection that hangs. */
+    if (errno == EEXIST) {
+        if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, sock->socket, &ev) == 0) {
+            sock->registered = 1;
+            return;
+        }
+    } else if (errno == ENOENT) {
+        if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sock->socket, &ev) == 0) {
+            sock->registered = 1;
+            return;
+        }
+    }
+
+    LOG(MESSAGE_LOG, ERROR_LEVEL, sock->socket, "epoll_ctl(%s, events=0x%X) failed: %s",
+        (op == EPOLL_CTL_MOD) ? "MOD" : "ADD", ev.events, strerror(errno));
+    sock->registered = 0;
 }
 
 void addEventSocketRead(socket_info *sock) {
@@ -134,7 +156,14 @@ void delEventSocketWritePersist(socket_info *sock) {
 
 void delEventSocketAll(socket_info *sock) {
     if (sock->registered) {
-        epoll_ctl(epoll_fd, EPOLL_CTL_DEL, sock->socket, NULL);
+        /* ENOENT and EBADF are expected here: the kernel drops a closed fd
+         * from the set on its own, and an EPOLLONESHOT event may already have
+         * disarmed it. Anything else means the socket keeps firing events. */
+        if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, sock->socket, NULL) != 0
+                && errno != ENOENT && errno != EBADF) {
+            LOG(MESSAGE_LOG, ERROR_LEVEL, sock->socket, "epoll_ctl(DEL) failed: %s",
+                strerror(errno));
+        }
         sock->registered = 0;
     }
 }
