@@ -878,10 +878,32 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
         case PROXY_STATE_SEND_TO_BACKEND:
             /* Request an Backend senden */
             {
-                int to_send = proxy->request_buffer_pos - proxy->send_pos;
-                int sent = send(proxy->backend_fd,
-                               &proxy->request_buffer[proxy->send_pos],
-                               to_send, 0);
+                int to_send;
+                int sent;
+
+                /* connect() may have returned EINPROGRESS, in which case the
+                 * connection can still have failed since. Collect the pending
+                 * error before the first send, otherwise a failed connect only
+                 * shows up as a misleading send error. Checked once per
+                 * connection, on re-entry after a partial send send_pos is
+                 * already non-zero. */
+                if (proxy->send_pos == 0) {
+                    int so_error = 0;
+                    socklen_t so_error_len = sizeof(so_error);
+
+                    if (getsockopt(proxy->backend_fd, SOL_SOCKET, SO_ERROR,
+                                   &so_error, &so_error_len) == 0 && so_error != 0) {
+                        LOG(PROXY_LOG, ERROR_LEVEL, 0, "Backend connect to %s failed: %s",
+                            proxy->backend_path, strerror(so_error));
+                        proxy->state = PROXY_STATE_ERROR;
+                        return proxy_process_state(proxy);
+                    }
+                }
+
+                to_send = proxy->request_buffer_pos - proxy->send_pos;
+                sent = send(proxy->backend_fd,
+                            &proxy->request_buffer[proxy->send_pos],
+                            to_send, 0);
 
                 /* Backend-Handler registrieren, damit Write-Events (partieller
                  * Send / EAGAIN bei grossen Uploads) wieder hier landen und der
@@ -1243,12 +1265,23 @@ static int proxy_connect_backend(reverse_proxy_connection_t* proxy) {
     }
 
     if (connect(sock_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+        if (errno == EAGAIN) {
+            /* A non blocking unix socket reports a full accept queue as EAGAIN,
+             * not EINPROGRESS. The backend is running but not keeping up, so
+             * this connection cannot be established right now. */
+            LOG(PROXY_LOG, ERROR_LEVEL, 0, "Backend %s is not accepting connections (queue full)",
+                proxy->backend_path);
+            close(sock_fd);
+            return -1;
+        }
         if (errno != EINPROGRESS) {
             LOG(PROXY_LOG, NOTICE_LEVEL, 0, "Failed to connect to backend %s: %s",
                       proxy->backend_path, strerror(errno));
             close(sock_fd);
             return -1;
         }
+        /* EINPROGRESS: the connect is still running. Whether it succeeded is
+         * checked via SO_ERROR before the first send in SEND_TO_BACKEND. */
     }
 
     proxy->backend_fd = sock_fd;
