@@ -982,8 +982,16 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                 return proxy_process_state(proxy);
             }
 
-            /* Connection: close injizieren für sauberes Verbindungsende (nicht bei WebSockets) */
-            proxy_inject_connection_close(proxy);
+            /* Connection: close injizieren für sauberes Verbindungsende (nicht bei WebSockets).
+             * Fails only when the buffer cannot be grown. Sending the response
+             * without the header would tell the client to keep the connection
+             * alive while the proxy closes it right after, so treat it as an
+             * error - same as the forwarded headers on the request side. */
+            if (proxy_inject_connection_close(proxy) < 0) {
+                LOG(PROXY_LOG, ERROR_LEVEL, 0, "%s", "Failed to inject Connection: close");
+                proxy->state = PROXY_STATE_ERROR;
+                return proxy_process_state(proxy);
+            }
 
             /* Body Mode bestimmen */
             {
