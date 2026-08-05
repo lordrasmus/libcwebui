@@ -204,10 +204,22 @@ void reverse_proxy_register_uds_internal(const char* method, const char* url_pre
     } else {
         reg->method = strdup("*");
     }
-    
+
     reg->url_prefix = strdup(url_prefix);
-    reg->url_prefix_len = strlen(url_prefix);
     reg->backend_path = strdup(backend_path);
+
+    /* Without these strings the registration would be matched later and
+     * dereferenced, so give up here instead. free() accepts NULL. */
+    if (reg->method == NULL || reg->url_prefix == NULL || reg->backend_path == NULL) {
+        LOG(PROXY_LOG, ERROR_LEVEL, 0, "Failed to allocate registration strings for %s", url_prefix);
+        free(reg->method);
+        free(reg->url_prefix);
+        free(reg->backend_path);
+        WebserverFree(reg);
+        return;
+    }
+
+    reg->url_prefix_len = strlen(url_prefix);
     reg->type = PROXY_TYPE_UDS;
     reg->forward_websocket = 1;  /* Default: WebSockets weiterleiten */
     reg->next = NULL;
@@ -303,20 +315,26 @@ static reverse_proxy_connection_t* proxy_create_connection(socket_info* client_s
     proxy->client_sock = client_sock;
     proxy->backend_fd = -1;
     proxy->backend_path = strdup(reg->backend_path);
-    
+    if (proxy->backend_path == NULL) {
+        WebserverFree(proxy);
+        return NULL;
+    }
+
     /* Request Buffer allokieren */
     proxy->request_buffer = WebserverMalloc(PROXY_BUFFER_SIZE);
     if (proxy->request_buffer == NULL) {
+        free(proxy->backend_path);
         WebserverFree(proxy);
         return NULL;
     }
     proxy->request_buffer_size = PROXY_BUFFER_SIZE;
     proxy->request_buffer_pos = 0;
-    
+
     /* Response Buffer allokieren */
     proxy->response_buffer = WebserverMalloc(PROXY_BUFFER_SIZE);
     if (proxy->response_buffer == NULL) {
         WebserverFree(proxy->request_buffer);
+        free(proxy->backend_path);
         WebserverFree(proxy);
         return NULL;
     }
