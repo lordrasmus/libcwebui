@@ -27,6 +27,14 @@ SPDX-License-Identifier: MPL-2.0
 SOCKET_SEND_STATUS WebserverSend(socket_info* sock, const unsigned char *buffer, size_t len, int flags, size_t* bytes_send) {
 	ssize_t ret;
 
+	/* Vor dem SSL-Zweig nullen, nicht danach: der SSL-Wrapper schreibt
+	 * *bytes_send auf seinen Fehlerpfaden nicht, sodass ein Aufrufer sonst den
+	 * Wert des vorherigen Aufrufs weiterverwendet und Bytes als gesendet
+	 * zaehlt, die nie rausgingen. */
+	if (likely(bytes_send != 0)){
+		*bytes_send = 0;
+	}
+
 #ifdef WEBSERVER_USE_SSL
 	if (sock->use_ssl == 1) {
 		SOCKET_SEND_STATUS status;
@@ -35,9 +43,6 @@ SOCKET_SEND_STATUS WebserverSend(socket_info* sock, const unsigned char *buffer,
 	}
 #endif
 
-	if (likely(bytes_send != 0)){
-		*bytes_send = 0;
-	}
 
 	ret = PlatformSendSocketNonBlocking(sock->socket, buffer, len, flags);
 	if (likely(ret == len)) {

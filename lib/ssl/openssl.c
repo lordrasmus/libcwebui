@@ -719,7 +719,12 @@ SOCKET_SEND_STATUS WebserverSSLSendNonBlocking(socket_info* s, const unsigned ch
 			err_code = ERR_get_error();
 			if ( err_code == 0 ){
 				if ( ( ret == 0 ) && ( errno == 0 )){
-					return CLIENT_DISCONNECTED;
+					/* SOCKET_SEND_CLIENT_DISCONNECTED (2), not the recv side's
+					 * CLIENT_DISCONNECTED (-1): this is a send function and the
+					 * caller compares against the SOCKET_SEND_* family. Returning
+					 * the recv constant here made every caller miss the
+					 * disconnect. */
+					return SOCKET_SEND_CLIENT_DISCONNECTED;
 				}
 				#if _WEBSERVER_CONNECTION_DEBUG_ > 1
 					LOG ( CONNECTION_LOG,ERROR_LEVEL,s->socket,"SSL_ERROR_SYSCALL ( %d / %d / %d / %m ) ",ret,r2, errno );

@@ -173,7 +173,12 @@ static int proxy_tunnel_flush_b2c(reverse_proxy_connection_t* proxy) {
          * bytes there, OpenSSL reports 0. */
         proxy->tunnel_b2c_sent += (uint32_t)sent;
 
-        if (status == SOCKET_SEND_CLIENT_DISCONNECTED) {
+        /* Alles ausser NO_MORE_DATA und BUFFER_FULL beendet den Tunnel. Der
+         * SSL-Pfad meldet einen abgerissenen Client auch als
+         * SSL_PROTOCOL_ERROR, SOCKET_SEND_SSL_ERROR oder CLIENT_DISCONNECTED
+         * (-1) - keiner davon ist SOCKET_SEND_CLIENT_DISCONNECTED. */
+        if (status != SOCKET_SEND_NO_MORE_DATA
+                && status != SOCKET_SEND_SEND_BUFFER_FULL) {
             return -1;
         }
         if (status == SOCKET_SEND_SEND_BUFFER_FULL || sent == 0) {
@@ -305,9 +310,13 @@ static void proxy_send_error_response(reverse_proxy_connection_t* proxy, int cod
          * bereits uebernommene Bytes, OpenSSL meldet 0 */
         total_sent += sent;
 
-        if (status == SOCKET_SEND_CLIENT_DISCONNECTED) {
-            LOG(PROXY_LOG, NOTICE_LEVEL, proxy->client_sock->socket, "%s",
-                "client disconnected while sending 502");
+        /* Alles ausser NO_MORE_DATA und BUFFER_FULL ist toedlich - der
+         * SSL-Pfad liefert auch SSL_PROTOCOL_ERROR, SOCKET_SEND_SSL_ERROR und
+         * CLIENT_DISCONNECTED (-1). */
+        if (status != SOCKET_SEND_NO_MORE_DATA
+                && status != SOCKET_SEND_SEND_BUFFER_FULL) {
+            LOG(PROXY_LOG, NOTICE_LEVEL, proxy->client_sock->socket,
+                "client gone while sending the error page (status %d)", status);
             return;
         }
 
@@ -1266,6 +1275,7 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                 /* Noch Header zu senden? */
                 if (!proxy->response_header_sent) {
                     while (proxy->send_pos < proxy->response_header_end) {
+                        sent = 0;
                         to_send = proxy->response_header_end - proxy->send_pos;
                         status = WebserverSend(proxy->client_sock,
                                    &proxy->response_buffer[proxy->send_pos],
@@ -1287,7 +1297,14 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                             addEventSocketWritePersist(proxy->client_sock);
                             return 0;
                         }
-                        if (status == SOCKET_SEND_CLIENT_DISCONNECTED) {
+                        /* Alles ausser NO_MORE_DATA ist toedlich. WebserverSend
+                         * liefert auf dem SSL-Pfad auch SSL_PROTOCOL_ERROR (-22),
+                         * SOCKET_SEND_SSL_ERROR (4) und CLIENT_DISCONNECTED (-1);
+                         * wer nur auf SOCKET_SEND_CLIENT_DISCONNECTED prueft, haelt
+                         * einen abgerissenen TLS-Client faelschlich fuer "spaeter
+                         * nochmal" und dreht endlos zwischen WAIT_WRITE und
+                         * STREAMING. */
+                        if (status != SOCKET_SEND_NO_MORE_DATA) {
                             proxy->state = PROXY_STATE_ERROR;
                             return proxy_process_state(proxy);
                         }
@@ -1337,6 +1354,7 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
 
                 /* Body-Daten aus Buffer senden - in Schleife bis Buffer leer oder BUFFER_FULL */
                 while (proxy->send_pos < proxy->response_buffer_pos) {
+                    sent = 0;
                     to_send = proxy->response_buffer_pos - proxy->send_pos;
                     status = WebserverSend(proxy->client_sock,
                                &proxy->response_buffer[proxy->send_pos],
@@ -1354,7 +1372,8 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                         addEventSocketWritePersist(proxy->client_sock);
                         return 0;
                     }
-                    if (status == SOCKET_SEND_CLIENT_DISCONNECTED) {
+                    /* Alles ausser NO_MORE_DATA ist toedlich, siehe Header-Schleife */
+                    if (status != SOCKET_SEND_NO_MORE_DATA) {
                         proxy->state = PROXY_STATE_ERROR;
                         return proxy_process_state(proxy);
                     }
