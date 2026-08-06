@@ -148,9 +148,13 @@ static void proxy_dump_header(const char* label, const unsigned char* buffer, ui
 #endif
 
 /*
- * Send 502 Bad Gateway error response directly on socket
+ * Send a minimal error response directly on the client socket
+ *
+ * detail may be NULL. Only usable while no response header has gone out yet -
+ * the caller has to make sure of that.
  */
-static void proxy_send_error_response(reverse_proxy_connection_t* proxy) {
+static void proxy_send_error_response(reverse_proxy_connection_t* proxy, int code,
+                                      const char* reason, const char* detail) {
     char body[512];
     char response[768];
     int body_len;
@@ -158,22 +162,21 @@ static void proxy_send_error_response(reverse_proxy_connection_t* proxy) {
     size_t total_sent = 0;
     size_t sent;
     SOCKET_SEND_STATUS status;
-    const char* backend_path = (proxy != NULL && proxy->backend_path != NULL) ? proxy->backend_path : "unknown";
 
     body_len = snprintf(body, sizeof(body),
-        "<html><head><title>502 Bad Gateway</title></head>"
-        "<body><h1>502 Bad Gateway</h1>"
-        "<p>Backend service unavailable: %s</p></body></html>",
-        backend_path);
+        "<html><head><title>%d %s</title></head>"
+        "<body><h1>%d %s</h1>"
+        "<p>%s</p></body></html>",
+        code, reason, code, reason, (detail != NULL) ? detail : "");
 
     response_len = snprintf(response, sizeof(response),
-        "HTTP/1.1 502 Bad Gateway\r\n"
+        "HTTP/1.1 %d %s\r\n"
         "Content-Type: text/html; charset=utf-8\r\n"
         "Content-Length: %d\r\n"
         "Connection: close\r\n"
         "\r\n"
         "%s",
-        body_len, body);
+        code, reason, body_len, body);
 
     if (proxy == NULL || proxy->client_sock == NULL || proxy->client_sock->socket < 0) {
         return;
@@ -626,7 +629,19 @@ void reverse_proxy_backend_handler(int fd, void* ptr) {
 
         case PROXY_STATE_RECV_BACKEND_HEADER:
             /* Daten vom Backend lesen - warten auf kompletten Header */
-            if (proxy->response_buffer_pos < proxy->response_buffer_size) {
+            if (proxy->response_buffer_pos >= proxy->response_buffer_size) {
+                /* Buffer full and still no complete header. Without this the
+                 * branch below is skipped, nothing is read, and the armed read
+                 * event keeps firing - the same endless loop as on the request
+                 * side. A backend whose header does not fit is broken. */
+                LOG(PROXY_LOG, ERROR_LEVEL, proxy->backend_fd,
+                    "Backend response header exceeds %u bytes, giving up",
+                    proxy->response_buffer_size);
+                proxy->state = PROXY_STATE_ERROR;
+                proxy_process_state(proxy);
+                return;
+            }
+            {
                 bytes_read = recv(proxy->backend_fd,
                                   &proxy->response_buffer[proxy->response_buffer_pos],
                                   proxy->response_buffer_size - proxy->response_buffer_pos,
@@ -795,7 +810,19 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
             /* Prüfen ob Header komplett */
             ret = proxy_find_header_end(proxy->request_buffer, proxy->request_buffer_pos);
             if (ret < 0) {
-                /* Header noch nicht komplett, weiter lesen */
+                /* Header not complete yet. Enforce PROXY_MAX_HEADER_SIZE before
+                 * reading on: without that limit the buffer eventually fills up,
+                 * the client read loop then breaks without calling recv() and the
+                 * read event stays armed - level triggered epoll keeps reporting
+                 * the fd, which spins the event loop. */
+                if (proxy->request_buffer_pos > PROXY_MAX_HEADER_SIZE) {
+                    LOG(PROXY_LOG, ERROR_LEVEL, 0, "Request header exceeds %d bytes, rejecting",
+                        PROXY_MAX_HEADER_SIZE);
+                    proxy_send_error_response(proxy, 431, "Request Header Fields Too Large", NULL);
+                    proxy->response_header_sent = 1;   /* stops ERROR from sending a 502 on top */
+                    proxy->state = PROXY_STATE_ERROR;
+                    return proxy_process_state(proxy);
+                }
                 return 0;
             }
             
@@ -871,6 +898,21 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
 #endif
             if (proxy->request_body_received >= proxy->request_content_length) {
                 proxy->state = PROXY_STATE_CONNECT_BACKEND;
+                return proxy_process_state(proxy);
+            }
+
+            /* Buffer full but the body is still short of Content-Length. That
+             * happens when the announced size did not fit and the buffer was
+             * capped while growing. Reading cannot make progress from here, so
+             * the read loop would break without recv() and spin the event loop.
+             * Reject instead of waiting for data there is no room for. */
+            if (proxy->request_buffer_pos >= proxy->request_buffer_size) {
+                LOG(PROXY_LOG, ERROR_LEVEL, 0,
+                    "Request body of %lu bytes does not fit into the buffer (%u), rejecting",
+                    (unsigned long)proxy->request_content_length, proxy->request_buffer_size);
+                proxy_send_error_response(proxy, 413, "Payload Too Large", NULL);
+                proxy->response_header_sent = 1;
+                proxy->state = PROXY_STATE_ERROR;
                 return proxy_process_state(proxy);
             }
             break;
@@ -1223,7 +1265,8 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                 /* 502 Error senden wenn noch keine Response gesendet wurde */
                 if (proxy->response_header_sent == 0) {
                     LOG(PROXY_LOG, NOTICE_LEVEL, 0, "Sending 502 Bad Gateway for %s", proxy->request_url);
-                    proxy_send_error_response(proxy);
+                    proxy_send_error_response(proxy, 502, "Bad Gateway",
+                        (proxy->backend_path != NULL) ? proxy->backend_path : "unknown");
                 }
 
                 proxy->client_sock->reverse_proxy_error = 1;
