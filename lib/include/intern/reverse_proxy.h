@@ -48,6 +48,31 @@ typedef enum {
     BODY_MODE_CLOSE              /* Bis Connection Close lesen */
 } body_transfer_mode_t;
 
+/*
+ * States for following a chunked response body (RFC 7230, 4.1).
+ *
+ * The proxy forwards the body unchanged and only needs to know where it ends -
+ * nothing is de-chunked. Without this the only end marker would be the backend
+ * closing, which is why "Connection: close" is forced onto the backend; that
+ * is skipped for upgrade requests, and the connection used to hang there.
+ *
+ * Format:  <hex-size>[;ext]CRLF <data> CRLF ... 0CRLF [trailer] CRLF
+ */
+typedef enum {
+    PROXY_CHUNK_SIZE = 0,        /* hex digits of the chunk size */
+    PROXY_CHUNK_EXT,             /* chunk extension from ';' up to CRLF */
+    PROXY_CHUNK_SIZE_LF,         /* CR of the size line seen */
+    PROXY_CHUNK_DATA,            /* payload, current_chunk_size still open */
+    PROXY_CHUNK_DATA_CR,         /* CRLF expected behind the payload */
+    PROXY_CHUNK_DATA_LF,
+    PROXY_CHUNK_TRAILER,         /* start of a trailer line after the null chunk */
+    PROXY_CHUNK_TRAILER_LF,      /* CR of the empty line, LF ends the response */
+    PROXY_CHUNK_TRAILER_LINE,    /* trailer header line */
+    PROXY_CHUNK_TRAILER_LINE_LF,
+    PROXY_CHUNK_DONE,            /* null chunk and trailer complete */
+    PROXY_CHUNK_ERROR            /* broken framing - fall back to waiting for close */
+} proxy_chunk_state_t;
+
 /* Proxy Connection Info */
 typedef struct reverse_proxy_connection {
     /* State Machine */
@@ -95,9 +120,9 @@ typedef struct reverse_proxy_connection {
     int response_header_sent;    /* Header wurde an Client gesendet */
     uint64_t response_body_sent; /* Bytes des Body an Client gesendet */
 
-    /* Chunked Encoding State */
-    int chunk_state;             /* 0=size, 1=data, 2=trailer */
-    uint64_t current_chunk_size;
+    /* Chunked Encoding State - see proxy_chunked_scan() */
+    proxy_chunk_state_t chunk_state;
+    uint64_t current_chunk_size;     /* bytes left in the current chunk */
     uint64_t current_chunk_received;
 
     /* WebSocket tunnel backpressure

@@ -69,6 +69,8 @@ static int proxy_find_header_end(const unsigned char* buffer, uint32_t len);
 static int64_t proxy_parse_content_length(const unsigned char* header, uint32_t header_len);
 static int proxy_check_chunked_encoding(const unsigned char* header, uint32_t header_len);
 static int proxy_check_websocket_upgrade(const unsigned char* header, uint32_t header_len);
+static int proxy_get_upgrade_value(const unsigned char* header, uint32_t header_len,
+                                   char* buf, int buf_size);
 static int proxy_get_status_code(const unsigned char* header, uint32_t header_len);
 static int proxy_inject_forwarded_headers(reverse_proxy_connection_t* proxy);
 static int proxy_inject_connection_close(reverse_proxy_connection_t* proxy);
@@ -79,6 +81,172 @@ static void proxy_shutdown_client(reverse_proxy_connection_t* proxy);
 static void proxy_tunnel_update_events(reverse_proxy_connection_t* proxy);
 static int proxy_tunnel_flush_c2b(reverse_proxy_connection_t* proxy);
 static int proxy_tunnel_flush_b2c(reverse_proxy_connection_t* proxy);
+
+/*
+ * Follow a chunked response body to find its end.
+ *
+ * The proxy forwards the body byte for byte, so this only tracks framing - it
+ * never rewrites or de-chunks anything. Call it with every stretch of body
+ * bytes in order, exactly once each; the state persists across calls because a
+ * chunk header can be split across two recv() calls.
+ *
+ * Returns 1 once the null chunk and its trailer are complete.
+ *
+ * On broken framing the state goes to PROXY_CHUNK_ERROR and stays there, and
+ * the caller falls back to waiting for the backend to close - which is exactly
+ * how it behaved before this parser existed. A bug in here can therefore not
+ * cut a valid response short, only miss the early end.
+ *
+ * Chunk sizes are capped well below the point where the accumulator could
+ * overflow; anything that large is a broken backend, not a real body.
+ */
+#define PROXY_CHUNK_SIZE_MAX  0x7FFFFFFFFFFFFFFFULL
+
+static int proxy_chunked_scan(reverse_proxy_connection_t* proxy,
+                              const unsigned char* data, uint32_t len) {
+    uint32_t i = 0;
+
+    if (proxy->chunk_state == PROXY_CHUNK_DONE) {
+        return 1;
+    }
+    if (proxy->chunk_state == PROXY_CHUNK_ERROR) {
+        return 0;
+    }
+
+    while (i < len) {
+        unsigned char c = data[i];
+
+        switch (proxy->chunk_state) {
+            case PROXY_CHUNK_SIZE:
+                if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+                    uint64_t digit;
+                    if (c <= '9') {
+                        digit = (uint64_t)(c - '0');
+                    } else if (c <= 'F') {
+                        digit = (uint64_t)(c - 'A' + 10);
+                    } else {
+                        digit = (uint64_t)(c - 'a' + 10);
+                    }
+                    if (proxy->current_chunk_size > (PROXY_CHUNK_SIZE_MAX - digit) / 16) {
+                        proxy->chunk_state = PROXY_CHUNK_ERROR;
+                        return 0;
+                    }
+                    proxy->current_chunk_size = proxy->current_chunk_size * 16 + digit;
+                } else if (c == ';') {
+                    proxy->chunk_state = PROXY_CHUNK_EXT;
+                } else if (c == '\r') {
+                    proxy->chunk_state = PROXY_CHUNK_SIZE_LF;
+                } else if (c == ' ' || c == '\t') {
+                    /* whitespace before the CRLF happens, tolerate it */
+                } else {
+                    proxy->chunk_state = PROXY_CHUNK_ERROR;
+                    return 0;
+                }
+                i++;
+                break;
+
+            case PROXY_CHUNK_EXT:
+                if (c == '\r') {
+                    proxy->chunk_state = PROXY_CHUNK_SIZE_LF;
+                }
+                i++;
+                break;
+
+            case PROXY_CHUNK_SIZE_LF:
+                if (c != '\n') {
+                    proxy->chunk_state = PROXY_CHUNK_ERROR;
+                    return 0;
+                }
+                /* size 0 is the null chunk, only the trailer follows */
+                proxy->chunk_state = (proxy->current_chunk_size == 0)
+                                   ? PROXY_CHUNK_TRAILER : PROXY_CHUNK_DATA;
+                i++;
+                break;
+
+            case PROXY_CHUNK_DATA: {
+                /* just skip the payload - it is already on its way out */
+                uint64_t remaining = (uint64_t)(len - i);
+                uint64_t skip = (proxy->current_chunk_size < remaining)
+                              ? proxy->current_chunk_size : remaining;
+
+                i += (uint32_t)skip;
+                proxy->current_chunk_size -= skip;
+                proxy->current_chunk_received += skip;
+
+                if (proxy->current_chunk_size == 0) {
+                    proxy->chunk_state = PROXY_CHUNK_DATA_CR;
+                }
+                break;
+            }
+
+            case PROXY_CHUNK_DATA_CR:
+                if (c != '\r') {
+                    proxy->chunk_state = PROXY_CHUNK_ERROR;
+                    return 0;
+                }
+                proxy->chunk_state = PROXY_CHUNK_DATA_LF;
+                i++;
+                break;
+
+            case PROXY_CHUNK_DATA_LF:
+                if (c != '\n') {
+                    proxy->chunk_state = PROXY_CHUNK_ERROR;
+                    return 0;
+                }
+                proxy->chunk_state = PROXY_CHUNK_SIZE;
+                proxy->current_chunk_size = 0;
+                i++;
+                break;
+
+            case PROXY_CHUNK_TRAILER:
+                /* start of a line: an immediate CRLF means no trailers and
+                 * ends the response */
+                if (c == '\r') {
+                    proxy->chunk_state = PROXY_CHUNK_TRAILER_LF;
+                } else if (c == '\n') {
+                    proxy->chunk_state = PROXY_CHUNK_DONE;
+                    return 1;
+                } else {
+                    proxy->chunk_state = PROXY_CHUNK_TRAILER_LINE;
+                }
+                i++;
+                break;
+
+            case PROXY_CHUNK_TRAILER_LF:
+                if (c != '\n') {
+                    proxy->chunk_state = PROXY_CHUNK_ERROR;
+                    return 0;
+                }
+                proxy->chunk_state = PROXY_CHUNK_DONE;
+                return 1;
+
+            case PROXY_CHUNK_TRAILER_LINE:
+                if (c == '\r') {
+                    proxy->chunk_state = PROXY_CHUNK_TRAILER_LINE_LF;
+                }
+                i++;
+                break;
+
+            case PROXY_CHUNK_TRAILER_LINE_LF:
+                if (c != '\n') {
+                    proxy->chunk_state = PROXY_CHUNK_ERROR;
+                    return 0;
+                }
+                proxy->chunk_state = PROXY_CHUNK_TRAILER;
+                i++;
+                break;
+
+            case PROXY_CHUNK_DONE:
+                return 1;
+
+            case PROXY_CHUNK_ERROR:
+            default:
+                return 0;
+        }
+    }
+
+    return (proxy->chunk_state == PROXY_CHUNK_DONE) ? 1 : 0;
+}
 
 /*
  * WebSocket tunnel: event registration follows the backlog
@@ -652,16 +820,16 @@ void reverse_proxy_client_handler(int fd, void* ptr) {
         case PROXY_STATE_SEND_TO_BACKEND:
         case PROXY_STATE_RECV_BACKEND_HEADER:
         case PROXY_STATE_STREAMING:
-            /* In diesen Zustaenden horcht der Client-Socket nur auf einen
-             * Verbindungsabbau (addEventSocketPeerClosePersist in
-             * CONNECT_BACKEND), nicht auf Daten. Ein Event kann hier also nur
-             * bedeuten: der Client ist weg. Sofort abbauen - epoll meldet das
-             * level-triggered dauerhaft, ein Ignorieren waere eine Endlosschleife.
+            /* In these states the client socket only listens for a connection
+             * teardown (addEventSocketPeerClosePersist in CONNECT_BACKEND),
+             * not for data. An event here can therefore only mean the client
+             * is gone. Tear down right away - epoll reports this level
+             * triggered forever, ignoring it would be an endless loop.
              *
-             * CONNECT_BACKEND und SEND_TO_BACKEND gehoeren zwingend dazu: ohne
-             * sie faellt das Event in default, wird nie konsumiert und der
-             * Event-Loop dreht mit 100 % CPU weiter, bis der Prozess neu
-             * gestartet wird.
+             * CONNECT_BACKEND and SEND_TO_BACKEND have to be part of this:
+             * without them the event falls into default, is never consumed and
+             * the event loop keeps spinning at 100% CPU until the process is
+             * restarted.
              *
              * Bewusste Einschraenkung: EPOLLRDHUP feuert auch bei einem
              * Half-Close, also wenn ein Client nach dem Request nur seine
@@ -895,6 +1063,15 @@ void reverse_proxy_backend_handler(int fd, void* ptr) {
                 }
 
                 proxy->response_buffer_pos = bytes_read;
+
+                /* Follow the framing before the data goes out. Every body byte
+                 * exactly once - the state survives across recv boundaries,
+                 * a chunk header can arrive split in two. */
+                if (proxy->response_body_mode == BODY_MODE_CHUNKED) {
+                    proxy_chunked_scan(proxy, proxy->response_buffer,
+                                       (uint32_t)bytes_read);
+                }
+
                 /* Sofort weiterleiten */
                 proxy_process_state(proxy);
                 return;
@@ -902,8 +1079,8 @@ void reverse_proxy_backend_handler(int fd, void* ptr) {
             break;
             
         case PROXY_STATE_WEBSOCKET_TUNNEL:
-            /* WebSocket Tunnel, Backend-Seite. Symmetrisch zur Client-Seite:
-             * erst den Rueckstau abbauen, dann nachlesen. */
+            /* WebSocket tunnel, backend side. Symmetric to the client side:
+             * drain the backlog first, then read. */
 #if _WEBSERVER_PROXY_DEBUG_ >= 5
             LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "%s", "WebSocket tunnel: backend handler called");
 #endif
@@ -1094,20 +1271,20 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
             break;
 
         case PROXY_STATE_CONNECT_BACKEND:
-            /* Der Request ist komplett gelesen - ab hier darf der Client-Socket
-             * nicht mehr auf Daten registriert sein. Er bleibt es sonst bis zum
-             * vollstaendig gesendeten Request, und in diesem Fenster liefert ein
-             * FIN oder RST des Clients ein Read-Event, das kein Zustand dieses
-             * Handlers abholt: level-triggered epoll stellt es sofort wieder zu,
-             * der Event-Loop dreht mit 100 % CPU. Gemessen an einem Backend, das
-             * den Body nicht abnimmt (test_uds_server) - der Spin endete auch
-             * dann nicht, als das Backend schon tot war.
+            /* The request is fully read - from here on the client socket must
+             * no longer be registered for data. It used to stay that way until
+             * the request had been sent in full, and in that window a client
+             * FIN or RST produces a read event that no state of this handler
+             * picks up: level triggered epoll redelivers it immediately and
+             * the event loop spins at 100% CPU. Measured against a backend
+             * that does not take the body (test_uds_server) - the spin did not
+             * even stop once the backend was already dead.
              *
-             * Weitere Daten koennen ohnehin nicht kommen: der Body ist
-             * vollstaendig, und Pipelining gibt es nicht (dem Backend wird
-             * Connection: close aufgezwungen). Auf den Verbindungsabbau muss
-             * dagegen weiter gehorcht werden, sonst bleibt ein verschwundener
-             * Client mitsamt Backend-Verbindung als FD-Paar zurueck. */
+             * No further data can arrive anyway: the body is complete and
+             * there is no pipelining (the backend is forced to Connection:
+             * close). The connection teardown still has to be watched, else a
+             * vanished client leaves its backend connection behind as a pair
+             * of descriptors. */
             addEventSocketPeerClosePersist(proxy->client_sock);
 #if _WEBSERVER_PROXY_DEBUG_ >= 3
             LOG(PROXY_LOG, NOTICE_LEVEL, 0, "Connecting to backend: %s", proxy->backend_path);
@@ -1207,8 +1384,8 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                 proxy->state = PROXY_STATE_RECV_BACKEND_HEADER;
                 addEventSocketReadPersist(proxy->backend_sock);
 
-                /* Der Client-Socket horcht bereits seit CONNECT_BACKEND nur noch
-                 * auf den Verbindungsabbau, hier ist nichts mehr umzustellen. */
+                /* The client socket has been listening for the teardown only
+                 * since CONNECT_BACKEND, nothing left to switch over here. */
             }
             break;
             
@@ -1224,8 +1401,12 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
 #if _WEBSERVER_PROXY_DEBUG_ >= 4
             LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "Backend response header complete at pos %d", ret);
 #endif
-            /* Response Header parsen */
-            proxy_parse_response_header(proxy);
+            /* Parse the response header. A rejected upgrade (see there) leaves
+             * nothing usable behind, so the connection is torn down. */
+            if (proxy_parse_response_header(proxy) < 0) {
+                proxy->state = PROXY_STATE_ERROR;
+                return proxy_process_state(proxy);
+            }
 
 #if _WEBSERVER_PROXY_DEBUG_ >= 6
             proxy_dump_header("RESPONSE FROM BACKEND", proxy->response_buffer, proxy->response_header_end);
@@ -1286,6 +1467,17 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
             }
 
             proxy->response_body_received = proxy->response_buffer_pos - proxy->response_header_end;
+
+            /* Body bytes that arrived together with the header have to go
+             * through the chunk scanner just like everything later - for a
+             * small response the complete body including the null chunk is
+             * already sitting here. */
+            if (proxy->response_body_mode == BODY_MODE_CHUNKED &&
+                proxy->response_body_received > 0) {
+                proxy_chunked_scan(proxy,
+                                   &proxy->response_buffer[proxy->response_header_end],
+                                   (uint32_t)proxy->response_body_received);
+            }
 #if _WEBSERVER_PROXY_DEBUG_ >= 4
             LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "Response Content-Length: %lu, body in buffer: %lu",
                       (unsigned long)proxy->response_content_length,
@@ -1464,6 +1656,26 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                         return proxy_process_state(proxy);
                     }
                 }
+
+                /* Chunked: the null chunk and its trailer are the end. Without
+                 * this the only marker would be the backend closing, which
+                 * never happens for an upgrade request - no "Connection:
+                 * close" is forced on the backend there - so the connection
+                 * used to hang on to two descriptors.
+                 *
+                 * On broken framing chunk_state is PROXY_CHUNK_ERROR and we
+                 * wait for the close as before. */
+                if (proxy->response_body_mode == BODY_MODE_CHUNKED &&
+                    proxy->chunk_state == PROXY_CHUNK_DONE) {
+#if _WEBSERVER_PROXY_DEBUG_ >= 3
+                    LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd,
+                        "STREAMING: chunked response complete (%lu bytes)",
+                        (unsigned long)proxy->response_body_sent);
+#endif
+                    proxy->state = PROXY_STATE_DONE;
+                    return proxy_process_state(proxy);
+                }
+
                 /* Für BODY_MODE_CLOSE warten wir bis Backend schließt */
             }
             break;
@@ -1631,6 +1843,49 @@ static int proxy_parse_response_header(reverse_proxy_connection_t* proxy) {
               proxy->response_status_code, proxy->response_is_websocket_upgrade);
 #endif
 
+    /*
+     * A tunnel hands the raw connection to the backend, so switch into it only
+     * for a protocol the client actually asked for. Checked here, not in
+     * proxy_check_websocket_upgrade(), because only this function has the
+     * request at hand.
+     *
+     * Two things are verified, both taken from how established proxies handle
+     * it: the request must have carried an Upgrade header at all (nginx,
+     * ngx_http_proxy_module.c: "if (r->headers_in.upgrade) u->upgrade = 1"),
+     * and the protocol named in the response must be the one that was asked
+     * for (apache mod_proxy_http.c rejects a mismatch with 502, caddy
+     * streaming.c refuses it - "backend tried to switch to unexpected
+     * protocol"). Without the first check a backend can open a tunnel that
+     * nobody requested.
+     *
+     * A mismatch tears the connection down instead of continuing: a 101
+     * carries no Content-Length, so the response path would fall back to
+     * BODY_MODE_CLOSE and wait for a backend that is itself waiting for tunnel
+     * traffic.
+     */
+    if (proxy->response_is_websocket_upgrade) {
+        char req_upgrade[64];
+        char res_upgrade[64];
+
+        if (proxy_get_upgrade_value(proxy->request_buffer, proxy->request_header_end,
+                                    req_upgrade, sizeof(req_upgrade)) == 0) {
+            LOG(PROXY_LOG, WARNING_LEVEL, proxy->backend_fd, "%s",
+                "Backend sent 101 for a request without Upgrade header, dropping connection");
+            proxy->response_is_websocket_upgrade = 0;
+            return -1;
+        }
+
+        if ((proxy_get_upgrade_value(proxy->response_buffer, proxy->response_header_end,
+                                     res_upgrade, sizeof(res_upgrade)) == 0) ||
+            (strcasecmp(req_upgrade, res_upgrade) != 0)) {
+            LOG(PROXY_LOG, WARNING_LEVEL, proxy->backend_fd,
+                "Backend switched to '%s' but '%s' was requested, dropping connection",
+                res_upgrade, req_upgrade);
+            proxy->response_is_websocket_upgrade = 0;
+            return -1;
+        }
+    }
+
     return 0;
 }
 
@@ -1742,6 +1997,49 @@ static int proxy_check_chunked_encoding(const unsigned char* header, uint32_t he
 /*
  * Check for WebSocket upgrade response (101 Switching Protocols)
  */
+/*
+ * Extract the value of the Upgrade header, trimmed, into buf.
+ *
+ * Returns 1 if a non-empty value was found. Used to compare what the client
+ * asked for against what the backend switched to.
+ */
+static int proxy_get_upgrade_value(const unsigned char* header, uint32_t header_len,
+                                   char* buf, int buf_size) {
+    const unsigned char* p = header;
+    const unsigned char* end = header + header_len;
+    int i;
+
+    buf[0] = '\0';
+
+    while (p + 8 <= end) {
+        /* Only match at the start of a header line, otherwise a value
+         * containing "upgrade:" would be picked up as a header name. */
+        if ((p == header || *(p - 1) == '\n') &&
+            (strncasecmp((const char*)p, "Upgrade:", 8) == 0)) {
+
+            p += 8;
+            while (p < end && (*p == ' ' || *p == '\t')) {
+                p++;
+            }
+
+            i = 0;
+            while ((p < end) && (*p != '\r') && (*p != '\n') && (i < buf_size - 1)) {
+                buf[i++] = (char)*p;
+                p++;
+            }
+            /* trailing whitespace */
+            while ((i > 0) && ((buf[i - 1] == ' ') || (buf[i - 1] == '\t'))) {
+                i--;
+            }
+            buf[i] = '\0';
+            return (i > 0) ? 1 : 0;
+        }
+        p++;
+    }
+
+    return 0;
+}
+
 static int proxy_check_websocket_upgrade(const unsigned char* header, uint32_t header_len) {
     const unsigned char* p;
     const unsigned char* end;
