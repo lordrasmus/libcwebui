@@ -2025,7 +2025,10 @@ static int64_t proxy_parse_content_length(const unsigned char* header, uint32_t 
     int cl_len = strlen(cl_str);
     uint64_t value;
 
-    while (p < end - cl_len) {
+    /* p + N <= end statt p < end - N: bei header_len < N zeigt end - N vor
+     * den Puffer (formal UB), und die Position p == end - N fiele weg,
+     * obwohl dort genau N Bytes hinpassen. */
+    while (p + cl_len <= end) {
         if (strncasecmp((const char*)p, cl_str, cl_len) == 0) {
             p += cl_len;
             while (p < end && (*p == ' ' || *p == '\t')) {
@@ -2075,7 +2078,7 @@ static int proxy_check_chunked_encoding(const unsigned char* header, uint32_t he
     const char* te_str = "Transfer-Encoding:";
     int te_len = strlen(te_str);
 
-    while (p < end - te_len) {
+    while (p + te_len <= end) {
         if (strncasecmp((const char*)p, te_str, te_len) == 0) {
             p += te_len;
             while (p < end && *p != '\r' && *p != '\n') {
@@ -2191,7 +2194,7 @@ static int proxy_extract_host_header(const unsigned char* header, uint32_t heade
     int host_str_len = 5;
     int pos = 0;
 
-    while (p < end - host_str_len) {
+    while (p + host_str_len <= end) {
         if (strncasecmp((const char*)p, host_str, host_str_len) == 0) {
             p += host_str_len;
             /* Skip whitespace */
