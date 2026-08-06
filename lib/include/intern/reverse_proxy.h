@@ -100,6 +100,18 @@ typedef struct reverse_proxy_connection {
     uint64_t current_chunk_size;
     uint64_t current_chunk_received;
 
+    /* WebSocket tunnel backpressure
+     *
+     * What a send could not take is kept until the target socket is writable
+     * again, and the other side is not read from until that backlog is gone.
+     * The payload lives in request_buffer (client -> backend) and
+     * response_buffer (backend -> client), which are unused once the tunnel is
+     * up; only the fill levels are tracked separately. */
+    uint32_t tunnel_c2b_len;     /* bytes pending in request_buffer */
+    uint32_t tunnel_c2b_sent;    /* how much of that already went out */
+    uint32_t tunnel_b2c_len;     /* bytes pending in response_buffer */
+    uint32_t tunnel_b2c_sent;
+
 #if _WEBSERVER_PROXY_DEBUG_ >= 2
     /* Timing Info */
     struct timespec time_start;           /* Proxy Start */

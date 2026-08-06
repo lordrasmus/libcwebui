@@ -76,6 +76,115 @@ static int proxy_extract_host_header(const unsigned char* header, uint32_t heade
 static int proxy_request_is_upgrade(const unsigned char* header, uint32_t header_len);
 static int proxy_force_connection_close(unsigned char* header, uint32_t header_len);
 static void proxy_shutdown_client(reverse_proxy_connection_t* proxy);
+static void proxy_tunnel_update_events(reverse_proxy_connection_t* proxy);
+static int proxy_tunnel_flush_c2b(reverse_proxy_connection_t* proxy);
+static int proxy_tunnel_flush_b2c(reverse_proxy_connection_t* proxy);
+
+/*
+ * WebSocket tunnel: event registration follows the backlog
+ *
+ * Read from a side only while the opposite direction has nothing pending -
+ * otherwise we would keep pulling in data we cannot pass on and would have to
+ * drop it. Ask for writability exactly while something is pending.
+ *
+ * The add... calls set the complete event set, so one call per socket is both
+ * necessary and sufficient.
+ */
+static void proxy_tunnel_update_events(reverse_proxy_connection_t* proxy) {
+    int client_read  = (proxy->tunnel_c2b_len == 0);
+    int client_write = (proxy->tunnel_b2c_len > 0);
+    int backend_read  = (proxy->tunnel_b2c_len == 0);
+    int backend_write = (proxy->tunnel_c2b_len > 0);
+
+    if (proxy->client_sock != NULL) {
+        if (client_read && client_write) {
+            addEventSocketReadWritePersist(proxy->client_sock);
+        } else if (client_write) {
+            addEventSocketWritePersist(proxy->client_sock);
+        } else if (client_read) {
+            addEventSocketReadPersist(proxy->client_sock);
+        } else {
+            /* Both directions parked: nothing to send, and reading is blocked
+             * by the backlog in the other direction. Register nothing at all -
+             * READ would spin (the peer has data the handler must not take,
+             * level triggered epoll reports it again immediately) and so would
+             * EPOLLRDHUP once the peer is gone. The socket is re-armed from
+             * proxy_tunnel_update_events() as soon as the other side's write
+             * event drained the backlog. */
+            delEventSocketAll(proxy->client_sock);
+        }
+    }
+
+    if (proxy->backend_sock != NULL) {
+        if (backend_read && backend_write) {
+            addEventSocketReadWritePersist(proxy->backend_sock);
+        } else if (backend_write) {
+            addEventSocketWritePersist(proxy->backend_sock);
+        } else if (backend_read) {
+            addEventSocketReadPersist(proxy->backend_sock);
+        } else {
+            delEventSocketAll(proxy->backend_sock);   /* siehe oben */
+        }
+    }
+}
+
+/*
+ * Push whatever is pending towards the backend.
+ * Returns 0 on success (backlog may still be non-empty), -1 if the connection
+ * is broken.
+ */
+static int proxy_tunnel_flush_c2b(reverse_proxy_connection_t* proxy) {
+    while (proxy->tunnel_c2b_sent < proxy->tunnel_c2b_len) {
+        int sent = send(proxy->backend_fd,
+                        &proxy->request_buffer[proxy->tunnel_c2b_sent],
+                        proxy->tunnel_c2b_len - proxy->tunnel_c2b_sent, 0);
+        if (sent < 0) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                return 0;   /* stays pending, retried on the next write event */
+            }
+            LOG(PROXY_LOG, ERROR_LEVEL, proxy->backend_fd,
+                "WebSocket tunnel: backend send failed: %s", strerror(errno));
+            return -1;
+        }
+        if (sent == 0) {
+            return 0;
+        }
+        proxy->tunnel_c2b_sent += (uint32_t)sent;
+    }
+
+    proxy->tunnel_c2b_len = 0;
+    proxy->tunnel_c2b_sent = 0;
+    return 0;
+}
+
+/*
+ * Push whatever is pending towards the client. WebserverSend is required here
+ * so the payload goes through TLS on an https connection.
+ */
+static int proxy_tunnel_flush_b2c(reverse_proxy_connection_t* proxy) {
+    while (proxy->tunnel_b2c_sent < proxy->tunnel_b2c_len) {
+        size_t sent = 0;
+        SOCKET_SEND_STATUS status = WebserverSend(proxy->client_sock,
+                            &proxy->response_buffer[proxy->tunnel_b2c_sent],
+                            proxy->tunnel_b2c_len - proxy->tunnel_b2c_sent,
+                            0, &sent);
+
+        /* Count what was taken even on BUFFER_FULL - mbedTLS reports accepted
+         * bytes there, OpenSSL reports 0. */
+        proxy->tunnel_b2c_sent += (uint32_t)sent;
+
+        if (status == SOCKET_SEND_CLIENT_DISCONNECTED) {
+            return -1;
+        }
+        if (status == SOCKET_SEND_SEND_BUFFER_FULL || sent == 0) {
+            return 0;   /* stays pending, retried on the next write event */
+        }
+    }
+
+    proxy->tunnel_b2c_len = 0;
+    proxy->tunnel_b2c_sent = 0;
+    return 0;
+}
 
 /*
  * Shut the client connection down so the pending close actually happens.
@@ -557,11 +666,27 @@ void reverse_proxy_client_handler(int fd, void* ptr) {
             return;
 
         case PROXY_STATE_WEBSOCKET_TUNNEL:
-            /* WebSocket Tunnel: Daten vom Client zum Backend */
-            do {
-                unsigned char tunnel_buf[4096];
-                /* Client-Socket: WebserverRecv für SSL-Unterstützung */
-                bytes_read = WebserverRecv(proxy->client_sock, tunnel_buf, sizeof(tunnel_buf), 0);
+            /* WebSocket Tunnel, Client-Seite.
+             *
+             * The handler gets no event type, so both directions are attempted:
+             * on a write event the flush makes progress and the read returns
+             * NO_MORE_DATA, on a read event the flush is a no-op. */
+
+            /* Pending data towards the client first - that is what a write
+             * event on this socket is for. */
+            if (proxy->tunnel_b2c_len > 0) {
+                if (proxy_tunnel_flush_b2c(proxy) < 0) {
+                    proxy->state = PROXY_STATE_DONE;
+                    proxy_process_state(proxy);
+                    return;
+                }
+            }
+
+            /* Only read while nothing is queued towards the backend, otherwise
+             * there would be nowhere to put it. */
+            while (proxy->tunnel_c2b_len == 0) {
+                bytes_read = WebserverRecv(proxy->client_sock, proxy->request_buffer,
+                                           proxy->request_buffer_size, 0);
 
                 if (bytes_read <= 0) {
                     /* Rueckgabecodes von WebserverRecv auswerten, kein errno.
@@ -569,7 +694,7 @@ void reverse_proxy_client_handler(int fd, void* ptr) {
                      * bei SSL kommt das z.B. bei einem unvollstaendigen TLS-Record,
                      * der Tunnel darf deswegen nicht abgebrochen werden. */
                     if (bytes_read == CLIENT_NO_MORE_DATA) {
-                        break;  /* auf naechstes Read-Event warten */
+                        break;
                     }
 #if _WEBSERVER_PROXY_DEBUG_ >= 3
                     LOG(PROXY_LOG, NOTICE_LEVEL, 0, "%s", "WebSocket tunnel: client closed");
@@ -579,20 +704,21 @@ void reverse_proxy_client_handler(int fd, void* ptr) {
                     return;
                 }
 
-                /* Direkt ans Backend weiterleiten (UDS - kein SSL nötig) */
-                if (proxy->backend_fd >= 0) {
-                    int sent = send(proxy->backend_fd, tunnel_buf, bytes_read, 0);
-                    if (sent < 0) {
-                        LOG(PROXY_LOG, ERROR_LEVEL, 0, "%s", "WebSocket tunnel: backend send error");
-                        proxy->state = PROXY_STATE_ERROR;
-                        proxy_process_state(proxy);
-                        return;
-                    }
-#if _WEBSERVER_PROXY_DEBUG_ >= 5
-                    LOG(PROXY_LOG, NOTICE_LEVEL, 0, "WebSocket tunnel: forwarded %d bytes to backend", sent);
-#endif
+                proxy->tunnel_c2b_len = (uint32_t)bytes_read;
+                proxy->tunnel_c2b_sent = 0;
+
+                if (proxy->backend_fd >= 0 && proxy_tunnel_flush_c2b(proxy) < 0) {
+                    proxy->state = PROXY_STATE_ERROR;
+                    proxy_process_state(proxy);
+                    return;
                 }
-            } while (WebserverSSLPending(proxy->client_sock));
+
+                if (!WebserverSSLPending(proxy->client_sock)) {
+                    break;
+                }
+            }
+
+            proxy_tunnel_update_events(proxy);
             return;
 
         default:
@@ -755,14 +881,25 @@ void reverse_proxy_backend_handler(int fd, void* ptr) {
             break;
             
         case PROXY_STATE_WEBSOCKET_TUNNEL:
-            /* WebSocket Tunnel: Daten vom Backend zum Client */
-            {
-                unsigned char tunnel_buf[4096];
+            /* WebSocket Tunnel, Backend-Seite. Symmetrisch zur Client-Seite:
+             * erst den Rueckstau abbauen, dann nachlesen. */
 #if _WEBSERVER_PROXY_DEBUG_ >= 5
-                LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "%s", "WebSocket tunnel: backend handler called");
+            LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "%s", "WebSocket tunnel: backend handler called");
 #endif
-                /* Backend: direktes recv (UDS - kein SSL) */
-                bytes_read = recv(proxy->backend_fd, tunnel_buf, sizeof(tunnel_buf), 0);
+            /* Pending data towards the backend - that is what a write event on
+             * this socket is for. */
+            if (proxy->tunnel_c2b_len > 0) {
+                if (proxy_tunnel_flush_c2b(proxy) < 0) {
+                    proxy->state = PROXY_STATE_ERROR;
+                    proxy_process_state(proxy);
+                    return;
+                }
+            }
+
+            /* Only read while nothing is queued towards the client. */
+            if (proxy->tunnel_b2c_len == 0) {
+                bytes_read = recv(proxy->backend_fd, proxy->response_buffer,
+                                  proxy->response_buffer_size, 0);
 
                 if (bytes_read <= 0) {
                     if (bytes_read == 0 || (errno != EAGAIN && errno != EWOULDBLOCK)) {
@@ -773,23 +910,22 @@ void reverse_proxy_backend_handler(int fd, void* ptr) {
                         proxy_process_state(proxy);
                         return;
                     }
+                    proxy_tunnel_update_events(proxy);
                     return;
                 }
 
-                /* Client-Socket: WebserverSend für SSL-Unterstützung */
-                size_t sent = 0;
-                SOCKET_SEND_STATUS status = WebserverSend(proxy->client_sock,
-                                                          tunnel_buf, bytes_read, 0, &sent);
-                if (status == SOCKET_SEND_CLIENT_DISCONNECTED) {
+                proxy->tunnel_b2c_len = (uint32_t)bytes_read;
+                proxy->tunnel_b2c_sent = 0;
+
+                if (proxy_tunnel_flush_b2c(proxy) < 0) {
                     LOG(PROXY_LOG, ERROR_LEVEL, proxy->backend_fd, "%s", "WebSocket tunnel: client disconnected");
                     proxy->state = PROXY_STATE_ERROR;
                     proxy_process_state(proxy);
                     return;
                 }
-#if _WEBSERVER_PROXY_DEBUG_ >= 5
-                LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "WebSocket tunnel: forwarded %zu bytes to client", sent);
-#endif
             }
+
+            proxy_tunnel_update_events(proxy);
             return;
 
         default:
@@ -1178,8 +1314,23 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                         /* Event-Zustand sauber zuruecksetzen, bevor fuer den Tunnel-Modus neu registriert wird */
                         delEventSocketAll(proxy->client_sock);
                         delEventSocketAll(proxy->backend_sock);
-                        addEventSocketReadPersist(proxy->client_sock);
-                        addEventSocketReadPersist(proxy->backend_sock);
+
+                        /* Anything the backend already sent past the header is
+                         * payload and has to reach the client. Hand it over as
+                         * the initial backlog instead of dropping it. */
+                        proxy->tunnel_b2c_len = proxy->response_buffer_pos;
+                        proxy->tunnel_b2c_sent = proxy->send_pos;
+                        proxy->tunnel_c2b_len = 0;
+                        proxy->tunnel_c2b_sent = 0;
+                        if (proxy->tunnel_b2c_sent >= proxy->tunnel_b2c_len) {
+                            proxy->tunnel_b2c_len = 0;
+                            proxy->tunnel_b2c_sent = 0;
+                        } else if (proxy_tunnel_flush_b2c(proxy) < 0) {
+                            proxy->state = PROXY_STATE_ERROR;
+                            return proxy_process_state(proxy);
+                        }
+
+                        proxy_tunnel_update_events(proxy);
                         return 0;
                     }
                 }
@@ -1240,8 +1391,11 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                             LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "%s", "Entering WebSocket tunnel mode");
 #endif
                             proxy->state = PROXY_STATE_WEBSOCKET_TUNNEL;
-                            addEventSocketReadPersist(proxy->client_sock);
-                            addEventSocketReadPersist(proxy->backend_sock);
+                            proxy->tunnel_c2b_len = 0;
+                            proxy->tunnel_c2b_sent = 0;
+                            proxy->tunnel_b2c_len = 0;
+                            proxy->tunnel_b2c_sent = 0;
+                            proxy_tunnel_update_events(proxy);
                             return 0;
                         }
 
