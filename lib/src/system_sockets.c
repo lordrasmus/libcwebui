@@ -1076,6 +1076,57 @@ void WebserverConnectionManagerStartLoop(void) {
 
 }
 
+/*
+ * Run an extern handler until the SSL layer holds no more decrypted data.
+ *
+ * The loop exists because epoll only reports what sits in the kernel buffer.
+ * Bytes that were already decrypted into the SSL layer have left it, so they
+ * would never trigger another event and would starve without this.
+ *
+ * A handler may legitimately decline to read: the reverse proxy stops taking
+ * data from the client while its backend backlog is full, because it has
+ * nowhere to put it. Looping on WebserverSSLPending() alone then spins at
+ * 100% CPU forever - nothing drains what keeps the condition true. So stop as
+ * soon as a call leaves the pending count untouched, the unambiguous "handler
+ * did nothing" case. A handler that reads and decrypts a fresh record on the
+ * way changes the count and keeps looping.
+ *
+ * A handler that parks this way owns the wakeup: it must arrange to be called
+ * again once it can accept data, since no event will do it (see
+ * reverse_proxy_backend_handler, which drives the client read path after its
+ * backlog drains).
+ *
+ * Returns 1 if the socket was closed - the caller must return immediately and
+ * must not touch sock any more.
+ */
+static int run_extern_handler( socket_info* sock ) {
+
+	while ( sock->extern_handle != 0 ) {
+
+		int pending_before = WebserverSSLPending( sock );
+
+		sock->extern_handle( sock->socket, sock->extern_handle_data_ptr );
+
+		/* Nach extern_handle prüfen ob Socket geschlossen werden soll
+		 * (z.B. Reverse Proxy DONE/ERROR) */
+		if ( sock->closeSocket == 1 ) {
+			WebserverConnectionManagerCloseRequest( sock );
+			return 1;
+		}
+
+		/* extern_handle könnte sich selbst deregistriert haben (z.B. Proxy DONE) */
+		if ( sock->extern_handle == 0 ) {
+			break;
+		}
+
+		if ( WebserverSSLPending( sock ) == pending_before ) {
+			break;
+		}
+	}
+
+	return 0;
+}
+
 void handleer( int a, short b, void *t ) {
 	int ret;
 	socket_info* sock = (socket_info*) t;
@@ -1103,19 +1154,7 @@ void handleer( int a, short b, void *t ) {
 
 	if ( sock->extern_handle != 0 )
 	{
-		do {
-			sock->extern_handle(sock->socket, sock->extern_handle_data_ptr);
-			/* Nach extern_handle prüfen ob Socket geschlossen werden soll
-			 * (z.B. Reverse Proxy DONE/ERROR) */
-			if (sock->closeSocket == 1) {
-				WebserverConnectionManagerCloseRequest(sock);
-				return;
-			}
-			/* extern_handle könnte sich selbst deregistriert haben (z.B. Proxy DONE) */
-			if (sock->extern_handle == 0) {
-				break;
-			}
-		} while ( WebserverSSLPending(sock) );
+		run_extern_handler( sock );
 		return;
 	}
 
@@ -1182,15 +1221,8 @@ void handleer( int a, short b, void *t ) {
 			// TODO Websocket handling testen
 			if ( ret == 2 ){ // Websocket/Proxy hat die Verbindung übernommen
 				/* SSL Pending Bytes verarbeiten (z.B. POST Body im SSL Buffer) */
-				while (sock->extern_handle != 0 && WebserverSSLPending(sock)) {
-					sock->extern_handle(sock->socket, sock->extern_handle_data_ptr);
-					if (sock->closeSocket == 1) {
-						WebserverConnectionManagerCloseRequest(sock);
-						return;
-					}
-					if (sock->extern_handle == 0) {
-						break;
-					}
+				if ( WebserverSSLPending( sock ) ) {
+					run_extern_handler( sock );
 				}
 				return;
 			}

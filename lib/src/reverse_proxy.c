@@ -727,6 +727,11 @@ void reverse_proxy_client_handler(int fd, void* ptr) {
                 }
             }
 
+            /* Returning with a backlog and pending SSL data is a legitimate
+             * state: reading stopped because there is nowhere to put the data.
+             * run_extern_handler() will not call us again for it - the wakeup
+             * comes from the backend write event, which drives the read path
+             * from reverse_proxy_backend_handler() once the backlog drains. */
             proxy_tunnel_update_events(proxy);
             return;
 
@@ -901,6 +906,25 @@ void reverse_proxy_backend_handler(int fd, void* ptr) {
                 if (proxy_tunnel_flush_c2b(proxy) < 0) {
                     proxy->state = PROXY_STATE_ERROR;
                     proxy_process_state(proxy);
+                    return;
+                }
+
+                /* Backlog gone: the client socket may still hold decrypted
+                 * bytes inside the SSL layer. Those are invisible to epoll -
+                 * they left the kernel buffer when the record was read - so no
+                 * read event will ever announce them. While the backlog
+                 * existed the client read path declined to take them, which is
+                 * what kept the connection alive instead of dropping data.
+                 * Drive that path from here now that there is room again.
+                 *
+                 * This is the wakeup path that lets handleer() stop looping on
+                 * WebserverSSLPending() without the bytes starving.
+                 *
+                 * The client handler re-arms both sockets and may tear the
+                 * connection down, so proxy must not be touched afterwards. */
+                if ((proxy->tunnel_c2b_len == 0) && (proxy->client_sock != NULL) &&
+                    WebserverSSLPending(proxy->client_sock)) {
+                    reverse_proxy_client_handler(proxy->client_sock->socket, proxy);
                     return;
                 }
             }

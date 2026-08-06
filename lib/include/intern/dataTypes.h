@@ -241,6 +241,10 @@ typedef struct{
 } socket_file_infos;
 
 
+/* Called from handleer() via run_extern_handler(). On an SSL connection the
+ * handler must either drain what the SSL layer holds or, if it declines to
+ * read, provide its own wakeup - see run_extern_handler() in
+ * system_sockets.c. */
 typedef void ( *extern_handler ) ( int fd, void* ptr );
 
 typedef struct{

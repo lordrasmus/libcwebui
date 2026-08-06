@@ -449,6 +449,20 @@ int  WebserverConfigGetInt(const char* name);
 void WebserverConfigSetText(const char* name, const char* text);
 void WebserverConfigGetText(const char* name, char* text, int text_size);
 
+/*
+ * Hand a file descriptor to the event loop and have `handle` called on it.
+ *
+ * On an SSL connection the handler is expected to consume what the SSL layer
+ * has already decrypted. Those bytes are no longer in the kernel buffer, so
+ * epoll will not announce them a second time - a handler that returns while
+ * leaving them behind gets no further event for them.
+ *
+ * A handler that deliberately stops reading (backpressure, e.g. no room left
+ * to forward the data) is therefore responsible for getting itself called
+ * again once it can accept data. The event loop detects the stall and stops
+ * calling it, so the connection does not burn CPU, but it cannot supply the
+ * wakeup.
+ */
 void WebserverInjectExternFD(int fd, extern_handler handle );
 
 
