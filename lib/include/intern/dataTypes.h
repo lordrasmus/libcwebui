@@ -307,9 +307,6 @@ typedef struct {
 #ifdef WEBSERVER_USE_SSL
 	char use_ssl;
 	char ssl_pending;
-	// TODO werden die event flags noch gebraucht ??
-	char ssl_block_event_flags;
-	uint32_t ssl_event_flags;
 	char run_ssl_accept;
 	struct ssl_store_s *ssl_context;
 	int ssl_pending_bytes;

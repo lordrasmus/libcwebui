@@ -182,14 +182,6 @@ void deleteEvent(socket_info *sock) {
 }
 
 #ifdef WEBSERVER_USE_SSL
-void commitSslEventFlags(socket_info *sock) {
-    /* Der ssl_block_event_flags / ssl_event_flags-Mechanismus ist ein Relikt
-     * aus dem libevent/select-Backend und wird von kqueue (wie epoll) nicht
-     * benoetigt: kevent() ist nicht blockierend und jederzeit aufrufbar. Diese
-     * Funktion wird im aktuellen Code nirgends aufgerufen und existiert nur zur
-     * Vollstaendigkeit des Backend-Interfaces. */
-    modifyKqueue(sock, KQ_READ | KQ_WRITE, 1);
-}
 #endif
 
 #endif

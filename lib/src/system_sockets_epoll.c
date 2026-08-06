@@ -189,9 +189,6 @@ void deleteEvent(socket_info *sock) {
 }
 
 #ifdef WEBSERVER_USE_SSL
-void commitSslEventFlags(socket_info *sock) {
-    modifyEpoll(sock, sock->ssl_event_flags, 1);
-}
 #endif
 
 #endif

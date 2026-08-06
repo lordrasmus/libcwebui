@@ -53,7 +53,6 @@ void delEventSocketWritePersist(socket_info* sock);
 void delEventSocketReadPersist(socket_info* sock);
 void delEventSocketAll(socket_info* sock);
 
-void commitSslEventFlags( socket_info* sock );
 
 void activateEventSocketWrite(socket_info* sock);
 void updateWebsocketEventFlags(socket_info* sock, int list_empty);
