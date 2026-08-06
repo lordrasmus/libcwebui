@@ -1988,10 +1988,13 @@ static int proxy_parse_response_header(reverse_proxy_connection_t* proxy) {
         char req_upgrade[64];
         char res_upgrade[64];
 
-        if (proxy_get_upgrade_value(proxy->request_buffer, proxy->request_header_end,
-                                    req_upgrade, sizeof(req_upgrade)) == 0) {
+        if ((proxy_request_is_upgrade(proxy->request_buffer,
+                                      proxy->request_header_end) == 0) ||
+            (proxy_get_upgrade_value(proxy->request_buffer, proxy->request_header_end,
+                                     req_upgrade, sizeof(req_upgrade)) == 0)) {
             LOG(PROXY_LOG, WARNING_LEVEL, proxy->backend_fd, "%s",
-                "Backend sent 101 for a request without Upgrade header, dropping connection");
+                "Backend sent 101 for a request that did not ask for an upgrade, "
+                "dropping connection");
             return -1;
         }
 
@@ -2244,9 +2247,52 @@ static int proxy_extract_host_header(const unsigned char* header, uint32_t heade
  * Bei einem Upgrade darf dem Backend kein "Connection: close" untergeschoben
  * werden, sonst kommt der Tunnel nicht zustande.
  */
+/*
+ * Does this header carry a valid protocol upgrade?
+ *
+ * Both parts are required: the Upgrade header naming the protocol, and the
+ * "upgrade" token in Connection. RFC 7230 6.7 obliges the sender to send both,
+ * and the second one is what marks Upgrade as hop-by-hop in the first place -
+ * a lone Upgrade header is just an ordinary field that happens to have that
+ * name.
+ *
+ * Treating it as an upgrade anyway had a consequence beyond tunnels: it
+ * suppressed the forced "Connection: close" towards the backend, which is what
+ * lets the proxy recognise the end of a response body at all.
+ */
+static int proxy_header_has_connection_upgrade(const unsigned char* header,
+                                               uint32_t header_len) {
+    const unsigned char* p = header;
+    const unsigned char* end = header + header_len;
+
+    while (p + 11 <= end) {
+        if (((p == header) || (*(p - 1) == '\n')) &&
+            (strncasecmp((const char*)p, "Connection:", 11) == 0)) {
+
+            p += 11;
+            /* The value is a comma separated list - "keep-alive, Upgrade" is
+             * as valid as a bare "Upgrade". */
+            while ((p < end) && (*p != '\r') && (*p != '\n')) {
+                if ((p + 7 <= end) && (strncasecmp((const char*)p, "upgrade", 7) == 0)) {
+                    return 1;
+                }
+                p++;
+            }
+            return 0;
+        }
+        p++;
+    }
+
+    return 0;
+}
+
 static int proxy_request_is_upgrade(const unsigned char* header, uint32_t header_len) {
     const unsigned char* p = header;
     const unsigned char* end = header + header_len;
+
+    if (proxy_header_has_connection_upgrade(header, header_len) == 0) {
+        return 0;
+    }
 
     /* Erste Zeile ist die Request-Line, dort steht kein Header */
     while (p < end && *p != '\n') {
