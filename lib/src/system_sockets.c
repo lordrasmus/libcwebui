@@ -1086,14 +1086,26 @@ void WebserverConnectionManagerStartLoop(void) {
  * A handler may legitimately decline to read: the reverse proxy stops taking
  * data from the client while its backend backlog is full, because it has
  * nowhere to put it. Looping on WebserverSSLPending() alone then spins at
- * 100% CPU forever - nothing drains what keeps the condition true. So stop as
- * soon as a call leaves the pending count untouched, the unambiguous "handler
- * did nothing" case. A handler that reads and decrypts a fresh record on the
- * way changes the count and keeps looping.
+ * 100% CPU forever - nothing drains what keeps the condition true. So the loop
+ * only continues while the pending count actually moves:
  *
- * A handler that parks this way owns the wakeup: it must arrange to be called
- * again once it can accept data, since no event will do it (see
- * reverse_proxy_backend_handler, which drives the client read path after its
+ *   0            -> done, the regular exit
+ *   unchanged    -> the handler touched nothing, stop before spinning
+ *   any other    -> it consumed some, or decrypted a fresh record on the way;
+ *                   keep going, those bytes get no event of their own
+ *
+ * This needs the real byte count, which is why WebserverSSLPending() returns
+ * one. It used to collapse to 0/1 in the openssl and mbedtls backends, and the
+ * check above was blind in exactly the interesting case: a handler that took
+ * part of the pending data and left the rest saw 1 -> 1, was read as "did
+ * nothing", and the remainder starved - no epoll event follows for bytes that
+ * already left the kernel buffer. It stayed unnoticed because both proxy read
+ * paths loop over WebserverSSLPending() themselves and take everything they
+ * can, so nothing was ever left behind in practice.
+ *
+ * A handler that parks deliberately still owns its wakeup: it must arrange to
+ * be called again once it can accept data, since no event will do it (see
+ * reverse_proxy_backend_handler, which drives the client read path once its
  * backlog drains).
  *
  * Returns 1 if the socket was closed - the caller must return immediately and
@@ -1123,14 +1135,15 @@ static int run_extern_handler( socket_info* sock ) {
 		pending_after = WebserverSSLPending( sock );
 
 		/* Nothing left - the normal case. This check has to come before the
-		 * progress check: a handler that drained the buffer has done its work
-		 * and must not be called again. Depending on its state the proxy reads
-		 * such a call as "client is gone" and tears the connection down - that
-		 * is how a POST with a body over https lost its response. */
+		 * one below: a handler that drained the buffer has done its work and
+		 * must not be called again. Depending on its state the proxy reads such
+		 * a call as "client is gone" and tears the connection down - that is
+		 * how a POST with a body over https lost its response. */
 		if ( pending_after == 0 ) {
 			break;
 		}
 
+		/* Still pending and not a byte moved - the handler declined to read. */
 		if ( pending_after == pending_before ) {
 			break;
 		}
@@ -1244,7 +1257,7 @@ void handleer( int a, short b, void *t ) {
 				return;
 			}
 
-			while(( sock->header_buffer_pos > 0) || ( WebserverSSLPending ( sock ) == 1 ) ){
+			while(( sock->header_buffer_pos > 0) || ( WebserverSSLPending ( sock ) > 0 ) ){
 
 				ret = handleClient(sock);
 				if (ret < 0) {

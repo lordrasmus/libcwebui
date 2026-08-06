@@ -230,7 +230,8 @@ int WebserverSSLPending(socket_info *s) {
 		return 0;
 	}
 
-	return wolfSSL_pending(ctx->ssl);
+	s->ssl_pending_bytes = wolfSSL_pending(ctx->ssl);
+	return s->ssl_pending_bytes;
 }
 
 int WebserverSSLAccept(socket_info *s) {

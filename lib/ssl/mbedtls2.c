@@ -274,8 +274,10 @@ int WebserverSSLPending(socket_info *s) {
 	struct ssl_store_s *ctx = s->ssl_context;
 	if (ctx == NULL) return 0;
 
-	size_t pending = mbedtls_ssl_get_bytes_avail(&ctx->ssl);
-	return (pending > 0) ? 1 : 0;
+	/* The byte count, not just a flag - see run_extern_handler(). A TLS record
+	 * carries at most 16 KB, so the cast cannot truncate. */
+	s->ssl_pending_bytes = (int)mbedtls_ssl_get_bytes_avail(&ctx->ssl);
+	return s->ssl_pending_bytes;
 }
 
 int WebserverSSLAccept(socket_info *s) {

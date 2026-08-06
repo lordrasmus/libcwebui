@@ -33,6 +33,14 @@ int                 WebserverSSLTestKeyfile( char* keyfile );
 int					WebserverSSLInit(socket_info* s);
 int					WebserverSSLAccept(socket_info* s);
 
+/* Number of decrypted bytes waiting in the SSL layer, 0 if none.
+ *
+ * The count matters, not just "something is there": run_extern_handler() tells
+ * a handler that made progress from one that did nothing by comparing the
+ * value across a call. Backends must return the real number - openssl and
+ * mbedtls used to collapse it to 0/1, which made that comparison blind to a
+ * handler consuming only part of what was pending. Also updates
+ * socket_info::ssl_pending_bytes. */
 int 				WebserverSSLPending(socket_info* s);
 SOCKET_SEND_STATUS	WebserverSSLSendNonBlocking(socket_info* s, const unsigned char *buf, size_t len, int flags, size_t* bytes_send);
 int					WebserverSSLRecvNonBlocking(socket_info* s, unsigned char *buf, unsigned len, int flags);

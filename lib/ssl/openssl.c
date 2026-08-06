@@ -440,11 +440,7 @@ int WebserverSSLPending(socket_info* s) {
 
 	s->ssl_pending_bytes = SSL_pending( s->ssl_context->ssl );
 
-	if( s->ssl_pending_bytes > 0 ){
-		return 1;
-	}
-
-	return 0;
+	return s->ssl_pending_bytes;
 }
 
 int WebserverSSLAccept(socket_info* s) {
