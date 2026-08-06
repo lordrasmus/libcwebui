@@ -1085,16 +1085,16 @@ void reverse_proxy_backend_handler(int fd, void* ptr) {
                         /* Prüfen ob alles empfangen wurde */
                         if (proxy->response_body_mode == BODY_MODE_CHUNKED &&
                             proxy->chunk_state != PROXY_CHUNK_DONE) {
-                            /* Ohne diesen Zweig ginge der Abbruch still durch:
-                             * response_content_length ist bei chunked 0, also
-                             * ist die Vollstaendigkeitspruefung unten immer
-                             * wahr. Der Client merkt den fehlenden Nullchunk
-                             * selbst - im Log stand bisher nichts, waehrend der
-                             * CONTENT_LENGTH-Fall daneben seit jeher warnt.
+                            /* Without this branch the abort passes silently:
+                             * response_content_length stays 0 for chunked, so
+                             * the completeness check below is always true. The
+                             * client notices the missing null chunk by itself,
+                             * but nothing reached the log - unlike the
+                             * CONTENT_LENGTH case right next to it.
                              *
-                             * Der Zustand bleibt DONE: der Response-Header ist
-                             * langst raus, ein Fehler liesse sich dem Client
-                             * nicht mehr mitteilen. */
+                             * The state stays DONE: the response header left
+                             * long ago, so the failure can no longer be
+                             * signalled to the client. */
                             LOG(PROXY_LOG, WARNING_LEVEL, proxy->backend_fd,
                                 "Backend closed, chunked response incomplete "
                                 "(chunk state %d, %lu bytes sent)",
