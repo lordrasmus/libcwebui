@@ -1471,7 +1471,6 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
             }
 
             proxy->response_header_end = ret;
-            proxy->response_header_complete = 1;
 #if _WEBSERVER_PROXY_DEBUG_ >= 4
             LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "Backend response header complete at pos %d", ret);
 #endif

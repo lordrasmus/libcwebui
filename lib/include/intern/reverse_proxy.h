@@ -105,7 +105,6 @@ typedef struct reverse_proxy_connection {
     uint32_t response_buffer_size;
     uint32_t response_buffer_pos;
     uint32_t response_header_end;
-    int response_header_complete;
     
     /* Response Info */
     int response_status_code;
