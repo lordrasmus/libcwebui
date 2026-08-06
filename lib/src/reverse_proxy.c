@@ -1229,6 +1229,47 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
             {
                 int64_t parsed_content_length = proxy_parse_content_length(
                     proxy->request_buffer, proxy->request_header_end);
+                int request_is_chunked = proxy_check_chunked_encoding(
+                    proxy->request_buffer, proxy->request_header_end);
+
+                /*
+                 * Both framings at once is the classic request smuggling
+                 * pattern: whoever reads by Content-Length and whoever reads by
+                 * Transfer-Encoding disagree about where the request ends, and
+                 * the bytes in between become a second request for one of them.
+                 * RFC 9112 6.3 - "ought to be handled as an error". Unlike the
+                 * response side the sender here is a client, so this is not a
+                 * bug report, it is an attempt; reject it outright.
+                 */
+                if ((parsed_content_length >= 0) && request_is_chunked) {
+                    LOG(PROXY_LOG, WARNING_LEVEL, 0, "%s",
+                        "Request has both Content-Length and Transfer-Encoding, rejecting");
+                    proxy_send_error_response(proxy, 400, "Bad Request", NULL);
+                    proxy->response_header_sent = 1;
+                    proxy->state = PROXY_STATE_ERROR;
+                    return proxy_process_state(proxy);
+                }
+
+                /*
+                 * A chunked request body is not implemented. Passing it on as
+                 * BODY_MODE_NONE - which is what used to happen - sends the
+                 * request without its body and leaves the backend waiting for
+                 * data that never arrives. Say so instead.
+                 *
+                 * Browsers do not produce this over HTTP/1.1: they know the
+                 * length and send Content-Length, and the one streaming case
+                 * (fetch with a ReadableStream body) is restricted to HTTP/2
+                 * and HTTP/3. It comes from tooling - curl with unknown length,
+                 * programmatic clients.
+                 */
+                if (request_is_chunked) {
+                    LOG(PROXY_LOG, WARNING_LEVEL, 0, "%s",
+                        "Chunked request body is not supported, rejecting");
+                    proxy_send_error_response(proxy, 411, "Length Required", NULL);
+                    proxy->response_header_sent = 1;
+                    proxy->state = PROXY_STATE_ERROR;
+                    return proxy_process_state(proxy);
+                }
 
                 if (parsed_content_length > 0) {
                     proxy->request_body_mode = BODY_MODE_CONTENT_LENGTH;
@@ -1265,14 +1306,6 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                         proxy->state = PROXY_STATE_RECV_CLIENT_BODY;
                         return 0;
                     }
-                } else if (proxy_check_chunked_encoding(proxy->request_buffer,
-                                                         proxy->request_header_end)) {
-                    proxy->request_body_mode = BODY_MODE_CHUNKED;
-                    proxy->request_content_length = 0;
-                    /* TODO: Chunked Request Body handling */
-#if _WEBSERVER_PROXY_DEBUG_ >= 3
-                    LOG(PROXY_LOG, NOTICE_LEVEL, 0, "%s", "Request uses chunked encoding (not fully implemented)");
-#endif
                 } else {
                     /* Kein Body oder Content-Length: 0 */
                     proxy->request_body_mode = BODY_MODE_NONE;
@@ -1487,6 +1520,36 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                  * PROXY_CL_MISSING means no Content-Length header,
                  * PROXY_CL_INVALID an unusable value - both fall through to
                  * chunked or read-until-close below */
+                /*
+                 * Content-Length and Transfer-Encoding at the same time is
+                 * refused rather than repaired.
+                 *
+                 * RFC 9112 6.3 puts the error first - "ought to be handled as
+                 * an error" - and only then allows forwarding, and that with a
+                 * MUST to strip Content-Length beforehand. Otherwise we would
+                 * count by Content-Length while the client parses the chunked
+                 * framing, and both headers reach it unchanged: the response
+                 * gets truncated at whatever the smaller of the two says.
+                 *
+                 * The references disagree here, so the reasoning matters more
+                 * than the vote: nginx rejects (ngx_http_upstream.c: "upstream
+                 * sent Content-Length and Transfer-Encoding headers at the same
+                 * time"), apache and go strip Content-Length and continue.
+                 * Both of those proxy arbitrary third-party upstreams, where
+                 * leniency is the only option. Our backend ships with the same
+                 * product - if it sends both it is broken, and that should be
+                 * visible as a 502 with a log line instead of silently patched
+                 * over.
+                 */
+                if ((parsed_content_length >= 0) &&
+                    proxy_check_chunked_encoding(proxy->response_buffer,
+                                                 proxy->response_header_end)) {
+                    LOG(PROXY_LOG, ERROR_LEVEL, proxy->backend_fd, "%s",
+                        "Backend sent Content-Length and Transfer-Encoding at the same time");
+                    proxy->state = PROXY_STATE_ERROR;
+                    return proxy_process_state(proxy);
+                }
+
                 if (proxy->response_status_code == 204 || proxy->response_status_code == 304) {
                     proxy->response_body_mode = BODY_MODE_CONTENT_LENGTH;
                     proxy->response_content_length = 0;
