@@ -313,6 +313,13 @@ typedef struct {
 	char run_ssl_accept;
 	struct ssl_store_s *ssl_context;
 	int ssl_pending_bytes;
+
+	/* Bytes ever handed out by WebserverRecv() on this socket, monotonic.
+	 *
+	 * Used by run_extern_handler() to tell "the handler read from this socket"
+	 * from "it did not touch it" - a question the SSL layer cannot answer,
+	 * since it only knows what is left, not who took what. */
+	uint64_t bytes_received;
 #endif
 
 #if defined( USE_EPOLL ) || defined( USE_KQUEUE )

@@ -102,9 +102,9 @@ static int proxy_tunnel_flush_b2c(reverse_proxy_connection_t* proxy);
  *   - a size line without any hex digit would otherwise read as size 0, i.e.
  *     as the null chunk, and end the response early (hence
  *     PROXY_CHUNK_SIZE_START)
- *   - a bare LF instead of CRLF is rejected, as in nginx and apache; tolerating
- *     it would leave the parser sitting in a line state forever, and a lone LF
- *     is a known request smuggling vector
+ *   - a bare LF instead of CRLF is rejected: tolerating it would leave the
+ *     parser sitting in a line state forever, and a lone LF is a known request
+ *     smuggling vector
  *
  * Chunk sizes are capped well below the point where the accumulator could
  * overflow; anything that large is a broken backend, not a real body.
@@ -140,10 +140,10 @@ static int proxy_chunked_scan(reverse_proxy_connection_t* proxy,
                 /* A size line must start with a hex digit. Without this state
                  * an empty line would be read as size 0, i.e. as the null
                  * chunk, and end the response early - the one way a parser
-                 * error could truncate instead of merely miss the end.
-                 * nginx has the same dedicated state (sw_chunk_start), apache
-                 * names the case in a comment ("this also works for empty
-                 * chunk size lines"). */
+                 * error could truncate instead of merely miss the end. A
+                 * separate state for the first digit is the usual way to close
+                 * this: only there can "no digit at all" be told apart from
+                 * "digits already seen". */
                 if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
                     proxy->current_chunk_size = proxy_hex_value(c);
                     proxy->chunk_state = PROXY_CHUNK_SIZE;
@@ -164,8 +164,8 @@ static int proxy_chunked_scan(reverse_proxy_connection_t* proxy,
                     }
                     proxy->current_chunk_size = proxy->current_chunk_size * 16 + digit;
                 } else if ((c == ';') || (c == ' ') || (c == '\t')) {
-                    /* Extension, or whitespace before the CRLF - nginx enters
-                     * the same state for all three. */
+                    /* Extension, or whitespace before the CRLF - both are
+                     * skipped the same way up to the end of the line. */
                     proxy->chunk_state = PROXY_CHUNK_EXT;
                 } else if (c == '\r') {
                     proxy->chunk_state = PROXY_CHUNK_SIZE_LF;
@@ -180,10 +180,9 @@ static int proxy_chunked_scan(reverse_proxy_connection_t* proxy,
                 if (c == '\r') {
                     proxy->chunk_state = PROXY_CHUNK_SIZE_LF;
                 } else if (c == '\n') {
-                    /* Bare LF instead of CRLF. Rejected everywhere here, as in
-                     * nginx (no option at all) and apache (strict is the
-                     * default, only HttpProtocolOptions Unsafe allows it) -
-                     * a lone LF is a known request smuggling vector. */
+                    /* Bare LF instead of CRLF - rejected in every state.
+                     * Strict CRLF is the safe reading: a lone LF is a known
+                     * request smuggling vector. */
                     proxy->chunk_state = PROXY_CHUNK_ERROR;
                     return 0;
                 }
@@ -1531,15 +1530,12 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                  * framing, and both headers reach it unchanged: the response
                  * gets truncated at whatever the smaller of the two says.
                  *
-                 * The references disagree here, so the reasoning matters more
-                 * than the vote: nginx rejects (ngx_http_upstream.c: "upstream
-                 * sent Content-Length and Transfer-Encoding headers at the same
-                 * time"), apache and go strip Content-Length and continue.
-                 * Both of those proxy arbitrary third-party upstreams, where
-                 * leniency is the only option. Our backend ships with the same
-                 * product - if it sends both it is broken, and that should be
-                 * visible as a 502 with a log line instead of silently patched
-                 * over.
+                 * Repairing it - dropping Content-Length and going on - is
+                 * the other permitted reading, and the right one for a proxy in
+                 * front of arbitrary third-party upstreams that cannot be
+                 * fixed. Our backend ships with the same product: if it sends
+                 * both it is broken, and that should be visible as a 502 with a
+                 * log line instead of silently patched over.
                  */
                 if ((parsed_content_length >= 0) &&
                     proxy_check_chunked_encoding(proxy->response_buffer,
@@ -1956,14 +1952,11 @@ static int proxy_parse_response_header(reverse_proxy_connection_t* proxy) {
      * the cases it exists for: a 101 carrying Upgrade: h2c, or none at all,
      * would sail past unchecked.
      *
-     * Two things are verified, both taken from how established proxies handle
-     * it: the request must have carried an Upgrade header at all (nginx,
-     * ngx_http_proxy_module.c: "if (r->headers_in.upgrade) u->upgrade = 1"),
-     * and the protocol named in the response must be the one that was asked
-     * for (apache mod_proxy_http.c rejects a mismatch with 502, caddy
-     * streaming.go refuses it - "backend tried to switch to unexpected
-     * protocol"). Without the first check a backend can open a tunnel that
-     * nobody requested.
+     * Two things are verified: the request must have carried an Upgrade
+     * header at all, and the protocol named in the response must be the one
+     * that was asked for. Without the first check a backend can open a tunnel
+     * that nobody requested; without the second it can switch the connection
+     * to a protocol the client never agreed to.
      *
      * A rejected upgrade tears the connection down instead of continuing: a
      * 101 carries no Content-Length, so the response path would fall back to

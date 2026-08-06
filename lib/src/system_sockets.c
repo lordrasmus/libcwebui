@@ -1086,22 +1086,27 @@ void WebserverConnectionManagerStartLoop(void) {
  * A handler may legitimately decline to read: the reverse proxy stops taking
  * data from the client while its backend backlog is full, because it has
  * nowhere to put it. Looping on WebserverSSLPending() alone then spins at
- * 100% CPU forever - nothing drains what keeps the condition true. So the loop
- * only continues while the pending count actually moves:
+ * 100% CPU forever - nothing drains what keeps the condition true. So two
+ * separate questions decide whether to call again, and each is asked where it
+ * can be answered exactly:
  *
- *   0            -> done, the regular exit
- *   unchanged    -> the handler touched nothing, stop before spinning
- *   any other    -> it consumed some, or decrypted a fresh record on the way;
- *                   keep going, those bytes get no event of their own
+ *   did the handler read from this socket?   socket_info::bytes_received
+ *   is there anything left to read?          WebserverSSLPending()
  *
- * This needs the real byte count, which is why WebserverSSLPending() returns
- * one. It used to collapse to 0/1 in the openssl and mbedtls backends, and the
- * check above was blind in exactly the interesting case: a handler that took
- * part of the pending data and left the rest saw 1 -> 1, was read as "did
- * nothing", and the remainder starved - no epoll event follows for bytes that
- * already left the kernel buffer. It stayed unnoticed because both proxy read
- * paths loop over WebserverSSLPending() themselves and take everything they
- * can, so nothing was ever left behind in practice.
+ * Only both together continue the loop. Deriving the first from SSL_pending -
+ * which is what this used to do - is a guess, and it is wrong in a case that
+ * really occurs: a handler reading in a loop of its own empties the current
+ * record, the next one gets decrypted, and the count lands on the same value
+ * it started at. That reads as "did nothing", the loop stops, and the
+ * remainder starves - no epoll event follows for bytes that have already left
+ * the kernel buffer, which is the entire reason this loop exists.
+ *
+ * Asking the SSL layer for the second question is not a workaround, it is the
+ * only source: WebserverRecv() performs a single SSL_read and returns, so
+ * nobody else knows whether anything was left behind. A recv that drained the
+ * SSL layer until empty, or a buffer of our own between it and the handler,
+ * would carry that information along by itself - we have neither, so the
+ * question has to be asked explicitly.
  *
  * A handler that parks deliberately still owns its wakeup: it must arrange to
  * be called again once it can accept data, since no event will do it (see
@@ -1115,8 +1120,7 @@ static int run_extern_handler( socket_info* sock ) {
 
 	while ( sock->extern_handle != 0 ) {
 
-		int pending_before = WebserverSSLPending( sock );
-		int pending_after;
+		uint64_t bytes_before = sock->bytes_received;
 
 		sock->extern_handle( sock->socket, sock->extern_handle_data_ptr );
 
@@ -1132,19 +1136,17 @@ static int run_extern_handler( socket_info* sock ) {
 			break;
 		}
 
-		pending_after = WebserverSSLPending( sock );
-
-		/* Nothing left - the normal case. This check has to come before the
-		 * one below: a handler that drained the buffer has done its work and
-		 * must not be called again. Depending on its state the proxy reads such
-		 * a call as "client is gone" and tears the connection down - that is
-		 * how a POST with a body over https lost its response. */
-		if ( pending_after == 0 ) {
+		/* Nothing was taken from this socket - the handler declined to read,
+		 * so calling it again would only spin. */
+		if ( sock->bytes_received == bytes_before ) {
 			break;
 		}
 
-		/* Still pending and not a byte moved - the handler declined to read. */
-		if ( pending_after == pending_before ) {
+		/* It read, and nothing is left over. Calling again would be one call
+		 * too many: depending on its state the proxy reads that as "client is
+		 * gone" and tears the connection down - that is how a POST with a body
+		 * over https lost its response. */
+		if ( WebserverSSLPending( sock ) == 0 ) {
 			break;
 		}
 	}
