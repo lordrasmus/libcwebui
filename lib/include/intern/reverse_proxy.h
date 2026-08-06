@@ -59,7 +59,8 @@ typedef enum {
  * Format:  <hex-size>[;ext]CRLF <data> CRLF ... 0CRLF [trailer] CRLF
  */
 typedef enum {
-    PROXY_CHUNK_SIZE = 0,        /* hex digits of the chunk size */
+    PROXY_CHUNK_SIZE_START = 0,  /* first hex digit, required - see below */
+    PROXY_CHUNK_SIZE,            /* further hex digits of the chunk size */
     PROXY_CHUNK_EXT,             /* chunk extension from ';' up to CRLF */
     PROXY_CHUNK_SIZE_LF,         /* CR of the size line seen */
     PROXY_CHUNK_DATA,            /* payload, current_chunk_size still open */
@@ -123,7 +124,6 @@ typedef struct reverse_proxy_connection {
     /* Chunked Encoding State - see proxy_chunked_scan() */
     proxy_chunk_state_t chunk_state;
     uint64_t current_chunk_size;     /* bytes left in the current chunk */
-    uint64_t current_chunk_received;
 
     /* WebSocket tunnel backpressure
      *

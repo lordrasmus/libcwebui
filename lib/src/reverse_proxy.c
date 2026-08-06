@@ -96,10 +96,30 @@ static int proxy_tunnel_flush_b2c(reverse_proxy_connection_t* proxy);
  * how it behaved before this parser existed. A bug in here can therefore not
  * cut a valid response short, only miss the early end.
  *
+ * That property only holds because the framing is checked strictly: every
+ * deviation has to end in ERROR rather than in a guess. Two ways to get it
+ * wrong, both found by review:
+ *   - a size line without any hex digit would otherwise read as size 0, i.e.
+ *     as the null chunk, and end the response early (hence
+ *     PROXY_CHUNK_SIZE_START)
+ *   - a bare LF instead of CRLF is rejected, as in nginx and apache; tolerating
+ *     it would leave the parser sitting in a line state forever, and a lone LF
+ *     is a known request smuggling vector
+ *
  * Chunk sizes are capped well below the point where the accumulator could
  * overflow; anything that large is a broken backend, not a real body.
  */
 #define PROXY_CHUNK_SIZE_MAX  0x7FFFFFFFFFFFFFFFULL
+
+static uint64_t proxy_hex_value(unsigned char c) {
+    if (c <= '9') {
+        return (uint64_t)(c - '0');
+    }
+    if (c <= 'F') {
+        return (uint64_t)(c - 'A' + 10);
+    }
+    return (uint64_t)(c - 'a' + 10);
+}
 
 static int proxy_chunked_scan(reverse_proxy_connection_t* proxy,
                               const unsigned char* data, uint32_t len) {
@@ -116,27 +136,39 @@ static int proxy_chunked_scan(reverse_proxy_connection_t* proxy,
         unsigned char c = data[i];
 
         switch (proxy->chunk_state) {
+            case PROXY_CHUNK_SIZE_START:
+                /* A size line must start with a hex digit. Without this state
+                 * an empty line would be read as size 0, i.e. as the null
+                 * chunk, and end the response early - the one way a parser
+                 * error could truncate instead of merely miss the end.
+                 * nginx has the same dedicated state (sw_chunk_start), apache
+                 * names the case in a comment ("this also works for empty
+                 * chunk size lines"). */
+                if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+                    proxy->current_chunk_size = proxy_hex_value(c);
+                    proxy->chunk_state = PROXY_CHUNK_SIZE;
+                } else {
+                    proxy->chunk_state = PROXY_CHUNK_ERROR;
+                    return 0;
+                }
+                i++;
+                break;
+
             case PROXY_CHUNK_SIZE:
                 if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
-                    uint64_t digit;
-                    if (c <= '9') {
-                        digit = (uint64_t)(c - '0');
-                    } else if (c <= 'F') {
-                        digit = (uint64_t)(c - 'A' + 10);
-                    } else {
-                        digit = (uint64_t)(c - 'a' + 10);
-                    }
+                    uint64_t digit = proxy_hex_value(c);
+
                     if (proxy->current_chunk_size > (PROXY_CHUNK_SIZE_MAX - digit) / 16) {
                         proxy->chunk_state = PROXY_CHUNK_ERROR;
                         return 0;
                     }
                     proxy->current_chunk_size = proxy->current_chunk_size * 16 + digit;
-                } else if (c == ';') {
+                } else if ((c == ';') || (c == ' ') || (c == '\t')) {
+                    /* Extension, or whitespace before the CRLF - nginx enters
+                     * the same state for all three. */
                     proxy->chunk_state = PROXY_CHUNK_EXT;
                 } else if (c == '\r') {
                     proxy->chunk_state = PROXY_CHUNK_SIZE_LF;
-                } else if (c == ' ' || c == '\t') {
-                    /* whitespace before the CRLF happens, tolerate it */
                 } else {
                     proxy->chunk_state = PROXY_CHUNK_ERROR;
                     return 0;
@@ -147,6 +179,13 @@ static int proxy_chunked_scan(reverse_proxy_connection_t* proxy,
             case PROXY_CHUNK_EXT:
                 if (c == '\r') {
                     proxy->chunk_state = PROXY_CHUNK_SIZE_LF;
+                } else if (c == '\n') {
+                    /* Bare LF instead of CRLF. Rejected everywhere here, as in
+                     * nginx (no option at all) and apache (strict is the
+                     * default, only HttpProtocolOptions Unsafe allows it) -
+                     * a lone LF is a known request smuggling vector. */
+                    proxy->chunk_state = PROXY_CHUNK_ERROR;
+                    return 0;
                 }
                 i++;
                 break;
@@ -170,7 +209,6 @@ static int proxy_chunked_scan(reverse_proxy_connection_t* proxy,
 
                 i += (uint32_t)skip;
                 proxy->current_chunk_size -= skip;
-                proxy->current_chunk_received += skip;
 
                 if (proxy->current_chunk_size == 0) {
                     proxy->chunk_state = PROXY_CHUNK_DATA_CR;
@@ -192,7 +230,7 @@ static int proxy_chunked_scan(reverse_proxy_connection_t* proxy,
                     proxy->chunk_state = PROXY_CHUNK_ERROR;
                     return 0;
                 }
-                proxy->chunk_state = PROXY_CHUNK_SIZE;
+                proxy->chunk_state = PROXY_CHUNK_SIZE_START;
                 proxy->current_chunk_size = 0;
                 i++;
                 break;
@@ -203,8 +241,8 @@ static int proxy_chunked_scan(reverse_proxy_connection_t* proxy,
                 if (c == '\r') {
                     proxy->chunk_state = PROXY_CHUNK_TRAILER_LF;
                 } else if (c == '\n') {
-                    proxy->chunk_state = PROXY_CHUNK_DONE;
-                    return 1;
+                    proxy->chunk_state = PROXY_CHUNK_ERROR;   /* bare LF */
+                    return 0;
                 } else {
                     proxy->chunk_state = PROXY_CHUNK_TRAILER_LINE;
                 }
@@ -222,6 +260,11 @@ static int proxy_chunked_scan(reverse_proxy_connection_t* proxy,
             case PROXY_CHUNK_TRAILER_LINE:
                 if (c == '\r') {
                     proxy->chunk_state = PROXY_CHUNK_TRAILER_LINE_LF;
+                } else if (c == '\n') {
+                    /* Without this the parser stayed in this state for the
+                     * rest of the stream and never found the end. */
+                    proxy->chunk_state = PROXY_CHUNK_ERROR;
+                    return 0;
                 }
                 i++;
                 break;
