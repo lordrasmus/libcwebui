@@ -1209,6 +1209,39 @@ void handleer( int a, short b, void *t ) {
 	}
 
 	if (sock->client == 1) {
+
+		/* Connection is gone - tear it down.
+		 *
+		 * EVENT_TIMEOUT stands for EPOLLERR, EPOLLHUP and EPOLLRDHUP. For a
+		 * plain client socket only the first two can occur: EPOLLRDHUP is
+		 * reported only when it was registered, which happens exclusively for
+		 * proxy connections (addEventSocketPeerClosePersist), and those never
+		 * reach this point - extern_handle is checked further up. EPOLLERR and
+		 * EPOLLHUP on the other hand are forced into every epoll mask by the
+		 * kernel regardless of what was registered.
+		 *
+		 * So a half close - a client that shuts down its writing side and
+		 * still waits for the response - cannot end up here; it arrives as
+		 * EPOLLIN with recv() returning 0. Whatever does end up here means the
+		 * connection is unusable.
+		 *
+		 * Without this the event was silently dropped: none of the branches
+		 * below match EVENT_TIMEOUT, so the function returned and nobody
+		 * closed the socket. A client aborting with RST - a killed browser, a
+		 * NAT timeout - therefore leaked one descriptor per connection,
+		 * permanently, and without ever showing up as CLOSE_WAIT since the
+		 * kernel had already discarded the socket. That is also why a normal
+		 * FIN was never affected: it arrives as EPOLLIN and takes the read
+		 * path below. */
+		if (b == EVENT_TIMEOUT) {
+#if _WEBSERVER_CONNECTION_DEBUG_ > 0
+			LOG( CONNECTION_LOG, NOTICE_LEVEL, sock->socket, "%s",
+			     "connection error (EPOLLERR/EPOLLHUP), closing" );
+#endif
+			WebserverConnectionManagerCloseRequest( sock );
+			return;
+		}
+
 		if (b == EVENT_READ) {
 
 			#ifdef WEBSERVER_USE_SSL
