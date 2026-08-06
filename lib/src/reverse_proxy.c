@@ -648,13 +648,20 @@ void reverse_proxy_client_handler(int fd, void* ptr) {
             proxy_process_state(proxy);
             return;
 
+        case PROXY_STATE_CONNECT_BACKEND:
+        case PROXY_STATE_SEND_TO_BACKEND:
         case PROXY_STATE_RECV_BACKEND_HEADER:
         case PROXY_STATE_STREAMING:
             /* In diesen Zustaenden horcht der Client-Socket nur auf einen
              * Verbindungsabbau (addEventSocketPeerClosePersist in
-             * SEND_TO_BACKEND), nicht auf Daten. Ein Event kann hier also nur
+             * CONNECT_BACKEND), nicht auf Daten. Ein Event kann hier also nur
              * bedeuten: der Client ist weg. Sofort abbauen - epoll meldet das
              * level-triggered dauerhaft, ein Ignorieren waere eine Endlosschleife.
+             *
+             * CONNECT_BACKEND und SEND_TO_BACKEND gehoeren zwingend dazu: ohne
+             * sie faellt das Event in default, wird nie konsumiert und der
+             * Event-Loop dreht mit 100 % CPU weiter, bis der Prozess neu
+             * gestartet wird.
              *
              * Bewusste Einschraenkung: EPOLLRDHUP feuert auch bei einem
              * Half-Close, also wenn ein Client nach dem Request nur seine
@@ -1087,6 +1094,21 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
             break;
 
         case PROXY_STATE_CONNECT_BACKEND:
+            /* Der Request ist komplett gelesen - ab hier darf der Client-Socket
+             * nicht mehr auf Daten registriert sein. Er bleibt es sonst bis zum
+             * vollstaendig gesendeten Request, und in diesem Fenster liefert ein
+             * FIN oder RST des Clients ein Read-Event, das kein Zustand dieses
+             * Handlers abholt: level-triggered epoll stellt es sofort wieder zu,
+             * der Event-Loop dreht mit 100 % CPU. Gemessen an einem Backend, das
+             * den Body nicht abnimmt (test_uds_server) - der Spin endete auch
+             * dann nicht, als das Backend schon tot war.
+             *
+             * Weitere Daten koennen ohnehin nicht kommen: der Body ist
+             * vollstaendig, und Pipelining gibt es nicht (dem Backend wird
+             * Connection: close aufgezwungen). Auf den Verbindungsabbau muss
+             * dagegen weiter gehorcht werden, sonst bleibt ein verschwundener
+             * Client mitsamt Backend-Verbindung als FD-Paar zurueck. */
+            addEventSocketPeerClosePersist(proxy->client_sock);
 #if _WEBSERVER_PROXY_DEBUG_ >= 3
             LOG(PROXY_LOG, NOTICE_LEVEL, 0, "Connecting to backend: %s", proxy->backend_path);
 #endif
@@ -1185,12 +1207,8 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                 proxy->state = PROXY_STATE_RECV_BACKEND_HEADER;
                 addEventSocketReadPersist(proxy->backend_sock);
 
-                /* Client-Socket nicht mehr auf Daten beobachten, aber weiter auf
-                 * einen Verbindungsabbau horchen. Sonst ist der Client waehrend
-                 * der gesamten Backend-Phase unbeobachtet und ein FIN des
-                 * Browsers faellt nie auf - der Socket bleibt in CLOSE_WAIT
-                 * haengen und mit ihm die Backend-Verbindung. */
-                addEventSocketPeerClosePersist(proxy->client_sock);
+                /* Der Client-Socket horcht bereits seit CONNECT_BACKEND nur noch
+                 * auf den Verbindungsabbau, hier ist nichts mehr umzustellen. */
             }
             break;
             
