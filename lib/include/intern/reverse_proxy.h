@@ -111,7 +111,7 @@ typedef struct reverse_proxy_connection {
     body_transfer_mode_t response_body_mode;
     uint64_t response_content_length;
     uint64_t response_body_received;
-    int response_is_websocket_upgrade;
+    int response_is_upgrade;
     
     /* Send Tracking */
     uint32_t send_pos;           /* Aktuelle Position beim Senden */

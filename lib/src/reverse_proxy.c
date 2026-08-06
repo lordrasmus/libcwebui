@@ -68,7 +68,6 @@ static int proxy_find_header_end(const unsigned char* buffer, uint32_t len);
 
 static int64_t proxy_parse_content_length(const unsigned char* header, uint32_t header_len);
 static int proxy_check_chunked_encoding(const unsigned char* header, uint32_t header_len);
-static int proxy_check_websocket_upgrade(const unsigned char* header, uint32_t header_len);
 static int proxy_get_upgrade_value(const unsigned char* header, uint32_t header_len,
                                    char* buf, int buf_size);
 static int proxy_get_status_code(const unsigned char* header, uint32_t header_len);
@@ -1413,7 +1412,7 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
 #endif
 
             /* WebSocket Upgrade? -> Tunnel Mode */
-            if (proxy->response_is_websocket_upgrade) {
+            if (proxy->response_is_upgrade) {
 #if _WEBSERVER_PROXY_DEBUG_ >= 3
                 LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "%s", "WebSocket upgrade detected");
 #endif
@@ -1557,7 +1556,7 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                     LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "%s", "STREAMING: header sent, starting body");
 #endif
                     /* Bei WebSocket-Upgrade sofort in Tunnel-Mode wechseln */
-                    if (proxy->response_is_websocket_upgrade) {
+                    if (proxy->response_is_upgrade) {
 #if _WEBSERVER_PROXY_DEBUG_ >= 3
                         LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "%s", "Entering WebSocket tunnel mode");
 #endif
@@ -1639,7 +1638,7 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                         LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "STREAMING: all body sent (%lu bytes)",
                                   (unsigned long)proxy->response_body_sent);
 #endif
-                        if (proxy->response_is_websocket_upgrade) {
+                        if (proxy->response_is_upgrade) {
 #if _WEBSERVER_PROXY_DEBUG_ >= 3
                             LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "%s", "Entering WebSocket tunnel mode");
 #endif
@@ -1835,35 +1834,41 @@ static int proxy_connect_backend(reverse_proxy_connection_t* proxy) {
 static int proxy_parse_response_header(reverse_proxy_connection_t* proxy) {
     proxy->response_status_code = proxy_get_status_code(proxy->response_buffer,
                                                        proxy->response_header_end);
-    proxy->response_is_websocket_upgrade = proxy_check_websocket_upgrade(
-        proxy->response_buffer, proxy->response_header_end);
+    proxy->response_is_upgrade = 0;
 
 #if _WEBSERVER_PROXY_DEBUG_ >= 4
-    LOG(PROXY_LOG, NOTICE_LEVEL, 0, "Response status: %d, websocket_upgrade: %d",
-              proxy->response_status_code, proxy->response_is_websocket_upgrade);
+    LOG(PROXY_LOG, NOTICE_LEVEL, 0, "Response status: %d",
+              proxy->response_status_code);
 #endif
 
     /*
-     * A tunnel hands the raw connection to the backend, so switch into it only
-     * for a protocol the client actually asked for. Checked here, not in
-     * proxy_check_websocket_upgrade(), because only this function has the
-     * request at hand.
+     * Status 101 means the backend is switching protocols - from here on the
+     * only question is whether it was allowed to. That is independent of which
+     * protocol it names, so the check hangs on the status code alone.
+     *
+     * Hanging it on "the response says websocket" instead would skip exactly
+     * the cases it exists for: a 101 carrying Upgrade: h2c, or none at all,
+     * would sail past unchecked.
      *
      * Two things are verified, both taken from how established proxies handle
      * it: the request must have carried an Upgrade header at all (nginx,
      * ngx_http_proxy_module.c: "if (r->headers_in.upgrade) u->upgrade = 1"),
      * and the protocol named in the response must be the one that was asked
      * for (apache mod_proxy_http.c rejects a mismatch with 502, caddy
-     * streaming.c refuses it - "backend tried to switch to unexpected
+     * streaming.go refuses it - "backend tried to switch to unexpected
      * protocol"). Without the first check a backend can open a tunnel that
      * nobody requested.
      *
-     * A mismatch tears the connection down instead of continuing: a 101
-     * carries no Content-Length, so the response path would fall back to
+     * A rejected upgrade tears the connection down instead of continuing: a
+     * 101 carries no Content-Length, so the response path would fall back to
      * BODY_MODE_CLOSE and wait for a backend that is itself waiting for tunnel
-     * traffic.
+     * traffic - two descriptors held for nothing.
+     *
+     * What passes is tunnelled whatever the protocol is called. The tunnel
+     * forwards raw bytes and does not interpret them, so it is not websocket
+     * specific.
      */
-    if (proxy->response_is_websocket_upgrade) {
+    if (proxy->response_status_code == 101) {
         char req_upgrade[64];
         char res_upgrade[64];
 
@@ -1871,7 +1876,6 @@ static int proxy_parse_response_header(reverse_proxy_connection_t* proxy) {
                                     req_upgrade, sizeof(req_upgrade)) == 0) {
             LOG(PROXY_LOG, WARNING_LEVEL, proxy->backend_fd, "%s",
                 "Backend sent 101 for a request without Upgrade header, dropping connection");
-            proxy->response_is_websocket_upgrade = 0;
             return -1;
         }
 
@@ -1880,10 +1884,11 @@ static int proxy_parse_response_header(reverse_proxy_connection_t* proxy) {
             (strcasecmp(req_upgrade, res_upgrade) != 0)) {
             LOG(PROXY_LOG, WARNING_LEVEL, proxy->backend_fd,
                 "Backend switched to '%s' but '%s' was requested, dropping connection",
-                res_upgrade, req_upgrade);
-            proxy->response_is_websocket_upgrade = 0;
+                res_upgrade[0] != '\0' ? res_upgrade : "(none)", req_upgrade);
             return -1;
         }
+
+        proxy->response_is_upgrade = 1;
     }
 
     return 0;
@@ -2040,39 +2045,6 @@ static int proxy_get_upgrade_value(const unsigned char* header, uint32_t header_
     return 0;
 }
 
-static int proxy_check_websocket_upgrade(const unsigned char* header, uint32_t header_len) {
-    const unsigned char* p;
-    const unsigned char* end;
-    int status = proxy_get_status_code(header, header_len);
-
-    if (status != 101) {
-        return 0;
-    }
-
-    /* Check for Upgrade: websocket header */
-    p = header;
-    end = header + header_len;
-
-    while (p < end - 8) {
-        if (strncasecmp((const char*)p, "Upgrade:", 8) == 0) {
-            p += 8;
-            while (p < end && *p != '\r' && *p != '\n') {
-                if (strncasecmp((const char*)p, "websocket", 9) == 0) {
-                    return 1;
-                }
-                p++;
-            }
-        }
-        while (p < end && *p != '\n') {
-            p++;
-        }
-        if (p < end) {
-            p++;
-        }
-    }
-
-    return 0;
-}
 
 /*
  * Get HTTP status code from response
