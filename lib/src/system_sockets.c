@@ -1104,6 +1104,7 @@ static int run_extern_handler( socket_info* sock ) {
 	while ( sock->extern_handle != 0 ) {
 
 		int pending_before = WebserverSSLPending( sock );
+		int pending_after;
 
 		sock->extern_handle( sock->socket, sock->extern_handle_data_ptr );
 
@@ -1119,7 +1120,19 @@ static int run_extern_handler( socket_info* sock ) {
 			break;
 		}
 
-		if ( WebserverSSLPending( sock ) == pending_before ) {
+		pending_after = WebserverSSLPending( sock );
+
+		/* Nichts mehr da - der Regelfall. Diese Prüfung muss vor der
+		 * Fortschrittsprüfung stehen: ein Handler, der den Puffer leert, hat
+		 * seine Arbeit getan und darf nicht noch einmal gerufen werden. Der
+		 * Proxy wertet einen solchen Aufruf je nach Zustand als "Client ist
+		 * weg" und baut die Verbindung ab - ein POST mit Body ueber https
+		 * bekam dadurch keine Antwort mehr. */
+		if ( pending_after == 0 ) {
+			break;
+		}
+
+		if ( pending_after == pending_before ) {
 			break;
 		}
 	}
