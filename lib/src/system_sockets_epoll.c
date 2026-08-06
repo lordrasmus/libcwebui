@@ -42,7 +42,9 @@ void eventHandler(int fd, short flags, void *arg) {
     }
 
     if (flags & ~(EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
-        printf("BUG: epoll unhandled flags 0x%X\n", flags);
+        /* Barely reachable - the branches above return - but a printf would
+         * bypass the log entirely and land on the console. */
+        LOG(MESSAGE_LOG, ERROR_LEVEL, fd, "epoll reported unhandled flags 0x%X", flags);
     }
 }
 
