@@ -1083,7 +1083,25 @@ void reverse_proxy_backend_handler(int fd, void* ptr) {
                         LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "%s", "Backend closed during streaming");
 #endif
                         /* Prüfen ob alles empfangen wurde */
-                        if (proxy->response_body_mode == BODY_MODE_CLOSE ||
+                        if (proxy->response_body_mode == BODY_MODE_CHUNKED &&
+                            proxy->chunk_state != PROXY_CHUNK_DONE) {
+                            /* Ohne diesen Zweig ginge der Abbruch still durch:
+                             * response_content_length ist bei chunked 0, also
+                             * ist die Vollstaendigkeitspruefung unten immer
+                             * wahr. Der Client merkt den fehlenden Nullchunk
+                             * selbst - im Log stand bisher nichts, waehrend der
+                             * CONTENT_LENGTH-Fall daneben seit jeher warnt.
+                             *
+                             * Der Zustand bleibt DONE: der Response-Header ist
+                             * langst raus, ein Fehler liesse sich dem Client
+                             * nicht mehr mitteilen. */
+                            LOG(PROXY_LOG, WARNING_LEVEL, proxy->backend_fd,
+                                "Backend closed, chunked response incomplete "
+                                "(chunk state %d, %lu bytes sent)",
+                                (int)proxy->chunk_state,
+                                (unsigned long)proxy->response_body_sent);
+                            proxy->state = PROXY_STATE_DONE;
+                        } else if (proxy->response_body_mode == BODY_MODE_CLOSE ||
                             proxy->response_body_sent >= proxy->response_content_length) {
                             proxy->state = PROXY_STATE_DONE;
                         } else {
