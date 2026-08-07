@@ -2270,13 +2270,40 @@ static int proxy_header_has_connection_upgrade(const unsigned char* header,
             (strncasecmp((const char*)p, "Connection:", 11) == 0)) {
 
             p += 11;
-            /* The value is a comma separated list - "keep-alive, Upgrade" is
-             * as valid as a bare "Upgrade". */
+            /* The value is a comma separated list of tokens - "keep-alive,
+             * Upgrade" counts just like a bare "Upgrade".
+             *
+             * Comparing the whole list against "upgrade" with strncasecmp at
+             * every offset is not enough: "notupgrade" contains it, and so
+             * does "upgraded". Both used to pass, and since this same function
+             * decides whether the backend gets Connection: close forced on it,
+             * a bogus value switched off the only way to detect the end of a
+             * response. Each token is therefore delimited first and then
+             * compared as a whole. */
             while ((p < end) && (*p != '\r') && (*p != '\n')) {
-                if ((p + 7 <= end) && (strncasecmp((const char*)p, "upgrade", 7) == 0)) {
+                const unsigned char* tok;
+                const unsigned char* tok_end;
+
+                while ((p < end) && ((*p == ' ') || (*p == '\t') || (*p == ','))) {
+                    p++;
+                }
+
+                tok = p;
+                while ((p < end) && (*p != ',') && (*p != '\r') && (*p != '\n')) {
+                    p++;
+                }
+
+                /* Trailing whitespace does not belong to the token */
+                tok_end = p;
+                while ((tok_end > tok)
+                        && ((*(tok_end - 1) == ' ') || (*(tok_end - 1) == '\t'))) {
+                    tok_end--;
+                }
+
+                if (((tok_end - tok) == 7)
+                        && (strncasecmp((const char*)tok, "upgrade", 7) == 0)) {
                     return 1;
                 }
-                p++;
             }
             return 0;
         }
