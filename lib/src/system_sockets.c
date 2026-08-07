@@ -1333,9 +1333,18 @@ void handleer( int a, short b, void *t ) {
 	}
 #endif
 
+	/* Closing takes precedence - except while a finished response is still
+	 * queued and this is the write event that would send it. Tearing down
+	 * here would throw away an answer the client is entitled to; the write
+	 * path closes on its own once the queue is empty (see closeSocket in the
+	 * NO_MORE_DATA case below). Everything else is unaffected: connections
+	 * marked for closing without pending output, and any event other than
+	 * write, still tear down immediately. */
 	if (sock->closeSocket == 1) {
-		WebserverConnectionManagerCloseRequest(sock);
-		return;
+		if ((b != EVENT_WRITE) || (ws_list_size(&sock->output_list) == 0)) {
+			WebserverConnectionManagerCloseRequest(sock);
+			return;
+		}
 	}
 
 	if (sock->server == 1) {
@@ -1439,6 +1448,22 @@ void handleer( int a, short b, void *t ) {
 					WebserverConnectionManagerCloseRequest(sock);
 					return;
 				}
+
+				/* Proxy or websocket took the connection over - same as in the
+				 * single request path above, and it has to return here too.
+				 * The event registration below is absolute: running into it
+				 * would overwrite what checkReverseProxy() just registered for
+				 * itself, leaving the connection with two owners and nobody
+				 * serving it. That is what used to happen with two requests in
+				 * one segment where the second one hits a proxied URL - no
+				 * answer came back at all, not even for the first request. */
+				if ( ret == 2 ){
+					if ( WebserverSSLPending( sock ) ) {
+						run_extern_handler( sock );
+					}
+					return;
+				}
+
 				// Header nicht zuende , weitere daten lesen
 				if( ret == 0 ){
 					break;

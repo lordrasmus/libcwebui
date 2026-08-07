@@ -749,6 +749,37 @@ int checkReverseProxy(socket_info* s, char* buffer, int length) {
     LOG(PROXY_LOG, NOTICE_LEVEL, 0, "Found proxy: %s -> %s", url, reg->backend_path);
 #endif
 
+    /*
+     * A response for an earlier request on this connection is still waiting to
+     * be written, so this request was pipelined behind it.
+     *
+     * The proxy cannot take over here. It does not queue into output_list, it
+     * takes the socket itself - including the event registration - and the
+     * pending response would never be written. Answering the request by the
+     * normal path is not an option either: the URL belongs to the proxy, so
+     * anything from there would be a made up answer (a 404 for a route that
+     * exists).
+     *
+     * So the earlier response is written out, this request is dropped, and the
+     * connection closes afterwards - closeSocket is picked up by the write
+     * path once the queue is empty. A client that pipelines has to be prepared
+     * to repeat unanswered requests after a close anyway (RFC 9112 9.3.2).
+     *
+     * Doing this properly would mean letting the proxy queue into output_list
+     * like every other response. That is a rewrite of the whole send path -
+     * backpressure, the tunnel and the event registration all hang off it -
+     * for a case no browser produces: the proxy forces Connection: close, so
+     * nothing can be pipelined after a proxied request, only before it.
+     */
+    if (ws_list_size(&s->output_list) > 0) {
+        LOG(PROXY_LOG, WARNING_LEVEL, s->socket,
+            "%s pipelined behind a pending response, closing instead", url);
+        s->header_buffer_pos = 0;   /* drop this request, it stays unanswered */
+        s->closeSocket = 1;
+        addEventSocketWritePersist(s);
+        return 0;
+    }
+
     /* Proxy Connection erstellen */
     proxy = proxy_create_connection(s, reg);
     if (proxy == NULL) {
