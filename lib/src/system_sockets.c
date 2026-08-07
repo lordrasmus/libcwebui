@@ -387,6 +387,31 @@ static int check_post_header( socket_info* sock ){
  *
  */
 
+/*
+ * An error page has been built - hand it over so it actually gets sent.
+ *
+ * The senders in server_error_pages.c only fill html_chunk_list and
+ * header_chunk_list. Only generateOutputBuffer() moves that into output_list,
+ * from where handleClientWriteData() sends it, and it used to be called on the
+ * success path alone. Returning -1 here therefore tore the connection down
+ * with the finished page still in the chunk lists, and
+ * WebserverFreeSocketInfo() freed it: the client saw a bare FIN - or an RST -
+ * instead of the 400 or 405. Measured before the fix: 0 bytes returned while
+ * the log showed the error branch had run.
+ *
+ * Returning 1 puts it on the regular path instead: handleer() registers the
+ * write event, and the NO_MORE_DATA case closes afterwards because
+ * closeSocket is set. What is left of the broken request is dropped, since the
+ * pipelining loop in handleer() would otherwise parse it again, fail again and
+ * never make progress.
+ */
+static int finish_error_response(socket_info* sock) {
+	generateOutputBuffer(sock);
+	sock->header_buffer_pos = 0;
+	sock->closeSocket = 1;
+	return 1;
+}
+
 static int handleClientHeaderData(socket_info* sock) {
 	/*
 	 * len2 must be initialized to -6 (no complete line recognized).
@@ -479,8 +504,7 @@ static int handleClientHeaderData(socket_info* sock) {
 			 * wen ja haben wir hier einen internen fehler */
 			if ( ( buffer_length - sock->header_buffer_pos ) == 0 ){
 				sendInternalError(sock);
-				sock->closeSocket = 1;
-				return -1;
+				return finish_error_response(sock);
 			}
 			return 0;
 		}
@@ -489,8 +513,7 @@ static int handleClientHeaderData(socket_info* sock) {
 		if (len2 == 0) {
 			sendMethodBadRequestLineToLong(sock);
 			LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"sendMethodBadRequestLineToLong > %d",WEBSERVER_MAX_HEADER_LINE_LENGHT );
-			sock->closeSocket = 1;
-			return -1;
+			return finish_error_response(sock);
 		}
 
 		/* methode nicht erlaubt */
@@ -501,8 +524,7 @@ static int handleClientHeaderData(socket_info* sock) {
 				sendMethodNotAllowed(sock);
 				LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"methodNotAllowed -> %s",sock->header->error_method );
 			}
-			sock->closeSocket = 1;
-			return -1;
+			return finish_error_response(sock);
 		}
 
 		/* Reverse Proxy hat die Verbindung übernommen */
@@ -523,7 +545,7 @@ static int handleClientHeaderData(socket_info* sock) {
 					sock->header->error = 1;
 					sendMethodBadRequest(sock);
 					LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","POST Method Header Error" );
-					return -1;
+					return finish_error_response(sock);
 				}
 
 				/* POST ohne Body (Content-Length: 0) direkt verarbeiten */
@@ -553,7 +575,7 @@ static int handleClientHeaderData(socket_info* sock) {
 					sock->header->error = 1;
 					sendMethodBadRequest(sock);
 					LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","POST Method Header Error" );
-					return -1;
+					return finish_error_response(sock);
 				}
 
 				/* POST ohne Body (Content-Length: 0) direkt verarbeiten */
