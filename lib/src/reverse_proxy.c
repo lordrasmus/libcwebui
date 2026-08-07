@@ -1436,6 +1436,38 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
             break;
 
         case PROXY_STATE_CONNECT_BACKEND:
+            /*
+             * Drop whatever sits behind the body. checkReverseProxy() copies
+             * the entire header buffer into the request buffer - everything
+             * read so far, including a second request the client put into the
+             * same segment - and the send below writes all of it. That second
+             * request would reach the backend on this connection without its
+             * own X-Forwarded headers and without the forced Connection:
+             * close, and with a Content-Length it would additionally count as
+             * body. Measured: a backend announced 5 bytes and received 32.
+             *
+             * Both ways into this state pass here, so one check covers the
+             * request read in one go as well as the one completed in
+             * RECV_CLIENT_BODY.
+             *
+             * Upgrade requests are exempt: there the bytes behind the header
+             * are not a second request but the first tunnel payload, and
+             * dropping them would cut into the tunnel.
+             */
+            if (proxy_request_is_upgrade(proxy->request_buffer,
+                                         proxy->request_header_end) == 0) {
+                uint64_t want = (uint64_t)proxy->request_header_end
+                              + proxy->request_content_length;
+
+                if ((uint64_t)proxy->request_buffer_pos > want) {
+                    LOG(PROXY_LOG, WARNING_LEVEL, 0,
+                        "Discarding %lu bytes sent past the request body",
+                        (unsigned long)((uint64_t)proxy->request_buffer_pos - want));
+                    proxy->request_buffer_pos = (uint32_t)want;
+                    proxy->request_body_received = proxy->request_content_length;
+                }
+            }
+
             /* The request is fully read - from here on the client socket must
              * no longer be registered for data. It used to stay that way until
              * the request had been sent in full, and in that window a client
