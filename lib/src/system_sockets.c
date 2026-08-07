@@ -975,8 +975,12 @@ static void accept_reject_one(socket_info* sock) {
 	if (c >= 0) {
 		/* Only on a plain port. On the TLS port the peer is waiting for a
 		 * handshake, so a status line would just be protocol garbage - the
-		 * close alone already beats a timeout. */
-		if (sock->use_ssl == 0) {
+		 * close alone already beats a timeout. Without SSL support there is
+		 * no TLS port, and use_ssl does not exist. */
+#ifdef WEBSERVER_USE_SSL
+		if (sock->use_ssl == 0)
+#endif
+		{
 			static const char busy[] =
 				"HTTP/1.1 503 Service Unavailable\r\n"
 				"Connection: close\r\n"
@@ -1111,7 +1115,12 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* so
 	unsigned char *buffer;
 
 #ifdef _WEBSERVER_FILESYSTEM_DEBUG_
-		LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"Send File from Disk Soll %ld Pos %ld",file->file_info->DataLenght,file->file_send_pos );
+		/* FILE_OFFSET has no printf specifier of its own: it is off_t on Linux
+		 * and the BSDs, but uint64_t on Windows and unsigned long on
+		 * barrelfish - signed on some platforms, unsigned on others, and off_t
+		 * is not a fixed width type, so there is no PRI macro for it either.
+		 * long long is wide enough for every one of them. */
+		LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"Send File from Disk Soll %lld Pos %lld",(long long)file->file_info->DataLenght,(long long)file->file_send_pos );
 #endif
 
 	buffer = (unsigned char *) WebserverMalloc( WRITE_DATA_SIZE );
@@ -1137,7 +1146,7 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* so
 		switch (status) {
 		case SOCKET_SEND_NO_MORE_DATA:
 #if _WEBSERVER_CONNECTION_DEBUG_ >= 5
-			LOG ( SOCKET_LOG,NOTICE_LEVEL,sock->socket,"SOCKET_SEND_NO_MORE_DATA : %ld status : %d ret : %zu",file->file_send_pos,status,ret );
+			LOG ( SOCKET_LOG,NOTICE_LEVEL,sock->socket,"SOCKET_SEND_NO_MORE_DATA : %lld status : %d ret : %zu",(long long)file->file_send_pos,status,ret );
 #endif
 			file->file_send_pos += ret;
 			if ( file->file_info->DataLenght == file->file_send_pos) {
@@ -1234,6 +1243,15 @@ void WebserverConnectionManagerStartLoop(void) {
  * be called again once it can accept data, since no event will do it (see
  * reverse_proxy_backend_handler, which drives the client read path once its
  * backlog drains).
+ *
+ * On a plain connection the loop runs exactly once - WebserverSSLPending() is
+ * zero there, a constant without WEBSERVER_USE_SSL and an early return for
+ * use_ssl == 0 with it. That is correct: whatever the handler did not take is
+ * still in the kernel buffer, and level-triggered epoll reports it again. The
+ * wakeup duty above is not lifted by it. It applies whenever the handler is
+ * the one holding data back, which has nothing to do with TLS - a handler that
+ * pulls bytes into a buffer of its own and leaves them there starves them just
+ * the same, and this loop will not catch it.
  *
  * Returns 1 if the socket was closed - the caller must return immediately and
  * must not touch sock any more.
