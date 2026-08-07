@@ -67,7 +67,17 @@ static int proxy_find_header_end(const unsigned char* buffer, uint32_t len);
 #define PROXY_CL_INVALID   (-2)
 
 static int64_t proxy_parse_content_length(const unsigned char* header, uint32_t header_len);
-static int proxy_check_chunked_encoding(const unsigned char* header, uint32_t header_len);
+
+/* How a message frames its body according to Transfer-Encoding. Only the last
+ * coding in the list counts (RFC 9112 6.1). */
+typedef enum {
+    PROXY_TE_NONE = 0,      /* no Transfer-Encoding header at all */
+    PROXY_TE_CHUNKED,       /* chunked is the final coding - length is framed */
+    PROXY_TE_OTHER          /* header present, but chunked is not final */
+} PROXY_TE_MODE;
+
+static PROXY_TE_MODE proxy_check_transfer_encoding(const unsigned char* header,
+                                                   uint32_t header_len);
 static int proxy_get_upgrade_value(const unsigned char* header, uint32_t header_len,
                                    char* buf, int buf_size);
 static int proxy_get_status_code(const unsigned char* header, uint32_t header_len);
@@ -1246,7 +1256,7 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
             {
                 int64_t parsed_content_length = proxy_parse_content_length(
                     proxy->request_buffer, proxy->request_header_end);
-                int request_is_chunked = proxy_check_chunked_encoding(
+                PROXY_TE_MODE request_te = proxy_check_transfer_encoding(
                     proxy->request_buffer, proxy->request_header_end);
 
                 /*
@@ -1258,9 +1268,25 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                  * response side the sender here is a client, so this is not a
                  * bug report, it is an attempt; reject it outright.
                  */
-                if ((parsed_content_length >= 0) && request_is_chunked) {
+                if ((parsed_content_length >= 0) && (request_te != PROXY_TE_NONE)) {
                     LOG(PROXY_LOG, WARNING_LEVEL, 0, "%s",
                         "Request has both Content-Length and Transfer-Encoding, rejecting");
+                    proxy_send_error_response(proxy, 400, "Bad Request", NULL);
+                    proxy->response_header_sent = 1;
+                    proxy->state = PROXY_STATE_ERROR;
+                    return proxy_process_state(proxy);
+                }
+
+                /*
+                 * Transfer-Encoding present, but chunked is not the final
+                 * coding: then the body has no self-delimiting framing at all.
+                 * RFC 9112 6.3 leaves no choice for a request - "the server
+                 * MUST respond with 400 and close the connection" - because
+                 * anything else would mean guessing where the request ends.
+                 */
+                if (request_te == PROXY_TE_OTHER) {
+                    LOG(PROXY_LOG, WARNING_LEVEL, 0, "%s",
+                        "Request Transfer-Encoding does not end in chunked, rejecting");
                     proxy_send_error_response(proxy, 400, "Bad Request", NULL);
                     proxy->response_header_sent = 1;
                     proxy->state = PROXY_STATE_ERROR;
@@ -1279,7 +1305,7 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                  * and HTTP/3. It comes from tooling - curl with unknown length,
                  * programmatic clients.
                  */
-                if (request_is_chunked) {
+                if (request_te == PROXY_TE_CHUNKED) {
                     LOG(PROXY_LOG, WARNING_LEVEL, 0, "%s",
                         "Chunked request body is not supported, rejecting");
                     proxy_send_error_response(proxy, 411, "Length Required", NULL);
@@ -1555,8 +1581,9 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                  * log line instead of silently patched over.
                  */
                 if ((parsed_content_length >= 0) &&
-                    proxy_check_chunked_encoding(proxy->response_buffer,
-                                                 proxy->response_header_end)) {
+                    (proxy_check_transfer_encoding(proxy->response_buffer,
+                                                  proxy->response_header_end)
+                        != PROXY_TE_NONE)) {
                     LOG(PROXY_LOG, ERROR_LEVEL, proxy->backend_fd, "%s",
                         "Backend sent Content-Length and Transfer-Encoding at the same time");
                     proxy->state = PROXY_STATE_ERROR;
@@ -1570,8 +1597,9 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                     /* Content-Length Header vorhanden (auch wenn 0) */
                     proxy->response_body_mode = BODY_MODE_CONTENT_LENGTH;
                     proxy->response_content_length = (uint64_t)parsed_content_length;
-                } else if (proxy_check_chunked_encoding(proxy->response_buffer,
-                                                         proxy->response_header_end)) {
+                } else if (proxy_check_transfer_encoding(proxy->response_buffer,
+                                                          proxy->response_header_end)
+                               == PROXY_TE_CHUNKED) {
                     proxy->response_body_mode = BODY_MODE_CHUNKED;
                     proxy->response_content_length = 0;
 #if _WEBSERVER_PROXY_DEBUG_ >= 3
@@ -2093,22 +2121,64 @@ static int64_t proxy_parse_content_length(const unsigned char* header, uint32_t 
 /*
  * Check for Transfer-Encoding: chunked
  */
-static int proxy_check_chunked_encoding(const unsigned char* header, uint32_t header_len) {
+/*
+ * Classify the Transfer-Encoding of a message.
+ *
+ * Only the *last* coding decides how the body is framed (RFC 9112 6.1), so
+ * this returns what that last token is rather than whether "chunked" appears
+ * anywhere. Several Transfer-Encoding headers are allowed and form one list,
+ * hence the scan keeps the last token seen across all of them.
+ *
+ * The previous version searched the value for the substring "chunked", which
+ * was wrong in both directions: "Transfer-Encoding: gzip" was not recognised
+ * as a Transfer-Encoding at all and slipped past the Content-Length check,
+ * while "xchunked" counted as chunked framing.
+ */
+static PROXY_TE_MODE proxy_check_transfer_encoding(const unsigned char* header,
+                                                   uint32_t header_len) {
     const unsigned char* p = header;
     const unsigned char* end = header + header_len;
     const char* te_str = "Transfer-Encoding:";
-    int te_len = strlen(te_str);
+    int te_len = (int)strlen(te_str);
+    const unsigned char* last_tok = NULL;
+    int last_len = 0;
+    int seen = 0;
 
     while (p + te_len <= end) {
-        if (strncasecmp((const char*)p, te_str, te_len) == 0) {
+        /* Only at the start of a header line, otherwise the string could be
+         * matched inside another header's value. */
+        if (((p == header) || (*(p - 1) == '\n'))
+                && (strncasecmp((const char*)p, te_str, te_len) == 0)) {
+            seen = 1;
             p += te_len;
-            while (p < end && *p != '\r' && *p != '\n') {
-                if (strncasecmp((const char*)p, "chunked", 7) == 0) {
-                    return 1;
+
+            while ((p < end) && (*p != '\r') && (*p != '\n')) {
+                const unsigned char* tok;
+                const unsigned char* tok_end;
+
+                while ((p < end) && ((*p == ' ') || (*p == '\t') || (*p == ','))) {
+                    p++;
                 }
-                p++;
+
+                tok = p;
+                while ((p < end) && (*p != ',') && (*p != '\r') && (*p != '\n')) {
+                    p++;
+                }
+
+                tok_end = p;
+                while ((tok_end > tok)
+                        && ((*(tok_end - 1) == ' ') || (*(tok_end - 1) == '\t'))) {
+                    tok_end--;
+                }
+
+                if (tok_end > tok) {
+                    last_tok = tok;
+                    last_len = (int)(tok_end - tok);
+                }
             }
+            continue;
         }
+
         /* Zur nächsten Zeile */
         while (p < end && *p != '\n') {
             p++;
@@ -2118,7 +2188,13 @@ static int proxy_check_chunked_encoding(const unsigned char* header, uint32_t he
         }
     }
 
-    return 0;
+    if (seen == 0) {
+        return PROXY_TE_NONE;
+    }
+    if ((last_len == 7) && (strncasecmp((const char*)last_tok, "chunked", 7) == 0)) {
+        return PROXY_TE_CHUNKED;
+    }
+    return PROXY_TE_OTHER;
 }
 
 /*
