@@ -146,3 +146,18 @@ lib/third_party/src/miniz/*.o
 
 .cproject
 .settings/language.settings.xml
+
+# Build output of lib/, which is what the embedding project deploys.
+# It was tracked by accident once - a 2.7 MB blob that changes on every build.
+lib/libWebserver.so.1
+
+# Test variants, replacing the per-variant entries above for the ones that
+# were missing. Covers variants added later as well.
+tests/config_variants/*/main
+tests/config_variants/*/main.o
+tests/config_variants/*/main.dSYM/
+
+# Crypto libraries the variant Makefiles fetch and build in place.
+tests/config_variants/LinuxMbedTLS2/mbedtls/
+tests/config_variants/LinuxMbedTLS3/mbedtls/
+tests/config_variants/LinuxWolfSSL/wolfssl/
