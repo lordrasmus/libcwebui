@@ -44,6 +44,9 @@ global_vars* initWebserver(void) {
 	addTemplateFilePostfix(".inc");
 	#endif
 
+	/* listen() backlog - how many connections may wait to be accepted, not how
+	 * many may be open. The latter is bounded by the descriptor limit, which
+	 * is logged at startup. */
 	globals.config.connections = 128;
 	globals.init_called = 0xAB;
 

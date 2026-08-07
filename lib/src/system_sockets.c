@@ -67,8 +67,38 @@ static void accept_reserve_open(void) {
 		g_accept_reserve_fd = open("/dev/null", O_RDONLY | O_CLOEXEC);
 	}
 }
+
+#include <sys/resource.h>
+
+/*
+ * Report how many descriptors this process may use.
+ *
+ * The limit is inherited from whoever started the service and was never read
+ * here, so running into it came without warning and left no trace of how much
+ * had been available. Since every connection costs a descriptor, it is also
+ * the effective cap on concurrent connections - worth having in the log next
+ * to the ports.
+ *
+ * The soft value is the one that applies; a process may raise it up to the
+ * hard value on its own, without privileges.
+ */
+static void log_descriptor_limit(void) {
+	struct rlimit rl;
+
+	if (getrlimit(RLIMIT_NOFILE, &rl) != 0) {
+		LOG(CONNECTION_LOG, WARNING_LEVEL, 0, "%s",
+		    "could not read the descriptor limit");
+		return;
+	}
+
+	LOG(CONNECTION_LOG, NOTICE_LEVEL, 0,
+	    "descriptor limit %lu (max %lu), listen backlog %d",
+	    (unsigned long)rl.rlim_cur, (unsigned long)rl.rlim_max,
+	    globals.config.connections);
+}
 #else
 static void accept_reserve_open(void) { }
+static void log_descriptor_limit(void) { }
 #endif
 
 
@@ -138,6 +168,8 @@ int WebserverStartConnectionManager(void) {
 	LOG( CONNECTION_LOG, NOTICE_LEVEL, 0, "webserver listening on port %d ( PID %d )",
 		getConfigInt("port"), PlatformGetPID());
 #endif
+
+	log_descriptor_limit();
 
 #ifdef WEBSERVER_USE_WNFS
 
