@@ -41,11 +41,43 @@ SPDX-License-Identifier: MPL-2.0
 	int wnfs_socket = 0;
 #endif
 
+#if defined(__linux__)
+#include <fcntl.h>
+#include <errno.h>
+
+/*
+ * One descriptor held in reserve so a connection can still be refused when the
+ * process has run out of them.
+ *
+ * accept() failing with EMFILE leaves the connection sitting in the accept
+ * queue. The listening socket stays readable, level triggered epoll reports it
+ * again immediately, and the handler spins without ever making progress -
+ * measured at well over one core, with the watchdog taking the process down in
+ * one of the runs.
+ *
+ * Freeing this descriptor makes room for exactly one accept(), which takes the
+ * connection off the queue - that alone ends the spin. The client gets a 503
+ * instead of a timeout, and the slot goes back into reserve right after.
+ */
+static int g_accept_reserve_fd = -1;
+static time_t g_accept_reserve_logged = 0;
+
+static void accept_reserve_open(void) {
+	if (g_accept_reserve_fd < 0) {
+		g_accept_reserve_fd = open("/dev/null", O_RDONLY | O_CLOEXEC);
+	}
+}
+#else
+static void accept_reserve_open(void) { }
+#endif
+
 
 int WebserverStartConnectionManager(void) {
 	int socket;
 	socket_info* info;
 
+	/* Early, while descriptors are still plentiful - see accept_reject_one(). */
+	accept_reserve_open();
 
 	socket = PlatformGetSocket(getConfigInt("port"), globals.config.connections);
 
@@ -885,6 +917,57 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteData(socket_info* sock) {
 
 
 
+#if defined(__linux__)
+/*
+ * Take one waiting connection off the queue and refuse it.
+ *
+ * Only one per call: with a flood of connections, looping here would keep the
+ * event loop busy refusing and starve the connections already being served.
+ * The listener stays readable, so the next round takes the next one - a spin
+ * with progress instead of one without.
+ */
+static void accept_reject_one(socket_info* sock) {
+	int c;
+	time_t now;
+
+	/* Retry in case the last round could not get the slot back. */
+	accept_reserve_open();
+	if (g_accept_reserve_fd < 0) {
+		return;
+	}
+
+	close(g_accept_reserve_fd);
+	g_accept_reserve_fd = -1;
+
+	c = accept(sock->socket, NULL, 0);
+	if (c >= 0) {
+		/* Only on a plain port. On the TLS port the peer is waiting for a
+		 * handshake, so a status line would just be protocol garbage - the
+		 * close alone already beats a timeout. */
+		if (sock->use_ssl == 0) {
+			static const char busy[] =
+				"HTTP/1.1 503 Service Unavailable\r\n"
+				"Connection: close\r\n"
+				"Content-Length: 0\r\n"
+				"\r\n";
+			(void)send(c, busy, sizeof(busy) - 1, MSG_NOSIGNAL);
+		}
+		close(c);
+	}
+
+	accept_reserve_open();
+
+	/* At most one line per second: a flood would otherwise fill the log and
+	 * push out everything that explains how it got there. */
+	now = time(NULL);
+	if (now != g_accept_reserve_logged) {
+		g_accept_reserve_logged = now;
+		LOG(CONNECTION_LOG, WARNING_LEVEL, sock->socket, "%s",
+		    "out of file descriptors, refusing connections with 503");
+	}
+}
+#endif
+
 void handleServer(socket_info* sock) {
 	int c;
 	unsigned int port;
@@ -893,6 +976,13 @@ void handleServer(socket_info* sock) {
 	while (1) {
 		c = PlatformAccept(sock, &port);
 		if (c == -1){
+#if defined(__linux__)
+			/* errno is still the one from accept(): PlatformAccept does
+			 * nothing else on the failure path. */
+			if ((errno == EMFILE) || (errno == ENFILE)) {
+				accept_reject_one(sock);
+			}
+#endif
 			return;
 		}
 
