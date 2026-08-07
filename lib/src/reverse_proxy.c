@@ -1294,6 +1294,22 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                 }
 
                 /*
+                 * An unusable Content-Length must not be treated like a
+                 * missing one. "5x" used to be read as 5 and the rest thrown
+                 * away, and two contradicting headers were resolved by taking
+                 * the first - in both cases the backend may end the message
+                 * somewhere else than we do.
+                 */
+                if (parsed_content_length == PROXY_CL_INVALID) {
+                    LOG(PROXY_LOG, WARNING_LEVEL, 0, "%s",
+                        "Request has an unusable Content-Length, rejecting");
+                    proxy_send_error_response(proxy, 400, "Bad Request", NULL);
+                    proxy->response_header_sent = 1;
+                    proxy->state = PROXY_STATE_ERROR;
+                    return proxy_process_state(proxy);
+                }
+
+                /*
                  * A chunked request body is not implemented. Passing it on as
                  * BODY_MODE_NONE - which is what used to happen - sends the
                  * request without its body and leaves the backend waiting for
@@ -1559,9 +1575,24 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                  * HTTP 204 (No Content) und 304 (Not Modified) haben nie einen Body
                  * Content-Length: 0 bedeutet auch kein Body
                  * parsed_content_length >= 0 bedeutet Content-Length Header vorhanden
-                 * PROXY_CL_MISSING means no Content-Length header,
-                 * PROXY_CL_INVALID an unusable value - both fall through to
-                 * chunked or read-until-close below */
+                 * PROXY_CL_MISSING means no Content-Length header and falls
+                 * through to chunked or read-until-close below. */
+
+                /*
+                 * An unusable Content-Length from the backend is refused for
+                 * the same reason as CL+TE below: falling through to
+                 * read-until-close would work, but it hides a broken backend
+                 * behind a response that happens to arrive. Ours ships with
+                 * the same product - it should show up as a 502 with a log
+                 * line.
+                 */
+                if (parsed_content_length == PROXY_CL_INVALID) {
+                    LOG(PROXY_LOG, ERROR_LEVEL, proxy->backend_fd, "%s",
+                        "Backend sent an unusable Content-Length");
+                    proxy->state = PROXY_STATE_ERROR;
+                    return proxy_process_state(proxy);
+                }
+
                 /*
                  * Content-Length and Transfer-Encoding at the same time is
                  * refused rather than repaired.
@@ -2078,7 +2109,10 @@ static int64_t proxy_parse_content_length(const unsigned char* header, uint32_t 
      * den Puffer (formal UB), und die Position p == end - N fiele weg,
      * obwohl dort genau N Bytes hinpassen. */
     while (p + cl_len <= end) {
-        if (strncasecmp((const char*)p, cl_str, cl_len) == 0) {
+        /* Only at the start of a header line - unanchored this would also
+         * match "X-Content-Length:" or the string inside another value. */
+        if (((p == header) || (*(p - 1) == '\n'))
+                && (strncasecmp((const char*)p, cl_str, cl_len) == 0)) {
             p += cl_len;
             while (p < end && (*p == ' ' || *p == '\t')) {
                 p++;
@@ -2104,6 +2138,43 @@ static int64_t proxy_parse_content_length(const unsigned char* header, uint32_t 
                 value = value * 10 + digit;
                 p++;
             }
+
+            /* Nothing but whitespace may follow. Stopping at the first non
+             * digit and returning what was read turned "5x" into 5 and passed
+             * it on as the body length. */
+            while ((p < end) && ((*p == ' ') || (*p == '\t'))) {
+                p++;
+            }
+            if ((p < end) && (*p != '\r') && (*p != '\n')) {
+                LOG(PROXY_LOG, ERROR_LEVEL, 0, "%s", "Content-Length with trailing garbage");
+                return PROXY_CL_INVALID;
+            }
+
+            /* A second Content-Length header makes the length ambiguous: we
+             * would use the first one while the backend may use the second,
+             * and then both sides see the message end in a different place.
+             * Repeated identical values would be permitted, but telling them
+             * apart buys nothing here - reject either way. */
+            while (p < end && *p != '\n') {
+                p++;
+            }
+            if (p < end) {
+                p++;
+            }
+            while (p + cl_len <= end) {
+                if (((p == header) || (*(p - 1) == '\n'))
+                        && (strncasecmp((const char*)p, cl_str, cl_len) == 0)) {
+                    LOG(PROXY_LOG, ERROR_LEVEL, 0, "%s", "More than one Content-Length header");
+                    return PROXY_CL_INVALID;
+                }
+                while (p < end && *p != '\n') {
+                    p++;
+                }
+                if (p < end) {
+                    p++;
+                }
+            }
+
             return (int64_t)value;
         }
         /* Zur nächsten Zeile */
