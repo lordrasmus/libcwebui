@@ -92,7 +92,9 @@ TEST_FILES= \
 	test_message_queue.cpp \
 	test_file_manager.cpp \
 	test_server_config.cpp \
-	test_conditions.cpp
+	test_conditions.cpp \
+	test_post_multipart.cpp \
+	test_memory_overflow.cpp
 
 C_OBJS=$(C_FILES:.c=.o)
 

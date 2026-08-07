@@ -126,16 +126,33 @@ static void parsePostData(http_request *s){
 				/* Ein Boundary beendet / startet einen Abschnitt */
 				if ( 0 == strncmp( pos2 , bound_end , bound_len ) ){
 					upload_file_info * file_info;
+					uint64_t part_len = offset3 - offset2;
+
+					/* The CRLF of the delimiter always sits in front of the
+					 * boundary and does not belong to the data. Without it
+					 * the section is empty, and the arithmetic below does not
+					 * yield -1 on uint64_t but the maximum value. The memory
+					 * manager used to carry that on in unsigned int, where
+					 * the sum wrapped around: a request for 16 exabytes
+					 * returned a block of a few dozen bytes, and the memcpy
+					 * below ran past it. Browsers do not produce this
+					 * framing, a hand written body does. */
+					if ( part_len < 2 ) {
+						LOG ( CONNECTION_LOG,WARNING_LEVEL,s->socket->socket,
+						      "%s","multipart part without a delimiter before the boundary, skipping" );
+						offset = offset3 + offset + bound_len - 1;
+						break;
+					}
 
 					/* Am Ender Der Daten ist \r\n darum -2 */
-					data = WebserverMalloc( ( offset3 - offset2 ) - 1 );
-					memcpy( data, data_start , ( offset3 - offset2 ) - 2);
-					data[ ( offset3 - offset2 ) - 2 ] = '\0';
+					data = WebserverMalloc( part_len - 1 );
+					memcpy( data, data_start , part_len - 2);
+					data[ part_len - 2 ] = '\0';
 
 					file_info = WebserverMalloc( sizeof ( upload_file_info ) );
 
 					file_info->data = data;
-					file_info->length = ( offset3 - offset2 )  -2;
+					file_info->length = part_len - 2;
 
 					tmp = stringfind(header->Content_Disposition, "filename=");
 					if ( 0 != tmp){

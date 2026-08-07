@@ -264,7 +264,7 @@ void* real_WebserverMalloc(const unsigned long size, const char* function, const
 void* real_WebserverMalloc(const unsigned long size ) {
 #endif
 	unsigned long *s;
-	unsigned int add_size = 0, real_alloc;
+	unsigned long add_size = 0, real_alloc;
 	char* ret;
 
 #ifdef _WEBSERVER_MEMORY_DEBUG_
@@ -276,11 +276,25 @@ void* real_WebserverMalloc(const unsigned long size ) {
 
 	add_size += __BIGGEST_ALIGNMENT__ + sizeof(unsigned long);
 
-	real_alloc = size + add_size;
-
-	if ( size != 0 ){
-		WS_ASSERT( real_alloc == add_size)
+	/* Refuse a size that cannot be satisfied instead of wrapping around.
+	 *
+	 * real_alloc used to be unsigned int while size is unsigned long, so the
+	 * sum wrapped: a request for the upper bound came back as a block of a few
+	 * dozen bytes, the allocation succeeded, and the caller wrote past it. A
+	 * malformed multipart body reached this from parsePostData(), where an
+	 * empty section turns into (0 - 1) as the length.
+	 *
+	 * Both are unsigned long now, and the remaining overflow - possible where
+	 * the type is 32 bit wide - is caught before the allocation. There is no
+	 * way to report the failure: every caller assumes a valid pointer, and the
+	 * error path below ends the process either way. Ending it here at least
+	 * says what happened, rather than corrupting the heap first. */
+	if ( size > (unsigned long)-1 - add_size ) {
+		fprintf(stderr, "Memory malloc Error: refusing %lu bytes (overflow)\n", size);
+		exit(1);
 	}
+
+	real_alloc = size + add_size;
 
 	PlatformLockMutex(&mem_mutex);
 
@@ -290,7 +304,7 @@ void* real_WebserverMalloc(const unsigned long size ) {
 	ret = (char*) PlatformMalloc(real_alloc);
 #endif
 	if (ret == 0) {
-		printf("Memory malloc Error\n");
+		fprintf(stderr, "Memory malloc Error\n");
 		exit(1);
 	}
 #ifdef _WEBSERVER_MEMORY_DEBUG_
