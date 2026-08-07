@@ -2483,9 +2483,21 @@ static int proxy_header_has_connection_upgrade(const unsigned char* header,
                     return 1;
                 }
             }
-            return 0;
+            /* Keep looking. A field may be sent more than once, and the values
+             * then form one list (RFC 9110 5.3) - "Connection: keep-alive"
+             * followed by "Connection: Upgrade" is a valid upgrade request.
+             * Returning here after the first line missed that and answered 502
+             * to a client that had asked correctly. */
+            continue;
         }
-        p++;
+
+        /* Zur nächsten Zeile */
+        while (p < end && *p != '\n') {
+            p++;
+        }
+        if (p < end) {
+            p++;
+        }
     }
 
     return 0;
