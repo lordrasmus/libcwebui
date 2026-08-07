@@ -54,6 +54,19 @@ void delEventSocketReadPersist(socket_info* sock);
 void delEventSocketAll(socket_info* sock);
 
 
+/* Must be called before a socket_info is released.
+ *
+ * epoll and kqueue hand out a snapshot of ready events that carries a raw
+ * pointer per entry. A handler that releases a *different* socket - the proxy
+ * releases its backend socket together with the client - leaves the entries
+ * still waiting in that snapshot pointing at freed memory. Deregistering the
+ * events does not help: the kernel cannot take back what it has already
+ * delivered.
+ *
+ * The select backend does not need this and implements it empty; it does not
+ * dispatch from a snapshot but reads its own registry once per iteration. */
+void eventSocketFreed(socket_info* sock);
+
 void activateEventSocketWrite(socket_info* sock);
 void updateWebsocketEventFlags(socket_info* sock, int list_empty);
 void deleteEvent(socket_info* sock);

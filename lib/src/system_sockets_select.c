@@ -295,6 +295,16 @@ void deleteEvent(socket_info* sock){
 	PlatformUnlockMutex(&select_lock);
 }
 
+/* Nothing to do here, unlike epoll and kqueue.
+ *
+ * Those dispatch from a snapshot the kernel filled, so an entry can outlive
+ * the socket it points at. This backend keeps no snapshot: the dispatch loop
+ * re-reads client_sock[i] under the lock for every single entry, and a socket
+ * that gets released clears its slot before that read. A freed socket can
+ * therefore never be dispatched. */
+void eventSocketFreed( UNUSED_PARA socket_info* sock ){
+}
+
 #ifdef WEBSERVER_USE_SSL
 #endif
 

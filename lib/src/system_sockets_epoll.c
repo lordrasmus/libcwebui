@@ -66,6 +66,48 @@ void breakEvents(void) {
     break_loop = 1;
 }
 
+/* The batch epoll_wait() has filled and how far it has been dispatched.
+ *
+ * No locking needed: both the dispatch loop and eventSocketFreed() run in the
+ * event loop thread. Every socket_info is released from there - the websocket
+ * threads only look sockets up by GUID and queue output, they never free one.
+ * They do register events in parallel (see modifyEpoll), which is unrelated. */
+static struct epoll_event *batch_events = NULL;
+static int batch_len = 0;
+static int batch_pos = 0;
+static time_t stale_logged = 0;
+
+void eventSocketFreed(socket_info *sock) {
+    int i;
+
+    for (i = batch_pos + 1; i < batch_len; ++i) {
+        if (batch_events[i].data.ptr != sock) {
+            continue;
+        }
+
+        /* Drop the entry before the socket is released, so the dispatch loop
+         * skips it. Clearing it here rather than validating the pointer at
+         * dispatch time is what makes this safe: the memory is still allocated
+         * at this point, so no newly accepted connection can have taken the
+         * block over yet. A check at dispatch time would confirm such a
+         * recycled pointer as valid and deliver the event to a different,
+         * live connection. */
+        batch_events[i].data.ptr = NULL;
+
+        /* At most one line per second - one hit per connection would flood the
+         * log and push out whatever explains how it got there. */
+        {
+            time_t now = time(NULL);
+            if (now != stale_logged) {
+                stale_logged = now;
+                LOG(MESSAGE_LOG, WARNING_LEVEL, sock->socket,
+                    "socket released while its event was still queued, entry %d of %d skipped",
+                    i, batch_len);
+            }
+        }
+    }
+}
+
 char waitEvents(void) {
     struct epoll_event events[MAX_EVENTS];
     while (!break_loop) {
@@ -74,10 +116,22 @@ char waitEvents(void) {
             perror("epoll_wait failed");
             return -1;
         }
+        batch_events = events;
+        batch_len = n;
         for (int i = 0; i < n; ++i) {
             socket_info *sock = (socket_info *)events[i].data.ptr;
+            batch_pos = i;
+            if (sock == NULL) {
+                /* Released by a handler earlier in this same batch - see
+                 * eventSocketFreed(). Dispatching would work on freed memory:
+                 * epoll_ctl(DEL) cannot take back an event already delivered. */
+                continue;
+            }
             eventHandler(sock->socket, events[i].events, sock);
         }
+        /* Outside the dispatch loop there is no batch to invalidate. */
+        batch_len = 0;
+        batch_events = NULL;
     }
     break_loop = 0;
     return 0;

@@ -62,6 +62,35 @@ void breakEvents(void) {
     break_loop = 1;
 }
 
+/* See the epoll backend - kqueue hands out the same kind of snapshot, with
+ * the pointer in udata instead of data.ptr. */
+static struct kevent *batch_events = NULL;
+static int batch_len = 0;
+static int batch_pos = 0;
+static time_t stale_logged = 0;
+
+void eventSocketFreed(socket_info *sock) {
+    int i;
+
+    for (i = batch_pos + 1; i < batch_len; ++i) {
+        if (batch_events[i].udata != sock) {
+            continue;
+        }
+
+        batch_events[i].udata = NULL;
+
+        {
+            time_t now = time(NULL);
+            if (now != stale_logged) {
+                stale_logged = now;
+                LOG(MESSAGE_LOG, WARNING_LEVEL, sock->socket,
+                    "socket released while its event was still queued, entry %d of %d skipped",
+                    i, batch_len);
+            }
+        }
+    }
+}
+
 char waitEvents(void) {
     struct kevent evlist[MAX_EVENTS];
     while (!break_loop) {
@@ -70,8 +99,16 @@ char waitEvents(void) {
             perror("kevent failed");
             return -1;
         }
+        batch_events = evlist;
+        batch_len = n;
         for (int i = 0; i < n; ++i) {
             socket_info *sock = (socket_info *)evlist[i].udata;
+
+            batch_pos = i;
+            if (sock == NULL) {
+                /* Released by a handler earlier in this same batch. */
+                continue;
+            }
 
             /* Fehler beim Verarbeiten dieses Events -> wie EPOLLERR/EPOLLHUP
              * im epoll-Backend als TIMEOUT (Cleanup) dispatchen. */
@@ -90,6 +127,8 @@ char waitEvents(void) {
                 eventHandler(sock->socket, EVENT_WRITE, sock);
             }
         }
+        batch_len = 0;
+        batch_events = NULL;
     }
     break_loop = 0;
     return 0;

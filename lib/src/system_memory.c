@@ -74,6 +74,13 @@ socket_info* WebserverMallocSocketInfo(void) {
 
 
 void WebserverFreeSocketInfo(socket_info* sock) {
+	/* Hand the pointer to the event backend while it is still valid: a batch
+	 * of ready events may still hold entries pointing at this socket. This is
+	 * the only place a socket_info is released, so it also covers the proxy
+	 * backend socket, which is freed further down via reverse_proxy_cleanup()
+	 * and reaches this function through the recursive call. */
+	eventSocketFreed(sock);
+
 	if (sock->header_buffer != 0) {
 		WebserverFree(sock->header_buffer);
 		sock->header_buffer = 0;
