@@ -2165,13 +2165,18 @@ static int64_t proxy_parse_content_length(const unsigned char* header, uint32_t 
     const unsigned char* p = header;
     const unsigned char* end = header + header_len;
     const char* cl_str = "Content-Length:";
-    int cl_len = strlen(cl_str);
+    size_t cl_len = strlen(cl_str);
     uint64_t value;
 
-    /* p + N <= end statt p < end - N: bei header_len < N zeigt end - N vor
-     * den Puffer (formal UB), und die Position p == end - N fiele weg,
-     * obwohl dort genau N Bytes hinpassen. */
-    while (p + cl_len <= end) {
+    /* Compare the remaining length, do not build a pointer from it.
+     *
+     * "p < end - N" walks before the buffer once header_len < N, and it also
+     * drops the position p == end - N although exactly N bytes fit there.
+     * "p + N <= end" fixes the second part but keeps the first: pointer
+     * arithmetic past one-past-the-end is undefined as well, even where the
+     * result is only compared and never dereferenced. Subtracting two
+     * pointers into the same object is defined, so that is what is used. */
+    while ((size_t)(end - p) >= cl_len) {
         /* Only at the start of a header line - unanchored this would also
          * match "X-Content-Length:" or the string inside another value. */
         if (((p == header) || (*(p - 1) == '\n'))
@@ -2224,7 +2229,7 @@ static int64_t proxy_parse_content_length(const unsigned char* header, uint32_t 
             if (p < end) {
                 p++;
             }
-            while (p + cl_len <= end) {
+            while ((size_t)(end - p) >= cl_len) {
                 if (((p == header) || (*(p - 1) == '\n'))
                         && (strncasecmp((const char*)p, cl_str, cl_len) == 0)) {
                     LOG(PROXY_LOG, ERROR_LEVEL, 0, "%s", "More than one Content-Length header");
@@ -2273,12 +2278,12 @@ static PROXY_TE_MODE proxy_check_transfer_encoding(const unsigned char* header,
     const unsigned char* p = header;
     const unsigned char* end = header + header_len;
     const char* te_str = "Transfer-Encoding:";
-    int te_len = (int)strlen(te_str);
+    size_t te_len = strlen(te_str);
     const unsigned char* last_tok = NULL;
     int last_len = 0;
     int seen = 0;
 
-    while (p + te_len <= end) {
+    while ((size_t)(end - p) >= te_len) {
         /* Only at the start of a header line, otherwise the string could be
          * matched inside another header's value. */
         if (((p == header) || (*(p - 1) == '\n'))
@@ -2348,7 +2353,7 @@ static int proxy_get_upgrade_value(const unsigned char* header, uint32_t header_
 
     buf[0] = '\0';
 
-    while (p + 8 <= end) {
+    while ((size_t)(end - p) >= 8) {
         /* Only match at the start of a header line, otherwise a value
          * containing "upgrade:" would be picked up as a header name. */
         if ((p == header || *(p - 1) == '\n') &&
@@ -2422,10 +2427,10 @@ static int proxy_extract_host_header(const unsigned char* header, uint32_t heade
     const unsigned char* p = header;
     const unsigned char* end = header + header_len;
     const char* host_str = "Host:";
-    int host_str_len = 5;
+    size_t host_str_len = 5;
     int pos = 0;
 
-    while (p + host_str_len <= end) {
+    while ((size_t)(end - p) >= host_str_len) {
         if (strncasecmp((const char*)p, host_str, host_str_len) == 0) {
             p += host_str_len;
             /* Skip whitespace */
@@ -2475,7 +2480,7 @@ static int proxy_header_has_connection_upgrade(const unsigned char* header,
     const unsigned char* p = header;
     const unsigned char* end = header + header_len;
 
-    while (p + 11 <= end) {
+    while ((size_t)(end - p) >= 11) {
         if (((p == header) || (*(p - 1) == '\n')) &&
             (strncasecmp((const char*)p, "Connection:", 11) == 0)) {
 
@@ -2551,7 +2556,7 @@ static int proxy_request_is_upgrade(const unsigned char* header, uint32_t header
         p++;
     }
 
-    while (p + 8 <= end) {
+    while ((size_t)(end - p) >= 8) {
         if (strncasecmp((const char*)p, "Upgrade:", 8) == 0) {
             return 1;
         }
@@ -2595,7 +2600,7 @@ static int proxy_force_connection_close(unsigned char* header, uint32_t header_l
         p++;
     }
 
-    while (p + name_len <= end) {
+    while ((size_t)(end - p) >= name_len) {
         if (strncasecmp((const char*)p, name, name_len) == 0) {
             p += name_len;
             line_end = p;
