@@ -23,10 +23,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "WebserverConfig.h"
 
 
-#ifdef USE_EXTERNAL_RBTREE
-	//#warning "using external RB Tree"
-#else
-
 #include "misc.h"
 
 /***********************************************************************/
@@ -87,5 +83,3 @@ void * SafeMalloc(size_t size) {
 /*  been defined */
 
 /*void NullFunction(void * junk) { junk = junk ; } */
-
-#endif /* USE_EXTERNAL_RBTREE */

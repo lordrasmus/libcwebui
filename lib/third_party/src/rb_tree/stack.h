@@ -2,14 +2,6 @@
 #include "WebserverConfig.h"
 
 
-#ifdef USE_EXTERNAL_RBTREE
-
-	#include <Utils/red_black_tree.h>
-
-
-
-#else
-
 #ifndef _RB_STACK_H_
 #define _RB_STACK_H_
 #include "misc.h"
@@ -59,6 +51,3 @@ void * StackPop(stk_stack * theStack);
 int StackNotEmpty(stk_stack *);
 
 #endif
-
-
-#endif // USE_EXTERNAL_RBTREE

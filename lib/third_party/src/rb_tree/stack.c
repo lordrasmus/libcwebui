@@ -23,10 +23,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "WebserverConfig.h"
 
 
-#ifdef USE_EXTERNAL_RBTREE
-	//#warning "using external RB Tree"
-#else
-
 #include "stack.h"
 
 int StackNotEmpty(stk_stack * theStack) {
@@ -112,5 +108,3 @@ static void StackDestroy(stk_stack * theStack, void DestFunc(void * a)) {
 	}
 }
 #endif
-
-#endif /* USE_EXTERNAL_RBTREE */

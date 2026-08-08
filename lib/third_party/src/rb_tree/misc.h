@@ -2,14 +2,6 @@
 #include "WebserverConfig.h"
 
 
-#ifdef USE_EXTERNAL_RBTREE
-
-	#include <Utils/red_black_tree.h>
-
-
-
-#else
-
 #include<stdio.h>
 #include<stdlib.h>
 
@@ -36,10 +28,6 @@ void Assert(int assertion, const char* error);
 void * SafeMalloc(size_t size);
 
 #endif
-
-
-
-#endif /* USE_EXTERNAL_RBTREE */
 
 
 

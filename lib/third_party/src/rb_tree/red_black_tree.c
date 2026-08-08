@@ -23,11 +23,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "webserver.h"
 
 
-#ifdef USE_EXTERNAL_RBTREE
-	//#warning "using external RB Tree"
-#else
-
-
 #include "red_black_tree.h"
 
 /***********************************************************************/
@@ -707,7 +702,51 @@ stk_stack* RBEnumerate(rb_red_blk_tree* tree, void* low, void* high) {
   return(enumResultStack);
 }
 
-#endif /* USE_EXTERNAL_RBTREE */
+/***********************************************************************/
+/*  FUNCTION:  EnumerateAllHelper */
+/**/
+/*    INPUTS:  tree, the subtree rooted at x, and the stack to fill */
+/**/
+/*    OUTPUT:  none */
+/**/
+/*    Modifies Input: stack */
+/**/
+/*    Note:    This function should only be called by RBEnumerateAll */
+/***********************************************************************/
+
+static void EnumerateAllHelper(rb_red_blk_tree* tree, rb_red_blk_node* x,
+			       stk_stack* stack) {
+  rb_red_blk_node* nil=tree->nil;
+  if (x != nil) {
+    EnumerateAllHelper(tree,x->left,stack);
+    StackPush(stack,x);
+    EnumerateAllHelper(tree,x->right,stack);
+  }
+}
+
+/***********************************************************************/
+/*  FUNCTION:  RBEnumerateAll */
+/**/
+/*    INPUTS:  tree is the tree to walk */
+/**/
+/*    OUTPUT:  stack containing pointers to every node in the tree */
+/**/
+/*    Modifies Input: none */
+/**/
+/*    Note:    RBEnumerate needs a key range, so a caller that wants the */
+/*             whole tree has to invent bounds that happen to contain    */
+/*             every key - which only works as long as the key type and  */
+/*             the Compare function are known. This walks the nodes      */
+/*             instead and never touches a key.                          */
+/***********************************************************************/
+
+stk_stack* RBEnumerateAll(rb_red_blk_tree* tree) {
+  stk_stack* enumResultStack;
+
+  enumResultStack=StackCreate();
+  EnumerateAllHelper(tree,tree->root->left,enumResultStack);
+  return(enumResultStack);
+}
 
 
 

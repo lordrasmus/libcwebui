@@ -2,19 +2,6 @@
 #include "WebserverConfig.h"
 
 
-#ifdef USE_EXTERNAL_RBTREE
-
-	#include <Utils/red_black_tree.h>
-
-	#define RBEnumerate RBTEnumerate
-	#define RBTreeDestroy RBTDestroy
-	#define RBTreeInsert RBTInsert
-	#define RBExactQuery RBTQuery
-	#define RBTreeCreate RBTCreate
-	#define RBDelete RBTDelete
-
-#else
-
 #ifndef _RB_TREE_H_
 #define _RB_TREE_H_
 
@@ -85,10 +72,8 @@
 	rb_red_blk_node* TreeSuccessor(rb_red_blk_tree*,rb_red_blk_node*);
 	rb_red_blk_node* RBExactQuery(rb_red_blk_tree*, void*);
 	stk_stack * RBEnumerate(rb_red_blk_tree* tree,void* low, void* high);
+	stk_stack * RBEnumerateAll(rb_red_blk_tree* tree);
 	void NullFunction(void*);
 
 #endif
-
-
-#endif /* USE_EXTERNAL_RBTREE */
 
