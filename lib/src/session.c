@@ -862,6 +862,16 @@ void dumpSessions(http_request* s) {
 	rb_red_blk_node* node;
 	int first = 1;
 
+	/* Hold the lock across the whole walk. checkSessionTimeout() runs from
+	 * another request and removes nodes, freeing the store behind node->info
+	 * - without this, the collected node pointers can go stale halfway
+	 * through and the page reads freed memory.
+	 *
+	 * Nothing in this loop takes another lock (printHTMLChunk and the
+	 * variable store getters do not), so there is no order to get wrong. The
+	 * lock is held while writing the page, which is fine for a debug view. */
+	PlatformLockMutex( &session_mutex );
+
 	stack = RBEnumerateAll(session_store_tree);
 
 	/* Table header */
@@ -917,6 +927,8 @@ void dumpSessions(http_request* s) {
 
 	printHTMLChunk(s->socket, "</table>");
 	free(stack);
+
+	PlatformUnlockMutex( &session_mutex );
 }
 
 unsigned long dumpSessionsSize(int* count) {
@@ -926,6 +938,10 @@ unsigned long dumpSessionsSize(int* count) {
 	stk_stack* stack;
 	rb_red_blk_node* node;
 
+	/* Same reason as in dumpSessions() - the timeout pass frees stores while
+	 * this walks them. */
+	PlatformLockMutex( &session_mutex );
+
 	stack = RBEnumerateAll(session_store_tree);
 	while (0 != StackNotEmpty(stack)) {
 		node = (rb_red_blk_node*) StackPop(stack);
@@ -934,6 +950,9 @@ unsigned long dumpSessionsSize(int* count) {
 		i++;
 	}
 	free(stack);
+
+	PlatformUnlockMutex( &session_mutex );
+
 	if (count != 0){
 		*count = i;
 	}
