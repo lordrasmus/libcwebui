@@ -94,7 +94,7 @@ static void checkSessionTimeout(void) {
 	PlatformLockMutex( &session_mutex );
 
 	ws_list_init(&del_list);
-	stack = RBEnumerate(session_store_tree, (void*)"0", (void*)"z");
+	stack = RBEnumerateAll(session_store_tree);
 
 	while (0 != StackNotEmpty(stack)) {
 		int timeout;
@@ -439,6 +439,23 @@ void restoreSession(http_request* s,int lock_stores, int create_session ) {
 		if (s->create_cookie == 0) {
 			if (false == findSessionStore(s, 0)) {
 				if ( create_session == 1){
+					/* The cookie names a store that does not exist. Do not
+					 * create one under that name: the value came from the
+					 * client and would become the key in the tree.
+					 *
+					 * Two things follow from a client chosen key. It can sort
+					 * outside the range the timeout pass and the statistics
+					 * walk over, in which case the entry is never counted and
+					 * never freed. And it lets the client decide the key of a
+					 * store that a later login marks as registered - the
+					 * session fixation the comment at the top of this file
+					 * asks to prevent.
+					 *
+					 * Issue our own GUID instead and send it back, exactly as
+					 * for a request that arrives without a cookie. The client
+					 * loses nothing: it had no valid session either way. */
+					s->create_cookie = 1;
+					generateGUID(s->guid, WEBSERVER_GUID_LENGTH);
 					createSession(s, 0);
 				}
 			}
@@ -458,6 +475,9 @@ void restoreSession(http_request* s,int lock_stores, int create_session ) {
 			if (s->create_cookie_ssl == 0) {
 				if (false == findSessionStore(s, 1)) {
 					if ( create_session == 1){
+						/* Same as above for the TLS side. */
+						s->create_cookie_ssl = 1;
+						generateGUID(s->guid_ssl, WEBSERVER_GUID_LENGTH);
 						createSession(s, 1);
 					}
 				}
@@ -842,7 +862,7 @@ void dumpSessions(http_request* s) {
 	rb_red_blk_node* node;
 	int first = 1;
 
-	stack = RBEnumerate(session_store_tree, (void*)"0", (void*)"z");
+	stack = RBEnumerateAll(session_store_tree);
 
 	/* Table header */
 	printHTMLChunk(s->socket,
@@ -906,7 +926,7 @@ unsigned long dumpSessionsSize(int* count) {
 	stk_stack* stack;
 	rb_red_blk_node* node;
 
-	stack = RBEnumerate(session_store_tree, (void*)"0", (void*)"z");
+	stack = RBEnumerateAll(session_store_tree);
 	while (0 != StackNotEmpty(stack)) {
 		node = (rb_red_blk_node*) StackPop(stack);
 		ss = (sessionStore*) node->info;

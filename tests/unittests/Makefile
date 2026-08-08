@@ -94,7 +94,8 @@ TEST_FILES= \
 	test_server_config.cpp \
 	test_conditions.cpp \
 	test_post_multipart.cpp \
-	test_memory_overflow.cpp
+	test_memory_overflow.cpp \
+	test_session_range.cpp
 
 C_OBJS=$(C_FILES:.c=.o)
 
