@@ -112,13 +112,24 @@ int sendHeaderWebsocket(socket_info* sock) {
 static void addConnectionStatusLines(socket_info* socket) {
 	char sanitized[512];
 
-	if (socket->header->Connection != 0) {
+	/* What the server is going to do beats what the client asked for. Error
+	 * pages end the connection, and mirroring the client's "keep-alive" back
+	 * at it made the answer look broken: the browser keeps the request open
+	 * waiting for a reusable connection while the server is already tearing
+	 * it down. */
+	if (socket->closeSocket == 1) {
+		printHeaderChunk(socket, "Connection: close\r\n");
+	} else if (socket->header->Connection != 0) {
+		/* No early return here: the CORS headers below belong on this answer
+		 * as well. Without them a cross-origin XHR - the web interface sends
+		 * withCredentials - discards the response, and "Connection: close" is
+		 * exactly what a client sends on its last request. */
 		if (strcmp(socket->header->Connection, "close") == 0) {
 			printHeaderChunk(socket, "Connection: close\r\n");
-			return;
+		} else {
+			sanitize_header_value(sanitized, socket->header->Connection, sizeof(sanitized));
+			printHeaderChunk(socket, "Connection: %s\r\n", sanitized);
 		}
-		sanitize_header_value(sanitized, socket->header->Connection, sizeof(sanitized));
-		printHeaderChunk(socket, "Connection: %s\r\n", sanitized);
 	} else {
 		/* HTTP/1.1 default is keep-alive, HTTP/1.0 default is close */
 		if (socket->header->isHttp1_1 == 1) {

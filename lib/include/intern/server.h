@@ -61,12 +61,10 @@ int sendFile(http_request* s, WebserverFileInfo *file);
 
 int sendFileNotFound(http_request* s);
 int sendAccessDenied(http_request* s);
-int sendServiceUnavailable(socket_info *sock);
-int sendMethodNotAllowed(socket_info *sock);
-int sendMethodBadRequest(socket_info *sock);
-int sendMethodBadRequestLineToLong(socket_info *sock);
-int sendMethodBadRequestMissingHeaderLines(socket_info *sock);
-int sendInternalError(socket_info *sock);
+
+/* Error page for the statuses listed in http_error_pages[]; detail may be 0.
+ * Ends the request and marks the connection for closing. */
+int sendHttpErrorPage(socket_info *sock, int code, const char* detail);
 
 int checkBuilinSites(http_request* s);
 

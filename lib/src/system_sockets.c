@@ -381,7 +381,7 @@ static int recv_post_payload( socket_info* sock, const char* buffer, uint32_t le
 			 * Client sieht am Ende gar keine Antwort.
 			 * finish_error_response() ist genau fuer diesen Fall da: es flusht
 			 * die Fehlerseite und setzt closeSocket. */
-			sendServiceUnavailable( sock );
+			sendHttpErrorPage( sock, 503, 0 );
 			return finish_error_response( sock );
 		}
 
@@ -439,6 +439,14 @@ static int recv_post_payload( socket_info* sock, const char* buffer, uint32_t le
 }
 
 
+/*
+ * Checked before a single byte of the body is read.
+ *
+ * Returns 0 when the request may proceed, otherwise the HTTP status the caller
+ * has to answer with. It used to return a plain -1, and that is why every
+ * rejection went out as 400: a body above the limit is a 413, a stream handler
+ * that cannot be set up is a 500, but the caller could not tell them apart.
+ */
 static int check_post_header( socket_info* sock ){
 
 	//LOG(CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"header->contentlenght %" PRIu64 " ",sock->header->contentlenght );
@@ -455,7 +463,7 @@ static int check_post_header( socket_info* sock ){
 		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s","header->boundary == 0 ");
 		//LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s",sock->header_buffer);
 		// nicht einfach den Buffer ausgeben
-		return -1;
+		return 400;
 	}
 
 	/* Ist fuer diese URL ein Streaming Handler registriert, wird der Body
@@ -479,7 +487,7 @@ static int check_post_header( socket_info* sock ){
 
 		if ( sock->header->contentlenght > max_size ){
 			LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"header->contentlenght > max_post_size ( %" PRIu64 " > %" PRIu64 " ) url '%s'",sock->header->contentlenght, max_size, sock->header->url );
-			return -1;
+			return 413;
 		}
 
 		if ( stream_handler != 0 ){
@@ -508,7 +516,7 @@ static int check_post_header( socket_info* sock ){
 
 			if ( 0 != startPostStream( sock, stream_handler, discard ) ){
 				LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"POST stream setup failed for url '%s'",sock->header->url);
-				return -1;
+				return 500;
 			}
 		}
 	}
@@ -639,6 +647,7 @@ static int handleClientHeaderData(socket_info* sock) {
 	 */
 	int len2 = -6;
 	int post_ret;
+	int post_status;
 	unsigned int buffer_length = WEBSERVER_MAX_HEADER_LINE_LENGHT * 1;
 	unsigned int parsed = 0;
 
@@ -725,7 +734,7 @@ static int handleClientHeaderData(socket_info* sock) {
 			/* zur sicherheit nochmal prüfen ob der header buffer voll ist
 			 * wen ja haben wir hier einen internen fehler */
 			if ( ( buffer_length - sock->header_buffer_pos ) == 0 ){
-				sendInternalError(sock);
+				sendHttpErrorPage(sock, 500, 0);
 				return finish_error_response(sock);
 			}
 			return 0;
@@ -733,8 +742,8 @@ static int handleClientHeaderData(socket_info* sock) {
 
 		/* Header Zeile zu lang */
 		if (len2 == 0) {
-			sendMethodBadRequestLineToLong(sock);
-			LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"sendMethodBadRequestLineToLong > %d",WEBSERVER_MAX_HEADER_LINE_LENGHT );
+			sendHttpErrorPage(sock, 400, "The header line is too long.");
+			LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"headerLineToLong > %d",WEBSERVER_MAX_HEADER_LINE_LENGHT );
 			return finish_error_response(sock);
 		}
 
@@ -743,7 +752,7 @@ static int handleClientHeaderData(socket_info* sock) {
 			if ( sock->header->no_websocket_support == 1 ){
 				LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","Websocket Support disabled" );
 			}else{
-				sendMethodNotAllowed(sock);
+				sendHttpErrorPage(sock, 405, 0);
 				LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"methodNotAllowed -> %s",sock->header->error_method );
 			}
 			return finish_error_response(sock);
@@ -763,10 +772,11 @@ static int handleClientHeaderData(socket_info* sock) {
 		/* Header zuende aber noch weitere daten vorhanden */
 		if (len2 == -3) {
 			if ( sock->header->method == HTTP_POST ){
-				if ( -1 == check_post_header( sock ) ){
+				post_status = check_post_header( sock );
+				if ( post_status != 0 ){
 					sock->header->error = 1;
-					sendMethodBadRequest(sock);
-					LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","POST Method Header Error" );
+					sendHttpErrorPage(sock, post_status, 0);
+					LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"POST Method Header Error, status %d",post_status );
 					return finish_error_response(sock);
 				}
 
@@ -797,10 +807,11 @@ static int handleClientHeaderData(socket_info* sock) {
 			sock->header_buffer_pos = 0;
 			sock->header_buffer[0] = '\0';
 			if ( sock->header->method == HTTP_POST ){
-				if ( -1 == check_post_header( sock ) ){
+				post_status = check_post_header( sock );
+				if ( post_status != 0 ){
 					sock->header->error = 1;
-					sendMethodBadRequest(sock);
-					LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","POST Method Header Error" );
+					sendHttpErrorPage(sock, post_status, 0);
+					LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"POST Method Header Error, status %d",post_status );
 					return finish_error_response(sock);
 				}
 

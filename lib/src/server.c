@@ -379,7 +379,7 @@ int getHttpRequest(socket_info* sock) {
 	}
 
 	if (s.header->error != 0) {
-		sendMethodBadRequest(sock);
+		sendHttpErrorPage(sock, 400, 0);
 		endHTTPRequest(&s);
 		return 0;
 	}

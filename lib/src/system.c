@@ -127,13 +127,13 @@ int handleWebRequest(socket_info* sock) {
 
 	// Wenn keine Methoder erkannt wurde
 	if (sock->header->method == HTTP_UNKNOWN_METHOD) {
-		sendMethodNotAllowed(sock);
+		sendHttpErrorPage(sock, 405, 0);
 		return 0;
 	}
 
 
 	if (checkHeaderComplete(sock->header) == false) {
-		sendMethodBadRequestMissingHeaderLines(sock);
+		sendHttpErrorPage(sock, 400, "Header Lines missing.");
 		return 0;
 	}
 
