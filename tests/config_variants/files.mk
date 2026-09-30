@@ -29,6 +29,7 @@ FILES= \
 	../../../lib/src/webserver_api_functions.c      ../../../lib/src/websocket_handler.c \
 	../../../lib/src/websockets.c                   ../../../lib/src/websockets_send_recv.c \
 	../../../lib/src/websockets_streaming.c         ../../../lib/src/reverse_proxy.c \
+	../../../lib/src/post_streaming.c \
 	../../../lib/ssl/openssl.c \
 	../../../lib/ssl/mbedtls2.c \
 	../../../lib/ssl/mbedtls3.c \

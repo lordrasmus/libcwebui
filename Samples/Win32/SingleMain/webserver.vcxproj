@@ -184,6 +184,7 @@
     <ClInclude Include="..\..\..\lib\include\intern\system_file_cache.h" />
     <ClInclude Include="..\..\..\lib\include\intern\system_memory.h" />
     <ClInclude Include="..\..\..\lib\include\intern\system_sockets.h" />
+    <ClInclude Include="..\..\..\lib\include\intern\post_streaming.h" />
     <ClInclude Include="..\..\..\lib\include\intern\system_sockets_container.h" />
     <ClInclude Include="..\..\..\lib\include\intern\system_sockets_events.h" />
     <ClInclude Include="..\..\..\lib\include\intern\variable.h" />
@@ -247,6 +248,7 @@
     <ClCompile Include="..\..\..\lib\src\system_memory.c" />
     <ClCompile Include="..\..\..\lib\src\system_memory_gcc.c" />
     <ClCompile Include="..\..\..\lib\src\system_memory_msc.c" />
+    <ClCompile Include="..\..\..\lib\src\post_streaming.c" />
     <ClCompile Include="..\..\..\lib\src\system_sockets.c" />
     <ClCompile Include="..\..\..\lib\src\system_sockets_container.c" />
     <ClCompile Include="..\..\..\lib\src\system_sockets_epoll.c" />

@@ -61,6 +61,7 @@ C_FILES= \
 	../../lib/src/hashmap.c \
 	../../lib/src/websockets_send_recv.c \
 	../../lib/src/websockets_streaming.c \
+	../../lib/src/post_streaming.c \
 	../../lib/src/websocket_handler.c \
 	../../lib/src/websockets.c \
 	../../lib/src/webserver_api_functions.c \
@@ -94,13 +95,25 @@ TEST_FILES= \
 	test_server_config.cpp \
 	test_conditions.cpp \
 	test_post_multipart.cpp \
+	test_post_streaming.cpp \
 	test_memory_overflow.cpp \
-	test_session_range.cpp
+	test_session_range.cpp \
+	test_error_pages.cpp
 
 C_OBJS=$(C_FILES:.c=.o)
+C_DEPS=$(C_FILES:.c=.d)
 
+# -MMD -MP erzeugt zu jedem .o ein .d mit den benutzten Headern.
+# Ohne das wird ein .o nur neu uebersetzt wenn sich seine .c aendert - nach
+# einem neuen Feld in dataTypes.h haben die Uebersetzungseinheiten dann
+# unterschiedliche sizeof(), der Allokator reserviert nach der alten Groesse
+# und der Zugriff erfolgt nach der neuen. Das aeussert sich als Speicherfehler
+# an voellig unbeteiligten Stellen. Das BBS-Build-System macht das fuer die
+# Plugins laengst ( -MD -MP in build_rules.include ), hier fehlte es.
 %.o: %.c
-	gcc ${C_FLAGS} -fno-omit-frame-pointer -c $< -o $@
+	gcc ${C_FLAGS} -fno-omit-frame-pointer -MMD -MP -c $< -o $@
+
+-include $(C_DEPS)
 
 all: run_tests
 
@@ -124,6 +137,6 @@ filter: run_tests
 	./run_tests --gtest_filter=${FILTER}
 
 clean:
-	rm -f run_tests test_results.xml ${C_OBJS}
+	rm -f run_tests test_results.xml ${C_OBJS} $(C_DEPS)
 
 .PHONY: all test test-ci list filter clean

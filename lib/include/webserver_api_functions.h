@@ -271,6 +271,16 @@ int checkUserRegisterStatus(dummy_handler* s);
 ************************************************************************************************/
 
 int    getFileCount(dummy_handler* s);
+/*
+ * Die hochgeladenen Dateien eines multipart/form-data Requests, in der
+ * Reihenfolge des Bodys. Formularfelder ohne filename= stehen hier nicht -
+ * ein Request ohne Datei liefert an Index 0 also 0 und nicht etwa den Namen
+ * des ersten Feldes.
+ *
+ * Bei gestreamten Uploads liegen die Daten nicht im Speicher: getFileData()
+ * liefert dann 0, der Inhalt ist bereits ueber on_chunk() beim Handler
+ * gelandet. getFileName() und getFileSize() gelten weiterhin.
+ */
 char*  getFileName(dummy_handler* s,int index);
 char*  getFileData(dummy_handler* s,int index);
 int    getFileSize(dummy_handler* s,int index);
@@ -434,6 +444,142 @@ void* WebsocketStreamGetUserData(websocket_stream_context* ctx);
 void WebsocketStreamAbort(websocket_stream_context* ctx);
 
 #endif /* WEBSERVER_USE_WEBSOCKETS */
+
+/***********************************************************************************************
+*                                                                                              *
+*          POST Streaming API                                                                  *
+*                                                                                              *
+************************************************************************************************/
+
+/**
+ * Streaming context for large multipart/form-data POST uploads.
+ * Passed to all streaming callbacks.
+ *
+ * Ohne Streaming wird der komplette POST Body in den RAM geladen und der
+ * Datei Part daraus noch einmal kopiert. Der Spitzenbedarf ist dann das
+ * Doppelte der Dateigroesse. Mit einem registrierten Streaming Handler
+ * wird der Body nie gepuffert, der Bedarf ist konstant.
+ */
+typedef struct post_stream_context {
+	char*    url;               /* Request URL                                  */
+	char*    field_name;        /* name="..."     aus Content-Disposition        */
+	/* filename="..." aus Content-Disposition. Steht so im Request wie der
+	 * Client ihn geschickt hat - er kann Pfadanteile enthalten ( "../.." ).
+	 * Wer damit eine Datei anlegt, muss ihn vorher selbst bereinigen. */
+	char*    file_name;
+	uint64_t total_length;      /* Content-Length der gesamten Anfrage           */
+	uint64_t received_length;   /* Nutzbytes dieses Parts bisher                 */
+	char     aborted;           /* Handler hat den Stream abgebrochen            */
+	void*    user_data;         /* Handler spezifische Daten                     */
+} post_stream_context;
+
+/**
+ * Streaming callback types
+ */
+typedef void (*post_stream_start_handler)(post_stream_context* ctx);
+typedef void (*post_stream_chunk_handler)(post_stream_context* ctx,
+                                          const unsigned char* data,
+                                          uint32_t length);
+typedef void (*post_stream_end_handler)(post_stream_context* ctx,
+                                        int success);  /* success=0 on error/abort */
+
+/**
+ * Register a streaming handler for a POST URL.
+ * When registered, ALL multipart/form-data uploads on this URL use streaming
+ * (no threshold). Andere Content-Types der URL laufen unveraendert ueber den
+ * normalen POST Buffer.
+ *
+ * on_start / on_end werden pro Datei Part gerufen, also einmal pro Datei.
+ * Parts ohne filename= sind Formularfelder, die weiterhin normal gepuffert
+ * und ueber getFileName()/getFileData() bereitgestellt werden.
+ *
+ * Ein fuehrender Slash in der URL ist optional, "/a/b.html" und "a/b.html"
+ * sind gleichwertig.
+ *
+ * auth_check laeuft, bevor der Body gelesen wird, und entscheidet ob dieser
+ * Request schreiben darf. Liefert sie 0, werden die Callbacks nicht gerufen
+ * und nichts gepuffert oder geschrieben - der Body wird aber weiterhin vom
+ * Socket gelesen und verworfen. 0 als Zeiger heisst: keine Pruefung, jeder
+ * darf.
+ *
+ * Das Verwerfen ist bewusst so: der Request laeuft danach normal weiter zum
+ * Handler, damit eine REST URL ihre gewohnte JSON Antwort liefert und nicht
+ * eine Fehlerseite, mit der das Frontend nichts anfangen kann. Der Preis ist,
+ * dass ein Unberechtigter weiterhin Bandbreite und Parse Zeit kosten kann -
+ * bis max_size Bytes. Gegen Speicher und Dateisystem schuetzt es, gegen
+ * Netzlast nicht.
+ *
+ * Die Pruefung gehoert dem Consumer, nicht dem Webserver: nur er weiss,
+ * welches Recht sein Upload verlangt. Ein Firmware Upload, der schon in
+ * on_start() die Zieldatei anlegt, muss hier ACL_WRITE verlangen - sonst
+ * koennte ein angemeldeter Benutzer ohne Schreibrecht die vorhandene Datei
+ * loeschen lassen, bevor der URL Handler ueberhaupt laeuft.
+ *
+ * Nur beim Start registrieren ( init_webserver_plugin ). Die Registry wird
+ * beim Request ohne Lock gelesen, eine Registrierung zur Laufzeit waere ein
+ * Race gegen laufende Verbindungen.
+ *
+ * max_size begrenzt den Body dieser URL. 0 bedeutet: globales max_post_size
+ * verwenden. Damit kann max_post_size klein bleiben - gross genug fuer
+ * Formulare und Zertifikate - und nur die URL, die tatsaechlich eine Firmware
+ * entgegennimmt, erlaubt deren Groesse. Sonst koennte an jeder beliebigen URL
+ * ein Body in Firmware-Groesse abgeladen werden.
+ */
+void RegisterPostStreamHandler(
+	const char* url,
+	post_stream_auth_handler auth_check,
+	uint64_t max_size,
+	post_stream_start_handler on_start,
+	post_stream_chunk_handler on_chunk,
+	post_stream_end_handler   on_end
+);
+
+/**
+ * Helper functions for streaming handlers
+ */
+/**
+ * Groesstes Limit ueber alle registrierten Streaming Handler ( 0 = keiner ).
+ * Fuer die Frage "wie gross darf ein Upload hoechstens sein", die ein
+ * Frontend vor dem Absenden stellt.
+ */
+uint64_t GetMaxPostStreamSize(void);
+
+void  PostStreamSetUserData(post_stream_context* ctx, void* data);
+void* PostStreamGetUserData(post_stream_context* ctx);
+
+/**
+ * Abort the current stream (e.g., on handler error).
+ *
+ * Der Abbruch gilt fuer den restlichen Request, nicht nur fuer den laufenden
+ * Part:
+ *
+ *  - Der laufende Part bekommt keine weiteren on_chunk() mehr, aber noch
+ *    on_end() mit success == 0.
+ *  - Fuer alle folgenden Parts laeuft gar kein Callback mehr an - weder
+ *    on_start() noch on_chunk() noch on_end().
+ *  - Der restliche Body wird noch vom Socket gelesen und verworfen, sonst
+ *    haengt die Verbindung.
+ *  - Nichts davon erscheint in getFileName()/getFileSize(): weder die
+ *    abgebrochene Datei noch Formularfelder, die nach dem Abbruch folgen.
+ *    Was vor dem Abbruch vollstaendig angekommen ist, bleibt dagegen
+ *    erhalten - der URL Handler sieht die Felder und Dateien bis dahin.
+ *
+ * Unabhaengig davon gilt fuer Formularfelder eine Groessengrenze ( je Feld und
+ * in der Summe ). Ein Feld, das sie reisst, wird nicht gekuerzt weitergegeben
+ * sondern ganz weggelassen: ein gekuerzter Wert waere von einem echt so
+ * gesendeten nicht zu unterscheiden. Der Handler sieht das Feld also gar
+ * nicht, der Rest des Requests bleibt gueltig.
+ *
+ * Der Aufruf ist auch in on_end() noch erlaubt - dort faellt zum Beispiel
+ * eine Pruefsumme ueber die fertige Datei auf. Die Datei wird dann ebenfalls
+ * nicht mehr als vorhanden gemeldet.
+ *
+ * Denselben Zustand loest die interne Obergrenze fuer die Anzahl der Parts
+ * eines Requests aus ( POST_STREAM_MAX_PARTS ): alles ab dem Limit wird
+ * verworfen. Der Request selbst laeuft danach normal in den URL Handler, der
+ * dann nur die Parts bis zum Limit sieht.
+ */
+void PostStreamAbort(post_stream_context* ctx);
 
 void WebserverRegisterPluginErrorHandler(plugin_error_handler f);
 

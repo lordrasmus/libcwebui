@@ -40,6 +40,7 @@
 						"../../lib/src/system_file_cache.c",
 						"../../lib/src/system_file_access_binary.c",
 						"../../lib/src/system_file_access_utils.c",
+						"../../lib/src/post_streaming.c",
 						"../../lib/src/system_sockets.c",
 						"../../lib/src/system_sockets_container.c",
 						"../../lib/src/system_sockets_events.c",

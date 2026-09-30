@@ -299,13 +299,94 @@ static void call_post_post_handler( socket_info* sock ){
 
 }
 
+/*
+ * Streaming Variante: der Body wird nicht gepuffert sondern direkt in die
+ * Multipart Statemachine gegeben, die die Nutzdaten an den registrierten
+ * Handler durchreicht. Der Spitzenbedarf ist damit unabhaengig von der
+ * Groesse der hochgeladenen Datei.
+ */
+static int finish_error_response(socket_info* sock);
+
+static int recv_post_payload_streaming( socket_info* sock, const char* buffer, uint32_t len ){
+
+	uint64_t remaining;
+	uint32_t use;
+	int ret;
+
+	if ( ( sock->header->post_buffer_pos == 0 ) && ( len > 0 ) ){
+		call_pre_post_handler( sock );
+	}
+
+	remaining = sock->header->contentlenght - sock->header->post_buffer_pos;
+
+	use = len;
+	if ( (uint64_t)len > remaining ){
+		use = (uint32_t)remaining;
+	}
+
+	ret = postStreamFeed( sock, (const unsigned char*)buffer, use );
+
+	if ( ret < 0 ){
+		/* Der Rest des Bodys darf nicht als naechster Request gelesen werden */
+		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s","POST stream failed, closing connection");
+		sock->header->error = 1;
+		sock->header_buffer_pos = 0;
+		sock->closeSocket = 1;
+		return 1;
+	}
+
+	if ( len > use ){
+		/* Ueberschuessige Bytes gehoeren zum naechsten Header */
+		sock->header_buffer_pos = len;
+		reCopyHeaderBuffer(sock, use);
+		call_post_post_handler( sock );
+		return 1;
+	}
+
+	sock->header_buffer_pos = 0;
+
+	if ( ret == 1 ){
+		call_post_post_handler( sock );
+		return 1;
+	}
+
+	return 0;
+}
+
 static int recv_post_payload( socket_info* sock, const char* buffer, uint32_t len){
+
+	if ( sock->post_streaming_active ){
+		return recv_post_payload_streaming( sock, buffer, len );
+	}
+
 
 	/*
 	LOG(CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"POST Data %d of %d -> %d",sock->header->post_buffer_pos,sock->header->contentlenght, len);
 	*/
 
 	if ( sock->header->post_buffer == 0 ){
+
+		/* Der Puffer wird sofort in voller Content-Length belegt, noch bevor
+		 * die Daten da sind. Ohne Gesamtbudget koennte ein Client mit vielen
+		 * parallelen Verbindungen den Speicher binden, ohne etwas zu senden. */
+		if ( 0 == postBufferReserve( sock->header->contentlenght + 1 ) ){
+			LOG(CONNECTION_LOG,WARNING_LEVEL,sock->socket,"POST abgewiesen, Gesamtbudget erschoepft ( %" PRIu64 " angefordert, %" PRIu64 " belegt, max_post_memory_total %d ) url '%s'",
+				sock->header->contentlenght + 1, postBufferAllocated(), getConfigInt("max_post_memory_total"), sock->header->url );
+
+			/* Kein header->error setzen: getHttpRequest() wuerde darauf hin eine
+			 * zweite Fehlerseite ( 400 ) auf dieselben, noch nicht geleerten
+			 * Chunk Listen legen. generateOutputBuffer() verpackt dann beide
+			 * Antworten zu einer unparsbaren, und die Pipelining Schleife
+			 * parst den Rest erneut, bis error_requests_on_socket greift - der
+			 * Client sieht am Ende gar keine Antwort.
+			 * finish_error_response() ist genau fuer diesen Fall da: es flusht
+			 * die Fehlerseite und setzt closeSocket. */
+			sendServiceUnavailable( sock );
+			return finish_error_response( sock );
+		}
+
+		sock->header->post_buffer_reserved = sock->header->contentlenght + 1;
+
 		/* WebserverMalloc ruft exit(1) bei Fehler auf, kann nicht NULL zurückgeben */
 		sock->header->post_buffer = WebserverMalloc( sock->header->contentlenght + 1 );
 		/* um Payload Buffer beim Debug ausgeben zu können */
@@ -329,9 +410,16 @@ static int recv_post_payload( socket_info* sock, const char* buffer, uint32_t le
 		sock->header->post_buffer_pos += diff;
 
 		if ( len > diff ){
-			sock->header_buffer_pos = diff;
+			/* Die Bytes hinter dem Body gehoeren zum naechsten Request und
+			 * muessen an den Anfang des Header Buffers.
+			 *
+			 * reCopyHeaderBuffer() kopiert header_buffer_pos - end Bytes ab
+			 * Position end nach vorne. Hier stand frueher beides auf diff,
+			 * die Differenz war also 0 und die ueberzaehligen Bytes gingen
+			 * verloren. header_buffer_pos muss die Gesamtzahl der im Buffer
+			 * stehenden Bytes sein, damit len - diff Bytes uebrig bleiben. */
+			sock->header_buffer_pos = len;
 			reCopyHeaderBuffer(sock, diff);
-			// TODO verarbeitung von weiteren header bytes noch testen
 			call_post_post_handler( sock );
 
 			return 1;
@@ -355,10 +443,6 @@ static int check_post_header( socket_info* sock ){
 
 	//LOG(CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"header->contentlenght %" PRIu64 " ",sock->header->contentlenght );
 
-	if ( sock->header->contentlenght > (uint64_t)getConfigInt("max_post_size") ){
-		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"header->contentlenght > max_post_size ( %" PRIu64 " > %d ) ",sock->header->contentlenght, getConfigInt("max_post_size") );
-		return -1;
-	}
 
 	/*if ( sock->header->contenttype == 0 ){
 		LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"%s","header->contenttype == 0 ");
@@ -374,6 +458,61 @@ static int check_post_header( socket_info* sock ){
 		return -1;
 	}
 
+	/* Ist fuer diese URL ein Streaming Handler registriert, wird der Body
+	 * nicht gepuffert sondern in Chunks durchgereicht. Nur multipart, alles
+	 * andere ist klein genug fuer den normalen Weg. */
+	{
+		post_stream_handler_entry* stream_handler = 0;
+		uint64_t max_size = (uint64_t)getConfigInt("max_post_size");
+
+		if ( sock->header->contenttype == MULTIPART_FORM_DATA ){
+			stream_handler = findPostStreamHandler( sock->header->url );
+		}
+
+		/* Groessenpruefung erst nach dem Lookup: max_post_size ist bewusst
+		 * klein gehalten, damit nicht an jeder beliebigen URL ein Body in
+		 * Firmware-Groesse abgeladen werden kann. Nur eine URL mit eigenem
+		 * Limit darf mehr. */
+		if ( ( stream_handler != 0 ) && ( stream_handler->max_size > 0 ) ){
+			max_size = stream_handler->max_size;
+		}
+
+		if ( sock->header->contentlenght > max_size ){
+			LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"header->contentlenght > max_post_size ( %" PRIu64 " > %" PRIu64 " ) url '%s'",sock->header->contentlenght, max_size, sock->header->url );
+			return -1;
+		}
+
+		if ( stream_handler != 0 ){
+
+			int discard = 0;
+
+			/* Die Auth Pruefung eines Template Handlers laeuft erst nachdem der
+			 * Body vollstaendig empfangen ist. Ein Unberechtigter koennte bis
+			 * dahin die Callbacks ausloesen und damit in das tmpfs schreiben
+			 * lassen. Welches Recht noetig ist, weiss nur der Consumer - er
+			 * gibt seine Pruefung bei RegisterPostStreamHandler() mit.
+			 *
+			 * Der Request wird trotzdem nicht abgebrochen, sondern nur der
+			 * Inhalt verworfen: keine Callbacks, keine gepufferten Felder. Der
+			 * Body selbst wird weiter gelesen, damit die Antwort dieselbe
+			 * bleibt wie ohne Streaming - die REST API liefert weiter ihr JSON
+			 * und nicht eine Fehlerseite, mit der das Frontend nichts anfangen
+			 * kann. Gegen Bandbreite schuetzt das nicht, siehe
+			 * RegisterPostStreamHandler(). */
+			if ( stream_handler->auth_check != 0 ){
+				if ( 0 == postStreamRequestAuthorized( sock, stream_handler->auth_check ) ){
+					LOG(CONNECTION_LOG,WARNING_LEVEL,sock->socket,"POST stream '%s' nicht berechtigt, Body wird verworfen",sock->header->url);
+					discard = 1;
+				}
+			}
+
+			if ( 0 != startPostStream( sock, stream_handler, discard ) ){
+				LOG(CONNECTION_LOG,ERROR_LEVEL,sock->socket,"POST stream setup failed for url '%s'",sock->header->url);
+				return -1;
+			}
+		}
+	}
+
 	return 0;
 }
 
@@ -383,6 +522,8 @@ static int check_post_header( socket_info* sock ){
  *
  * 		0 = Header noch nicht zuende
  * 		1 = Header zuende aber noch Daten vorhanden
+ * 		2 = Proxy oder Websocket hat die Verbindung uebernommen
+ * 		3 = Fehlerantwort steht bereits im Output Buffer ( finish_error_response )
  *	   -1 = Fehler beim Header empfangen
  *
  */
@@ -399,20 +540,96 @@ static int check_post_header( socket_info* sock ){
  * instead of the 400 or 405. Measured before the fix: 0 bytes returned while
  * the log showed the error branch had run.
  *
- * Returning 1 puts it on the regular path instead: handleer() registers the
- * write event, and the NO_MORE_DATA case closes afterwards because
- * closeSocket is set. What is left of the broken request is dropped, since the
- * pipelining loop in handleer() would otherwise parse it again, fail again and
- * never make progress.
+ * So the page goes on the regular write path: handleer() registers the write
+ * event, and the NO_MORE_DATA case closes afterwards because closeSocket is
+ * set. What is left of the broken request is dropped, since the pipelining
+ * loop in handleer() would otherwise parse it again, fail again and never make
+ * progress.
+ *
+ * The return value is 3, not 1: with 1 handleClient() would additionally run
+ * the request through handleWebRequest(). The URL handler would run despite
+ * the error and append a second HTTP response to the first one.
  */
 static int finish_error_response(socket_info* sock) {
 	generateOutputBuffer(sock);
 	sock->header_buffer_pos = 0;
 	sock->closeSocket = 1;
-	return 1;
+	return 3;
+}
+
+/*
+ * Body eines Streaming Uploads lesen.
+ *
+ * Umgeht den 2 KB Header Buffer und liest in POST_STREAM_READ_CHUNK_SIZE
+ * grossen Bloecken direkt in die Statemachine. Es wird nie mehr angefordert
+ * als der Body noch hergibt, damit kann der Ueberlauf Fall in
+ * recv_post_payload_streaming() hier gar nicht auftreten - die Bytes des
+ * naechsten Requests bleiben im Socket und werden ganz normal als Header
+ * gelesen.
+ */
+static int handlePostStreamData(socket_info* sock) {
+
+	unsigned int this_read = 0;
+	int post_ret;
+
+	while (1) {
+
+		uint64_t remaining = sock->header->contentlenght - sock->header->post_buffer_pos;
+		uint32_t to_read;
+		int len;
+
+		if ( remaining == 0 ){
+			return 0;
+		}
+
+		to_read = sock->post_stream_read_buf_size;
+		if ( (uint64_t)to_read > remaining ){
+			to_read = (uint32_t)remaining;
+		}
+
+		len = WebserverRecv(sock, sock->post_stream_read_buf, to_read, 0);
+
+		if ( len == CLIENT_NO_MORE_DATA ){
+			return 0;
+		}
+
+		if ( (len == CLIENT_DISCONNECTED) || (len == CLIENT_UNKNOWN_ERROR) || (len == SSL_PROTOCOL_ERROR) ){
+#if _WEBSERVER_CONNECTION_DEBUG_ > 1
+			LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"Client Disconnected during POST stream" );
+#endif
+			sock->closeSocket = 1;
+			return -1;
+		}
+
+		if ( len <= 0 ){
+			return 0;
+		}
+
+		post_ret = recv_post_payload( sock, (const char*)sock->post_stream_read_buf, (uint32_t)len );
+		if ( post_ret == 3 ){
+			return 3;	/* Fehlerantwort steht schon, Request nicht weiterverarbeiten */
+		}
+		if ( post_ret == 1 ){
+			sock->header->header_complete = 0;
+			return 1;	/* Body vollstaendig, weitere Daten sind der naechste Header */
+		}
+
+		this_read += (unsigned int)len;
+		if ( this_read > POST_STREAM_MAX_READ_PER_EVENT ){
+			return 0;	/* andere Sockets drankommen lassen */
+		}
+	}
 }
 
 static int handleClientHeaderData(socket_info* sock) {
+
+	/* Laeuft ein Streaming Upload, wird der Body an der Header Logik vorbei
+	 * gelesen. Der erste Teil steckt noch im Header Buffer, den holt der
+	 * Aufruf von recv_post_payload() unten in der Header Verarbeitung ab. */
+	if ( ( sock->post_streaming_active == 1 ) && ( sock->header != 0 ) && ( sock->header->header_complete == 1 ) ){
+		return handlePostStreamData( sock );
+	}
+
 	/*
 	 * len2 must be initialized to -6 (no complete line recognized).
 	 * When the header buffer is full, recv() is skipped and we jump directly
@@ -421,6 +638,7 @@ static int handleClientHeaderData(socket_info* sock) {
 	 * With -6 as default, we safely return 0 and wait for more data.
 	 */
 	int len2 = -6;
+	int post_ret;
 	unsigned int buffer_length = WEBSERVER_MAX_HEADER_LINE_LENGHT * 1;
 	unsigned int parsed = 0;
 
@@ -464,7 +682,11 @@ static int handleClientHeaderData(socket_info* sock) {
 					if ( len == 0 ){
 						return 0;
 					}
-					if ( 1 == recv_post_payload( sock ,sock->header_buffer, len ) ){
+					post_ret = recv_post_payload( sock ,sock->header_buffer, len );
+					if ( post_ret == 3 ){
+						return 3;	/* Fehlerantwort steht schon, Request nicht weiterverarbeiten */
+					}
+					if ( post_ret == 1 ){
 						sock->header->header_complete = 0;
 						return 1;	/* Aktuellen POST Request  gelesen, weiter Daten sind der nächste Header */
 					}
@@ -555,7 +777,11 @@ static int handleClientHeaderData(socket_info* sock) {
 				}
 
 				// Das muss hier sein weil noch Teil der Daten im Header Buffer sein können
-				if ( 1 == recv_post_payload( sock, sock->header_buffer, sock->header_buffer_pos )){
+				post_ret = recv_post_payload( sock, sock->header_buffer, sock->header_buffer_pos );
+				if ( post_ret == 3 ){
+					return 3; /* Fehlerantwort steht schon, Request nicht weiterverarbeiten */
+				}
+				if ( post_ret == 1 ){
 					sock->header->header_complete = 0;
 					return 1; /* Aktuellen POST Request  gelesen, weiter Daten sind der nächste Header */
 				}
@@ -630,6 +856,7 @@ static int checkConnectionKeepAlive(socket_info *sock) {
  *		0  = Header nicht zuende es müssen noch Daten gelesen werden
  *		1  = Request wurde komplett gelesen und Output generiert
  *		2  = Websocket handling , Events wurden eingetragen
+ *		3  = Fehlerantwort steht bereits im Output Buffer ( finish_error_response )
  *
  */
 
@@ -654,6 +881,13 @@ static int handleClient(socket_info* sock) {
 	/* Reverse Proxy hat die Verbindung übernommen */
 	if (ret == 2) {
 		return 2;
+	}
+	/* Die Fehlerantwort liegt schon vollstaendig im Output Buffer. Der Request
+	 * darf nicht zusaetzlich durch handleWebRequest() laufen, sonst haengt eine
+	 * zweite Antwort an der ersten und der Client bekommt Muell zu sehen.
+	 * finish_error_response() hat closeSocket bereits gesetzt. */
+	if (ret == 3) {
+		return 1;
 	}
 	if (ret == 1) {
 #ifdef WEBSERVER_USE_WEBSOCKETS
@@ -1463,7 +1697,14 @@ void handleer( int a, short b, void *t ) {
 				return;
 			}
 
-			while(( sock->header_buffer_pos > 0) || ( WebserverSSLPending ( sock ) > 0 ) ){
+			/* closeSocket mitpruefen: nach einer Fehlerantwort steht die
+			 * Antwort schon vollstaendig in der output_list und die
+			 * Verbindung ist zum Schliessen markiert. Liegen bei TLS Header
+			 * und Body im selben Record, haette die Schleife den bereits
+			 * abgewiesenen Body danach als naechsten Request verarbeitet und
+			 * eine zweite Antwort an dieselbe Verbindung gehaengt. */
+			while(( sock->closeSocket == 0 ) &&
+			      (( sock->header_buffer_pos > 0) || ( WebserverSSLPending ( sock ) > 0 ) )){
 
 				ret = handleClient(sock);
 				if (ret < 0) {
@@ -1490,6 +1731,13 @@ void handleer( int a, short b, void *t ) {
 				if( ret == 0 ){
 					break;
 				}
+			}
+
+			/* Zum Schliessen markiert und nichts mehr zu senden: dann gibt es
+			 * auch nichts, worauf ein Read Event noch warten muesste. */
+			if ( ( sock->closeSocket == 1 ) && ( ws_list_size( &sock->output_list ) == 0 ) ){
+				WebserverConnectionManagerCloseRequest(sock);
+				return;
 			}
 
 			// Wenn Output Daten generiert wurden diese erstmal schreiben, nach dem schreiben dann wieder input daten lesen

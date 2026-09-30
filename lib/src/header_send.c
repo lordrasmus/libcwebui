@@ -228,6 +228,16 @@ void sendHeaderNotFound(http_request* s, int p_lenght) {
 }
 
 void sendHeaderError(socket_info* sock, char* ErrorMessage, int p_lenght) {
+	/* Fehlerseiten gehen immer unkomprimiert raus. Diese Funktion schliesst den
+	 * Header hier selbst ab ( eigene Content-Length und das leere "\r\n" ).
+	 * Stuende das Flag noch, wuerde generateOutputBuffer() danach
+	 * Content-Encoding, eine zweite Content-Length und ein weiteres "\r\n"
+	 * anhaengen - hinter dem fertigen Header, also mitten in den Body. Das
+	 * Flag ist ein Socket Feld und wird erst nach handleClientHeaderData()
+	 * genullt: auf einer Keep-Alive Verbindung steht es im Fehlerpfad also noch
+	 * vom vorherigen Request. */
+	sock->use_output_compression = 0;
+
 	if ( sock->header->isHttp1_1 ){
 		printHeaderChunk(sock, "HTTP/1.1 %s\r\n", ErrorMessage);
 	}else{

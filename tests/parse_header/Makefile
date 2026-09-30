@@ -55,6 +55,7 @@ FILES= \
 	../../lib/src/variable.c \
 	../../lib/src/websockets_send_recv.c \
 	../../lib/src/websockets_streaming.c \
+	../../lib/src/post_streaming.c \
 	../../lib/src/websocket_handler.c \
 	../../lib/src/websockets.c \
 	../../lib/src/webserver_api_functions.c \

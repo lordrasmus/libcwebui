@@ -181,6 +181,18 @@ typedef enum {
 
 typedef int ( *plugin_error_handler ) ( PLUGIN_ERROR_TYPES error,const char* plugin,const char* function,const char* text );
 
+/*
+ * Prueffunktion eines Streaming Handlers, siehe RegisterPostStreamHandler().
+ *
+ * Sie laeuft, bevor der Body gelesen wird - der Request ist zu dem Zeitpunkt
+ * nur der Header, URL Parameter und Session inklusive. Rueckgabe 1, wenn der
+ * Request schreiben darf, sonst 0.
+ *
+ * Die Funktion darf nichts in die Antwort schreiben - die wird erst nach dem
+ * Body gebaut - und die Session nicht veraendern.
+ */
+typedef int ( *post_stream_auth_handler ) ( dummy_handler* s );
+
 
 
 /***********************************************************************************************

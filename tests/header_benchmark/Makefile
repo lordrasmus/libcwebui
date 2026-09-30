@@ -29,7 +29,7 @@ FILES= \
 	../../lib/src/message_queue.c \
 	../../lib/src/header_send.c \
 	../../lib/src/system_sockets_container.c \
-	../../lib/src/system_sockets.c \
+	../../lib/src/system_sockets.c ../../lib/src/post_streaming.c \
 	../../lib/src/system_sockets_send.c \
 	../../lib/src/system_memory.c \
 	../../lib/src/system_memory_gcc.c \

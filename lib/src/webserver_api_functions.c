@@ -564,6 +564,7 @@ void WebserverRegisterPluginErrorHandler(plugin_error_handler f){
 	RegisterPluginErrorHandler(f);
 }
 
+
 void WebserverInjectExternFD(int fd, extern_handler handle ){
 	socket_info* sock = WebserverMallocSocketInfo();
 	sock->extern_handle = handle;
@@ -624,6 +625,36 @@ void ws_url_decode(char *line){
 
 void ws_register_url_function( char* url, url_handler_func func ){
 	register_url_function( url, func );
+}
+
+
+/*
+ *		POST Streaming API
+ */
+
+void RegisterPostStreamHandler( const char* url,
+                                post_stream_auth_handler auth_check,
+                                uint64_t max_size,
+                                post_stream_start_handler on_start,
+                                post_stream_chunk_handler on_chunk,
+                                post_stream_end_handler on_end ){
+	registerPostStreamHandlerInternal( url, auth_check, max_size, on_start, on_chunk, on_end );
+}
+
+uint64_t GetMaxPostStreamSize( void ){
+	return maxPostStreamSizeInternal();
+}
+
+void PostStreamSetUserData( post_stream_context* ctx, void* data ){
+	if ( ctx ) ctx->user_data = data;
+}
+
+void* PostStreamGetUserData( post_stream_context* ctx ){
+	return ctx ? ctx->user_data : NULL;
+}
+
+void PostStreamAbort( post_stream_context* ctx ){
+	if ( ctx ) ctx->aborted = 1;
 }
 
 

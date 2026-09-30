@@ -22,6 +22,10 @@ SPDX-License-Identifier: MPL-2.0
 #include "linked_list.h"
 #include "variable_store.h"
 
+/* Nur fuer die Callback Typen ( post_stream_auth_handler, dummy_handler ).
+ * Der Header haengt selbst nur an stdint.h, es entsteht kein Zirkel. */
+#include "../webserver_api_functions_macros.h"
+
 #ifdef WEBSERVER_USE_PYTHON
 	#include <Python.h>
 #endif
@@ -214,6 +218,7 @@ typedef struct {
 
 	char* post_buffer;
 	uint32_t post_buffer_pos;
+	uint64_t post_buffer_reserved;	/* aus dem Gesamtbudget belegt, siehe postBufferReserve() */
 	char* boundary;
 
 	char* Content_Disposition;
@@ -276,6 +281,45 @@ typedef struct websocket_stream_handler_entry {
     void (*on_end)(struct websocket_stream_context* ctx,
                    int success);
 } websocket_stream_handler_entry;
+
+/* POST Streaming - forward declaration and internal types */
+struct post_stream_context;  /* Full definition in webserver_api_functions.h */
+
+typedef struct post_stream_handler_entry {
+	char* url;
+	post_stream_auth_handler auth_check;	/* darf dieser Request schreiben? 0 = keine Pruefung */
+	uint64_t max_size;			/* eigenes Limit statt max_post_size, 0 = globales nehmen */
+	void (*on_start)(struct post_stream_context* ctx);
+	void (*on_chunk)(struct post_stream_context* ctx,
+	                 const unsigned char* data,
+	                 uint32_t length);
+	void (*on_end)(struct post_stream_context* ctx,
+	               int success);
+} post_stream_handler_entry;
+
+/* Formularfelder ( Parts ohne filename= ) werden weiter gepuffert, damit
+ * getFileName()/getFileData() im Webmodul unveraendert funktionieren.
+ * Bewusst eine einfache Liste statt list_t: der Pointer ist durch das
+ * memset in WebserverMallocSocketInfo() bereits gueltig initialisiert. */
+typedef struct post_stream_part {
+	char* name;
+	char* data;			/* nur bei Formularfeldern, Datei Parts sind gestreamt */
+	uint64_t length;
+	uint64_t capacity;	/* belegter Puffer, waechst verdoppelnd - siehe emitPartData() */
+	char is_file;		/* Part hatte ein filename= */
+	char failed;		/* Handler hat abgebrochen - nicht als Datei melden */
+	char truncated;		/* Feldgrenze erreicht, nur einmal warnen */
+	struct post_stream_part* next;
+} post_stream_part;
+
+/* Zustaende der inkrementellen Multipart Statemachine */
+#define POST_STREAM_STATE_PREAMBLE			0	/* vor dem ersten Boundary            */
+#define POST_STREAM_STATE_AFTER_BOUNDARY	1	/* "\r\n" = neuer Part, "--" = Ende  */
+#define POST_STREAM_STATE_DELIM_CHECK		6	/* Boundary erst nach den 2 Folgebytes gueltig */
+#define POST_STREAM_STATE_PART_HEADER		2	/* Content-Disposition sammeln        */
+#define POST_STREAM_STATE_PART_DATA			3	/* Nutzdaten an den Handler streamen  */
+#define POST_STREAM_STATE_EPILOGUE			4	/* Rest nach dem End Boundary         */
+#define POST_STREAM_STATE_ERROR				5
 
 typedef struct {
 	int socket;
@@ -379,6 +423,38 @@ typedef struct {
 	void* extern_handle_data_ptr;
 
 	uint32_t error_requests_on_socket;
+
+	/* POST Streaming state
+	 * Der Body wird nicht gepuffert sondern in Chunks an den Handler
+	 * durchgereicht. Peak RAM ist damit unabhaengig von der Dateigroesse. */
+	char post_streaming_active;
+	unsigned char post_stream_state;
+	struct post_stream_context* post_stream_ctx;
+	post_stream_handler_entry* post_stream_handler;
+
+	unsigned char* post_stream_read_buf;	/* eigener Lesepuffer, siehe post_streaming.h */
+	uint32_t post_stream_read_buf_size;
+
+	unsigned char* post_stream_delim;		/* "\r\n" + boundary, Preamble nutzt delim + 2 */
+	uint32_t post_stream_delim_len;
+
+	unsigned char* post_stream_hold;		/* Rueckhalte Puffer fuer Boundary ueber Chunk Grenzen */
+	uint32_t post_stream_hold_len;
+	uint32_t post_stream_hold_size;
+
+	char* post_stream_part_header;			/* Sammelpuffer fuer den Part Header  */
+	uint32_t post_stream_part_header_len;
+
+	char post_stream_part_is_file;			/* aktueller Part hat ein filename=   */
+	char post_stream_started;				/* on_start wurde bereits gerufen     */
+	char post_stream_discard;				/* Nutzdaten verwerfen statt streamen */
+	char post_stream_delim_in_data;			/* DELIM_CHECK kam aus PART_DATA, nicht aus der Preamble */
+
+	struct post_stream_part* post_stream_parts;	/* gepufferte Formularfelder */
+	struct post_stream_part* post_stream_current_part;	/* Eintrag des laufenden Parts, NULL wenn keiner angelegt wurde */
+	uint32_t post_stream_parts_count;		/* Anzahl, siehe POST_STREAM_MAX_PARTS */
+	uint64_t post_stream_fields_total;		/* Summe aller Feldwerte, siehe POST_STREAM_MAX_FIELDS_TOTAL */
+	char post_stream_field_limit_logged;	/* Feldgrenze gerissen - nur einmal pro Request loggen */
 
 } socket_info;
 

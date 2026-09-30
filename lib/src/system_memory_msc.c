@@ -69,6 +69,11 @@ void initMemoryManager(void) {
 
 	PlatformCreateMutex(&mem_mutex);
 
+	/* Muss vor dem ersten POST stehen: postBufferReserve() lockt
+	 * post_buffer_mutex bedingungslos, auf einem nicht initialisierten Mutex
+	 * ist das undefiniertes Verhalten. */
+	initPostBufferBudget();
+
 	ws_list_init(&chunk_cache);
 
 	/* ws_list_attributes_freer(&chunk_cache,freeChunkCallBack); */
@@ -84,6 +89,9 @@ void freeMemoryManager(void) {
 
 
 	ws_list_destroy(&chunk_cache);
+
+	PlatformUnlockMutex(&mem_mutex);
+	freePostBufferBudget();
 }
 
 

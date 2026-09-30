@@ -81,6 +81,11 @@ void WebserverFreeSocketInfo(socket_info* sock) {
 	 * and reaches this function through the recursive call. */
 	eventSocketFreed(sock);
 
+	/* Bricht die Verbindung mitten im Upload ab, muss der Streaming Handler
+	 * noch die Gelegenheit bekommen seine Teildatei aufzuraeumen. */
+	postStreamFinish(sock, 0);
+	cleanupSocketPostStreamState(sock);
+
 	if (sock->header_buffer != 0) {
 		WebserverFree(sock->header_buffer);
 		sock->header_buffer = 0;
@@ -223,6 +228,76 @@ HttpRequestHeader* WebserverMallocHttpRequestHeader(void) {
 	return header;
 }
 
+/***********************************************************************************************
+*                                                                                              *
+*          Gesamtbudget fuer gepufferte POST Bodies                                            *
+*                                                                                              *
+************************************************************************************************/
+
+/* max_post_size begrenzt den einzelnen Request. Das reicht nicht: der Puffer
+ * wird sofort in voller Content-Length alloziert, sobald das erste Byte
+ * eintrifft. Ein Client kann also mit N parallelen Verbindungen N * max_post_size
+ * binden, ohne die Daten je zu senden. Darum ein zweiter Deckel ueber die Summe
+ * aller Verbindungen.
+ *
+ * Streaming Handler ( RegisterPostStreamHandler ) puffern nichts und tauchen
+ * hier nie auf - der Firmware Upload ist damit ohne Sonderfall ausgenommen. */
+static uint64_t post_buffer_allocated = 0;
+static WS_MUTEX post_buffer_mutex;
+
+/* Eager beim Start anlegen, nicht lazy beim ersten Gebrauch: ein
+ * check-then-act ohne Synchronisierung waere genau dann kaputt, wenn hier
+ * einmal zwei Threads ankommen. Alle anderen Subsysteme ( mem_mutex,
+ * initSessions, initSocketContainer ) machen es ebenso. */
+void initPostBufferBudget(void) {
+	PlatformCreateMutex(&post_buffer_mutex);
+}
+
+void freePostBufferBudget(void) {
+	PlatformDestroyMutex(&post_buffer_mutex);
+	post_buffer_allocated = 0;
+}
+
+/* 1 = Budget reicht und ist belegt, 0 = erschoepft */
+int postBufferReserve(uint64_t size) {
+	uint64_t limit;
+	int ok = 0;
+
+	limit = (uint64_t)getConfigInt("max_post_memory_total");
+	if (limit == 0) {
+		return 1;   /* Budget abgeschaltet */
+	}
+
+	PlatformLockMutex(&post_buffer_mutex);
+	if ((post_buffer_allocated + size) <= limit) {
+		post_buffer_allocated += size;
+		ok = 1;
+	}
+	PlatformUnlockMutex(&post_buffer_mutex);
+
+	return ok;
+}
+
+void postBufferRelease(uint64_t size) {
+	if (size == 0) return;
+
+	PlatformLockMutex(&post_buffer_mutex);
+	if (post_buffer_allocated >= size) {
+		post_buffer_allocated -= size;
+	} else {
+		post_buffer_allocated = 0;   /* darf nicht unterlaufen */
+	}
+	PlatformUnlockMutex(&post_buffer_mutex);
+}
+
+uint64_t postBufferAllocated(void) {
+	uint64_t ret;
+	PlatformLockMutex(&post_buffer_mutex);
+	ret = post_buffer_allocated;
+	PlatformUnlockMutex(&post_buffer_mutex);
+	return ret;
+}
+
 void WebserverResetHttpRequestHeader(HttpRequestHeader *header) {
 
 	clearVariables(header->parameter_store);
@@ -271,6 +346,14 @@ void WebserverResetHttpRequestHeader(HttpRequestHeader *header) {
 	if (header->post_buffer != 0) {
 		WebserverFree(header->post_buffer);
 		header->post_buffer = 0;
+	}
+
+	/* Bewusst nicht an post_buffer gekoppelt: wird der Puffer irgendwo anders
+	 * freigegeben und genullt, bliebe die Reservierung sonst bis zum Neustart
+	 * im Gesamtbudget stehen und der Server nimmt irgendwann keine POSTs mehr an. */
+	if (header->post_buffer_reserved != 0) {
+		postBufferRelease(header->post_buffer_reserved);
+		header->post_buffer_reserved = 0;
 	}
 
 	if (header->boundary != 0) {

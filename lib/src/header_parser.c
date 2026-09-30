@@ -217,17 +217,28 @@ static int header_attr_compare( char* text, unsigned int text_length, char* line
 }
 
 
+/*
+ * Jeder Zweig muss Eingabe verbrauchen oder abbrechen. Fehlt das CRLF hinter
+ * dem Feldnamen, stand hier frueher ein continue, das weder line2 noch length2
+ * bewegt hat - eine Endlosschleife. Ausgeloest hat das ein NUL Byte im Wert:
+ * stringfind() sucht ueber strlen() und endet dort, ohne Treffer liefert es 0.
+ * Der Webserver arbeitet den Event Loop synchron ab, ein einziger solcher
+ * Multipart Request haelt damit den ganzen Server an - gepuffert wie gestreamt
+ * und vor jeder Berechtigungspruefung.
+ */
 #define CHECK_HEADER_LINE2(a,b)  h_len = sizeof(a) - 1; \
 if (!strncasecmp((char*)line2,a,h_len)) \
 { \
 	int crlf_pos = stringfind(line2, "\r\n"); \
-	if (crlf_pos > (int)h_len) { \
-		len = crlf_pos - h_len - 1; \
-		if ( header->b != 0) WebserverFree(header->b); \
-		header->b = (char*)WebserverMalloc( len + 1 ); \
-		Webserver_strncpy((char*)header->b,len+1,(char*)&line2[h_len],len); \
-		line2 = &line2[h_len + len ]; length2 -= h_len + len ; \
+	if (crlf_pos <= (int)h_len) { \
+		header->error = 1; \
+		break ; \
 	} \
+	len = crlf_pos - h_len - 1; \
+	if ( header->b != 0) WebserverFree(header->b); \
+	header->b = (char*)WebserverMalloc( len + 1 ); \
+	Webserver_strncpy((char*)header->b,len+1,(char*)&line2[h_len],len); \
+	line2 = &line2[h_len + len ]; length2 -= h_len + len ; \
 	continue ; \
 }
 

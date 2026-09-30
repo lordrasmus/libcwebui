@@ -16,7 +16,7 @@ FILES= \
     ../../../lib/src/system.c                       ../../../lib/src/system_file_access.c \
     ../../../lib/src/system_file_access_fs.c        ../../../lib/src/system_file_access_wnfs.c \
     ../../../lib/src/system_file_cache.c            ../../../lib/src/system_file_access_utils.c \
-    ../../../lib/src/system_file_access_binary.c    ../../../lib/src/system_sockets.c \
+    ../../../lib/src/system_file_access_binary.c    ../../../lib/src/system_sockets.c ../../../lib/src/post_streaming.c \
 	../../../lib/src/system_sockets_container.c      \
 	../../../lib/src/system_sockets_epoll.c         ../../../lib/src/system_sockets_kqueue.c \
 	../../../lib/src/system_sockets_send.c \

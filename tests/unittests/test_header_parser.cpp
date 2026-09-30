@@ -505,3 +505,38 @@ TEST_F(HeaderParserTest, ConnectionUpgrade) {
     EXPECT_NE(header->Connection, nullptr);
     EXPECT_STREQ(header->Connection, "Upgrade");
 }
+
+/*
+ * analyseFormDataLine() muss auch bei einem kaputten Part Header zurueckkehren.
+ *
+ * Das CRLF hinter dem Feldnamen wird mit stringfind() gesucht, das intern
+ * strlen() benutzt und deshalb an einem eingebetteten NUL Byte endet. Ohne
+ * Treffer liefert stringfind() 0 - die Bedingung crlf_pos > h_len ist damit
+ * falsch, und der Zweig macht ein continue ohne line2/length2 zu bewegen: eine
+ * Endlosschleife. Der Webserver arbeitet den Event Loop synchron ab, ein
+ * einziger solcher Request haelt damit den ganzen Server an.
+ *
+ * Erreichbar ueber jeden Multipart POST, gepuffert ( parsePostData() ) wie
+ * gestreamt, und vor jeder Berechtigungspruefung.
+ */
+TEST_F(HeaderParserTest, FormDataLineWithNulByteTerminates) {
+    /* "Content-Disposition: " gefolgt von einem Wert mit NUL vor dem CRLF */
+    char line[128];
+    memset(line, 0, sizeof(line));
+
+    const char* prefix = "Content-Disposition: form-data; name=\"x";
+    size_t plen = strlen(prefix);
+    memcpy(line, prefix, plen);
+    line[plen]     = '\0';        /* das NUL Byte mitten im Wert */
+    line[plen + 1] = '"';
+    line[plen + 2] = '\r';
+    line[plen + 3] = '\n';
+    line[plen + 4] = '\r';
+    line[plen + 5] = '\n';
+
+    int consumed = analyseFormDataLine(sock, line, (unsigned int)(plen + 6), header);
+
+    /* Kein Haenger, und der Request ist als fehlerhaft markiert */
+    EXPECT_EQ(header->error, 1) << "kaputter Part Header muss als Fehler durchkommen";
+    EXPECT_GE(consumed, 0);
+}

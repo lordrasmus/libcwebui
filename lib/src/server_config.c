@@ -29,6 +29,13 @@ void initConfig(void) {
 	setConfigInt( "port",80);
 	setConfigInt( "ssl_port",-1);
 	setConfigInt( "max_post_size",2 * 1024 * 1024); // Default 2 MB Max Post Size
+	/* Obergrenze fuer die Summe aller gleichzeitig gepufferten POST Bodies
+	   ueber alle Verbindungen. max_post_size begrenzt nur den einzelnen
+	   Request - ohne Gesamtbudget koennte ein Client mit vielen parallelen
+	   Verbindungen beliebig viel Speicher binden, ohne auch nur die Daten zu
+	   senden ( der Puffer wird sofort in voller Content-Length alloziert ).
+	   Streaming Handler puffern nichts und zaehlen darum nicht mit. */
+	setConfigInt( "max_post_memory_total", 16 * 1024 * 1024);
 	setConfigInt( "use_csp",0);
 	setConfigInt( "reload_py_modules",0);
 	#ifdef WEBSERVER_SESSION_TIMEOUT

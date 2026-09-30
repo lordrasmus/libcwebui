@@ -59,6 +59,20 @@ int sendAccessDenied(http_request* s){
 	return 0;
 }
 
+/* Der Request ist in Ordnung, dem Server fehlt gerade nur der Speicher, um
+ * den Body zu puffern. 503 statt 4xx: die Ursache liegt beim Server und der
+ * Client darf es spaeter erneut versuchen. */
+int sendServiceUnavailable(socket_info *sock){
+	int length = 0;
+	sock->error_requests_on_socket++;
+	length += printHTMLChunk( sock,"<html><title>503 Service Unavailable</title><body>");
+	length += printHTMLChunk( sock,"<h1>503 Service Unavailable</h1>");
+	length += printHTMLChunk( sock,"<p>The server is temporarily unable to buffer the request body.</p><hr />");
+	length += printAddressInfo( sock);
+	sendHeaderError( sock,(char*)"503 Service Unavailable",length);
+	return 0;
+}
+
 int sendMethodNotAllowed(socket_info *sock){
 	int length = 0;
 	sock->error_requests_on_socket++;

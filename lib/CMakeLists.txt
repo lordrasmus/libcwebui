@@ -66,6 +66,7 @@ src/system_file_access_wnfs.c
 src/system_file_cache.c
 src/system_memory.c
 src/system_memory_msc.c
+src/post_streaming.c
 src/system_sockets.c
 src/system_sockets_container.c
 src/system_sockets_events.c

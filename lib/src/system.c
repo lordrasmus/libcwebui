@@ -168,6 +168,7 @@ void shutdownWebserver(void) {
 	free_file_access();
 
 	free_extension_api();
+	cleanupPostStreaming();
 	freeSessions();
 	freeEvents();
 	freeConfig();

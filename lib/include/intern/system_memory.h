@@ -75,6 +75,14 @@ void	WebserverFree( void* mem );
 
 
 unsigned long WebserverMallocedSize(void* mem);
+
+/* Gesamtbudget fuer gepufferte POST Bodies ueber alle Verbindungen.
+   Streaming Handler puffern nichts und zaehlen nicht mit. */
+void     initPostBufferBudget(void);
+void     freePostBufferBudget(void);
+int      postBufferReserve(uint64_t size);
+void     postBufferRelease(uint64_t size);
+uint64_t postBufferAllocated(void);
 unsigned long WebserverMallocedRealSize(void* mem);
 void* WebserverRealloc(void *mem, const unsigned long size );
 

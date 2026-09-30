@@ -19,6 +19,7 @@ LIB_SOURCES := 	src/builtinFunctions.c \
 			src/message_queue.c \
 			src/reverse_proxy.c \
 			src/server.c \
+			src/post_streaming.c \
 			src/server_chunk_functions.c \
 			src/server_config.c \
 			src/server_error_pages.c \

@@ -70,6 +70,7 @@ void initMemoryManager(void) {
 #endif
 
 	PlatformCreateMutex(&mem_mutex);
+	initPostBufferBudget();
 
 #ifdef _WEBSERVER_MEMORY_DEBUG_
 	ws_list_init(&block_list);
@@ -99,6 +100,9 @@ void freeMemoryManager(void) {
 #endif
 
 	ws_list_destroy(&chunk_cache);
+
+	PlatformUnlockMutex(&mem_mutex);
+	freePostBufferBudget();
 }
 
 #ifdef _WEBSERVER_MEMORY_DEBUG_

@@ -10,7 +10,7 @@ FILES=../../lib/src/variable_store.c ../../lib/src/header_parser.c ../../lib/src
 	../../lib/src/utils.c ../../lib/src/server_chunk_functions.c ../../lib/src/variable.c \
 	../../lib/src/cookie.c ../../lib/src/websockets.c ../../lib/src/engine_api_extensions.c ../../lib/third_party/src/rb_tree/red_black_tree.c \
 	../../lib/third_party/src/rb_tree/stack.c ../../lib/third_party/src/rb_tree/misc.c ../../lib/src/message_queue.c ../../lib/src/header_send.c \
-	../../lib/src/system_sockets_container.c ../../lib/src/system_sockets.c ../../lib/platform/linux/platform-file-access.c \
+	../../lib/src/system_sockets_container.c ../../lib/src/system_sockets.c ../../lib/src/post_streaming.c ../../lib/platform/linux/platform-file-access.c \
 	../../lib/src/system_sockets_send.c ../../lib/platform/linux/platform-sockets.c ../../lib/src/log.c ../../lib/src/server_error_pages.c \
 	../../lib/ssl/openssl.c ../../lib/src/server_config.c ../../lib/src/system_sockets_epoll.c ../../lib/src/session.c \
 	../../lib/src/system_sockets_recv.c ../../lib/src/websockets_send_recv.c ../../lib/src/conditions.c ../../lib/src/globals.c \

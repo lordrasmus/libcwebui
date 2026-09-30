@@ -38,6 +38,11 @@ static void endHTTPRequest(http_request *s) {
 	upload_file_info * f_info;
 	custom_response_header * h_info;
 
+	/* Ist der Request mitten im Stream abgebrochen, muss der Handler noch
+	 * aufraeumen koennen. Nach einem regulaeren Ende ist das ein No-Op. */
+	postStreamFinish(s->socket, 0);
+	cleanupSocketPostStreamState(s->socket);
+
 	clearRenderVariables(s);
 	if (s->store != 0){
 		unlockStore(s->store->vars);
@@ -80,6 +85,13 @@ static void parsePostData(http_request *s){
 	HttpRequestHeader *header;
 	uint32_t bound_len;
 	char* bound_end;
+
+	/* Beim Streaming wurde der Body bereits waehrend des Empfangs verarbeitet.
+	 * Es sind nur noch die Metadaten in den Request zu uebernehmen. */
+	if ( s->socket->post_streaming_active ){
+		postStreamFillUploadInfo( s );
+		return;
+	}
 
 	if ( s->socket->header->post_buffer == 0 ){
 		return;
@@ -191,6 +203,8 @@ static void parsePostData(http_request *s){
 
 	WebserverFree( s->socket->header->post_buffer );
 	s->socket->header->post_buffer = 0;
+	postBufferRelease( s->socket->header->post_buffer_reserved );
+	s->socket->header->post_buffer_reserved = 0;
 	s->socket->header->contentlenght = 0;
 	s->socket->header->post_buffer_pos = 0;
 
