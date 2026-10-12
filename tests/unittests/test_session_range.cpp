@@ -30,15 +30,8 @@ protected:
     HttpRequestHeader *header;
 
     void SetUp() override {
-        // The session tree lives in a file scope static and is created by
-        // initSessions(). Only once - a second call would leak the first
-        // tree and hand the tests a fresh one halfway through.
-        static bool initialised = false;
-        if (!initialised) {
-            initSessions();
-            initialised = true;
-        }
-
+        // The session tree is created once for the whole run, see
+        // test_main.cpp. Counts are therefore taken relative to "before".
         memset(&req, 0, sizeof(req));
         memset(&sock, 0, sizeof(sock));
         header = WebserverMallocHttpRequestHeader();

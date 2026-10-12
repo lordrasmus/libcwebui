@@ -169,14 +169,8 @@ protected:
             RegisterPostStreamHandler(TEST_URL, NULL, 0, on_start, on_chunk, on_end);
         }
 
-        /* Der Auth Pfad stellt die Session wieder her - ohne initialisierten
-           Store laeuft restoreSession() auf einen leeren Baum. Wie oben nur
-           einmal, der Store ist global. */
-        static bool sessions_ready = false;
-        if (!sessions_ready) {
-            initSessions();
-            sessions_ready = true;
-        }
+        /* The auth path restores the session and needs the session store.
+           It is created once for the whole run, see test_main.cpp. */
 
         sock = (socket_info*)calloc(1, sizeof(socket_info));
         sock->header = WebserverMallocHttpRequestHeader();
