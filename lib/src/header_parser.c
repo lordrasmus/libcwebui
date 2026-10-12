@@ -758,3 +758,30 @@ bool checkHeaderComplete(HttpRequestHeader* header) {
 	return true;
 }
 
+
+/* Content-Disposition: form-data; name="x"; filename="name" -> name
+ * Returns 0 without a filename parameter. */
+char* getFormDataFilename(const char *content_disposition) {
+	uint32_t tmp, len;
+	char *name;
+
+	tmp = stringfind(content_disposition, "filename=");
+	if ( 0 == tmp ){
+		return 0;
+	}
+
+	tmp += 2; /* = und " stehen noch am anfang */
+	len = strlen( content_disposition );
+	/* Without a value behind "filename=" the subtraction below went
+	 * negative in uint32_t: a 4 GB allocation, or a zero sized one that
+	 * strncpy then wrote past. */
+	if ( len < tmp + 1 ){
+		len = 0;
+	}else{
+		len = len - tmp - 1; /* am ende ist noch ein " */
+	}
+	name = WebserverMalloc( len + 1);
+	strncpy( name , &content_disposition[ tmp ] , len );
+	name[len] = '\0';
+	return name;
+}

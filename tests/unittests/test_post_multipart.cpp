@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <cstring>
 #include <unistd.h>
+#include <string>
 
 extern "C" {
 #include "webserver.h"
@@ -131,4 +132,43 @@ TEST_F(PostMultipartTest, NulBeforeCrlfReturns) {
 TEST_F(PostMultipartTest, EmptyValueReturns) {
     const char body[] = "Content-Disposition: ";
     expectReturns(sock, body, sizeof(body) - 1);
+}
+
+/*
+ * Multipart POST: the filename of an upload.
+ *
+ * getFormDataFilename() skips '="' behind "filename=" and drops the closing
+ * quote. With nothing or just a quote behind "filename=", the length came
+ * out negative in uint32_t - about 4 GB - and the allocation and strncpy
+ * that followed went with it.
+ */
+static std::string filenameOf(const char *content_disposition) {
+    char *name = getFormDataFilename(content_disposition);
+    if (name == 0) {
+        return "<none>";
+    }
+    std::string ret(name);
+    WebserverFree(name);
+    return ret;
+}
+
+TEST_F(PostMultipartTest, FilenameRegular) {
+    EXPECT_EQ(filenameOf("form-data; name=\"x\"; filename=\"a.txt\""), "a.txt");
+}
+
+TEST_F(PostMultipartTest, FilenameMissing) {
+    EXPECT_EQ(filenameOf("form-data; name=\"x\""), "<none>");
+    EXPECT_EQ(filenameOf(0), "<none>");
+}
+
+TEST_F(PostMultipartTest, FilenameEmptyQuoted) {
+    EXPECT_EQ(filenameOf("form-data; filename=\"\""), "");
+}
+
+TEST_F(PostMultipartTest, FilenameWithoutValue) {
+    EXPECT_EQ(filenameOf("form-data; filename="), "");
+}
+
+TEST_F(PostMultipartTest, FilenameOnlyOpeningQuote) {
+    EXPECT_EQ(filenameOf("form-data; filename=\""), "");
 }
