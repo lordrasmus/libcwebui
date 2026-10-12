@@ -53,7 +53,7 @@ TEST_F(ErrorPageTest, ErrorPageIsNotCompressedAfterCompressedRequest) {
     /* Der vorherige Request auf derselben Verbindung lieferte komprimiert */
     sock->use_output_compression = 1;
 
-    sendMethodBadRequest(sock);
+    sendHttpErrorPage(sock, 400, 0);
     generateOutputBuffer(sock);
 
     ASSERT_EQ(ws_list_size(&sock->output_list), 1u);
