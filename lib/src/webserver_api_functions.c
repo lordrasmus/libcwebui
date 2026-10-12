@@ -380,6 +380,26 @@ const char* ws_get_client_ip(dummy_handler* s){
 	return r->socket->client_ip_str;
 }
 
+void ws_set_response_status(dummy_handler* s, int status){
+	http_request* r = (http_request*) s;
+	if ( r == NULL || r->header == NULL ) return;
+	r->header->response_status = (short) status;
+}
+
+void ws_set_access_log_user(dummy_handler* s, const char* user){
+	http_request* r = (http_request*) s;
+	size_t len;
+	if ( r == NULL || r->header == NULL ) return;
+	if ( r->header->access_log_user != 0 ){
+		WebserverFree( r->header->access_log_user );
+		r->header->access_log_user = 0;
+	}
+	if ( user == NULL ) return;
+	len = strlen( user );
+	r->header->access_log_user = (char*) WebserverMalloc( len + 1 );
+	memcpy( r->header->access_log_user, user, len + 1 );
+}
+
 /*****************************************************************************
  *
  *						Request Status Informationen

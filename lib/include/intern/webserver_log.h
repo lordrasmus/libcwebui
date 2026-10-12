@@ -67,6 +67,11 @@ extern "C" {
 
 
 
+/* Access log - see ws_set_access_log_handler() */
+uint64_t accessLogNowMs(void);
+void accessLogRequest(socket_info* sock);
+void accessLogEntry(const ws_access_log_entry* entry);
+
 void addLog(LogChannels channel,LogLevels level,char* filename,int fileline,const char* function,int socket,char* text,...) __attribute__ ((format (printf, 7, 8)));
 
 #ifdef __cplusplus

@@ -93,7 +93,7 @@ char* get_cors_type_name( CORS_HEADER_TYPES type ){
 #ifdef WEBSERVER_USE_WEBSOCKETS
 
 int sendHeaderWebsocket(socket_info* sock) {
-	
+	sock->header->response_status = 101;
 	if ( sock->header->isHttp1_1 ){
 		printWebsocketChunk(sock, "HTTP/1.1 101 Switching Protocols\r\n");
 	}else{
@@ -156,6 +156,7 @@ static void addConnectionStatusLines(socket_info* socket) {
 int sendPreflightAllowed(socket_info *sock) {
 	char sanitized[512];
 
+	sock->header->response_status = 204;
 	if ( sock->header->isHttp1_1 ){
 		printHeaderChunk( sock, "HTTP/1.1 204 No Content\r\n");
 	}else{
@@ -213,6 +214,7 @@ static void addCacheControlLines(http_request* s, WebserverFileInfo *info) {
 }
 
 int sendHeaderNotModified(http_request* s, WebserverFileInfo *info) {
+	s->header->response_status = 304;
 	if ( s->header->isHttp1_1 ){
 		printHeaderChunk(s->socket, "HTTP/1.1 304 Not Modified\r\n");
 	}else{
@@ -226,6 +228,7 @@ int sendHeaderNotModified(http_request* s, WebserverFileInfo *info) {
 }
 
 void sendHeaderNotFound(http_request* s, int p_lenght) {
+	s->header->response_status = 404;
 	if ( s->header->isHttp1_1 ){
 		printHeaderChunk(s->socket, "HTTP/1.1 404 Not Found\r\n");
 	}else{
@@ -249,6 +252,7 @@ void sendHeaderError(socket_info* sock, char* ErrorMessage, int p_lenght) {
 	 * vom vorherigen Request. */
 	sock->use_output_compression = 0;
 
+	sock->header->response_status = (short) atoi( ErrorMessage ); /* "403 Forbidden" */
 	if ( sock->header->isHttp1_1 ){
 		printHeaderChunk(sock, "HTTP/1.1 %s\r\n", ErrorMessage);
 	}else{
@@ -453,14 +457,38 @@ static void addSessionCookies(http_request* s,WebserverFileInfo *info){
 /*
  * 	p_lenght ist wichtig für die Template Engine
  */
+static const char* reasonPhrase(int status) {
+	switch ( status ){
+		case 200: return "OK";
+		case 201: return "Created";
+		case 202: return "Accepted";
+		case 204: return "No Content";
+		case 400: return "Bad Request";
+		case 401: return "Unauthorized";
+		case 403: return "Forbidden";
+		case 404: return "Not Found";
+		case 405: return "Method Not Allowed";
+		case 409: return "Conflict";
+		case 413: return "Payload Too Large";
+		case 429: return "Too Many Requests";
+		case 500: return "Internal Server Error";
+		case 501: return "Not Implemented";
+		case 502: return "Bad Gateway";
+		case 503: return "Service Unavailable";
+	}
+	return "Unknown";
+}
+
 int sendHeader(http_request* s, WebserverFileInfo *info, FILE_OFFSET p_lenght) {
 	custom_response_header* h_info;
 
-	if( s->header->isHttp1_1 ){
-		printHeaderChunk(s->socket, "HTTP/1.1 200 OK\r\n");
-	}else{
-		printHeaderChunk(s->socket, "HTTP/1.0 200 OK\r\n");
+	/* the handler may have chosen another status via ws_set_response_status() */
+	if ( ( s->header->response_status < 100 ) || ( s->header->response_status > 599 ) ){
+		s->header->response_status = 200;
 	}
+
+	printHeaderChunk(s->socket, "HTTP/1.%d %d %s\r\n", s->header->isHttp1_1 ? 1 : 0,
+	                 s->header->response_status, reasonPhrase( s->header->response_status ));
 	printHeaderChunk(s->socket, "Server: %s\r\n", "libCWebUI");
 
 	addSessionCookies( s , info );

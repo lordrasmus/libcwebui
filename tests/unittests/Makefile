@@ -96,6 +96,7 @@ TEST_FILES= \
 	test_conditions.cpp \
 	test_post_multipart.cpp \
 	test_post_streaming.cpp \
+	test_access_log.cpp \
 	test_memory_overflow.cpp \
 	test_session_range.cpp \
 	test_error_pages.cpp

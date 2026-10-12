@@ -290,6 +290,42 @@ int    getPostSize(dummy_handler* s);
 /* Client-IP der Verbindung als String ("" wenn nicht ermittelbar). */
 const char* ws_get_client_ip(dummy_handler* s);
 
+/* HTTP status of the response, default 200. Has to be called before the
+ * handler returns - the header is sent afterwards. */
+void ws_set_response_status(dummy_handler* s, int status);
+
+
+/***********************************************************************************************
+*                                                                                              *
+*          Access Log                                                                          *
+*                                                                                              *
+************************************************************************************************/
+
+/* One entry per answered request. All strings are only valid during the
+ * call; a string the request did not carry is NULL. */
+typedef struct {
+	const char* client_ip;
+	const char* method;        /* "GET", "POST", ... or NULL */
+	const char* url;           /* path without query string, with leading '/' */
+	int status;                /* 0 = no response (e.g. client gone first) */
+	uint64_t bytes;            /* size of the response */
+	uint64_t duration_ms;      /* first request byte -> response queued */
+	const char* user_agent;
+	const char* referer;
+	const char* user;          /* set via ws_set_access_log_user() */
+	int ssl;
+	int websocket;             /* 1 = WebSocket upgrade */
+	int proxy;                 /* 1 = handled by the reverse proxy */
+} ws_access_log_entry;
+
+typedef void (*ws_access_log_handler)(const ws_access_log_entry* entry);
+
+/* Called from the event loop thread for every request. NULL disables it. */
+void ws_set_access_log_handler(ws_access_log_handler handler);
+
+/* User the current request is logged with. */
+void ws_set_access_log_user(dummy_handler* s, const char* user);
+
 
 /***********************************************************************************************
 *                                                                                              *

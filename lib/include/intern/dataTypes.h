@@ -227,6 +227,12 @@ typedef struct {
 	ws_variable_store *parameter_store;
 	list_t cookie_list;
 
+	/* Access log, reset with every request */
+	uint64_t request_start_ms;   /* first bytes of the request, 0 = unknown */
+	uint64_t response_bytes;     /* size of the response handed to the send path */
+	short response_status;       /* status line sent, or set via ws_set_response_status() */
+	char* access_log_user;       /* set via ws_set_access_log_user() */
+
 } HttpRequestHeader;
 
 typedef struct {

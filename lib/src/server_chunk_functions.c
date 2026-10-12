@@ -396,6 +396,7 @@ void generateOutputBuffer(socket_info* sock) {
 		
 		output->header.buffer = buffer;
 		output->header.buffer_size = offset;
+		sock->header->response_bytes = output->header.buffer_size + output->body.buffer_size;
 		ws_list_append( &sock->output_list, output, 0 );
 		return;
 	}
@@ -424,8 +425,10 @@ void generateOutputBuffer(socket_info* sock) {
 #endif
 	output->body.buffer = buffer;
 	output->body.buffer_size = offset;
+	sock->header->response_bytes = offset;
 	
 	if ( sock->send_file_info != 0 ){
+		sock->header->response_bytes += sock->send_file_info->DataLenght;
 
 		output->file_infos.file_info= sock->send_file_info;
 		output->file_infos.file_send_pos = 0;

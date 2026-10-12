@@ -515,6 +515,9 @@ static void proxy_send_error_response(reverse_proxy_connection_t* proxy, int cod
         return;
     }
 
+    proxy->error_response_status = code;
+    proxy->error_response_bytes = (uint64_t)response_len;
+
     /* Ueber WebserverSend senden, nicht per rohem send(): auf einer
      * HTTPS-Verbindung ginge die Fehlerseite sonst unverschluesselt in den
      * TLS-Stream und der Browser meldet einen Protokollfehler statt die
@@ -790,6 +793,9 @@ int checkReverseProxy(socket_info* s, char* buffer, int length) {
 
     /* URL für Logging speichern */
     snprintf(proxy->request_url, sizeof(proxy->request_url), "%s", url);
+    proxy->request_url[strcspn(proxy->request_url, "?")] = '\0';  /* no query strings in logs */
+    snprintf(proxy->request_method, sizeof(proxy->request_method), "%s", method);
+    proxy->access_start_ms = s->header->request_start_ms;
 
     /* Bisherige Daten in Request Buffer kopieren */
     if (length > 0 && (uint32_t)length < proxy->request_buffer_size) {
@@ -2821,10 +2827,47 @@ static int proxy_inject_connection_close(reverse_proxy_connection_t* proxy) {
 /*
  * Cleanup proxy connection
  */
+/*
+ * One access log line per proxied request, written when the connection is
+ * torn down - the proxy forces Connection: close, so that is the end of the
+ * request whichever way it went. The client's request header may already be
+ * freed here, which is why the proxy keeps its own copy of what it needs.
+ */
+static void proxy_access_log(reverse_proxy_connection_t* proxy) {
+    ws_access_log_entry entry;
+
+    if (proxy->client_sock == NULL) {
+        return;
+    }
+
+    memset(&entry, 0, sizeof(entry));
+    entry.client_ip = proxy->client_sock->client_ip_str;
+    entry.method = proxy->request_method[0] ? proxy->request_method : NULL;
+    entry.url = proxy->request_url[0] ? proxy->request_url : NULL;
+    entry.status = proxy->error_response_status ? proxy->error_response_status
+                                                : proxy->response_status_code;
+    entry.bytes = proxy->response_body_sent + proxy->error_response_bytes;
+    if (proxy->error_response_bytes == 0 && proxy->response_header_sent) {
+        entry.bytes += proxy->response_header_end;
+    }
+    if (proxy->access_start_ms != 0) {
+        entry.duration_ms = accessLogNowMs() - proxy->access_start_ms;
+    }
+#ifdef WEBSERVER_USE_SSL
+    entry.ssl = proxy->client_sock->use_ssl;
+#endif
+    entry.websocket = proxy->response_is_upgrade;
+    entry.proxy = 1;
+
+    accessLogEntry(&entry);
+}
+
 static void proxy_cleanup_connection(reverse_proxy_connection_t* proxy) {
     if (proxy == NULL) {
         return;
     }
+
+    proxy_access_log(proxy);
 
 #if _WEBSERVER_PROXY_DEBUG_ >= 4
     LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "%s", "Cleaning up proxy connection");

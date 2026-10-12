@@ -146,6 +146,12 @@ typedef struct reverse_proxy_connection {
 #endif
     char request_url[512];                /* URL für Logging */
 
+    /* Access log */
+    char request_method[16];
+    uint64_t access_start_ms;
+    int error_response_status;            /* error page sent by the proxy itself */
+    uint64_t error_response_bytes;
+
 } reverse_proxy_connection_t;
 
 /* Registration Structure */

@@ -560,6 +560,7 @@ static int check_post_header( socket_info* sock ){
  */
 static int finish_error_response(socket_info* sock) {
 	generateOutputBuffer(sock);
+	accessLogRequest(sock);
 	sock->header_buffer_pos = 0;
 	sock->closeSocket = 1;
 	return 3;
@@ -674,6 +675,10 @@ static int handleClientHeaderData(socket_info* sock) {
 
 			if ((len == CLIENT_NO_MORE_DATA) && (sock->header_buffer_pos == 0)) {
 				return 0;
+			}
+
+			if ( ( len > 0 ) && ( sock->header->request_start_ms == 0 ) ){
+				sock->header->request_start_ms = accessLogNowMs();
 			}
 
 			if ((len == CLIENT_DISCONNECTED) || (len == CLIENT_UNKNOWN_ERROR) || (len == SSL_PROTOCOL_ERROR)) {
@@ -910,6 +915,7 @@ static int handleClient(socket_info* sock) {
 			initWebsocketStructures(sock);
 			sock->isWebsocket = 1;
 			startWebsocketConnection ( sock );
+			accessLogRequest(sock);
 			addEventSocketReadWritePersist ( sock );
 			return 2;
 		}
@@ -921,6 +927,7 @@ static int handleClient(socket_info* sock) {
 				LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"isWebsocket 2" );
 			#endif
 			generateOutputBuffer(sock);
+			accessLogRequest(sock);
 			addEventSocketWritePersist(sock);
 			return 2;
 		}
@@ -939,6 +946,7 @@ static int handleClient(socket_info* sock) {
 		// sonderfall wenn nur \r\n gesendet wird
 		if (  sock->header->parsed_bytes != 0 ) {
 			generateOutputBuffer(sock);
+			accessLogRequest(sock);
 		}
 
 		WebserverResetHttpRequestHeader(sock->header);

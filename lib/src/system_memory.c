@@ -310,6 +310,15 @@ void WebserverResetHttpRequestHeader(HttpRequestHeader *header) {
 	header->contentlenght = 0;
 	header->method = 0;
 
+	header->error_method[0] = '\0';
+	header->request_start_ms = 0;
+	header->response_bytes = 0;
+	header->response_status = 0;
+	if (header->access_log_user != 0) {
+		WebserverFree(header->access_log_user);
+		header->access_log_user = 0;
+	}
+
 	if (header->url != 0) {
 		WebserverFree(header->url);
 		header->url = 0;

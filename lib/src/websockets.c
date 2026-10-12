@@ -213,6 +213,7 @@ int checkIskWebsocketConnection(socket_info* sock) {
 		if ( header->SecWebSocketVersion < 13 ){
 			/* RFC 6455 Section 4.4: Send supported version(s) in response */
 			printHeaderChunk(sock,"HTTP/1.1 426 Upgrade Required\r\n");
+			header->response_status = 426;
 			printHeaderChunk(sock,"Sec-WebSocket-Version: 13\r\n");
 			printHeaderChunk(sock,"\r\n");
 			#ifdef _WEBSERVER_HEADER_DEBUG_
