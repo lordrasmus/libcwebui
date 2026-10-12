@@ -115,7 +115,7 @@ static void parsePostData(http_request *s){
 
 			pos = &s->socket->header->post_buffer[ offset + bound_len ];
 
-			offset2 = analyseFormDataLine( s->socket, pos , s->socket->header->contentlenght - offset, header );
+			offset2 = analyseFormDataLine( s->socket, pos , s->socket->header->contentlenght - ( offset + bound_len ), header );
 
 			data_start = &pos[offset2];
 

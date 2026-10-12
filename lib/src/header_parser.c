@@ -217,17 +217,21 @@ static int header_attr_compare( char* text, unsigned int text_length, char* line
 }
 
 
+/* A part header line without its CRLF ends the part header: there is
+ * nothing left to parse, and matching the same position again would never
+ * end. The search is bounded by length2, not by a NUL byte. */
 #define CHECK_HEADER_LINE2(a,b)  h_len = sizeof(a) - 1; \
 if (!strncasecmp((char*)line2,a,h_len)) \
 { \
-	int crlf_pos = stringfind(line2, "\r\n"); \
-	if (crlf_pos > (int)h_len) { \
-		len = crlf_pos - h_len - 1; \
-		if ( header->b != 0) WebserverFree(header->b); \
-		header->b = (char*)WebserverMalloc( len + 1 ); \
-		Webserver_strncpy((char*)header->b,len+1,(char*)&line2[h_len],len); \
-		line2 = &line2[h_len + len ]; length2 -= h_len + len ; \
+	long crlf_pos = stringnfind(line2, "\r\n", length2); \
+	if (crlf_pos <= (long)h_len) { \
+		return length; \
 	} \
+	len = crlf_pos - h_len - 1; \
+	if ( header->b != 0) WebserverFree(header->b); \
+	header->b = (char*)WebserverMalloc( len + 1 ); \
+	Webserver_strncpy((char*)header->b,len+1,(char*)&line2[h_len],len); \
+	line2 = &line2[h_len + len ]; length2 -= h_len + len ; \
 	continue ; \
 }
 
