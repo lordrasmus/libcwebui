@@ -49,6 +49,7 @@ void sendHeaderNotFound(http_request* s, int p_lenght);
 
 int analyseHeaderLine(socket_info* sock,char *line,unsigned int length,HttpRequestHeader *header);
 int analyseFormDataLine(socket_info* sock, char *line, unsigned int length, HttpRequestHeader *header);
+char* getFormDataFilename(const char *content_disposition);
 
 
 int getHttpRequestHeader(http_request* s);

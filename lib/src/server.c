@@ -81,7 +81,6 @@ static void parsePostData(http_request *s){
 	uint64_t offset2 = 0;
 	uint64_t offset3 = 0;
 	char end= 0;
-	uint32_t tmp;
 	HttpRequestHeader *header;
 	uint32_t bound_len;
 	char* bound_end;
@@ -127,7 +126,7 @@ static void parsePostData(http_request *s){
 
 			pos = &s->socket->header->post_buffer[ offset + bound_len ];
 
-			offset2 = analyseFormDataLine( s->socket, pos , s->socket->header->contentlenght - offset, header );
+			offset2 = analyseFormDataLine( s->socket, pos , s->socket->header->contentlenght - ( offset + bound_len ), header );
 
 			data_start = &pos[offset2];
 
@@ -166,15 +165,8 @@ static void parsePostData(http_request *s){
 					file_info->data = data;
 					file_info->length = part_len - 2;
 
-					tmp = stringfind(header->Content_Disposition, "filename=");
-					if ( 0 != tmp){
-						uint32_t len;
-						tmp += 2; /* = und " stehen noch am anfang */
-						len = strlen( header->Content_Disposition ) - tmp - 1; /* am ende ist noch ein " */
-						file_info->name= WebserverMalloc( len + 1);
-						strncpy( file_info->name , &header->Content_Disposition[ tmp ] , len );
-						file_info->name[len] = '\0';
-					}else{
+					file_info->name = getFormDataFilename( header->Content_Disposition );
+					if ( file_info->name == 0 ){
 						LOG ( CONNECTION_LOG,ERROR_LEVEL,s->socket->socket,"Kein filename in Content_Disposition ( %s )", s->socket->header->Content_Disposition);
 						file_info->name= WebserverMalloc( 2 );
 						file_info->name[0] = '\0';

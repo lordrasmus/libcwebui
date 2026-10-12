@@ -217,22 +217,19 @@ static int header_attr_compare( char* text, unsigned int text_length, char* line
 }
 
 
-/*
- * Jeder Zweig muss Eingabe verbrauchen oder abbrechen. Fehlt das CRLF hinter
- * dem Feldnamen, stand hier frueher ein continue, das weder line2 noch length2
- * bewegt hat - eine Endlosschleife. Ausgeloest hat das ein NUL Byte im Wert:
- * stringfind() sucht ueber strlen() und endet dort, ohne Treffer liefert es 0.
- * Der Webserver arbeitet den Event Loop synchron ab, ein einziger solcher
- * Multipart Request haelt damit den ganzen Server an - gepuffert wie gestreamt
- * und vor jeder Berechtigungspruefung.
- */
+/* A part header line without its CRLF ends the part header: there is
+ * nothing left to parse, and matching the same position again would never
+ * end. The search is bounded by length2, not by a NUL byte.
+ * A NUL byte in the line is invalid (RFC 7578) and would cut the value short.
+ * Both cases set header->error: the streaming path checks it and rejects the
+ * request instead of going on with the previous part's values. */
 #define CHECK_HEADER_LINE2(a,b)  h_len = sizeof(a) - 1; \
 if (!strncasecmp((char*)line2,a,h_len)) \
 { \
-	int crlf_pos = stringfind(line2, "\r\n"); \
-	if (crlf_pos <= (int)h_len) { \
+	long crlf_pos = stringnfind(line2, "\r\n", length2); \
+	if ( (crlf_pos <= (long)h_len) || (memchr(line2, '\0', (size_t)crlf_pos) != 0) ) { \
 		header->error = 1; \
-		break ; \
+		return length; \
 	} \
 	len = crlf_pos - h_len - 1; \
 	if ( header->b != 0) WebserverFree(header->b); \
@@ -765,3 +762,30 @@ bool checkHeaderComplete(HttpRequestHeader* header) {
 	return true;
 }
 
+
+/* Content-Disposition: form-data; name="x"; filename="name" -> name
+ * Returns 0 without a filename parameter. */
+char* getFormDataFilename(const char *content_disposition) {
+	uint32_t tmp, len;
+	char *name;
+
+	tmp = stringfind(content_disposition, "filename=");
+	if ( 0 == tmp ){
+		return 0;
+	}
+
+	tmp += 2; /* = und " stehen noch am anfang */
+	len = strlen( content_disposition );
+	/* Without a value behind "filename=" the subtraction below went
+	 * negative in uint32_t: a 4 GB allocation, or a zero sized one that
+	 * strncpy then wrote past. */
+	if ( len < tmp + 1 ){
+		len = 0;
+	}else{
+		len = len - tmp - 1; /* am ende ist noch ein " */
+	}
+	name = WebserverMalloc( len + 1);
+	strncpy( name , &content_disposition[ tmp ] , len );
+	name[len] = '\0';
+	return name;
+}

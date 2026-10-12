@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 #include <cstring>
+#include <unistd.h>
+#include <string>
 
 extern "C" {
 #include "webserver.h"
@@ -84,4 +86,89 @@ TEST_F(PostMultipartTest, EmptyPartLeavesZeroLengthSection) {
            "parsePostData subtracts 1 and 2 from it.";
 
     WebserverFreeHttpRequestHeader(part);
+}
+
+/*
+ * Multipart POST: a part header line without its CRLF.
+ *
+ * analyseFormDataLine() matched "Content-Disposition: " / "Content-Type: "
+ * and searched the rest of the buffer for the CRLF ending the line. When
+ * there was none - a body cut short, or a NUL byte in front of the CRLF,
+ * since the search went by strlen - it did not move on and matched the same
+ * position again, forever. One request was enough to take the event loop
+ * down.
+ *
+ * Each call runs in a child with an alarm, so a regression fails the test
+ * instead of hanging the suite.
+ */
+static void expectReturns(socket_info *sock, const char *data, unsigned int length) {
+    EXPECT_EXIT({
+        alarm(2);
+        char *body = (char*)malloc(length + 1);
+        memcpy(body, data, length);
+        body[length] = '\0';
+        HttpRequestHeader *part = WebserverMallocHttpRequestHeader();
+        int off = analyseFormDataLine(sock, body, length, part);
+        exit((off >= 0 && (unsigned int)off <= length) ? 0 : 1);
+    }, ::testing::ExitedWithCode(0), "");
+}
+
+TEST_F(PostMultipartTest, ContentDispositionWithoutCrlfReturns) {
+    const char body[] = "Content-Disposition: form-data; name=\"x\"";
+    expectReturns(sock, body, sizeof(body) - 1);
+}
+
+TEST_F(PostMultipartTest, ContentTypeWithoutCrlfReturns) {
+    const char body[] = "Content-Disposition: form-data; name=\"x\"\r\n"
+                        "Content-Type: text/plain";
+    expectReturns(sock, body, sizeof(body) - 1);
+}
+
+TEST_F(PostMultipartTest, NulBeforeCrlfReturns) {
+    const char body[] = "Content-Type: text\0plain\r\n\r\nhello\r\n";
+    expectReturns(sock, body, sizeof(body) - 1);
+}
+
+TEST_F(PostMultipartTest, EmptyValueReturns) {
+    const char body[] = "Content-Disposition: ";
+    expectReturns(sock, body, sizeof(body) - 1);
+}
+
+/*
+ * Multipart POST: the filename of an upload.
+ *
+ * getFormDataFilename() skips '="' behind "filename=" and drops the closing
+ * quote. With nothing or just a quote behind "filename=", the length came
+ * out negative in uint32_t - about 4 GB - and the allocation and strncpy
+ * that followed went with it.
+ */
+static std::string filenameOf(const char *content_disposition) {
+    char *name = getFormDataFilename(content_disposition);
+    if (name == 0) {
+        return "<none>";
+    }
+    std::string ret(name);
+    WebserverFree(name);
+    return ret;
+}
+
+TEST_F(PostMultipartTest, FilenameRegular) {
+    EXPECT_EQ(filenameOf("form-data; name=\"x\"; filename=\"a.txt\""), "a.txt");
+}
+
+TEST_F(PostMultipartTest, FilenameMissing) {
+    EXPECT_EQ(filenameOf("form-data; name=\"x\""), "<none>");
+    EXPECT_EQ(filenameOf(0), "<none>");
+}
+
+TEST_F(PostMultipartTest, FilenameEmptyQuoted) {
+    EXPECT_EQ(filenameOf("form-data; filename=\"\""), "");
+}
+
+TEST_F(PostMultipartTest, FilenameWithoutValue) {
+    EXPECT_EQ(filenameOf("form-data; filename="), "");
+}
+
+TEST_F(PostMultipartTest, FilenameOnlyOpeningQuote) {
+    EXPECT_EQ(filenameOf("form-data; filename=\""), "");
 }
