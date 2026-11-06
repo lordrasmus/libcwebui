@@ -1842,7 +1842,28 @@ void handleer( int a, short b, void *t ) {
 	}
 }
 
+/* Bytes held in a chunk list. Walks the nodes instead of the list's own
+ * iterator: the iterator is state inside the list, and this reads lists of
+ * other sockets (dumpSockets()), which must not be disturbed. */
+static uint32_t chunk_list_bytes(const list_t* liste) {
+	uint32_t ret = 0;
+	const struct list_entry* entry;
+	for (entry = liste->first; entry != NULL; entry = entry->next) {
+		const html_chunk* chunk = (const html_chunk*) entry->data;
+		/* The buffer has a fixed size (WebserverMallocHtml_chunk()), however
+		 * much of it is used */
+		ret += sizeof(html_chunk) + WebserverMallocedSize(chunk->text);
+	}
+	return ret;
+}
+
+/*
+ * Memory held by a socket, for the socket overview (dumpSockets()).
+ * Called with socks_mutex held; takes socket_mutex for the websocket frames,
+ * which the websocket output thread appends under that mutex.
+ */
 uint32_t getSocketInfoSize(socket_info* sock) {
+	const struct list_entry* entry;
 	uint32_t ret = sizeof(socket_info);
 
 	if (sock->header_buffer != 0){
@@ -1859,11 +1880,20 @@ uint32_t getSocketInfoSize(socket_info* sock) {
 	if(sock->websocket_guid != 0){
 		ret+= WEBSERVER_GUID_LENGTH+1;
 	}
+
+	/* Frames queued for sending */
+	PlatformLockMutex(&sock->socket_mutex);
+	ret += chunk_list_bytes(&sock->websocket_chunk_list);
+	PlatformUnlockMutex(&sock->socket_mutex);
 #endif
 
-	ws_list_iterator_start( &sock->output_list );
-	while( ws_list_iterator_hasnext ( &sock->output_list ) ){
-		output_struct* out = (output_struct*) ws_list_iterator_next( &sock->output_list );
+	/* Response being built */
+	ret += chunk_list_bytes(&sock->header_chunk_list);
+	ret += chunk_list_bytes(&sock->html_chunk_list);
+
+	/* Responses waiting to be sent */
+	for (entry = sock->output_list.first; entry != NULL; entry = entry->next) {
+		const output_struct* out = (const output_struct*) entry->data;
 		ret += out->header.buffer_size;
 		ret += out->body.buffer_size;
 	}

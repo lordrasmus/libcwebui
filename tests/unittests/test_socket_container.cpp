@@ -369,3 +369,35 @@ TEST(ExternFdShutdownTest, ShutdownReleasesButDoesNotClose) {
     GTEST_FLAG_SET(death_test_style, "threadsafe");
     EXPECT_EXIT(shutdown_with_extern_fd(), ::testing::ExitedWithCode(0), "");
 }
+
+/*
+ * getSocketInfoSize() feeds the socket overview. It left out the websocket
+ * frames waiting to be sent and the response being built, and it walked the
+ * output list with the list's own iterator - state inside the list, which it
+ * reset for whoever else was iterating.
+ */
+TEST(SocketInfoSizeTest, CountsQueuedWebsocketFrames) {
+    socket_info* sock = WebserverMallocSocketInfo();
+    uint32_t before = getSocketInfoSize(sock);
+
+    char frame[3000];
+    memset(frame, 'x', sizeof(frame));
+    sendWebsocketChunk(sock, (const unsigned char*)frame, sizeof(frame));
+
+    /* Two chunks of 2000 bytes each hold the 3000 */
+    EXPECT_GE(getSocketInfoSize(sock), before + 4000);
+
+    WebserverFreeSocketInfo(sock);
+}
+
+TEST(SocketInfoSizeTest, LeavesTheListIteratorsAlone) {
+    socket_info* sock = WebserverMallocSocketInfo();
+    struct list_entry somewhere = {};
+    sock->output_list.cur_iter = &somewhere;
+
+    getSocketInfoSize(sock);
+
+    EXPECT_EQ(sock->output_list.cur_iter, &somewhere);
+    sock->output_list.cur_iter = nullptr;
+    WebserverFreeSocketInfo(sock);
+}
