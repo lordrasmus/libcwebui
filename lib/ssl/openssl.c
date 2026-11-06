@@ -173,7 +173,13 @@ static SSL_CTX *build_ssl_ctx(void) {
 
 	sess_cache_mode = SSL_CTX_get_session_cache_mode(ctx);
 
-	SSL_CTX_set_mode(ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+	/* SSL_MODE_RELEASE_BUFFERS: OpenSSL keeps a read and a write record buffer
+	 * of about 17 KB each for the whole lifetime of a connection. An idle
+	 * keep-alive or websocket connection held ~40 KB, which made the memory
+	 * limit, not the descriptor limit, the cap on open connections. Released
+	 * buffers are allocated again with the next record; the malloc/free is
+	 * negligible next to encrypting that record. */
+	SSL_CTX_set_mode(ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER | SSL_MODE_RELEASE_BUFFERS);
 	SSL_CTX_set_read_ahead(ctx, 1);
 
 	int ops = 0;
@@ -396,6 +402,9 @@ int WebserverSSLInit(socket_info* s) {
 	pthread_mutex_unlock( &g_ctx_mutex );
 	if (s->ssl_context->ssl == 0){
 		LOG(CONNECTION_LOG, ERROR_LEVEL, s->socket,"%s", "WebserverSSLInit fehler");
+		WebserverFree(s->ssl_context);
+		s->ssl_context = 0;
+		return -1;
 	}
 
 	s->ssl_pending_bytes = 0;

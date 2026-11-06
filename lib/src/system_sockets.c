@@ -1321,8 +1321,10 @@ void handleServer(socket_info* sock) {
 #endif
 			PlatformSetNonBlocking(c);
 			client_sock = addClientSocket(c, 1);
+			/* The TLS session is set up with the first data from the client,
+			 * see handleer(). A connection that never sends anything then
+			 * costs no TLS state (~10 KB with OpenSSL). */
 			client_sock->run_ssl_accept = 1;
-			WebserverSSLInit(client_sock);
 
 
 		} else {
@@ -1674,6 +1676,10 @@ void handleer( int a, short b, void *t ) {
 			if(sock->use_ssl == 1){
 
 				if (sock->run_ssl_accept == 1) {
+					if ((sock->ssl_context == 0) && (WebserverSSLInit(sock) != 0)) {
+						WebserverConnectionManagerCloseRequest(sock);
+						return;
+					}
 					ret = WebserverSSLAccept(sock);
 					if (ret == CLIENT_NO_MORE_DATA) {
 						addEventSocketRead(sock);
