@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
+#include <chrono>
 #include <cstring>
 #include <sys/socket.h>
+#include <thread>
 #include <unistd.h>
 
 extern "C" {
@@ -170,5 +172,67 @@ TEST_F(SocketContainerTest, ClosingProxyBackendDetachesClient) {
     EXPECT_EQ(client->extern_handle_data_ptr, nullptr);
 
     WebserverConnectionManagerCloseRequest(client);
+    EXPECT_EQ(sockets_in_container(), 0);
+}
+
+/*
+ * Closing a websocket while the output thread is queueing a frame for it.
+ *
+ * The output thread finds the socket by GUID, which leaves its mutex locked,
+ * queues the frame and registers the socket for writing
+ * (insert_websocket_output_chunk()). The event loop closing the same socket
+ * waits for that mutex in deleteSocket(). It must not have unregistered the
+ * socket's events before that point: the frame would register it again, and
+ * the socket was then freed while still registered - with the select backend
+ * a pointer to freed memory in its table.
+ */
+class WebsocketCloseTest : public SocketContainerTest {
+protected:
+    static void SetUpTestSuite() {
+        SocketContainerTest::SetUpTestSuite();
+        static bool started = false;
+        if (!started) {
+            /* epoll for the registrations, and the websocket threads: closing
+             * a websocket queues a disconnect message for the input thread */
+            initEvents();
+            initWebsocketApi();
+            started = true;
+        }
+    }
+};
+
+TEST_F(WebsocketCloseTest, CloseUnregistersOnlyAfterTheSenderIsDone) {
+    static const char guid[] = "close-order-test";
+
+    socket_info* sock = make_sock();
+    sock->isWebsocket = 1;
+    sock->websocket_guid = (char*)WebserverMalloc(WEBSERVER_GUID_LENGTH + 1);
+    snprintf(sock->websocket_guid, WEBSERVER_GUID_LENGTH + 1, "%s", guid);
+    sock->header = WebserverMallocHttpRequestHeader();
+    sock->header->url = (char*)WebserverMalloc(sizeof("NoSuchSocket"));
+    strcpy(sock->header->url, "NoSuchSocket");
+    addSocketContainer(sock);
+    addSocketByGUID(sock);
+    addEventSocketRead(sock);
+    ASSERT_EQ(sock->registered, 1);
+
+    /* What the output thread holds while it queues a frame */
+    ASSERT_EQ(getSocketByGUID(guid), sock);
+    ASSERT_EQ(sock->closeSocket, 0);
+
+    std::thread closer([sock] { WebserverConnectionManagerCloseRequest(sock); });
+    /* Give the closer time to run into the socket mutex */
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+    EXPECT_EQ(sock->registered, 1)
+        << "events were unregistered while another thread still held the socket";
+
+    /* The rest of what the output thread does, then let the close finish */
+    activateEventSocketWrite(sock);
+    PlatformUnlockMutex(&sock->socket_mutex);
+    closer.join();
+
+    /* Gone for every other thread: no frame can be queued for it any more */
+    EXPECT_EQ(getSocketByGUID(guid), nullptr);
     EXPECT_EQ(sockets_in_container(), 0);
 }

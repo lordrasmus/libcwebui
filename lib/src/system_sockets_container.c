@@ -106,6 +106,9 @@ void deleteSocket(socket_info* sock) {
 	#warning mal tracen wo das aufgerufen wird
 #endif
 
+	/* Under socket_mutex: sendWebsocketFrameReal() checks it under the same
+	 * mutex, so a thread that still got hold of the socket sees it */
+	sock->closeSocket = 1;
 	sock_list_unlink(sock);
 #ifdef WEBSERVER_USE_WEBSOCKETS
 	if (sock->isWebsocket == 1) {

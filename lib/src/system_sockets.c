@@ -259,7 +259,7 @@ void reCopyHeaderBuffer(socket_info* sock, unsigned int end) {
 void WebserverConnectionManagerCloseRequest(socket_info* sock) {
 
 	sock->active = 0;
-	sock->closeSocket = 1;
+	/* closeSocket is set in deleteSocket(), under the socket mutex */
 #ifdef WEBSERVER_USE_WEBSOCKETS
 	if ( sock->isWebsocket == 1 ) {
 		/* laenge 1 um keinen malloc mit 0 bytes zu machen */
@@ -273,8 +273,17 @@ void WebserverConnectionManagerCloseRequest(socket_info* sock) {
 	}
 #endif
 
-	delEventSocketAll(sock);
+	/* Remove the socket from the container and the GUID tree before its
+	 * events are unregistered, not after. The websocket output thread finds
+	 * a socket by GUID and, holding its mutex, queues a frame and registers
+	 * it for writing. In the old order that could happen between the
+	 * unregistration and deleteSocket() (which waits for that mutex): the
+	 * socket was registered again and then freed. epoll drops the descriptor
+	 * on close, but the select backend kept a pointer to the freed socket.
+	 * Once deleteSocket() returns, no other thread can reach the socket any
+	 * more, so the unregistration below is final. */
 	deleteSocket(sock);
+	delEventSocketAll(sock);
 
 	WebserverCloseSocket(sock);
 
