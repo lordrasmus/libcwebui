@@ -24,7 +24,16 @@ SPDX-License-Identifier: MPL-2.0
 #include <dmalloc/dmalloc.h>
 #endif
 
-static list_t sock_list;
+/* Listeners, accepted clients and proxy backends (sockets injected with
+ * WebserverInjectExternFD() are not part of it).
+ * Intrusive doubly linked list through socket_info::sock_list_prev/next,
+ * so deleteSocket() unlinks in O(1) instead of searching the whole list,
+ * and a connection costs no extra list node. Protected by socks_mutex.
+ *
+ * New sockets go to the tail: a proxy backend is always created after its
+ * client and so stays behind it, see deleteAllSockets(). */
+static socket_info *sock_list_head;
+static socket_info *sock_list_tail;
 static rb_red_blk_tree *sock_tree;
 static WS_MUTEX socks_mutex;
 
@@ -54,22 +63,42 @@ static int SockComp(const void* a, const void* b) {
 	return 0;
 }
 
+/* Caller holds socks_mutex. Safe for a socket that is not in the list. */
+static void sock_list_unlink(socket_info* sock) {
+	if (sock->in_sock_list == 0) {
+		return;
+	}
+	if (sock->sock_list_prev != NULL) {
+		sock->sock_list_prev->sock_list_next = sock->sock_list_next;
+	} else {
+		sock_list_head = sock->sock_list_next;
+	}
+	if (sock->sock_list_next != NULL) {
+		sock->sock_list_next->sock_list_prev = sock->sock_list_prev;
+	} else {
+		sock_list_tail = sock->sock_list_prev;
+	}
+	sock->sock_list_prev = NULL;
+	sock->sock_list_next = NULL;
+	sock->in_sock_list = 0;
+}
+
 void initSocketContainer(void) {
 	PlatformCreateMutex(&socks_mutex);
 	sock_tree = RBTreeCreate(SockComp, SockDest, SockDest, SockPrint, SockInfoPrint);
-	ws_list_init(&sock_list);
+	sock_list_head = NULL;
+	sock_list_tail = NULL;
 }
 
 void freeSocketContainer(void) {
 	deleteAllSockets();
-	ws_list_destroy(&sock_list);
 	if ( sock_tree != 0 ){
 		RBTreeDestroy(sock_tree);
 	}
 }
 
 void deleteSocket(socket_info* sock) {
-	
+
 	PlatformLockMutex(&socks_mutex);
 
 	PlatformLockMutex(&sock->socket_mutex);
@@ -77,7 +106,7 @@ void deleteSocket(socket_info* sock) {
 	#warning mal tracen wo das aufgerufen wird
 #endif
 
-	ws_list_delete(&sock_list, sock);
+	sock_list_unlink(sock);
 #ifdef WEBSERVER_USE_WEBSOCKETS
 	if (sock->isWebsocket == 1) {
 		rb_red_blk_node* node;
@@ -97,7 +126,17 @@ void deleteSocket(socket_info* sock) {
 
 void addSocketContainer(socket_info* sock) {
 	PlatformLockMutex(&socks_mutex);
-	ws_list_append(&sock_list, sock,0);
+	if (sock->in_sock_list == 0) {
+		sock->sock_list_prev = sock_list_tail;
+		sock->sock_list_next = NULL;
+		if (sock_list_tail != NULL) {
+			sock_list_tail->sock_list_next = sock;
+		} else {
+			sock_list_head = sock;
+		}
+		sock_list_tail = sock;
+		sock->in_sock_list = 1;
+	}
 	PlatformUnlockMutex(&socks_mutex);
 }
 
@@ -132,31 +171,32 @@ socket_info* getSocketByGUID(const char* guid) {
 
 void deleteAllSockets(void) {
 	socket_info* sock;
-	list_t del_list;
-
-	ws_list_init(&del_list);
 
 	PlatformLockMutex(&socks_mutex);
-
-	ws_list_iterator_start(&sock_list);
-	while (ws_list_iterator_hasnext(&sock_list)) {
-		sock = (socket_info*) ws_list_iterator_next(&sock_list);
+	for (sock = sock_list_head; sock != NULL; sock = sock->sock_list_next) {
 		PlatformShutdown(sock->socket);
-		ws_list_append(&del_list, sock,0);
 	}
-	ws_list_iterator_stop(&sock_list);
-
 	PlatformUnlockMutex(&socks_mutex);
 
-	ws_list_iterator_start(&del_list);
-	while (ws_list_iterator_hasnext(&del_list)) {
-		sock = (socket_info*) ws_list_iterator_next(&del_list);
+	/* Always close the current head instead of walking a snapshot: closing a
+	 * proxy client also frees its backend socket, which a snapshot would
+	 * still hold and close a second time. The backend sits behind its client
+	 * (tail insertion), so it is normally gone before it would come up here;
+	 * reverse_proxy_cleanup() copes with the other order as well. Unlinking
+	 * first guarantees progress; the unlink in deleteSocket() is then a
+	 * no-op. */
+	for (;;) {
+		PlatformLockMutex(&socks_mutex);
+		sock = sock_list_head;
+		if (sock != NULL) {
+			sock_list_unlink(sock);
+		}
+		PlatformUnlockMutex(&socks_mutex);
+		if (sock == NULL) {
+			break;
+		}
 		WebserverConnectionManagerCloseRequest(sock);
 	}
-	ws_list_iterator_stop(&del_list);
-
-	ws_list_destroy(&del_list);
-
 }
 
 unsigned long dumpSocketsSize(int *count) {
@@ -166,12 +206,10 @@ unsigned long dumpSocketsSize(int *count) {
 
 	PlatformLockMutex(&socks_mutex);
 
-	ws_list_iterator_start(&sock_list);
-	while ((sock = (socket_info*) ws_list_iterator_next(&sock_list))) {
+	for (sock = sock_list_head; sock != NULL; sock = sock->sock_list_next) {
 		size += getSocketInfoSize(sock);
 		i++;
 	}
-	ws_list_iterator_stop(&sock_list);
 	if (count != 0){
 		*count = i;
 	}
@@ -188,9 +226,8 @@ void dumpSockets(http_request* s) {
 	const char *ws_str;
 
 	PlatformLockMutex(&socks_mutex);
-	ws_list_iterator_start(&sock_list);
 
-	while ((sock = (socket_info*) ws_list_iterator_next(&sock_list))) {
+	for (sock = sock_list_head; sock != NULL; sock = sock->sock_list_next) {
 		/* Determine socket type */
 		if (sock->server == 1) {
 			type_str = "Server";
@@ -230,7 +267,6 @@ void dumpSockets(http_request* s) {
 			ssl_str, close_str, ws_str);
 	}
 
-	ws_list_iterator_stop(&sock_list);
 	PlatformUnlockMutex(&socks_mutex);
 }
 

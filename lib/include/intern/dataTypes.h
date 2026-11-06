@@ -327,9 +327,16 @@ typedef struct post_stream_part {
 #define POST_STREAM_STATE_EPILOGUE			4	/* Rest nach dem End Boundary         */
 #define POST_STREAM_STATE_ERROR				5
 
-typedef struct {
+typedef struct socket_info_s {
 	int socket;
-	
+
+	/* Links of the socket container list (system_sockets_container.c), kept
+	 * in the socket itself so that removing a socket needs no search and
+	 * adding one no allocation. Only touched under socks_mutex. */
+	struct socket_info_s *sock_list_prev;
+	struct socket_info_s *sock_list_next;
+	char in_sock_list;
+
 	int reverse_proxy_checked;
 	int reverse_proxy_error;
 	

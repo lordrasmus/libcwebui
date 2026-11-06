@@ -2073,6 +2073,10 @@ static int proxy_connect_backend(reverse_proxy_connection_t* proxy) {
     proxy->backend_sock->socket = sock_fd;
     proxy->backend_sock->active = 1;
     proxy->backend_sock->client = 1;
+    /* Back reference from the start, not only once SEND_TO_BACKEND installs
+     * the handler: if the backend socket is ever released before its client,
+     * reverse_proxy_cleanup() must find the connection to detach it. */
+    proxy->backend_sock->extern_handle_data_ptr = proxy;
 
     /* Socket Container hinzufügen für Event-Handling */
     addSocketContainer(proxy->backend_sock);
@@ -2949,6 +2953,15 @@ void reverse_proxy_cleanup(socket_info* s) {
     }
     
     reverse_proxy_connection_t* proxy = (reverse_proxy_connection_t*)s->extern_handle_data_ptr;
-    proxy_cleanup_connection(proxy);
     s->extern_handle_data_ptr = NULL;
+
+    /* Released through the backend socket itself: the caller has already
+     * closed its descriptor and frees it after this returns. Releasing it
+     * once more in proxy_cleanup_connection() would close the descriptor
+     * twice and free the socket_info twice. */
+    if (proxy->backend_sock == s) {
+        proxy->backend_sock = NULL;
+        proxy->backend_fd = -1;
+    }
+    proxy_cleanup_connection(proxy);
 }
