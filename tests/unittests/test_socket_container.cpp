@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <cerrno>
 #include <chrono>
 #include <cstring>
 #include <fcntl.h>
@@ -400,4 +401,159 @@ TEST(SocketInfoSizeTest, LeavesTheListIteratorsAlone) {
     EXPECT_EQ(sock->output_list.cur_iter, &somewhere);
     sock->output_list.cur_iter = nullptr;
     WebserverFreeSocketInfo(sock);
+}
+
+/*
+ * The per-address limit on the real accept path: handleServer() on a
+ * listener on 127.0.0.1, clients connecting from there.
+ */
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+class AcceptLimitTest : public WebsocketCloseTest {
+protected:
+    socket_info* listener = nullptr;
+    int port = 0;
+    std::vector<int> clients;
+    int saved_limit = 0;
+
+    void SetUp() override {
+        WebsocketCloseTest::SetUp();
+        saved_limit = connLimitGetMax();
+
+        int fd = socket(AF_INET, SOCK_STREAM, 0);
+        ASSERT_GE(fd, 0);
+        struct sockaddr_in a = {};
+        a.sin_family = AF_INET;
+        a.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        ASSERT_EQ(bind(fd, (struct sockaddr*)&a, sizeof(a)), 0);
+        ASSERT_EQ(listen(fd, 256), 0);
+        socklen_t len = sizeof(a);
+        getsockname(fd, (struct sockaddr*)&a, &len);
+        port = ntohs(a.sin_port);
+        fcntl(fd, F_SETFL, O_NONBLOCK);
+
+        listener = WebserverMallocSocketInfo();
+        listener->socket = fd;
+        listener->server = 1;
+    }
+
+    void TearDown() override {
+        for (int c : clients) {
+            close(c);
+        }
+        close(listener->socket);
+        WebserverFreeSocketInfo(listener);
+        connLimitSetMax(saved_limit);
+        WebsocketCloseTest::TearDown();     /* closes the accepted ones */
+    }
+
+    int connect_client() {
+        int c = socket(AF_INET, SOCK_STREAM, 0);
+        struct sockaddr_in a = {};
+        a.sin_family = AF_INET;
+        a.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        a.sin_port = htons(port);
+        EXPECT_EQ(connect(c, (struct sockaddr*)&a, sizeof(a)), 0);
+        clients.push_back(c);
+        return c;
+    }
+
+    /* Whether the server has closed the connection of client c */
+    static bool closed_by_server(int c) {
+        char b;
+        struct timeval tv = { 0, 200 * 1000 };
+        setsockopt(c, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+        ssize_t r = recv(c, &b, 1, MSG_PEEK);
+        return r == 0 || (r < 0 && errno == ECONNRESET);
+    }
+};
+
+TEST_F(AcceptLimitTest, FullGroupClosesTheLongestIdle) {
+    connLimitSetMax(4);
+    int first = connect_client();
+    int second = connect_client();
+    for (int i = 0; i < 4; i++) {
+        connect_client();
+    }
+    handleServer(listener);
+
+    EXPECT_EQ(sockets_in_container(), 4);
+    EXPECT_TRUE(closed_by_server(first));
+    EXPECT_TRUE(closed_by_server(second));
+    EXPECT_FALSE(closed_by_server(clients.back()));
+}
+
+TEST_F(AcceptLimitTest, RefusedWhenEveryConnectionHasInputWaiting) {
+    connLimitSetMax(2);
+    int a = connect_client();
+    int b = connect_client();
+    handleServer(listener);
+    ASSERT_EQ(sockets_in_container(), 2);
+
+    /* Both have sent part of a request that has not been read yet: they are
+     * about to work, neither may be closed for a newcomer */
+    ASSERT_EQ(send(a, "GET", 3, 0), 3);
+    ASSERT_EQ(send(b, "GET", 3, 0), 3);
+    int third = connect_client();
+    handleServer(listener);
+
+    EXPECT_EQ(sockets_in_container(), 2);
+    EXPECT_FALSE(closed_by_server(a));
+    EXPECT_FALSE(closed_by_server(b));
+    char answer[64] = {};
+    struct timeval tv = { 1, 0 };
+    setsockopt(third, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    ASSERT_GT(recv(third, answer, sizeof(answer) - 1, 0), 0);
+    EXPECT_EQ(strncmp(answer, "HTTP/1.1 503", 12), 0) << answer;
+}
+
+TEST_F(AcceptLimitTest, LoweredLimitTrimsOnTheNextConnection) {
+    connLimitSetMax(6);
+    for (int i = 0; i < 6; i++) {
+        connect_client();
+    }
+    handleServer(listener);
+    ASSERT_EQ(sockets_in_container(), 6);
+
+    connLimitSetMax(3);
+    connect_client();
+    handleServer(listener);
+    EXPECT_EQ(sockets_in_container(), 3);
+}
+
+TEST_F(AcceptLimitTest, OneRoundTakesABoundedNumber) {
+    /* Without the limit, so nothing is closed: only the per-round cap acts */
+    connLimitSetMax(0);
+    for (int i = 0; i < 70; i++) {
+        connect_client();
+    }
+    handleServer(listener);
+    EXPECT_EQ(sockets_in_container(), 64);
+    handleServer(listener);
+    EXPECT_EQ(sockets_in_container(), 70);
+}
+
+TEST_F(AcceptLimitTest, IdleOneFoundBehindManyWithInputWaiting) {
+    /* The nine oldest have input waiting, only the newest is idle: it must
+     * still be found, every member is looked at once */
+    connLimitSetMax(10);
+    for (int i = 0; i < 10; i++) {
+        connect_client();
+    }
+    handleServer(listener);
+    ASSERT_EQ(sockets_in_container(), 10);
+    for (int i = 0; i < 9; i++) {
+        ASSERT_EQ(send(clients[i], "GET", 3, 0), 3);
+    }
+    int idle = clients[9];
+    int newcomer = connect_client();
+    handleServer(listener);
+
+    EXPECT_EQ(sockets_in_container(), 10);
+    EXPECT_TRUE(closed_by_server(idle));
+    EXPECT_FALSE(closed_by_server(newcomer));
+    for (int i = 0; i < 9; i++) {
+        EXPECT_FALSE(closed_by_server(clients[i])) << "client " << i;
+    }
 }

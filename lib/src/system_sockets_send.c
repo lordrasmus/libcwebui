@@ -38,13 +38,26 @@ SOCKET_SEND_STATUS WebserverSend(socket_info* sock, const unsigned char *buffer,
 #ifdef WEBSERVER_USE_SSL
 	if (sock->use_ssl == 1) {
 		SOCKET_SEND_STATUS status;
-		status = WebserverSSLSendNonBlocking(sock, buffer, len, flags, bytes_send);
+		/* Always with a counter of our own: progress is what tells the
+		 * per-address limit that the connection is in use, and the caller
+		 * may not ask for the count */
+		size_t sent = 0;
+		status = WebserverSSLSendNonBlocking(sock, buffer, len, flags, &sent);
+		if (sent > 0) {
+			CONN_LIMIT_NOTE_IO(sock);
+		}
+		if (likely(bytes_send != 0)){
+			*bytes_send = sent;
+		}
 		return status;
 	}
 #endif
 
 
 	ret = PlatformSendSocketNonBlocking(sock->socket, buffer, len, flags);
+	if (ret > 0) {
+		CONN_LIMIT_NOTE_IO(sock);
+	}
 	if (likely(ret == len)) {
 		if (likely(bytes_send != 0)){
 			*bytes_send = ret;

@@ -327,6 +327,20 @@ typedef struct post_stream_part {
 #define POST_STREAM_STATE_EPILOGUE			4	/* Rest nach dem End Boundary         */
 #define POST_STREAM_STATE_ERROR				5
 
+/*
+ * Source address of a client, reduced to what the per-address connection
+ * limit counts as one client (system_sockets_container.c): IPv4 as
+ * ::ffff:a.b.c.d, global IPv6 as its /64, other IPv6 in full. valid is 0 when
+ * the platform does not supply the address; such a connection is not
+ * limited.
+ */
+typedef struct {
+	uint8_t addr[16];
+	uint8_t valid;
+} ws_peer_key;
+
+struct conn_group_s;
+
 typedef struct socket_info_s {
 	int socket;
 
@@ -336,6 +350,16 @@ typedef struct socket_info_s {
 	struct socket_info_s *sock_list_prev;
 	struct socket_info_s *sock_list_next;
 	char in_sock_list;
+
+	/* Per-address connection limit (system_sockets_container.c). The group
+	 * of all connections from the same source, linked through grp_prev/next.
+	 * last_io orders them by their last transfer. Only touched in the event
+	 * loop thread. */
+	ws_peer_key peer_key;
+	struct conn_group_s *conn_group;
+	struct socket_info_s *grp_prev;
+	struct socket_info_s *grp_next;
+	uint64_t last_io;
 
 	int reverse_proxy_checked;
 	int reverse_proxy_error;

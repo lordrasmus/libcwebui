@@ -38,6 +38,10 @@ void initConfig(void) {
 	setConfigInt( "max_post_memory_total", 16 * 1024 * 1024);
 	setConfigInt( "use_csp",0);
 	setConfigInt( "reload_py_modules",0);
+	/* Connections one source address may hold at the same time; 0 = no
+	   limit. The next one closes the longest idle connection of that
+	   address, see system_sockets_container.c */
+	setConfigInt( "max_connections_per_ip", 64);
 	#ifdef WEBSERVER_SESSION_TIMEOUT
 		setConfigInt( "session_timeout" , WEBSERVER_SESSION_TIMEOUT );
 	#else
@@ -72,6 +76,12 @@ void setConfigInt(const char* name, const int value) {
 	PlatformLockMutex(&config_v_store->lock);
 	var = newVariable(config_v_store, name, 0 );
 	setWSVariableInt(var, value);
+	/* Read on every accepted connection - kept in a plain variable so that
+	   accept() needs no lookup by name. Under the store's lock, so that two
+	   concurrent setters cannot leave store and copy disagreeing. */
+	if (strcmp(name, "max_connections_per_ip") == 0) {
+		connLimitSetMax(value);
+	}
 	PlatformUnlockMutex(&config_v_store->lock);
 }
 

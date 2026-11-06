@@ -9,11 +9,16 @@ extern "C" {
 class ServerConfigTest : public ::testing::Test {
 protected:
     void SetUp() override {
+        /* A fresh store for the defaults - replacing the one from test_main,
+           not dropping it (the next test still needs a live store) */
+        freeConfig();
         initConfig();
     }
 
     void TearDown() override {
+        /* Leave the defaults behind, not what this test set */
         freeConfig();
+        initConfig();
     }
 };
 

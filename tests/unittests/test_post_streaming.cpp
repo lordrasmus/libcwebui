@@ -744,18 +744,16 @@ TEST_F(PostStreamingTest, UnregisteredUrlHasNoHandler) {
 class PostBudgetTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        /* Der Config-Store ist global und wird von anderen Tests mitbenutzt.
-           Darum nur einmal anlegen und nie freigeben - ein freeConfig() hier
-           laesst nachfolgende Tests auf einen toten Store zugreifen. */
-        static bool config_ready = false;
-        if (!config_ready) {
-            initConfig();
+        /* Der Config-Store kommt aus test_main.cpp ( einmal fuer den ganzen
+           Lauf ). */
+        static bool budget_ready = false;
+        if (!budget_ready) {
             /* Das Budget hat einen eigenen Mutex. Ohne diesen Aufruf laeuft
                postBufferReserve() auf einen nie initialisierten Mutex - unter
                Linux faellt das nur nicht auf, weil ein nullinitialisierter
                pthread_mutex zufaellig gueltig ist. */
             initPostBufferBudget();
-            config_ready = true;
+            budget_ready = true;
         }
         /* Reste aus anderen Tests abraeumen - das Budget ist ebenfalls global */
         postBufferRelease(postBufferAllocated());
@@ -763,6 +761,10 @@ protected:
 
     void TearDown() override {
         postBufferRelease(postBufferAllocated());
+        /* Die Tests setzen max_post_memory_total um; nachfolgende Tests sollen
+           wieder die Defaults sehen */
+        freeConfig();
+        initConfig();
     }
 };
 

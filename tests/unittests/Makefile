@@ -100,7 +100,8 @@ TEST_FILES= \
 	test_memory_overflow.cpp \
 	test_session_range.cpp \
 	test_error_pages.cpp \
-	test_socket_container.cpp
+	test_socket_container.cpp \
+	test_connection_limit.cpp
 
 C_OBJS=$(C_FILES:.c=.o)
 C_DEPS=$(C_FILES:.c=.d)

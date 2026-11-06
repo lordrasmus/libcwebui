@@ -207,61 +207,54 @@ int		PlatformSelect ( void )
 
 #endif /* SELECT_HELPER_FUNCS */
 
+/*
+ * Accept a connection on the listener sock. The peer's address, as text,
+ * port and key for the per-address connection limit, is left in the
+ * listener's socket_info for handleServer() to copy.
+ *
+ * The address comes with accept() itself; a getpeername() afterwards was a
+ * second system call per connection.
+ */
 int		PlatformAccept(socket_info* sock, unsigned int *port)
 {
-    int ret=0;
-	char* ret2;
+	struct sockaddr_storage clientaddr;
+	socklen_t addrlen = sizeof(clientaddr);
+	int ret;
 
+	memset(&sock->peer_key, 0, sizeof(sock->peer_key));
+	sock->client_ip_str[0] = '\0';
+	*port = 0;
 #ifdef WEBSERVER_USE_IPV6
-    struct sockaddr_in6 clientaddr;
-#else
-    struct sockaddr_in clientaddr;
+	sock->client_v6_client = 0;
 #endif
 
+	ret = accept(sock->socket, (struct sockaddr*) &clientaddr, &addrlen);
+	if (ret < 0) {
+		/* errno is left as accept() set it, handleServer() checks EMFILE */
+		return ret;
+	}
+
+	if (clientaddr.ss_family == AF_INET) {
+		struct sockaddr_in *a = (struct sockaddr_in*) &clientaddr;
+		*port = ntohs(a->sin_port);
+		inet_ntop(AF_INET, &a->sin_addr, sock->client_ip_str, sizeof(sock->client_ip_str));
+		connLimitKeyFromAddress(&a->sin_addr, 4, &sock->peer_key);
+	} else if (clientaddr.ss_family == AF_INET6) {
+		struct sockaddr_in6 *a = (struct sockaddr_in6*) &clientaddr;
+		*port = ntohs(a->sin6_port);
+		/* Without WEBSERVER_USE_IPV6 the text buffer is too small for it and
+		 * stays empty; the server then only listens on IPv4 anyway */
+		inet_ntop(AF_INET6, &a->sin6_addr, sock->client_ip_str, sizeof(sock->client_ip_str));
 #ifdef WEBSERVER_USE_IPV6
-    sock->v6_client=1;
+		sock->client_v6_client = IN6_IS_ADDR_V4MAPPED(&a->sin6_addr) ? 0 : 1;
 #endif
+		connLimitKeyFromAddress(&a->sin6_addr, 16, &sock->peer_key);
+	} else {
+		/* Unknown address type: counted in one shared group, not unlimited */
+		connLimitKeyFromAddress(NULL, 0, &sock->peer_key);
+	}
 
-    socklen_t addrlen=sizeof ( clientaddr );
-
-    ret = accept ( sock->socket, NULL, 0 );
-    if ( ret > 0 )
-    {
-
-		if ( 0 == getpeername ( ret, ( struct sockaddr * ) &clientaddr, &addrlen ) ){
-			*port = ntohl(clientaddr.sin_port);
-		}else{
-			*port = 0;
-			printf("Error: getpeername %m\n");
-		}
-
-
-#ifdef WEBSERVER_USE_IPV6
-        if ( inet_ntop ( AF_INET6, &clientaddr.sin6_addr, sock->ip_str, sizeof ( sock->ip_str ) ) )
-        {
-            if ( clientaddr.sin6_addr.__in6_u.__u6_addr32[0] == 0 )
-            {
-                if ( clientaddr.sin6_addr.__in6_u.__u6_addr32[1] == 0 )
-                {
-                    if ( clientaddr.sin6_addr.__in6_u.__u6_addr32[2] == 0xFFFF0000 )
-                    {
-                        sock->v6_client = 0;
-                    }
-                }
-            }
-         
-#else
-		*port = clientaddr.sin_port;
-		ret2 = (char*)inet_ntop ( AF_INET, &clientaddr.sin_addr, sock->client_ip_str, sizeof ( sock->client_ip_str ) );
-        if ( ret2 != 0  )
-        {
-#endif
-            /*printf("Client address is %s\n", sock->ip_str);
-            printf("Client port is %d\n", ntohs(clientaddr.sin6_port));*/
-        }
-    }
-
-    return ret;
+	return ret;
 }
 
 int     PlatformSendSocket ( int socket, const unsigned char *buf, SIZE_TYPE len, int flags )

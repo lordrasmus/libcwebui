@@ -81,6 +81,9 @@ void WebserverFreeSocketInfo(socket_info* sock) {
 	 * and reaches this function through the recursive call. */
 	eventSocketFreed(sock);
 
+	/* Leave the per-address connection group, if it was counted in one */
+	connLimitDetach(sock);
+
 	/* Bricht die Verbindung mitten im Upload ab, muss der Streaming Handler
 	 * noch die Gelegenheit bekommen seine Teildatei aufzuraeumen. */
 	postStreamFinish(sock, 0);

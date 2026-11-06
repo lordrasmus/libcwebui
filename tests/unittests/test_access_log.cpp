@@ -38,14 +38,7 @@ protected:
     http_request req;
 
     void SetUp() override {
-        /* sendHeader() reads the config. The store is global and shared with
-           other tests: create it once and never free it, as test_post_streaming
-           does - a freeConfig() here leaves later tests on a dead store. */
-        static bool config_ready = false;
-        if (!config_ready) {
-            initConfig();
-            config_ready = true;
-        }
+        /* sendHeader() reads the config; the store comes from test_main.cpp */
         sock = WebserverMallocSocketInfo();
         sock->header = WebserverMallocHttpRequestHeader();
         sock->header->isHttp1_1 = 1;

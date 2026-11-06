@@ -1064,6 +1064,8 @@ static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendFileSystem_sendfile(soc
 	PlatformCloseDataStream();
 
 	if (send > 0) {
+		/* Bypasses WebserverSend(), so note the transfer here */
+		CONN_LIMIT_NOTE_IO(sock);
 		file->file_send_pos += send;
 
 		if ( file->file_info->DataLenght > file->file_send_pos ){
@@ -1288,12 +1290,148 @@ static void accept_reject_one(socket_info* sock) {
 }
 #endif
 
+/*
+ * Whether input for a connection has already arrived but not been handled:
+ * in the kernel buffer, in the TLS layer, or a complete request header
+ * waiting in the header buffer (pipelined). Such a connection is about to
+ * work, even if its state still says "waiting". One system call; asked only
+ * for the connection picked to be closed, not for every member.
+ */
+static int conn_limit_has_pending_input(socket_info* sock) {
+	/* The header buffer only while the HTTP parser owns it: after a proxy
+	 * took the connection over, the already forwarded header stays in it */
+	if ((sock->extern_handle == NULL) &&
+	    (sock->header_buffer != NULL) && (sock->header_buffer_pos >= 4)) {
+		uint32_t i;
+		for (i = 0; i + 4 <= sock->header_buffer_pos; i++) {
+			if (memcmp(&sock->header_buffer[i], "\r\n\r\n", 4) == 0) {
+				return 1;
+			}
+		}
+	}
+#ifdef WEBSERVER_USE_SSL
+	if ((sock->use_ssl == 1) && (WebserverSSLPending(sock) > 0)) {
+		return 1;
+	}
+#endif
+#if defined(MSG_PEEK) && defined(MSG_DONTWAIT)
+	{
+		char byte;
+		if (recv(sock->socket, &byte, 1, MSG_PEEK | MSG_DONTWAIT) > 0) {
+			return 1;
+		}
+	}
+#endif
+	return 0;
+}
+
+/*
+ * Per-address connection limit for the connection just accepted on c from
+ * the address in listener->peer_key: if its group is full, close the
+ * connection of that address whose last transfer is the oldest among those
+ * the server only waits on. Returns 1 if the new connection may be added;
+ * otherwise it has been turned away and closed.
+ *
+ * Refusing happens only when every connection of the address is busy
+ * (response, streamed upload, websocket, proxy) or has input waiting. What
+ * counts as busy is decided by connLimitIsEvictable().
+ */
+static int conn_limit_admit(socket_info* listener, struct conn_group_s* group, int c) {
+	static time_t last_closed_log = 0;
+	static time_t last_refused_log = 0;
+	int limit = connLimitGetMax();
+	int closed = 0;
+	/* Members found with input waiting get a last_io after this; meeting
+	 * one again as the oldest means every candidate has been looked at */
+	const uint64_t start_seq = g_conn_io_seq;
+	time_t now;
+
+	if (limit <= 0) {
+		return 1;
+	}
+
+	/* A loop and not a single check: after the limit was lowered at run time
+	 * a group can be above it, and each new connection trims it - at the
+	 * cost of a walk over the group per closed connection, acceptable for a
+	 * rare change of the setting. The group survives its last member being
+	 * closed here, the accept in progress holds it (connLimitAcquire()). */
+	while (connLimitCount(group) >= (uint32_t)limit) {
+		socket_info* victim = connLimitPickVictim(group);
+		if ((victim == NULL) || (victim->last_io > start_seq)) {
+			break;
+		}
+		if (conn_limit_has_pending_input(victim)) {
+			/* Its request is here, it just has not been read yet: count it
+			 * as active and look at the next one */
+			CONN_LIMIT_NOTE_IO(victim);
+			continue;
+		}
+		WebserverConnectionManagerCloseRequest(victim);
+		closed++;
+	}
+
+	if (connLimitCount(group) < (uint32_t)limit) {
+		if (closed > 0) {
+			/* At most one line per second, a flood would bury everything */
+			now = time(NULL);
+			if (now != last_closed_log) {
+				last_closed_log = now;
+				LOG(CONNECTION_LOG, NOTICE_LEVEL, c,
+				    "%s reached %d connections, closed %d idle",
+				    listener->client_ip_str, limit, closed);
+			}
+		}
+		return 1;
+	}
+
+	/* Same as accept_reject_one(): a status line only on a plain port, on
+	 * the TLS port the peer expects a handshake. Non-blocking, so that a
+	 * client not reading cannot hold up the accept loop. */
+	PlatformSetNonBlocking(c);
+#ifdef WEBSERVER_USE_SSL
+	if (listener->use_ssl == 0)
+#endif
+	{
+		static const char busy[] =
+			"HTTP/1.1 503 Service Unavailable\r\n"
+			"Connection: close\r\n"
+			"Content-Length: 0\r\n"
+			"\r\n";
+#ifdef MSG_NOSIGNAL
+		(void)PlatformSendSocketNonBlocking(c, (const unsigned char*) busy, sizeof(busy) - 1, MSG_NOSIGNAL);
+#else
+		(void)PlatformSendSocketNonBlocking(c, (const unsigned char*) busy, sizeof(busy) - 1, 0);
+#endif
+	}
+	PlatformClose(c);
+
+	now = time(NULL);
+	if (now != last_refused_log) {
+		last_refused_log = now;
+		LOG(CONNECTION_LOG, WARNING_LEVEL, c,
+		    "%s has %d connections, all busy or with input waiting - refusing more",
+		    listener->client_ip_str, limit);
+	}
+	return 0;
+}
+
+/* Connections taken per call of handleServer(). Under a constant stream of
+ * new connections the loop would otherwise never end, and the connections
+ * already open would not be served. The listener is level triggered in all
+ * event backends, so whatever is left in the queue is reported again. */
+#define ACCEPTS_PER_ROUND	64
+
 void handleServer(socket_info* sock) {
 	int c;
 	unsigned int port;
 	socket_info *client_sock;
+	struct conn_group_s *group;
+	int round;
 
-	while (1) {
+	for (round = 0; round < ACCEPTS_PER_ROUND; round++) {
+		/* Not left from the previous connection if a platform's
+		 * PlatformAccept() does not fill it */
+		sock->peer_key.valid = 0;
 		c = PlatformAccept(sock, &port);
 		if (c == -1){
 #if defined(__linux__)
@@ -1321,6 +1459,17 @@ void handleServer(socket_info* sock) {
 			continue;
 		}
 #endif
+
+		/* Per-address connection limit, before anything is allocated for the
+		 * new connection */
+		group = NULL;
+		if (sock->peer_key.valid) {
+			group = connLimitAcquire(&sock->peer_key);
+			if (!conn_limit_admit(sock, group, c)) {
+				connLimitRelease(group);
+				continue;
+			}
+		}
 
 #ifdef WEBSERVER_USE_SSL
 		if (sock->use_ssl == 1) {
@@ -1354,12 +1503,17 @@ void handleServer(socket_info* sock) {
 #endif
 
 
-		snprintf(client_sock->client_ip_str, INET_ADDRSTRLEN, "%s", sock->client_ip_str);
+		memcpy(client_sock->client_ip_str, sock->client_ip_str, sizeof(client_sock->client_ip_str));
 		client_sock->port = port;
+		client_sock->peer_key = sock->peer_key;
 
 #ifdef WEBSERVER_USE_IPV6
-		client_sock->v6_client = sock->v6_client;
+		client_sock->client_v6_client = sock->client_v6_client;
 #endif
+
+		if (group != NULL) {
+			connLimitAttach(group, client_sock);
+		}
 	}
 
 }
@@ -1685,6 +1839,9 @@ void handleer( int a, short b, void *t ) {
 			if(sock->use_ssl == 1){
 
 				if (sock->run_ssl_accept == 1) {
+					/* Handshake data arrived; SSL_accept() reads it past
+					 * WebserverRecv(), so note the activity here */
+					CONN_LIMIT_NOTE_IO(sock);
 					if ((sock->ssl_context == 0) && (WebserverSSLInit(sock) != 0)) {
 						WebserverConnectionManagerCloseRequest(sock);
 						return;

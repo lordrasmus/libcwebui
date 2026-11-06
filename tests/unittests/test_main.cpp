@@ -16,8 +16,23 @@ public:
     void TearDown() override { freeSessions(); }
 };
 
+/*
+ * The config store is a file scope static in server_config.c as well. The
+ * fixtures used to create it themselves: one created it once and never
+ * freed it, the next replaced it (leaking the first one), and
+ * ServerConfigTest freed it after every test, leaving the next fixture a
+ * dead store. Now it exists once for the whole run; ServerConfigTest
+ * replaces it instead of dropping it.
+ */
+class ConfigStoreEnvironment : public ::testing::Environment {
+public:
+    void SetUp() override { initConfig(); }
+    void TearDown() override { freeConfig(); }
+};
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     ::testing::AddGlobalTestEnvironment(new SessionStoreEnvironment);
+    ::testing::AddGlobalTestEnvironment(new ConfigStoreEnvironment);
     return RUN_ALL_TESTS();
 }
