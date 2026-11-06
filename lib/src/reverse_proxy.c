@@ -34,7 +34,10 @@ SPDX-License-Identifier: MPL-2.0
  * verwendet wenn der Client-Socket blockiert (STREAMING_WAIT_WRITE).
  */
 #define PROXY_BUFFER_SIZE       (64 * 1024)
-#define PROXY_MAX_HEADER_SIZE   (8 * 1024)
+/* Limit for the client's request header. Must stay below PROXY_BUFFER_SIZE,
+ * otherwise an incomplete header could fill the buffer before the limit hits.
+ * 16 KB leaves room for bearer tokens and cookies (nginx: 32 KB in total). */
+#define PROXY_MAX_HEADER_SIZE   (16 * 1024)
 
 /* Debug Level System für Reverse Proxy
  * 0 oder undefiniert: Keine Ausgaben
@@ -1268,20 +1271,26 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
         case PROXY_STATE_RECV_CLIENT_HEADER:
             /* Prüfen ob Header komplett */
             ret = proxy_find_header_end(proxy->request_buffer, proxy->request_buffer_pos);
+            /* Enforce PROXY_MAX_HEADER_SIZE in both cases:
+             * - header not complete yet: without the limit the buffer eventually
+             *   fills up, the client read loop then breaks without calling recv()
+             *   and the read event stays armed - level triggered epoll keeps
+             *   reporting the fd, which spins the event loop.
+             * - header complete: the whole header can arrive in a single read
+             *   (over TLS the read loop drains everything OpenSSL has decrypted),
+             *   so an oversized header must also be caught by its end position.
+             *   Checking request_buffer_pos here instead would reject a small
+             *   header whose body arrived in the same read. */
+            if ((ret > PROXY_MAX_HEADER_SIZE) ||
+                ((ret < 0) && (proxy->request_buffer_pos > PROXY_MAX_HEADER_SIZE))) {
+                LOG(PROXY_LOG, ERROR_LEVEL, 0, "Request header exceeds %d bytes, rejecting",
+                    PROXY_MAX_HEADER_SIZE);
+                proxy_send_error_response(proxy, 431, "Request Header Fields Too Large", NULL);
+                proxy->response_header_sent = 1;   /* stops ERROR from sending a 502 on top */
+                proxy->state = PROXY_STATE_ERROR;
+                return proxy_process_state(proxy);
+            }
             if (ret < 0) {
-                /* Header not complete yet. Enforce PROXY_MAX_HEADER_SIZE before
-                 * reading on: without that limit the buffer eventually fills up,
-                 * the client read loop then breaks without calling recv() and the
-                 * read event stays armed - level triggered epoll keeps reporting
-                 * the fd, which spins the event loop. */
-                if (proxy->request_buffer_pos > PROXY_MAX_HEADER_SIZE) {
-                    LOG(PROXY_LOG, ERROR_LEVEL, 0, "Request header exceeds %d bytes, rejecting",
-                        PROXY_MAX_HEADER_SIZE);
-                    proxy_send_error_response(proxy, 431, "Request Header Fields Too Large", NULL);
-                    proxy->response_header_sent = 1;   /* stops ERROR from sending a 502 on top */
-                    proxy->state = PROXY_STATE_ERROR;
-                    return proxy_process_state(proxy);
-                }
                 return 0;
             }
             
