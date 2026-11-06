@@ -51,19 +51,40 @@ WS_THREAD websocket_output_thread;
 static ws_MessageQueue* websocket_input_queue;
 static ws_MessageQueue* websocket_output_queue;
 
+/* Pushed by stopWebsocketApi() to end a thread; never freed. Queued behind
+ * everything already waiting, so pending messages are handled first. */
+static websocket_queue_msg websocket_stop_msg;
+
+/* Set while both threads run. Messages queued after the stop are released
+ * right away instead of waiting in a queue nobody reads any more. */
+static volatile int websocket_threads_running = 0;
+
+static void free_input_msg(websocket_queue_msg* msg) {
+	WebserverFree(msg->guid);
+	WebserverFree(msg->msg);
+	WebserverFree(msg->url);
+	WebserverFree(msg);
+}
+
+static void free_output_msg(websocket_queue_msg* msg) {
+	WebserverFree(msg->guid);
+	WebserverFree(msg->msg);
+	WebserverFree(msg);
+}
+
 static void websocket_input_thread_function( void ) {
 	websocket_queue_msg* msg;
 	while (1) {
 		msg = (websocket_queue_msg*) ws_popQueue(websocket_input_queue);
+		if (msg == &websocket_stop_msg) {
+			break;
+		}
 
 		handleWebsocketConnection(msg->signal, msg->guid, msg->url, msg->binary, (char*)msg->msg, msg->len);
 
-		WebserverFree(msg->guid);
-		WebserverFree(msg->msg);
-		WebserverFree(msg->url);
-		WebserverFree(msg);
+		free_input_msg(msg);
 	}
-	
+
 }
 
 
@@ -100,10 +121,18 @@ websocket_queue_msg* create_websocket_output_queue_msg(WEBSOCKET_SIGNALS signal,
 
 
 void insert_websocket_input_queue(websocket_queue_msg* msg){
+	if (websocket_threads_running == 0) {
+		free_input_msg(msg);
+		return;
+	}
 	ws_pushQueue(websocket_input_queue, (void*) msg);
 }
 
 void insert_websocket_output_queue(websocket_queue_msg* msg){
+	if (websocket_threads_running == 0) {
+		free_output_msg(msg);
+		return;
+	}
 	ws_pushQueue(websocket_output_queue, (void*) msg);
 }
 
@@ -112,22 +141,50 @@ static void websocket_output_thread_function( void ) {
 	websocket_queue_msg* msg;
 	while (1) {
 		msg = (websocket_queue_msg*) ws_popQueue(websocket_output_queue);
+		if (msg == &websocket_stop_msg) {
+			break;
+		}
 
 		sendWebsocketFrameReal(msg->guid, msg->msg, msg->len);
 
-		WebserverFree(msg->guid);
-		WebserverFree(msg->msg);
-		WebserverFree(msg);
+		free_output_msg(msg);
 	}
-	
+
 }
 
 void initWebsocketApi(void) {
 	websocket_input_queue = ws_createMessageQueue();
 	websocket_output_queue = ws_createMessageQueue();
+	websocket_threads_running = 1;
 	PlatformCreateThread(&websocket_input_thread, websocket_input_thread_function);
 	PlatformCreateThread(&websocket_output_thread, websocket_output_thread_function);
 	initWebsocketStreaming();
+}
+
+/*
+ * End both websocket threads and wait for them, so that nothing they do can
+ * overlap with the shutdown releasing sessions, config, handler tables and
+ * the socket container. Call it after all connections are closed: the
+ * disconnect messages that closing queued are still delivered to the
+ * handlers, the stop marker comes behind them.
+ *
+ * The input thread goes first, its handlers may still queue frames; those
+ * are sent (to nobody, the sockets are gone) or dropped by the output thread
+ * before it stops. The queues stay allocated: another application thread
+ * may still try to send, and finds its message released instead of a freed
+ * queue.
+ */
+void stopWebsocketApi(void) {
+	if (websocket_threads_running == 0) {
+		return;
+	}
+	ws_pushQueue(websocket_input_queue, &websocket_stop_msg);
+	PlatformJoinThread(&websocket_input_thread);
+
+	ws_pushQueue(websocket_output_queue, &websocket_stop_msg);
+	PlatformJoinThread(&websocket_output_thread);
+
+	websocket_threads_running = 0;
 }
 
 void initWebsocketStructures(socket_info* sock) {

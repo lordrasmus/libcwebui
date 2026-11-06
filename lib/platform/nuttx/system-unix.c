@@ -245,6 +245,10 @@ void PlatformCreateThread( WS_THREAD* handle, platform_thread_function func ){
 	 pthread_create( handle, NULL, run_thread, func);
 }
 
+void PlatformJoinThread( WS_THREAD* handle ){
+	 pthread_join( *handle, NULL );
+}
+
 
 int		PlatformClose(int socket){
 	return close( socket );

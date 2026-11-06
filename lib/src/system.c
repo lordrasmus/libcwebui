@@ -163,6 +163,15 @@ void shutdownWebserverHandler(void) {
 
 void shutdownWebserver(void) {
 	LOG(CONNECTION_LOG, NOTICE_LEVEL, 0, "%s","Webserver Shutdown");
+
+	/* Close all connections first; closing a websocket queues its disconnect
+	 * message. Then stop the websocket threads, which still deliver those
+	 * messages: until they are joined they use the socket container, the
+	 * handler table, sessions and config - everything released below. */
+	deleteAllSockets();
+#ifdef WEBSERVER_USE_WEBSOCKETS
+	stopWebsocketApi();
+#endif
 	freeSocketContainer();
 
 	free_file_access();

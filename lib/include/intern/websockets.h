@@ -57,6 +57,7 @@ extern "C" {
 
 
 void initWebsocketApi(void);
+void stopWebsocketApi(void);
 
 websocket_queue_msg* create_websocket_input_queue_msg(WEBSOCKET_SIGNALS signal, const char* guid, const char* url, const WEBSOCK_LEN_T msg_length);
 websocket_queue_msg* create_websocket_output_queue_msg(WEBSOCKET_SIGNALS signal, const char* guid, const WEBSOCK_LEN_T msg_length);

@@ -67,6 +67,8 @@ int PlatformPostSem(WS_SEMAPHORE_TYPE* sem);
 typedef void (*platform_thread_function)(void);
 
 void PlatformCreateThread( WS_THREAD* handle, platform_thread_function func );
+/* Wait until a thread created with PlatformCreateThread() has returned */
+void PlatformJoinThread( WS_THREAD* handle );
 
 #endif
 

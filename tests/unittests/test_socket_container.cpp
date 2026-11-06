@@ -236,3 +236,62 @@ TEST_F(WebsocketCloseTest, CloseUnregistersOnlyAfterTheSenderIsDone) {
     EXPECT_EQ(getSocketByGUID(guid), nullptr);
     EXPECT_EQ(sockets_in_container(), 0);
 }
+
+/*
+ * Shutdown with an open websocket.
+ *
+ * Closing the websocket queues a disconnect message; the input thread hands
+ * it to the application's handler. shutdownWebserver() used to go straight
+ * on releasing the handler table, sessions, config and the memory manager
+ * while that handler was still running - and the threads were never ended.
+ * Now it stops and joins both threads first, so the handler runs to the end
+ * against a server that is still intact.
+ *
+ * The handler takes its time and then reads the config, like a real one
+ * looking at server state. Runs in a fresh process: it initialises and shuts
+ * down the whole server.
+ */
+namespace {
+
+volatile int shutdown_handler_port = 0;
+
+void slow_disconnect_handler(const int signal, const char* guid, const char binary,
+                             const char* msg, const unsigned long long len) {
+    (void)guid; (void)binary; (void)msg; (void)len;
+    if (signal != WEBSOCKET_DISCONNECT) {
+        return;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    shutdown_handler_port = getConfigInt("port");
+}
+
+void shutdown_with_open_websocket() {
+    alarm(10);
+    initWebserver();
+    initSocketContainer();
+    RegisterWebsocketHandler("ShutdownTest", slow_disconnect_handler, __FILE__, __LINE__);
+
+    socket_info* sock = make_sock();
+    sock->isWebsocket = 1;
+    sock->websocket_guid = (char*)WebserverMalloc(WEBSERVER_GUID_LENGTH + 1);
+    snprintf(sock->websocket_guid, WEBSERVER_GUID_LENGTH + 1, "%s", "shutdown-test");
+    sock->header = WebserverMallocHttpRequestHeader();
+    sock->header->url = (char*)WebserverMalloc(sizeof("ShutdownTest"));
+    strcpy(sock->header->url, "ShutdownTest");
+    addSocketContainer(sock);
+    addSocketByGUID(sock);
+    addEventSocketRead(sock);
+
+    WebserverShutdown();
+
+    /* _exit: no leak report at exit, the shutdown is not meant to be leak
+     * free here, only the order matters */
+    _exit(shutdown_handler_port == 80 ? 0 : 2);
+}
+
+}  // namespace
+
+TEST(WebsocketShutdownTest, DisconnectHandlerFinishesBeforeTheServerIsTornDown) {
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    EXPECT_EXIT(shutdown_with_open_websocket(), ::testing::ExitedWithCode(0), "");
+}

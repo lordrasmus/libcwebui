@@ -92,9 +92,14 @@ void initSocketContainer(void) {
 
 void freeSocketContainer(void) {
 	deleteAllSockets();
+	/* Under the lock and cleared, so a late GUID lookup finds no tree
+	 * instead of a freed one */
+	PlatformLockMutex(&socks_mutex);
 	if ( sock_tree != 0 ){
 		RBTreeDestroy(sock_tree);
+		sock_tree = 0;
 	}
+	PlatformUnlockMutex(&socks_mutex);
 }
 
 void deleteSocket(socket_info* sock) {
@@ -111,7 +116,7 @@ void deleteSocket(socket_info* sock) {
 	sock->closeSocket = 1;
 	sock_list_unlink(sock);
 #ifdef WEBSERVER_USE_WEBSOCKETS
-	if (sock->isWebsocket == 1) {
+	if ((sock->isWebsocket == 1) && (sock_tree != 0)) {
 		rb_red_blk_node* node;
 		node = RBExactQuery(sock_tree, sock->websocket_guid);
 		if ( node != 0 ){
@@ -147,7 +152,7 @@ void addSocketContainer(socket_info* sock) {
 
 void addSocketByGUID(socket_info* sock) {
 	PlatformLockMutex(&socks_mutex);
-	if (sock->isWebsocket == 1){
+	if ((sock->isWebsocket == 1) && (sock_tree != 0)){
 		RBTreeInsert(sock_tree, sock->websocket_guid, sock);
 	}
 	PlatformUnlockMutex(&socks_mutex);
@@ -159,7 +164,7 @@ socket_info* getSocketByGUID(const char* guid) {
 
 	PlatformLockMutex(&socks_mutex);
 
-	node = RBExactQuery(sock_tree, (char*) guid);
+	node = (sock_tree != 0) ? RBExactQuery(sock_tree, (char*) guid) : 0;
 	if (node != 0) {
 		sock = (socket_info*) node->info;
 		PlatformLockMutex(&sock->socket_mutex);

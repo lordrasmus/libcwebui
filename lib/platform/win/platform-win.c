@@ -188,8 +188,14 @@ void PlatformCreateThread(WS_THREAD* handle, platform_thread_function func) {
 		0,                      // use default stack size  
 		MyThreadFunction,       // thread function name
 		func,          // argument to thread function 
-		0,                      // use default creation flags 
-		&dwThreadIdArray);   // returns the thread identifier 
+		0,                      // use default creation flags
+		&dwThreadIdArray);   // returns the thread identifier
+}
+
+void PlatformJoinThread(WS_THREAD* handle) {
+	WaitForSingleObject(*handle, INFINITE);
+	CloseHandle(*handle);
+	*handle = NULL;
 }
 
 
