@@ -512,7 +512,16 @@ static int recFrameV8(socket_info *sock) {
 						}
 					} else {
 						/* Normal fragment buffering (no streaming handler) */
+						if (wsf.real_length >= WEBSOCKET_MAX_INBUFFER_SIZE) {
+							LOG(WEBSOCKET_LOG, ERROR_LEVEL, sock->socket,
+								"Fragmented message too large: first fragment %llu >= %d",
+								(unsigned long long)wsf.real_length, WEBSOCKET_MAX_INBUFFER_SIZE);
+							goto close_socket_too_big;
+						}
 						tmp = WebserverMalloc( wsf.real_length ) ;
+						if (!tmp) {
+							goto close_socket_error;
+						}
 
 						ws_list_append(&sock->websocket_fragments, tmp,0);
 						for (ui = 0; ui < wsf.real_length; ui++){
@@ -597,8 +606,24 @@ static int recFrameV8(socket_info *sock) {
 						sock->websocket_stream_handler = NULL;
 					}
 				} else {
-					/* Normal fragment buffering (no streaming) */
+					/* Normal fragment buffering (no streaming)
+					 *
+					 * RFC 6455 section 10.4: the limit applies to the reassembled
+					 * message, so check it before every fragment is stored. Checking
+					 * only on the final fragment let a sender that never sends one
+					 * grow the buffer without bound. websocket_fragments_length stays
+					 * below the limit, the subtraction cannot wrap. */
+					if (wsf.real_length >= WEBSOCKET_MAX_INBUFFER_SIZE - sock->websocket_fragments_length) {
+						LOG(WEBSOCKET_LOG, ERROR_LEVEL, sock->socket,
+							"Fragmented message too large: %u + %llu >= %d",
+							sock->websocket_fragments_length, (unsigned long long)wsf.real_length,
+							WEBSOCKET_MAX_INBUFFER_SIZE);
+						goto close_socket_too_big;
+					}
 					tmp = WebserverMalloc( wsf.real_length ) ;
+					if (!tmp) {
+						goto close_socket_error;
+					}
 
 					ws_list_append(&sock->websocket_fragments, tmp,0);
 					for (ui = 0; ui < wsf.real_length; ui++){
@@ -793,6 +818,12 @@ close_socket_protocol_error:
 close_socket_invalid_utf8:
 	/* RFC 6455: Status 1007 = Invalid frame payload data (e.g., non-UTF-8 text) */
 	sendCloseFrameWithStatus(sock->websocket_guid, 1007);
+	sock->closeSocket = 1;
+	return -1;
+
+close_socket_too_big:
+	/* RFC 6455: Status 1009 = Message too big to process */
+	sendCloseFrameWithStatus(sock->websocket_guid, 1009);
 	sock->closeSocket = 1;
 	return -1;
 }
