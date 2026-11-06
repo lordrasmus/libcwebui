@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <chrono>
 #include <cstring>
+#include <fcntl.h>
 #include <sys/socket.h>
 #include <thread>
 #include <unistd.h>
@@ -294,4 +295,77 @@ void shutdown_with_open_websocket() {
 TEST(WebsocketShutdownTest, DisconnectHandlerFinishesBeforeTheServerIsTornDown) {
     GTEST_FLAG_SET(death_test_style, "threadsafe");
     EXPECT_EXIT(shutdown_with_open_websocket(), ::testing::ExitedWithCode(0), "");
+}
+
+/*
+ * Descriptors handed in with WebserverInjectExternFD() (the device daemon
+ * uses it for the watchdog and a timer). Their socket_info was never
+ * released, and there was no way to take one out again. The descriptor
+ * itself belongs to the caller and must stay open.
+ */
+namespace {
+
+void ignore_extern_event(int fd, void* ptr) {
+    (void)fd; (void)ptr;
+}
+
+bool fd_is_open(int fd) {
+    return fcntl(fd, F_GETFD) != -1;
+}
+
+void shutdown_with_extern_fd() {
+    alarm(10);
+    initWebserver();
+    initSocketContainer();
+    int p[2];
+    if (pipe(p) != 0) {
+        _exit(4);
+    }
+    WebserverInjectExternFD(p[0], ignore_extern_event);
+    if (countExternSockets() != 1) {
+        _exit(5);
+    }
+
+    WebserverShutdown();
+
+    if (countExternSockets() != 0) {
+        _exit(2);   /* still held after shutdown */
+    }
+    _exit(fd_is_open(p[0]) ? 0 : 3);
+}
+
+}  // namespace
+
+/* Same set-up as the websocket tests: needs epoll for the registration */
+class ExternFdTest : public WebsocketCloseTest {};
+
+TEST_F(ExternFdTest, RemoveReleasesButDoesNotClose) {
+    int a[2], b[2];
+    ASSERT_EQ(pipe(a), 0);
+    ASSERT_EQ(pipe(b), 0);
+    int before = countExternSockets();
+
+    WebserverInjectExternFD(a[0], ignore_extern_event);
+    WebserverInjectExternFD(b[0], ignore_extern_event);
+    EXPECT_EQ(countExternSockets(), before + 2);
+
+    EXPECT_EQ(WebserverRemoveExternFD(a[0]), 0);
+    EXPECT_EQ(countExternSockets(), before + 1);
+    EXPECT_TRUE(fd_is_open(a[0])) << "the descriptor belongs to the caller";
+
+    /* Removed already, and never injected */
+    EXPECT_EQ(WebserverRemoveExternFD(a[0]), -1);
+    EXPECT_EQ(WebserverRemoveExternFD(b[1]), -1);
+
+    EXPECT_EQ(WebserverRemoveExternFD(b[0]), 0);
+    EXPECT_EQ(countExternSockets(), before);
+
+    for (int fd : {a[0], a[1], b[0], b[1]}) {
+        close(fd);
+    }
+}
+
+TEST(ExternFdShutdownTest, ShutdownReleasesButDoesNotClose) {
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    EXPECT_EXIT(shutdown_with_extern_fd(), ::testing::ExitedWithCode(0), "");
 }

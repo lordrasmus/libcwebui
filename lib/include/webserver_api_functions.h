@@ -644,8 +644,23 @@ void WebserverConfigGetText(const char* name, char* text, int text_size);
  * again once it can accept data. The event loop detects the stall and stops
  * calling it, so the connection does not burn CPU, but it cannot supply the
  * wakeup.
+ *
+ * The descriptor stays the caller's: the server never closes it. It is
+ * unregistered with WebserverRemoveExternFD() or on WebserverShutdown().
+ *
+ * Call it before WebserverStart() or from the event loop thread (a handler).
  */
 void WebserverInjectExternFD(int fd, extern_handler handle );
+
+/*
+ * Stop watching a descriptor handed in with WebserverInjectExternFD(). The
+ * descriptor is not closed. Returns 0, or -1 if it was not injected.
+ *
+ * Call it before WebserverStart() or from the event loop thread, but not
+ * from the handler of that same descriptor: the event loop still uses it
+ * after the handler returns.
+ */
+int WebserverRemoveExternFD(int fd);
 
 
 void WebserverSetPostHandler( post_handler handler );

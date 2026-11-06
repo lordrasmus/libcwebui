@@ -30,6 +30,11 @@ extern "C" {
 	void addSocketByGUID(socket_info* sock);
 	socket_info* getSocketByGUID(const char* guid);
 
+	/* Sockets of WebserverInjectExternFD(), see system_sockets_container.c */
+	void addExternSocket(socket_info* sock);
+	int  removeExternSocket(int fd);
+	int  countExternSockets(void);
+
 #ifdef __cplusplus
 }
 #endif

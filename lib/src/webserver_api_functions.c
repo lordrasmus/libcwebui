@@ -589,7 +589,12 @@ void WebserverInjectExternFD(int fd, extern_handler handle ){
 	socket_info* sock = WebserverMallocSocketInfo();
 	sock->extern_handle = handle;
 	sock->socket = fd;
+	addExternSocket(sock);
 	addEventSocketReadPersist(sock);
+}
+
+int WebserverRemoveExternFD(int fd){
+	return removeExternSocket(fd);
 }
 
 

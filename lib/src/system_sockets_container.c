@@ -34,6 +34,21 @@ SPDX-License-Identifier: MPL-2.0
  * client and so stays behind it, see deleteAllSockets(). */
 static socket_info *sock_list_head;
 static socket_info *sock_list_tail;
+
+/* Descriptors handed in with WebserverInjectExternFD(). They are not
+ * connections: the descriptor stays the caller's, the server only watches
+ * it. Kept here so that one can be removed again and its socket_info is
+ * released on shutdown. Only a handful exist, a plain list does.
+ *
+ * Injection happens before WebserverStart(), when socks_mutex does not exist
+ * yet, so this list has no lock: it is only touched before the event loop
+ * starts and from the event loop thread. */
+typedef struct extern_fd_entry {
+	socket_info *sock;
+	struct extern_fd_entry *next;
+} extern_fd_entry;
+
+static extern_fd_entry *extern_fds;
 static rb_red_blk_tree *sock_tree;
 static WS_MUTEX socks_mutex;
 
@@ -90,8 +105,53 @@ void initSocketContainer(void) {
 	sock_list_tail = NULL;
 }
 
+void addExternSocket(socket_info* sock) {
+	extern_fd_entry *entry = (extern_fd_entry*) WebserverMalloc(sizeof(extern_fd_entry));
+	entry->sock = sock;
+	entry->next = extern_fds;
+	extern_fds = entry;
+}
+
+static void releaseExternSocket(extern_fd_entry *entry) {
+	delEventSocketAll(entry->sock);
+	/* Unregistered, not closed: the descriptor belongs to the caller */
+	WebserverFreeSocketInfo(entry->sock);
+	WebserverFree(entry);
+}
+
+int removeExternSocket(int fd) {
+	extern_fd_entry **pos;
+	for (pos = &extern_fds; *pos != NULL; pos = &(*pos)->next) {
+		if ((*pos)->sock->socket == fd) {
+			extern_fd_entry *entry = *pos;
+			*pos = entry->next;
+			releaseExternSocket(entry);
+			return 0;
+		}
+	}
+	return -1;
+}
+
+int countExternSockets(void) {
+	int count = 0;
+	extern_fd_entry *entry;
+	for (entry = extern_fds; entry != NULL; entry = entry->next) {
+		count++;
+	}
+	return count;
+}
+
+static void freeExternSockets(void) {
+	while (extern_fds != NULL) {
+		extern_fd_entry *entry = extern_fds;
+		extern_fds = entry->next;
+		releaseExternSocket(entry);
+	}
+}
+
 void freeSocketContainer(void) {
 	deleteAllSockets();
+	freeExternSockets();
 	/* Under the lock and cleared, so a late GUID lookup finds no tree
 	 * instead of a freed one */
 	PlatformLockMutex(&socks_mutex);
