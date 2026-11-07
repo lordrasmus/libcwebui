@@ -1076,6 +1076,13 @@ static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendFileSystem_sendfile(soc
 	// TODO(lordrasmus) : an fs anpassen
 
 	fd = PlatformOpenDataReadStream( file->file_info->FilePath);
+	if ( !fd ){
+		/* The file went away after the header promised its length: the
+		 * response cannot be completed. 0 is not a descriptor of ours here,
+		 * sendfile() would have read from stdin. */
+		LOG ( CONNECTION_LOG,ERROR_LEVEL,sock->socket,"cannot open %s to send it",file->file_info->FilePath );
+		return CLIENT_DICONNECTED;
+	}
 	diff = file->file_info->DataLenght - file->file_send_pos;
 
 	//printf("handleClientWriteDataSendFileSystem_sendfile: Diff %"FILE_OFF_PRINT_INT" DataLenght %"FILE_OFF_PRINT_INT"\n", diff, sock->file_infos.file_info->DataLenght );
@@ -1655,8 +1662,14 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* so
 		LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"Send File from Disk Soll %lld Pos %lld",(long long)file->file_info->DataLenght,(long long)file->file_send_pos );
 #endif
 
+	/* The file went away after the header promised its length: the
+	 * response cannot be completed */
+	if ( !PlatformOpenDataReadStream( file->file_info->FilePath) ){
+		LOG ( CONNECTION_LOG,ERROR_LEVEL,sock->socket,"cannot open %s to send it",file->file_info->FilePath );
+		file->file_info = 0;
+		return CLIENT_DICONNECTED;
+	}
 	buffer = (unsigned char *) WebserverMalloc( WRITE_DATA_SIZE );
-	PlatformOpenDataReadStream( file->file_info->FilePath);
 	PlatformSeekToPosition( file->file_send_pos);
 
 	while (1) {
@@ -1670,7 +1683,14 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteDataNotCachedReadWrite(socket_info* so
 
 		FILE_OFFSET ret2 = PlatformReadBytes(buffer, to_read);
 		if ( ret2 != to_read ){
-			printf("Error: read mismatch %"FILE_OFF_PRINT_INT" != %d\n",FILE_OFF_CAST(ret2),to_read);
+			/* The file got shorter while it is being sent. Sending to_read
+			 * bytes anyway put whatever the buffer held before - other
+			 * heap data - on the wire, and the length promised in the
+			 * header cannot be met any more: end the connection. */
+			LOG ( CONNECTION_LOG,ERROR_LEVEL,sock->socket,"read mismatch on %s: %"FILE_OFF_PRINT_INT" != %d",
+			      file->file_info->FilePath, FILE_OFF_CAST(ret2), to_read );
+			ret_v = CLIENT_DICONNECTED;
+			goto send_ende;
 		}
 
 		status = WebserverSend(sock, buffer, to_read, 0, &ret);

@@ -1478,6 +1478,80 @@ TEST_F(RequestHeaderSizeTest, HeaderJustAboveTheLimitIsRefused) {
 }
 
 /*
+ * Sending a file from disk after its header went out: the file can vanish
+ * or shrink meanwhile. The open was not checked, and a short read still
+ * sent the full length out of the buffer.
+ */
+class FileSendTest : public ::testing::Test {
+protected:
+    int peer = -1;
+    socket_info* s = nullptr;
+    WebserverFileInfo* f = nullptr;
+    char path[64] = "/tmp/libcwebui_send_XXXXXX";
+
+    void SetUp() override {
+        int fds[2];
+        ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, fds), 0);
+        fcntl(fds[0], F_SETFL, fcntl(fds[0], F_GETFL) | O_NONBLOCK);
+        fcntl(fds[1], F_SETFL, fcntl(fds[1], F_GETFL) | O_NONBLOCK);
+        peer = fds[1];
+        s = WebserverMallocSocketInfo();
+        s->socket = fds[0];
+        s->client = 1;
+
+        int fd = mkstemp(path);
+        ASSERT_GE(fd, 0);
+        std::string content(1000, 'A');
+        ASSERT_EQ(write(fd, content.data(), content.size()), (ssize_t)content.size());
+        close(fd);
+
+        f = create_empty_file(0);
+        char* p = (char*)WebserverMalloc(strlen(path) + 1);
+        strcpy(p, path);
+        f->FilePath = p;
+        f->DataLenght = 1000;
+    }
+
+    void TearDown() override {
+        unlink(path);
+        free_empty_file(f);
+        WebserverFreeSocketInfo(s);
+        close(peer);
+    }
+
+    std::string received() {
+        std::string got;
+        char buf[4096];
+        ssize_t n;
+        while ((n = recv(peer, buf, sizeof(buf), 0)) > 0) {
+            got.append(buf, (size_t)n);
+        }
+        return got;
+    }
+};
+
+TEST_F(FileSendTest, IntactFileIsSentCompletely) {
+    socket_file_infos info = { 0, f };
+    EXPECT_EQ(handleClientWriteDataNotCachedReadWrite(s, &info), NO_MORE_DATA);
+    EXPECT_EQ(received(), std::string(1000, 'A'));
+}
+
+TEST_F(FileSendTest, VanishedFileEndsTheResponse) {
+    unlink(path);
+    socket_file_infos info = { 0, f };
+    EXPECT_EQ(handleClientWriteDataNotCachedReadWrite(s, &info), CLIENT_DICONNECTED);
+    EXPECT_EQ(received().size(), 0u);
+}
+
+TEST_F(FileSendTest, ShrunkFileSendsNothingThatIsNotInIt) {
+    f->DataLenght = 5000;                   /* what the header promised */
+    socket_file_infos info = { 0, f };
+    EXPECT_EQ(handleClientWriteDataNotCachedReadWrite(s, &info), CLIENT_DICONNECTED);
+    std::string got = received();
+    EXPECT_EQ(got.find_first_not_of('A'), std::string::npos) << "bytes that are not file content";
+}
+
+/*
  * Compressed responses (Accept-Encoding: deflate on a template page). The
  * body buffer used to be the size of the page, while deflate output can be
  * larger: data that does not compress grows a little, and every chunk is

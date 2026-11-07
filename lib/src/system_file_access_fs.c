@@ -78,7 +78,13 @@ int local_file_system_check_file_modified( WebserverFileInfo *file ){
 		//printf("local_file_system:  file change %s File System -> FS_LOCAL_FILE_SYSTEM ( RAM cached )\n", file->FilePath );
 
 		// Datei ist im RAM cache
-		PlatformOpenDataReadStream( file->FilePath );
+		/* Gone between the check above and here: keep what is cached, as
+		 * for a file not found at all - reading on would use a stream that
+		 * is not open */
+		if ( !PlatformOpenDataReadStream( file->FilePath ) ){
+			printf("local_file_system_check_file_modified: Error cannot open %s\n",file->FilePath);
+			return 0;
+		}
 
 		// zur sicherheit die länge mit geöffnetem filehandel nochmal lesen
 		file->DataLenght = PlatformGetFileSize();
@@ -89,6 +95,9 @@ int local_file_system_check_file_modified( WebserverFileInfo *file ){
 		FILE_OFFSET ret = PlatformReadBytes( ( unsigned char*) file->Data, file->DataLenght);
 		if ( ret != file->DataLenght ){
 			printf("Error: file size mismatch1 %"FILE_OFF_PRINT_INT" != %"FILE_OFF_PRINT_INT"\n",FILE_OFF_CAST(ret),FILE_OFF_CAST(file->DataLenght));
+			/* Only what was read: the rest of the allocation is not file
+			 * content and must not be served as such */
+			file->DataLenght = ret;
 		}
 
 		PlatformCloseDataStream();
