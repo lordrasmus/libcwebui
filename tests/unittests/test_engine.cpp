@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 #include <cstring>
+#include <string>
+#include <vector>
 
 extern "C" {
 #include "webserver.h"
@@ -361,4 +363,69 @@ TEST_F(TagEdgeCaseTest, VeryLongCondition) {
 
     int pos = getNextTag(data.c_str(), data.length(), IF_TAG_GROUP, &tag);
     EXPECT_EQ(tag, IF_TAG);
+}
+
+/*
+ * processHTML() on pages that are broken or unusual. Templates are our own
+ * files, so this is hardening: the engine must not read or write beyond
+ * what it was given, whatever a template contains.
+ */
+class ProcessHtmlTest : public ::testing::Test {
+protected:
+    http_request s;
+
+    void SetUp() override {
+        memset(&s, 0, sizeof(s));
+        ws_list_init(&s.upload_files);
+        ws_list_init(&s.custom_response_headers);
+        s.socket = WebserverMallocSocketInfo();
+        s.socket->socket = -1;
+        s.header = WebserverMallocHttpRequestHeader();
+        s.socket->header = s.header;           /* released with the socket */
+    }
+
+    void TearDown() override {
+        WebserverFreeSocketInfo(s.socket);
+    }
+
+    /* Exactly the bytes of the page, so a read past them is caught */
+    int run(const std::string& page) {
+        std::vector<char> data(page.begin(), page.end());
+        return processHTML(&s, "", "test", data.data(), (int)data.size());
+    }
+
+    unsigned long output() {
+        return getChunkListSize(&s.socket->html_chunk_list);
+    }
+};
+
+TEST_F(ProcessHtmlTest, PageShorterThanTheHeaderIsNotComparedBeyondItsEnd) {
+    run("TEMP");
+    EXPECT_EQ(output(), 4u);
+    EXPECT_EQ(s.engine_index, 0);
+}
+
+TEST_F(ProcessHtmlTest, HeaderWithoutItsLineEndIsNotCutBeyondThePage) {
+    run("TEMPLATE_V1");                         /* 11 bytes, no line end */
+    EXPECT_EQ(output(), 11u);
+    EXPECT_EQ(s.engine_index, 0);
+}
+
+TEST_F(ProcessHtmlTest, HeaderIsStillRecognised) {
+    run("TEMPLATE_V1\nabc");
+    EXPECT_EQ(output(), 3u);
+}
+
+TEST_F(ProcessHtmlTest, LoopWithoutEndloopStopsThePage) {
+    run("abc{loop:render;\"portarray\":\"tmp\"}inside");   /* as the Port pages write it */
+    EXPECT_EQ(output(), 3u) << "what comes before the loop";
+    EXPECT_EQ(s.engine_index, 0);
+}
+
+TEST_F(ProcessHtmlTest, NestingDeeperThanTheEngineListIsRefused) {
+    s.engine_index = MAX_ENGINE_RECURTION;     /* as deep as it goes */
+    EXPECT_EQ(run("abc"), 0);
+    EXPECT_EQ(s.engine_index, MAX_ENGINE_RECURTION) << "no level beyond the list";
+    EXPECT_EQ(output(), 0u);
+    s.engine_index = 0;
 }

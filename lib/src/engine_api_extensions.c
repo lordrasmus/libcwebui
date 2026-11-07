@@ -279,7 +279,9 @@ void printRegisteredFunctions(http_request* s) {
 	print_func_ctx_t ctx;
 	ws_variable* var1 = getParameter(s, "reset_functions");
 
-	if (var1 != 0) {
+	/* Set by the request; a program that registered no error handler
+	 * would have been called through a null pointer */
+	if ((var1 != 0) && (error_handler != 0)) {
 		error_handler(PLUGIN_FUNCTION_RESET_CRASHED, "", "", "");
 	}
 
@@ -583,7 +585,8 @@ void printRegisteredPlugins(http_request* s) {
 	ws_variable *var1;
 
 	var1 = getParameter(s, "reset_plugins");
-	if (var1 != 0) {
+	/* See printRegisteredFunctions() */
+	if ((var1 != 0) && (error_handler != 0)) {
 		error_handler(PLUGIN_RESET_CRASHED, "", "", "");
 	}
 

@@ -147,13 +147,15 @@ ws_variable* NEED_RESUL_CHECK parseVariable(http_request *s,char* buffer) {
 					    buffer = &buffer[1];
 					    tmp2 = getWSVariableArray(tmp,buffer);
 					    if( tmp2 == 0 ){
-						strcpy(error_index,buffer);
+						/* Only for the error text: cut to the buffer, a long
+						 * index in a template used to run over it */
+						snprintf(error_index, sizeof(error_index), "%s", buffer);
 					    }
 					}else{						/* Int Index */
 					    i = atoi(buffer);
 					    tmp2 = getWSVariableArrayIndex(tmp,i);
 					    if( tmp2 == 0 ){
-						strcpy(error_index,buffer);
+						snprintf(error_index, sizeof(error_index), "%s", buffer);
 					    }
 					}
 				    }else{

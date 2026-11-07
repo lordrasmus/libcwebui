@@ -22,12 +22,6 @@ SPDX-License-Identifier: MPL-2.0
 #endif
 
 
-/*
-#pragma GCC push_options
-#pragma GCC optimize ("O0")
-#warning "Optimierung fuer Engine Parser deaktiviert"
-*/
-
 static void template_engine_start(http_request *s) {
 	s->engine_current = &s->engine_list[s->engine_index++];
 }
@@ -55,6 +49,14 @@ void engine_loop_array(http_request *s, const char* prefix, const char *pagename
 		FUNCTION_PARAS* func, int* i) {
 	ws_variable *var_array, *tmp, *var_value_name = 0, *var_key_name = 0, *tmp_value, *tmp_key;
 	int pos1 = find_tag_end_pos((char*) pagedata, datalenght, "{loop:", "{endloop}");
+	if (pos1 < 9) {
+		/* No {endloop}: the rest of the page is inside an unterminated
+		 * loop. -1 used to move the caller back a byte and became a
+		 * negative length for processHTML(). */
+		LOG(TEMPLATE_LOG, ERROR_LEVEL, 0, "{loop} without {endloop} in %s", pagename);
+		*i += datalenght;
+		return;
+	}
 	*i += pos1;
 	pos1 -= 9;
 
@@ -74,6 +76,9 @@ void engine_loop_array(http_request *s, const char* prefix, const char *pagename
 	freeWSVariable(tmp);
 
 	var_value_name = parseVariable(s, func->parameter[1].text);
+	if (var_value_name == 0) {
+		return;
+	}
 	if (var_value_name->type != VAR_TYPE_STRING) {
 		freeWSVariable(var_value_name);
 		return;
@@ -361,9 +366,6 @@ static void printFoundEngineFunction(FUNCTION_PARAS* func) {
 
 #endif
 
-/*int __attribute__((optimize("O0"))) */
-
-
 
 int processHTML(http_request* s, const char* prefix, const char *pagename, const char *pagedata, int datalenght) {
 	int i, last_chunk_send_pos;
@@ -373,6 +375,15 @@ int processHTML(http_request* s, const char* prefix, const char *pagename, const
 	int function_length;
 	char return_found = 0;
 
+	/* engine_list has room for MAX_ENGINE_RECURTION levels of {include},
+	 * {loop} and {if} inside each other; one more used to write past it
+	 * into the rest of the request. A template including itself ends
+	 * here too. */
+	if (s->engine_index >= MAX_ENGINE_RECURTION) {
+		LOG(TEMPLATE_LOG, ERROR_LEVEL, 0, "templates nested deeper than %d: %s",
+		    MAX_ENGINE_RECURTION, pagename != 0 ? pagename : "");
+		return 0;
+	}
 
 	template_engine_start(s);
 	s->engine_current->prefix = (char*) prefix;
@@ -380,7 +391,10 @@ int processHTML(http_request* s, const char* prefix, const char *pagename, const
 	s->engine_current->pagedata = (char*) pagedata;
 	s->engine_current->datalenght = datalenght;
 
-	if ( 0 == memcmp( template_v1_header, pagedata, sizeof( template_v1_header ) -1 ) ){
+	/* The header and the line end after it; a shorter page cannot have it
+	 * and must not be compared or cut beyond its end */
+	if ( ( datalenght >= (int)sizeof( template_v1_header ) ) &&
+	     ( 0 == memcmp( template_v1_header, pagedata, sizeof( template_v1_header ) -1 ) ) ){
 		pagedata += sizeof( template_v1_header );
 		datalenght -= sizeof( template_v1_header );
 		//printf("Engine Template V1 Header found\n");
@@ -452,7 +466,8 @@ int processHTML(http_request* s, const char* prefix, const char *pagename, const
 				last_chunk_send_pos = i + 1;
 				break;
 			case TEMPLATE_LOOP_ARRAY:
-				engine_loop_array(s, prefix, pagename, &pagedata[i + 1], datalenght - i, &s->engine_current->func, &i);
+				/* From i + 1 on there are datalenght - i - 1 bytes */
+				engine_loop_array(s, prefix, pagename, &pagedata[i + 1], datalenght - i - 1, &s->engine_current->func, &i);
 				last_chunk_send_pos = i + 1;
 				break;
 
@@ -548,7 +563,6 @@ int processHTML(http_request* s, const char* prefix, const char *pagename, const
 }
 
 /*
-#pragma GCC pop_options
 http://ctpp.havoc.ru/doc/en/
 */
 
