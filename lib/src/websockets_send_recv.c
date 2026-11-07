@@ -326,7 +326,14 @@ static int recFrameV8(socket_info *sock) {
 					/* Start streaming mode (non-fragmented) */
 					unsigned int header_length = offset;  /* Everything before payload */
 					uint32_t total_bytes_after_header = sock->websocket_buffer_offset - header_length;
-					uint32_t frame_end_pos = header_length + wsf.real_length;
+					uint32_t frame_end_pos;
+
+					/* Streaming takes frames of any size, but the end position
+					 * must not wrap around */
+					if (wsf.real_length > UINT32_MAX - header_length) {
+						goto close_socket_error;
+					}
+					frame_end_pos = header_length + wsf.real_length;
 
 					if (startWebsocketStream(sock, wsf.real_length, wsf.opcode, wsf.mask, stream_handler, 0) != 0) {
 						goto close_socket_error;
@@ -394,8 +401,23 @@ static int recFrameV8(socket_info *sock) {
 
 			/*
 			 * Normal (non-streaming) mode: need entire frame in buffer.
-			 * Rewind offset to before mask for the size check.
+			 *
+			 * So no frame can be larger than the input buffer may grow.
+			 * Checked here, for every opcode and before any arithmetic on
+			 * the length: a frame announcing close to 4 GB made
+			 * 2 + extra_bytes + real_length wrap around, its bare header
+			 * passed as complete, and a binary frame (no limit of its own)
+			 * went on to allocate the announced size - which on a 32 bit
+			 * target ends the process.
 			 */
+			if (wsf.real_length > WEBSOCKET_MAX_INBUFFER_SIZE) {
+				LOG(WEBSOCKET_LOG, ERROR_LEVEL, sock->socket,
+					"Frame too large: %llu > %d", (unsigned long long)wsf.real_length,
+					WEBSOCKET_MAX_INBUFFER_SIZE);
+				goto close_socket_too_big;
+			}
+
+			/* Rewind offset to before mask for the size check */
 			if (wsf.mask_bit == 1) {
 				offset -= 4;  /* Will re-extract mask after size check */
 			}

@@ -1205,3 +1205,73 @@ TEST_F(TlsFirstReadTest, WokenWithoutDataWaitsWithoutSslObject) {
     EXPECT_EQ(s->last_io, io_before) << "nothing arrived, no activity";
 }
 #endif
+
+#ifdef WEBSERVER_USE_WEBSOCKETS
+/*
+ * Frames through the real receive path: bytes written to the peer of a
+ * socketpair, read by recFrame().
+ */
+class WebsocketFrameTest : public WebsocketCloseTest {
+protected:
+    int peer = -1;
+    socket_info* ws = nullptr;
+
+    void SetUp() override {
+        WebsocketCloseTest::SetUp();
+        int fds[2];
+        ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, fds), 0);
+        fcntl(fds[0], F_SETFL, fcntl(fds[0], F_GETFL) | O_NONBLOCK);
+        peer = fds[1];
+        ws = WebserverMallocSocketInfo();
+        ws->socket = fds[0];
+        ws->client = 1;
+        ws->isWebsocket = 1;
+        ws->header = WebserverMallocHttpRequestHeader();
+        ws->header->SecWebSocketVersion = 13;
+        ws->header->url = (char*)WebserverMalloc(sizeof("NoSuchSocket"));
+        strcpy(ws->header->url, "NoSuchSocket");
+        ws->websocket_guid = (char*)WebserverMalloc(WEBSERVER_GUID_LENGTH + 1);
+        snprintf(ws->websocket_guid, WEBSERVER_GUID_LENGTH + 1, "%s", "frame-test");
+        ws->websocket_buffer = (unsigned char*)WebserverMalloc(WEBSOCKET_INIT_INBUFFER_SIZE);
+        addSocketContainer(ws);
+        addSocketByGUID(ws);
+    }
+
+    void TearDown() override {
+        if (peer >= 0) {
+            close(peer);
+        }
+        WebsocketCloseTest::TearDown();
+    }
+
+    /* A masked frame header with a 64 bit length field */
+    void send_header64(unsigned char first, uint64_t length) {
+        unsigned char h[14] = { first, 0x80 | 127 };
+        for (int i = 0; i < 8; i++) {
+            h[2 + i] = (unsigned char)(length >> (56 - 8 * i));
+        }
+        /* mask 00 00 00 00: the payload goes through unchanged */
+        ASSERT_EQ(send(peer, h, sizeof(h), 0), (ssize_t)sizeof(h));
+    }
+};
+
+/* 14 bytes announcing almost 4 GB: the length check used to wrap around */
+TEST_F(WebsocketFrameTest, HugeAnnouncedBinaryFrameIsRefusedNotAllocated) {
+    send_header64(0x82, 0xFFFFFFFFu);
+    EXPECT_EQ(recFrame(ws), -1);
+    EXPECT_EQ(ws->closeSocket, 1);
+}
+
+TEST_F(WebsocketFrameTest, BinaryFrameAboveTheInputLimitIsRefused) {
+    send_header64(0x82, WEBSOCKET_MAX_INBUFFER_SIZE + 1);
+    EXPECT_EQ(recFrame(ws), -1);
+    EXPECT_EQ(ws->closeSocket, 1);
+}
+
+TEST_F(WebsocketFrameTest, SmallBinaryFrameStillGoesThrough) {
+    unsigned char frame[2 + 4 + 3] = { 0x82, 0x80 | 3, 0, 0, 0, 0, 'a', 'b', 'c' };
+    ASSERT_EQ(send(peer, frame, sizeof(frame), 0), (ssize_t)sizeof(frame));
+    EXPECT_GE(recFrame(ws), 0);
+    EXPECT_EQ(ws->closeSocket, 0);
+}
+#endif
