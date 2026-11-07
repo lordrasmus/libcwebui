@@ -2,11 +2,15 @@
 #include <cstring>
 #include <dirent.h>
 #include <stdlib.h>
+#include <string>
+#include <sys/stat.h>
 #include <unistd.h>
 
 extern "C" {
 #include "webserver.h"
 #include "intern/system_file_access_utils.h"
+#include "intern/system_file_access.h"
+#include "intern/system_file_cache.h"
 }
 
 // File Type Detection Tests (MIME Types)
@@ -447,4 +451,63 @@ TEST(PlatformFileStreamTest, RegularFileStillOpensReadsAndCloses) {
     PlatformCloseDataStream();              /* twice: still harmless */
     EXPECT_EQ(open_descriptors(), before);
     unlink(path);
+}
+
+/*
+ * Resolving a URL in a registered directory: directory and rest of the URL
+ * are put together in a 1000 byte buffer. strncat() wrote its terminator
+ * one byte past it, and a path cut to fit named another file.
+ */
+class LocalDirTest : public ::testing::Test {
+protected:
+    static void SetUpTestSuite() {
+        static bool initialised = false;
+        if (!initialised) {
+            initFileCache();
+            init_local_file_system();
+            initialised = true;
+        }
+    }
+
+    /* A directory below /tmp whose path is at least min_length long */
+    static std::string make_dir(size_t min_length) {
+        char base[] = "/tmp/libcwebui_dir_XXXXXX";
+        std::string path = mkdtemp(base);
+        while (path.size() < min_length) {
+            path += "/" + std::string(100, 'd');
+            mkdir(path.c_str(), 0700);
+        }
+        return path;
+    }
+
+    static void write_file(const std::string& path, const char* text) {
+        FILE* f = fopen(path.c_str(), "w");
+        ASSERT_NE(f, nullptr);
+        fputs(text, f);
+        fclose(f);
+    }
+};
+
+TEST_F(LocalDirTest, FileInAShortDirectoryIsFound) {
+    std::string dir = make_dir(0);
+    write_file(dir + "/hello.txt", "hello");
+    add_local_file_system_dir("shortdir", dir.c_str(), 1, 0);
+    WebserverFileInfo* f = getFileLocalFileSystem("shortdir/hello.txt");
+    ASSERT_NE(f, nullptr);
+    EXPECT_EQ(f->DataLenght, 5);
+    unlink((dir + "/hello.txt").c_str());
+    rmdir(dir.c_str());
+}
+
+TEST_F(LocalDirTest, PathThatDoesNotFitIsNotFound) {
+    std::string dir = make_dir(600);
+    add_local_file_system_dir("longdir", dir.c_str(), 1, 0);
+    std::string url = "longdir/" + std::string(450, 'f');   /* together > 1000 */
+    EXPECT_EQ(getFileLocalFileSystem(url.c_str()), nullptr);
+    std::string p = dir;
+    while (p.size() > 26) {                 /* back up to the mkdtemp() base */
+        rmdir(p.c_str());
+        p = p.substr(0, p.rfind('/'));
+    }
+    rmdir(p.c_str());
 }

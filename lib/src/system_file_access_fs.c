@@ -192,12 +192,18 @@ static struct dir_info *search_file_dir ( const char* name, char* real_path, int
 		if (0 == strncmp(tmp_var->name, name, tmp_var->name_len)) {
 			
 			if (strlen( name ) > tmp_var->name_len ) {
-				strncpy( real_path, dir_tmp->dir, real_path_length - 1 );
-				real_path[ real_path_length - 1 ] = 0;
-				
-				int l = real_path_length - strlen( real_path );
-			
-				strncat( real_path, (char*)(name + tmp_var->name_len), l);
+				/* Directory and the rest of the URL. strncat() with the
+				 * room left wrote its terminator one byte past the buffer,
+				 * and a path cut to fit named another file than the one
+				 * asked for: one that does not fit is not in this
+				 * directory. */
+				int n = snprintf( real_path, (size_t)real_path_length, "%s%s",
+				                  dir_tmp->dir, name + tmp_var->name_len );
+				if ( ( n < 0 ) || ( n >= real_path_length ) ){
+					real_path[0] = '\0';
+					tmp_var = getWSVariableArrayNext( file_dirs );
+					continue;
+				}
 				if (PlatformOpenDataReadStream( real_path )) {
 					found = 1;
 					break;
