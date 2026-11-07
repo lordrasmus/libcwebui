@@ -200,6 +200,46 @@ void initWebsocketStructures(socket_info* sock) {
 	sock->websocket_stream_handler = NULL;
 }
 
+/* RFC 6455 4.1: the key is 16 random bytes in base64, always 24 characters:
+ * 22 from the alphabet and "==" */
+#define WEBSOCKET_KEY_LENGTH 24
+
+static int validWebsocketKey(const char* key) {
+	size_t i;
+
+	if (strlen(key) != WEBSOCKET_KEY_LENGTH) {
+		return 0;
+	}
+	for (i = 0; i < WEBSOCKET_KEY_LENGTH - 2; i++) {
+		char c = key[i];
+		if (!(((c >= 'A') && (c <= 'Z')) || ((c >= 'a') && (c <= 'z')) ||
+		      ((c >= '0') && (c <= '9')) || (c == '+') || (c == '/'))) {
+			return 0;
+		}
+	}
+	return (key[22] == '=') && (key[23] == '=');
+}
+
+/*
+ * Sec-WebSocket-Accept for a client key (RFC 6455 4.2.2): base64 of the
+ * SHA-1 of the key followed by the protocol GUID. out takes at least 29
+ * bytes. Returns 0, or -1 for a key that is not a valid one.
+ */
+int websocketAcceptKey(const char* key, unsigned char* out, int out_size) {
+	static const char guid[] = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+	char buffer[WEBSOCKET_KEY_LENGTH + sizeof(guid)];
+	char sha1[21];
+
+	if ((key == NULL) || !validWebsocketKey(key) || (out_size < 29)) {
+		return -1;
+	}
+	memcpy(buffer, key, WEBSOCKET_KEY_LENGTH);
+	memcpy(&buffer[WEBSOCKET_KEY_LENGTH], guid, sizeof(guid));
+	WebserverSHA1((unsigned char*) buffer, sizeof(buffer) - 1, (unsigned char*) sha1);
+	WebserverBase64Encode((unsigned char*) sha1, 20, out, out_size);
+	return 0;
+}
+
 int checkIskWebsocketConnection(socket_info* sock) {
 	HttpRequestHeader* header;
 		
@@ -280,6 +320,19 @@ int checkIskWebsocketConnection(socket_info* sock) {
 			return 1;
 		}
 
+		/* RFC 6455 4.2.1: a key that is not 16 bytes in base64 gets 400.
+		 * Checked here, before anything is computed from it: an overlong
+		 * key used to be copied without its terminator into a fixed
+		 * buffer on the stack and then appended to. */
+		if (!validWebsocketKey(header->SecWebSocketKey)) {
+			printHeaderChunk(sock,"HTTP/1.1 400 Bad Request\r\n");
+			header->response_status = 400;
+			printHeaderChunk(sock,"Content-Length: 0\r\n");
+			printHeaderChunk(sock,"\r\n");
+			header->isWebsocket = 2; /* refused, the response is prepared */
+			return 1;
+		}
+
 		header->isWebsocket = 1; // websocket ok
 		return 1;
 	}
@@ -287,17 +340,13 @@ int checkIskWebsocketConnection(socket_info* sock) {
 }
 
 int startWebsocketConnection(socket_info* sock) {
-	char buffer[170];
-	char buffer2[21];
 	http_request *s;
 	sock->active = 0;
 
-	
+	/* The key was validated by checkIskWebsocketConnection() */
 	if (sock->header->SecWebSocketKey != 0) {
-		strncpy( buffer, sock->header->SecWebSocketKey, 100 );
-		strcat(buffer, "258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
-		WebserverSHA1((unsigned char*) buffer, strlen(buffer), (unsigned char*) buffer2);
-		WebserverBase64Encode((unsigned char*) buffer2, 20, sock->header->WebSocketOutHash, 40);
+		websocketAcceptKey(sock->header->SecWebSocketKey, sock->header->WebSocketOutHash,
+		                   (int)sizeof(sock->header->WebSocketOutHash));
 	}
 
 	sendHeaderWebsocket(sock);

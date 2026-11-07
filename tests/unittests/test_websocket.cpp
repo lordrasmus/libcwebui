@@ -1,67 +1,77 @@
 #include <gtest/gtest.h>
 #include <cstring>
+#include <string>
 
 extern "C" {
 #include "webserver.h"
 }
 
 // WebSocket Handshake Key Calculation Tests
-// RFC 6455: Sec-WebSocket-Accept = Base64(SHA1(Sec-WebSocket-Key + GUID))
-class WebSocketHandshakeTest : public ::testing::Test {
-protected:
-    // Calculate the expected Sec-WebSocket-Accept value
-    // This mirrors what startWebsocketConnection does
-    void calcAcceptKey(const char* clientKey, char* acceptKey, size_t acceptKeySize) {
-        char buffer[170];
-        char sha1Result[21];
-
-        strncpy(buffer, clientKey, 100);
-        strcat(buffer, "258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
-
-        WebserverSHA1((unsigned char*)buffer, strlen(buffer), (unsigned char*)sha1Result);
-        WebserverBase64Encode((unsigned char*)sha1Result, 20, (unsigned char*)acceptKey, acceptKeySize);
-    }
-};
+// RFC 6455: Sec-WebSocket-Accept = Base64(SHA1(Sec-WebSocket-Key + GUID)),
+// computed by websocketAcceptKey(), which startWebsocketConnection() uses
+class WebSocketHandshakeTest : public ::testing::Test {};
 
 // Test vector from RFC 6455 Section 4.2.2
 TEST_F(WebSocketHandshakeTest, RFC6455TestVector) {
-    // From RFC 6455:
-    // Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
-    // Expected Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
-
-    char acceptKey[40];
-    calcAcceptKey("dGhlIHNhbXBsZSBub25jZQ==", acceptKey, sizeof(acceptKey));
-
-    EXPECT_STREQ(acceptKey, "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=");
+    unsigned char acceptKey[40];
+    ASSERT_EQ(websocketAcceptKey("dGhlIHNhbXBsZSBub25jZQ==", acceptKey, sizeof(acceptKey)), 0);
+    EXPECT_STREQ((char*)acceptKey, "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=");
 }
 
-TEST_F(WebSocketHandshakeTest, EmptyKey) {
-    char acceptKey[40];
-    calcAcceptKey("", acceptKey, sizeof(acceptKey));
-
-    // Should produce valid Base64 output (not crash)
-    EXPECT_GT(strlen(acceptKey), 0u);
+// The key is always 16 bytes in base64: 22 characters and "=="
+TEST_F(WebSocketHandshakeTest, KeysThatAreNotSixteenBytesAreRefused) {
+    unsigned char acceptKey[40];
+    EXPECT_EQ(websocketAcceptKey("", acceptKey, sizeof(acceptKey)), -1);
+    EXPECT_EQ(websocketAcceptKey("abc", acceptKey, sizeof(acceptKey)), -1);
+    EXPECT_EQ(websocketAcceptKey("dGhlIHNhbXBsZSBub25jZQ=", acceptKey, sizeof(acceptKey)), -1);
+    EXPECT_EQ(websocketAcceptKey("dGhlIHNhbXBsZSBub25jZQ==A", acceptKey, sizeof(acceptKey)), -1);
+    EXPECT_EQ(websocketAcceptKey("dGhlIHNhbXBsZSBub25jZ$==", acceptKey, sizeof(acceptKey)), -1);
+    EXPECT_EQ(websocketAcceptKey(NULL, acceptKey, sizeof(acceptKey)), -1);
 }
 
-TEST_F(WebSocketHandshakeTest, ShortKey) {
-    char acceptKey[40];
-    calcAcceptKey("abc", acceptKey, sizeof(acceptKey));
-
-    // Should produce valid Base64 output
-    EXPECT_GT(strlen(acceptKey), 0u);
+// Used to be copied with strncpy(…, 100) - no terminator - and appended to
+TEST_F(WebSocketHandshakeTest, OverlongKeyIsRefused) {
+    std::string longKey(1000, 'A');
+    unsigned char acceptKey[40];
+    EXPECT_EQ(websocketAcceptKey(longKey.c_str(), acceptKey, sizeof(acceptKey)), -1);
 }
 
-TEST_F(WebSocketHandshakeTest, LongKey) {
-    // Test with a key at the 100 char limit
-    char longKey[101];
-    memset(longKey, 'A', 99);
-    longKey[99] = '=';
-    longKey[100] = '\0';
+/* The header releases its strings with WebserverFree() */
+static char* header_string(const char* text) {
+    char* p = (char*)WebserverMalloc(strlen(text) + 1);
+    strcpy(p, text);
+    return p;
+}
 
-    char acceptKey[40];
-    calcAcceptKey(longKey, acceptKey, sizeof(acceptKey));
+static socket_info* upgrade_request(const char* key) {
+    socket_info* s = WebserverMallocSocketInfo();
+    s->socket = -1;
+    s->header = WebserverMallocHttpRequestHeader();
+    s->header->Connection = header_string("Upgrade");
+    s->header->Upgrade = header_string("websocket");
+    s->header->SecWebSocketKey = header_string(key);
+    s->header->SecWebSocketVersion = 13;
+    return s;
+}
 
-    EXPECT_GT(strlen(acceptKey), 0u);
+static void free_upgrade_request(socket_info* s) {
+    WebserverFreeSocketInfo(s);
+}
+
+TEST_F(WebSocketHandshakeTest, UpgradeWithAnInvalidKeyGets400) {
+    std::string longKey(200, 'A');
+    socket_info* s = upgrade_request(longKey.c_str());
+    EXPECT_EQ(checkIskWebsocketConnection(s), 1);
+    EXPECT_EQ(s->header->isWebsocket, 2) << "refused, response prepared";
+    EXPECT_EQ(s->header->response_status, 400);
+    free_upgrade_request(s);
+}
+
+TEST_F(WebSocketHandshakeTest, UpgradeWithAValidKeyIsAccepted) {
+    socket_info* s = upgrade_request("dGhlIHNhbXBsZSBub25jZQ==");
+    EXPECT_EQ(checkIskWebsocketConnection(s), 1);
+    EXPECT_EQ(s->header->isWebsocket, 1);
+    free_upgrade_request(s);
 }
 
 // WebSocket Frame Length Encoding Tests
