@@ -141,14 +141,16 @@ int local_file_system_read_content( WebserverFileInfo *file ){
 void add_local_file_system_dir(const char* alias, const char* dir, const int use_cache, const int auth_only ){
 
 	ws_variable *tmp;
-	char buffer[1000];
-	
-	struct dir_info* info = WebserverMalloc( sizeof( struct dir_info ) ) ;
+	size_t len;
 
-	if ( use_cache == 1 ){
-		info->use_ram_cache = 1;
-	}
-	
+	struct dir_info* info = WebserverMalloc( sizeof( struct dir_info ) ) ;
+	/* WebserverMalloc() does not clear: use_ram_cache was only ever set to
+	 * 1, so a directory registered without the RAM cache got whatever the
+	 * block held before - and was cached after all if that was not 0 */
+	memset( info, 0, sizeof( struct dir_info ) );
+
+	info->use_ram_cache = ( use_cache == 1 ) ? 1 : 0;
+
 	info->auth_only = auth_only;
 	
 	tmp = getWSVariableArray( file_dirs , alias);
@@ -161,13 +163,17 @@ void add_local_file_system_dir(const char* alias, const char* dir, const int use
 	
 	tmp = addWSVariableArray( file_dirs , alias, 0 );
 	
-	strncpy(buffer, dir, 990);
-	if (buffer[strlen(buffer)] != '/'){
-		strcat(buffer, "/");
+	/* The directory with exactly one '/' at the end. The old copy through
+	 * a 1000 byte buffer left it unterminated for 990 characters or more,
+	 * and tested the terminator instead of the last character, so every
+	 * directory got a second '/'. */
+	len = strlen( dir );
+	info->dir = WebserverMalloc( len + 2 );
+	memcpy( info->dir, dir, len );
+	if ( ( len == 0 ) || ( dir[len - 1] != '/' ) ){
+		info->dir[len++] = '/';
 	}
-
-	info->dir = WebserverMalloc( strlen( buffer ) + 1 );
-	strcpy( info->dir, buffer);
+	info->dir[len] = '\0';
 	
 	info->alias = WebserverMalloc( strlen( alias ) + 1 );
 	strcpy( info->alias, alias);
@@ -197,8 +203,14 @@ static struct dir_info *search_file_dir ( const char* name, char* real_path, int
 				 * and a path cut to fit named another file than the one
 				 * asked for: one that does not fit is not in this
 				 * directory. */
+				/* dir ends in exactly one '/', the rest of the URL starts
+				 * with one unless the alias was registered with it */
+				const char* rest = name + tmp_var->name_len;
+				while ( rest[0] == '/' ){
+					rest++;
+				}
 				int n = snprintf( real_path, (size_t)real_path_length, "%s%s",
-				                  dir_tmp->dir, name + tmp_var->name_len );
+				                  dir_tmp->dir, rest );
 				if ( ( n < 0 ) || ( n >= real_path_length ) ){
 					real_path[0] = '\0';
 					tmp_var = getWSVariableArrayNext( file_dirs );

@@ -499,6 +499,38 @@ TEST_F(LocalDirTest, FileInAShortDirectoryIsFound) {
     rmdir(dir.c_str());
 }
 
+/* With or without a '/' at the end: exactly one between directory and
+ * file. The check used to look at the terminator and always add one. */
+TEST_F(LocalDirTest, DirectoryAndFileAreJoinedWithOneSlash) {
+    std::string dir = make_dir(0);
+    write_file(dir + "/a.txt", "a");
+    add_local_file_system_dir("noslash", dir.c_str(), 1, 0);
+    add_local_file_system_dir("withslash", (dir + "/").c_str(), 1, 0);
+
+    WebserverFileInfo* f1 = getFileLocalFileSystem("noslash/a.txt");
+    WebserverFileInfo* f2 = getFileLocalFileSystem("withslash/a.txt");
+    ASSERT_NE(f1, nullptr);
+    ASSERT_NE(f2, nullptr);
+    EXPECT_EQ(std::string(f1->FilePath), dir + "/a.txt");
+    EXPECT_EQ(std::string(f2->FilePath), dir + "/a.txt");
+    unlink((dir + "/a.txt").c_str());
+    rmdir(dir.c_str());
+}
+
+/* Registered without the RAM cache, as WebserverAddFileDirNoCache() does.
+ * The flag was left uninitialised - under ASan new blocks are filled with
+ * 0xbe, so the old code cached such files after all. */
+TEST_F(LocalDirTest, DirectoryWithoutRamCacheIsNotCached) {
+    std::string dir = make_dir(0);
+    write_file(dir + "/b.txt", "b");
+    add_local_file_system_dir("nocache", dir.c_str(), 0, 0);
+    WebserverFileInfo* f = getFileLocalFileSystem("nocache/b.txt");
+    ASSERT_NE(f, nullptr);
+    EXPECT_EQ(f->NoRamCache, 1);
+    unlink((dir + "/b.txt").c_str());
+    rmdir(dir.c_str());
+}
+
 TEST_F(LocalDirTest, PathThatDoesNotFitIsNotFound) {
     std::string dir = make_dir(600);
     add_local_file_system_dir("longdir", dir.c_str(), 1, 0);
