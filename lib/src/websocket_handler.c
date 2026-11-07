@@ -93,11 +93,27 @@ static int handleWebsocket(socket_info* sock, EVENT_TYPES type) {
 					if (likely ( status == SOCKET_SEND_NO_MORE_DATA ) ){
 						continue;
 					}
+					if ( status == SOCKET_SEND_SEND_BUFFER_FULL ){
+						/* This chunk is out, the socket is full now */
+						break;
+					}
 				}
 
 				if ((status == SOCKET_SEND_UNKNOWN_ERROR) || (status == SOCKET_SEND_CLIENT_DISCONNECTED)) {
 					PlatformUnlockMutex(&sock->socket_mutex);
 					return -1;
+				}
+
+				/* The socket takes nothing more right now - an ordinary state
+				 * with a client reading slower than we write, or several
+				 * chunks queued: it used to end the connection. What went
+				 * out counts (with TLS part of the chunk may have), the rest
+				 * goes on the next write event; WRITE stays registered below
+				 * since the list is not empty. A client that never takes
+				 * anything again is the idle sweep's (timeout_send_idle). */
+				if ( status == SOCKET_SEND_SEND_BUFFER_FULL ){
+					sock->websocket_send_pos += (int)send_bytes;
+					break;
 				}
 
 				/* Der Buffer konnte nur teilweise gesendet werden */

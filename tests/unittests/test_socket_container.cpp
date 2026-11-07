@@ -1296,6 +1296,41 @@ TEST_F(WebsocketFrameTest, FrameJustLargerThanTheBufferIsReceived) {
     }
 }
 
+/* More queued than the socket takes at once: the write event used to end
+ * the connection as soon as the socket was full */
+TEST_F(WebsocketFrameTest, FullSendBufferWaitsForTheNextWriteEvent) {
+    int small = 4096;
+    setsockopt(ws->socket, SOL_SOCKET, SO_SNDBUF, &small, sizeof(small));
+    setsockopt(peer, SOL_SOCKET, SO_RCVBUF, &small, sizeof(small));
+
+    std::string sent;
+    for (int i = 0; i < 100; i++) {
+        std::string piece(1500, (char)('a' + i % 26));
+        sendWebsocketChunk(ws, (const unsigned char*)piece.data(), (unsigned int)piece.size());
+        sent += piece;
+    }
+
+    websocket_event_handler(ws, EVENT_WRITE);       /* peer reads nothing yet */
+    ASSERT_EQ(sockets_in_container(), 1) << "closed on a full socket";
+    ASSERT_FALSE(ws_list_empty(&ws->websocket_chunk_list)) << "test did not fill the socket";
+
+    std::string got;
+    char buf[8192];
+    fcntl(peer, F_SETFL, fcntl(peer, F_GETFL) | O_NONBLOCK);
+    for (int round = 0; round < 10000 && got.size() < sent.size(); round++) {
+        ssize_t n;
+        while ((n = recv(peer, buf, sizeof(buf), 0)) > 0) {
+            got.append(buf, (size_t)n);
+        }
+        if (!ws_list_empty(&ws->websocket_chunk_list)) {
+            websocket_event_handler(ws, EVENT_WRITE);
+            ASSERT_EQ(sockets_in_container(), 1);
+        }
+    }
+    EXPECT_EQ(got.size(), sent.size());
+    EXPECT_TRUE(got == sent) << "bytes lost or out of order";
+}
+
 /* Empty continuation frames used to cost an allocation and a list node
  * each without counting against any limit */
 TEST_F(WebsocketFrameTest, EndlessEmptyContinuationFramesAreStopped) {
