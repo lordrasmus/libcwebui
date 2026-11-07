@@ -297,66 +297,109 @@ static char* get_status( tdefl_status status ){
 	return "unknown";
 	
 }
-static unsigned long writeChunksToBuffer(list_t* liste, char* out_buffer, int compress) {
+static void releaseChunks(list_t* liste) {
 	html_chunk* chunk;
-	unsigned long offset = 0;
-	tdefl_status status;
-	tdefl_compressor *deflator = 0;
-	
-	if ( compress == 1 ){
-		int level = 5;
-		// The number of dictionary probes to use at each compression level (0-10). 0=implies fastest/minimal possible probing.
-		static const mz_uint s_tdefl_num_probes[11] = { 0, 1, 6, 32,  16, 32, 128, 256,  512, 768, 1500 };
-		
-		// create tdefl() compatible flags (we have to compose the low-level flags ourselves, or use tdefl_create_comp_flags_from_zip_params() but that means MINIZ_NO_ZLIB_APIS can't be defined).
-		mz_uint comp_flags = s_tdefl_num_probes[MZ_MIN(10, level)] | ((level <= 3) ? TDEFL_GREEDY_PARSING_FLAG : 0);
-		// mit level == 0 kann man noch das anhängen
-		// 		comp_flags |= TDEFL_FORCE_ALL_RAW_BLOCKS;
-
-
-		deflator = tdefl_compressor_alloc();
-		// Initialize the low-level compressor.
-		status = tdefl_init( deflator, NULL, NULL, comp_flags);
-		if (status != TDEFL_STATUS_OKAY){
-			printf("tdefl_init() failed!\n");
-			return EXIT_FAILURE;
-		}
-	}
 
 	ws_list_iterator_start(liste);
 	while ( ( chunk = (html_chunk*) ws_list_iterator_next(liste) ) ) {
-		if ( compress == 1 ){
-			
-			size_t in_bytes = chunk->length;
-			size_t out_bytes = 1000000;
-			// Compress as much of the input as possible (or all of it) to the output buffer.
-			status = tdefl_compress( deflator, chunk->text, &in_bytes, &out_buffer[offset], &out_bytes, TDEFL_FULL_FLUSH);
-			offset += out_bytes;
-			if ( status != TDEFL_STATUS_OKAY ){
-				printf("status : %s %ld\n",get_status(status),offset);
-			}
-		}else{
-			memcpy(&out_buffer[offset], chunk->text, chunk->length);
-			offset += chunk->length;
-		}
 		WebserverFreeHtml_chunk(chunk);
 	}
 	ws_list_iterator_stop(liste);
-	
-	
-	if ( compress == 1 ){
+	ws_list_clear(liste);
+}
+
+/* Copies the chunks into out_buffer, which must hold getChunkListSize(),
+ * and releases them */
+static unsigned long writeChunksToBuffer(list_t* liste, char* out_buffer) {
+	html_chunk* chunk;
+	unsigned long offset = 0;
+
+	ws_list_iterator_start(liste);
+	while ( ( chunk = (html_chunk*) ws_list_iterator_next(liste) ) ) {
+		memcpy(&out_buffer[offset], chunk->text, chunk->length);
+		offset += chunk->length;
+		WebserverFreeHtml_chunk(chunk);
+	}
+	ws_list_iterator_stop(liste);
+
+	ws_list_clear(liste);
+	return offset;
+}
+
+/*
+ * Room deflateChunks() may need for body_size bytes in chunk_count chunks.
+ * The base is miniz' own bound (mz_deflateBound(), not available with
+ * MINIZ_NO_ZLIB_APIS): incompressible data goes out as stored blocks and
+ * grows a little. On top, every chunk is flushed on its own, which ends a
+ * block and adds an empty stored block as sync marker: up to 5 bytes of
+ * block header, 5 of marker and the padding to the byte boundary.
+ */
+static unsigned long deflateCapacity(unsigned long body_size, unsigned int chunk_count) {
+	unsigned long a = 128 + (body_size / 100) * 110 + ((body_size % 100) * 110) / 100;
+	unsigned long b = 128 + body_size + ((body_size / (31 * 1024)) + 1) * 5;
+	return MZ_MAX(a, b) + (unsigned long)chunk_count * 16;
+}
+
+/*
+ * Compresses the chunks into out_buffer without releasing them. Returns the
+ * compressed size, 0 when that did not work - the chunks are still there
+ * for sending the page uncompressed.
+ */
+static unsigned long deflateChunks(list_t* liste, char* out_buffer, unsigned long capacity) {
+	html_chunk* chunk;
+	unsigned long offset = 0;
+	tdefl_status status;
+	tdefl_compressor *deflator;
+	int failed = 0;
+	int level = 5;
+	// The number of dictionary probes to use at each compression level (0-10). 0=implies fastest/minimal possible probing.
+	static const mz_uint s_tdefl_num_probes[11] = { 0, 1, 6, 32,  16, 32, 128, 256,  512, 768, 1500 };
+
+	// create tdefl() compatible flags (we have to compose the low-level flags ourselves, or use tdefl_create_comp_flags_from_zip_params() but that means MINIZ_NO_ZLIB_APIS can't be defined).
+	mz_uint comp_flags = s_tdefl_num_probes[MZ_MIN(10, level)] | ((level <= 3) ? TDEFL_GREEDY_PARSING_FLAG : 0);
+
+	deflator = tdefl_compressor_alloc();
+	if (deflator == NULL) {
+		return 0;
+	}
+	status = tdefl_init( deflator, NULL, NULL, comp_flags);
+	if (status != TDEFL_STATUS_OKAY){
+		printf("tdefl_init() failed: %s\n", get_status(status));
+		tdefl_compressor_free( deflator );
+		return 0;
+	}
+
+	/* Every call is told the room actually left: tdefl writes no more than
+	 * that, and reports a chunk it could not take completely */
+	ws_list_iterator_start(liste);
+	while ( ( chunk = (html_chunk*) ws_list_iterator_next(liste) ) ) {
+		size_t in_bytes = chunk->length;
+		size_t out_bytes = capacity - offset;
+		status = tdefl_compress( deflator, chunk->text, &in_bytes, &out_buffer[offset], &out_bytes, TDEFL_FULL_FLUSH);
+		offset += out_bytes;
+		if ( ( status != TDEFL_STATUS_OKAY ) || ( in_bytes != chunk->length ) ){
+			printf("deflate: chunk not taken completely, status %s, %lu of %lu bytes\n",
+			       get_status(status), offset, capacity);
+			failed = 1;
+			break;
+		}
+	}
+	ws_list_iterator_stop(liste);
+
+	if ( failed == 0 ){
 		size_t in_bytes = 0;
-		size_t out_bytes = 1000000;
+		size_t out_bytes = capacity - offset;
 		status = tdefl_compress( deflator, 0, &in_bytes, &out_buffer[offset], &out_bytes, TDEFL_FINISH);
 		offset += out_bytes;
 		if ( status != TDEFL_STATUS_DONE ){
-			printf("status : %s %ld\n",get_status(status),offset);
+			printf("deflate: finish failed, status %s, %lu of %lu bytes\n",
+			       get_status(status), offset, capacity);
+			failed = 1;
 		}
-		tdefl_compressor_free( deflator );
 	}
-	
-	ws_list_clear(liste);
-	return offset;
+	tdefl_compressor_free( deflator );
+
+	return failed ? 0 : offset;
 }
 
 void generateOutputBuffer(socket_info* sock) {
@@ -369,30 +412,36 @@ void generateOutputBuffer(socket_info* sock) {
 
 	if ( ( sock->use_output_compression == 1 ) && ( sock->send_file_info == 0 ) ){
 		unsigned long body_size = getChunkListSize(&sock->html_chunk_list);
-		buffer = (char*) WebserverMalloc ( body_size + 1  ); /* +1 fuer Header Debug '\0' */
-		
-		offset = writeChunksToBuffer(&sock->html_chunk_list, &buffer[offset], 1 );
+		/* Room for the compressed body, which can be larger than the page
+		 * itself: deflate does not shrink everything, and every chunk is
+		 * flushed on its own. The page size alone, as before, let a page
+		 * that compresses badly run over the end of the buffer. */
+		unsigned long capacity = deflateCapacity(body_size, ws_list_size(&sock->html_chunk_list));
+		buffer = (char*) WebserverMalloc ( capacity + 1  ); /* +1 fuer Header Debug '\0' */
+
+		offset = deflateChunks(&sock->html_chunk_list, buffer, capacity);
+		if ( offset > 0 ){
+			releaseChunks(&sock->html_chunk_list);
+			printHeaderChunk(sock, "Content-Encoding: deflate\r\n");
+		}else{
+			/* Not compressed after all: the page as it is, the buffer
+			 * holds it (capacity > body_size) */
+			offset = writeChunksToBuffer(&sock->html_chunk_list, buffer);
+		}
 		output->body.buffer = buffer;
 		output->body.buffer_size = offset;
-		
+
 		if ( body_size == 0){
 			printf("url : %s\n",sock->header->url);
 		}
-#if 0
-		double proz = offset;
-		proz /= (double)body_size;
-		proz *= 100.0;
-		printf("orig: %lu  compress: %lu  %.2f %%\n",body_size,offset,proz );
-#endif
-		
-		printHeaderChunk(sock, "Content-Encoding: deflate\r\n");
+
 		printHeaderChunk(sock, "Content-Length: %"PRIu32"\r\n", offset);
 		printHeaderChunk(sock, "\r\n"); /* HTTP Header beenden */
-		
+
 		unsigned long header_size = getChunkListSize(&sock->header_chunk_list);
 		buffer = (char*) WebserverMalloc ( header_size + 1  ); /* +1 fuer Header Debug '\0' */
-		
-		offset = writeChunksToBuffer(&sock->header_chunk_list, buffer, 0);
+
+		offset = writeChunksToBuffer(&sock->header_chunk_list, buffer);
 		
 		output->header.buffer = buffer;
 		output->header.buffer_size = offset;
@@ -410,14 +459,14 @@ void generateOutputBuffer(socket_info* sock) {
 	unsigned long size = header_size + body_size;
 	buffer = (char*) WebserverMalloc ( size + 1  ); /* +1 fuer Header Debug '\0' */
 
-	offset = writeChunksToBuffer(&sock->header_chunk_list, buffer, 0);
+	offset = writeChunksToBuffer(&sock->header_chunk_list, buffer);
 
 #ifdef _WEBSERVER_HEADER_DEBUG_
 	buffer[offset]='\0';
 	LOG (HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket, "-------- sending Header --------\r\n %s -------- Header end --------",buffer );
 #endif
 
-	offset += writeChunksToBuffer(&sock->html_chunk_list, &buffer[offset], 0 );
+	offset += writeChunksToBuffer(&sock->html_chunk_list, &buffer[offset] );
 
 #ifdef _WEBSERVER_BODY_DEBUG_
 	WebServerPrintf ( "%s",buffer );

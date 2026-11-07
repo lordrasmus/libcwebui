@@ -13,6 +13,7 @@
 extern "C" {
 #include "webserver.h"
 #include "reverse_proxy.h"
+#include <miniz.h>
 }
 
 /*
@@ -1275,3 +1276,62 @@ TEST_F(WebsocketFrameTest, SmallBinaryFrameStillGoesThrough) {
     EXPECT_EQ(ws->closeSocket, 0);
 }
 #endif
+
+/*
+ * Compressed responses (Accept-Encoding: deflate on a template page). The
+ * body buffer used to be the size of the page, while deflate output can be
+ * larger: data that does not compress grows a little, and every chunk is
+ * flushed on its own.
+ */
+static output_struct* deflate_page(socket_info* s, const std::vector<unsigned char>& page) {
+    s->header = WebserverMallocHttpRequestHeader();
+    s->use_output_compression = 1;
+    printHeaderChunk(s, "HTTP/1.1 200 OK\r\n");
+    sendHTMLChunk(s, (const char*)page.data(), (unsigned int)page.size());
+    generateOutputBuffer(s);
+    return (output_struct*)ws_list_get_at(&s->output_list, 0);
+}
+
+static std::vector<unsigned char> inflate_body(const output_struct* out) {
+    size_t len = 0;
+    void* p = tinfl_decompress_mem_to_heap(out->body.buffer, out->body.buffer_size, &len, 0);
+    std::vector<unsigned char> v;
+    if (p != NULL) {
+        v.assign((unsigned char*)p, (unsigned char*)p + len);
+        mz_free(p);
+    }
+    return v;
+}
+
+TEST(DeflateOutputTest, PageThatDoesNotCompressFitsAndInflatesBack) {
+    std::vector<unsigned char> page(20000);
+    unsigned int seed = 12345;
+    for (auto& b : page) {
+        seed = seed * 1103515245u + 12345u;
+        b = (unsigned char)(seed >> 16);
+    }
+    socket_info* s = make_sock();
+    output_struct* out = deflate_page(s, page);
+    ASSERT_NE(out, nullptr);
+    std::string header(out->header.buffer, out->header.buffer_size);
+    EXPECT_NE(header.find("Content-Encoding: deflate"), std::string::npos) << header;
+    EXPECT_NE(header.find("Content-Length: " + std::to_string(out->body.buffer_size)),
+              std::string::npos) << header;
+    EXPECT_GT(out->body.buffer_size, page.size()) << "random data does not shrink";
+    EXPECT_EQ(inflate_body(out), page);
+    WebserverFreeSocketInfo(s);
+}
+
+TEST(DeflateOutputTest, OrdinaryPageStillShrinks) {
+    std::string html;
+    while (html.size() < 20000) {
+        html += "<tr><td class=\"port\">Port</td><td class=\"state\">up</td></tr>\n";
+    }
+    std::vector<unsigned char> page(html.begin(), html.end());
+    socket_info* s = make_sock();
+    output_struct* out = deflate_page(s, page);
+    ASSERT_NE(out, nullptr);
+    EXPECT_LT(out->body.buffer_size, page.size() / 4);
+    EXPECT_EQ(inflate_body(out), page);
+    WebserverFreeSocketInfo(s);
+}
