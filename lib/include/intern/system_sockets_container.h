@@ -52,9 +52,37 @@ extern "C" {
 	 * for unknown address types */
 	void connLimitKeyFromAddress(const void* addr, uint32_t addr_len, ws_peer_key* key);
 
+	/* Config values of the connection limits and idle timeouts, set through
+	 * setConfigInt(); returns 1 if name is one of them */
+	int  connLimitSetConfig(const char* name, int value);
+
+	/* Total limit: all sockets in the container except listeners (proxy
+	 * backends included, they are descriptors as well) */
+	uint32_t connLimitTotalCount(void);
+	int  connLimitTotalMax(void);
+	socket_info* connLimitPickGlobalVictim(void);
+
+	/* Idle timeouts, driven by the event backends around every wait:
+	 * before (returns the wait timeout in ms, -1 = none), right after it,
+	 * and after the events of that wait have been dispatched */
+	int  eventLoopBeforeWait(void);
+	void eventLoopAfterWait(void);
+	void eventLoopAfterDispatch(void);
+	uint32_t connMonotonicSec(void);
+
 	/* Order of the last transfer on any connection; event loop thread only */
 	extern uint64_t g_conn_io_seq;
+	/* Event loop time in seconds, 0 = no clock (timeouts off) */
+	extern uint32_t g_loop_now;
 	#define CONN_LIMIT_NOTE_IO(sock)	( (sock)->last_io = ++g_conn_io_seq )
+	#define CONN_NOTE_RX(sock)			( (sock)->last_io = ++g_conn_io_seq, (sock)->rx_at = g_loop_now )
+	#define CONN_NOTE_TX(sock)			( (sock)->last_io = ++g_conn_io_seq, (sock)->tx_at = g_loop_now )
+
+	/* system_sockets.c: input already arrived for sock but not read yet */
+	int  connHasPendingInput(socket_info* sock);
+	/* system_sockets.c: make room below the total limit by closing the
+	 * longest idle connection; 1 if there is room afterwards */
+	int  connLimitEnsureTotalRoom(void);
 
 #ifdef __cplusplus
 }

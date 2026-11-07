@@ -88,6 +88,8 @@ static int handleWebsocket(socket_info* sock, EVENT_TYPES type) {
 					sock->websocket_send_pos = 0;
 					ws_list_delete(&sock->websocket_chunk_list, chunk);
 					WebserverFreeHtml_chunk(chunk);
+					/* Tells the idle sweep when its ping has gone out */
+					sock->ws_chunks_sent++;
 					if (likely ( status == SOCKET_SEND_NO_MORE_DATA ) ){
 						continue;
 					}

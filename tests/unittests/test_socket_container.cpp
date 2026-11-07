@@ -1,11 +1,14 @@
 #include <gtest/gtest.h>
+#include <algorithm>
 #include <cerrno>
+#include <sys/resource.h>
 #include <chrono>
 #include <cstring>
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <thread>
 #include <unistd.h>
+#include <vector>
 
 extern "C" {
 #include "webserver.h"
@@ -556,4 +559,597 @@ TEST_F(AcceptLimitTest, IdleOneFoundBehindManyWithInputWaiting) {
     for (int i = 0; i < 9; i++) {
         EXPECT_FALSE(closed_by_server(clients[i])) << "client " << i;
     }
+}
+
+/*
+ * Idle timeouts: the sweep run by eventLoopAfterDispatch() once per event
+ * loop second. The tests move the loop time g_loop_now themselves and build
+ * sockets in the states that matter.
+ */
+class IdleTimeoutTest : public WebsocketCloseTest {
+protected:
+    uint32_t base = 0;
+
+    void SetUp() override {
+        WebsocketCloseTest::SetUp();
+        base = g_loop_now + 1000;   /* well clear of earlier tests */
+        g_loop_now = base;
+    }
+
+    /* A client connection as handleServer() leaves it, stamps at "now" */
+    socket_info* client() {
+        socket_info* s = make_sock();
+        s->header = WebserverMallocHttpRequestHeader();
+        s->rx_at = s->tx_at = s->phase_at = g_loop_now;
+        addSocketContainer(s);
+        return s;
+    }
+
+    /* An established websocket: closing it queues a disconnect for the
+     * input thread, which needs the GUID and the URL */
+    socket_info* websocket(const char* guid) {
+        socket_info* s = client();
+        s->isWebsocket = 1;
+        s->bytes_received = 100;
+        s->websocket_guid = (char*)WebserverMalloc(WEBSERVER_GUID_LENGTH + 1);
+        snprintf(s->websocket_guid, WEBSERVER_GUID_LENGTH + 1, "%s", guid);
+        s->header->url = (char*)WebserverMalloc(sizeof("NoSuchSocket"));
+        strcpy(s->header->url, "NoSuchSocket");
+        addSocketByGUID(s);
+        return s;
+    }
+
+    /* What the write path does once the client has taken everything */
+    void drain(socket_info* s) {
+        while (!ws_list_empty(&s->websocket_chunk_list)) {
+            WebserverFreeHtml_chunk((html_chunk*)ws_list_extract_at(&s->websocket_chunk_list, 0));
+            s->ws_chunks_sent++;
+        }
+        s->tx_at = g_loop_now;
+    }
+
+    /* Let `seconds` pass since base and run the sweep */
+    void at(uint32_t seconds) {
+        g_loop_now = base + seconds;
+        eventLoopAfterDispatch();
+    }
+};
+
+TEST_F(IdleTimeoutTest, FreshConnectionGetsTheRequestHeaderDeadline) {
+    client();                               /* never sends a byte */
+    at(29);
+    EXPECT_EQ(sockets_in_container(), 1);
+    at(30);
+    EXPECT_EQ(sockets_in_container(), 0);
+}
+
+TEST_F(IdleTimeoutTest, KeepAliveHasItsOwnLongerTimeout) {
+    socket_info* s = client();
+    s->bytes_received = 100;                /* has had a request */
+    at(31);
+    EXPECT_EQ(sockets_in_container(), 1);
+    at(119);
+    EXPECT_EQ(sockets_in_container(), 1);
+    at(120);
+    EXPECT_EQ(sockets_in_container(), 0);
+}
+
+TEST_F(IdleTimeoutTest, NewRequestAfterAPauseStartsItsOwnDeadline) {
+    socket_info* s = client();
+    s->bytes_received = 100;
+    at(100);                                /* long keep-alive pause */
+    s->header_buffer_pos = 5;               /* next request begins */
+    s->phase_at = g_loop_now;
+    at(129);
+    EXPECT_EQ(sockets_in_container(), 1) << "not cut off for the pause before it";
+    at(130);
+    EXPECT_EQ(sockets_in_container(), 0) << "trickling header: one deadline";
+}
+
+TEST_F(IdleTimeoutTest, ResponseDeadlineCountsFromQueueingNotFromTheLastOne) {
+    socket_info* s = client();
+    s->bytes_received = 100;
+    at(110);                                /* keep-alive almost over */
+    output_struct* out = (output_struct*)WebserverMalloc(sizeof(output_struct));
+    memset(out, 0, sizeof(*out));
+    ws_list_append(&s->output_list, out, 0);
+    s->tx_at = g_loop_now;                  /* what generateOutputBuffer() does */
+    at(229);
+    EXPECT_EQ(sockets_in_container(), 1);
+    at(230);
+    EXPECT_EQ(sockets_in_container(), 0) << "client takes nothing for send_idle";
+}
+
+TEST_F(IdleTimeoutTest, UploadWithoutProgressIsClosedButProgressKeepsIt) {
+    socket_info* s = client();
+    s->bytes_received = 100;
+    s->header->header_complete = 1;         /* buffered POST body coming */
+    at(100);
+    s->rx_at = g_loop_now;                  /* a chunk arrived */
+    at(219);
+    EXPECT_EQ(sockets_in_container(), 1);
+    at(220);
+    EXPECT_EQ(sockets_in_container(), 0);
+}
+
+/* A socket whose input is read in the dispatch round in between */
+TEST_F(IdleTimeoutTest, InputWaitingSavesAKeepAliveConnectionOnce) {
+    int fds[2];
+    ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, fds), 0);
+    socket_info* s = WebserverMallocSocketInfo();
+    s->socket = fds[0];
+    s->client = 1;
+    s->header = WebserverMallocHttpRequestHeader();
+    s->bytes_received = 100;
+    s->rx_at = s->tx_at = s->phase_at = g_loop_now;
+    addSocketContainer(s);
+    ASSERT_EQ(send(fds[1], "GET", 3, 0), 3);   /* arrived, not yet read */
+    at(120);
+    ASSERT_EQ(sockets_in_container(), 1) << "next request is here";
+    EXPECT_EQ(s->spared_at, base + 120);
+    char buf[8];
+    ASSERT_EQ(recv(fds[0], buf, sizeof(buf), 0), 3);   /* the loop reads it */
+    s->header_buffer_pos = 3;
+    s->phase_at = g_loop_now;
+    at(121);
+    EXPECT_EQ(sockets_in_container(), 1);
+    EXPECT_EQ(s->spared_at, 0u) << "spared once, then reset";
+    close(fds[1]);
+}
+
+/* Input nothing is going to read: no second exception, and no sweep that
+ * keeps coming back to it */
+TEST_F(IdleTimeoutTest, InputNeverReadDoesNotSaveTheConnectionTwice) {
+    int fds[2];
+    ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, fds), 0);
+    socket_info* s = WebserverMallocSocketInfo();
+    s->socket = fds[0];
+    s->client = 1;
+    s->header = WebserverMallocHttpRequestHeader();
+    s->bytes_received = 100;
+    s->rx_at = s->tx_at = s->phase_at = g_loop_now;
+    addSocketContainer(s);
+    ASSERT_EQ(send(fds[1], "GET", 3, 0), 3);
+    at(120);
+    ASSERT_EQ(sockets_in_container(), 1);
+    at(121);
+    EXPECT_EQ(sockets_in_container(), 1) << "at least a whole second";
+    at(122);
+    EXPECT_EQ(sockets_in_container(), 0);
+    close(fds[1]);
+}
+
+/* A request arriving right at the deadline gets one second, not more */
+TEST_F(IdleTimeoutTest, RequestHeaderDeadlineInputBuysOneSecond) {
+    int fds[2];
+    ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, fds), 0);
+    socket_info* s = WebserverMallocSocketInfo();
+    s->socket = fds[0];
+    s->client = 1;
+    s->header = WebserverMallocHttpRequestHeader();
+    s->rx_at = s->tx_at = s->phase_at = g_loop_now;
+    addSocketContainer(s);
+    ASSERT_EQ(send(fds[1], "GET", 3, 0), 3);
+    at(30);
+    EXPECT_EQ(sockets_in_container(), 1);
+    at(31);
+    EXPECT_EQ(sockets_in_container(), 1);
+    at(32);
+    EXPECT_EQ(sockets_in_container(), 0) << "not a second longer";
+    close(fds[1]);
+}
+
+/* Under load one dispatch round need not reach a spared socket: the
+ * exception lasts the second, and an immediate further sweep in that
+ * second neither closes it nor keeps finding it again */
+TEST_F(IdleTimeoutTest, SparedSocketsLastTheSecondWithoutSpinning) {
+    std::vector<int> peers;
+    for (int i = 0; i < 100; i++) {
+        int fds[2];
+        ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, fds), 0);
+        socket_info* s = WebserverMallocSocketInfo();
+        s->socket = fds[0];
+        s->client = 1;
+        s->header = WebserverMallocHttpRequestHeader();
+        s->bytes_received = 100;
+        s->rx_at = s->tx_at = s->phase_at = g_loop_now;
+        addSocketContainer(s);
+        ASSERT_EQ(send(fds[1], "GET", 3, 0), 3);
+        peers.push_back(fds[1]);
+    }
+    at(120);
+    EXPECT_EQ(sockets_in_container(), 100);
+    EXPECT_EQ(eventLoopBeforeWait(), 0) << "64 per round, 36 left";
+    eventLoopAfterDispatch();
+    EXPECT_EQ(sockets_in_container(), 100) << "same second: spared, not closed";
+    EXPECT_NE(eventLoopBeforeWait(), 0) << "nothing left to do this second";
+    eventLoopAfterDispatch();
+    EXPECT_EQ(sockets_in_container(), 100);
+    at(121);                                /* spared just before the tick */
+    EXPECT_EQ(sockets_in_container(), 100) << "a whole second, not milliseconds";
+    EXPECT_NE(eventLoopBeforeWait(), 0);
+    at(122);                                /* nobody read: now they go */
+    eventLoopAfterDispatch();
+    EXPECT_EQ(sockets_in_container(), 0);
+    for (int fd : peers) {
+        close(fd);
+    }
+}
+
+/* More than one sweep can handle with no way to make progress on any of
+ * them must not turn into a loop that never waits */
+TEST_F(IdleTimeoutTest, ManyClosingWebsocketsWithQueuedFramesDoNotSpin) {
+    std::vector<socket_info*> ws;
+    for (int i = 0; i < 100; i++) {
+        char guid[32];
+        snprintf(guid, sizeof(guid), "closing-ws-%d", i);
+        socket_info* s = websocket(guid);
+        s->closeSocket = 1;
+        sendWebsocketChunk(s, (const unsigned char*)"\x81\x01x", 3);  /* client never takes it */
+        ws.push_back(s);
+    }
+    at(60);
+    EXPECT_NE(eventLoopBeforeWait(), 0) << "nothing to do right away";
+    EXPECT_EQ(sockets_in_container(), 100) << "no ping, no close yet";
+    for (socket_info* s : ws) {
+        EXPECT_EQ(s->ws_ping_at, 0u);
+    }
+    at(119);
+    EXPECT_EQ(sockets_in_container(), 100);
+    at(180);                                /* send_idle from first seen at 60 */
+    EXPECT_EQ(sockets_in_container(), 36);
+    eventLoopAfterDispatch();
+    EXPECT_EQ(sockets_in_container(), 0);
+}
+
+TEST_F(IdleTimeoutTest, ClosingWebsocketWithNothingQueuedUsesTheClosingDeadline) {
+    socket_info* s = websocket("closing-empty");
+    s->closeSocket = 1;
+    at(4);
+    EXPECT_EQ(sockets_in_container(), 1);
+    at(5);
+    EXPECT_EQ(sockets_in_container(), 0);
+}
+
+/* A client busy sending but not reading what it is sent */
+TEST_F(IdleTimeoutTest, WebsocketOutputNotTakenIsClosedDespiteTraffic) {
+    socket_info* s = websocket("not-reading");
+    sendWebsocketChunk(s, (const unsigned char*)"\x81\x01x", 3);
+    at(10);                                 /* first seen here */
+    for (uint32_t t = 11; t < 130; t++) {
+        s->rx_at = base + t;                /* frames keep coming in */
+        at(t);
+    }
+    EXPECT_EQ(sockets_in_container(), 1);
+    EXPECT_EQ(s->ws_ping_at, 0u) << "not silent, no ping";
+    s->rx_at = base + 130;
+    at(130);                                /* 120 s after it was seen at 10 */
+    EXPECT_EQ(sockets_in_container(), 0);
+}
+
+TEST_F(IdleTimeoutTest, WebsocketOutputBeingTakenKeepsIt) {
+    socket_info* s = websocket("reading-slowly");
+    at(10);
+    sendWebsocketChunk(s, (const unsigned char*)"\x81\x01x", 3);
+    at(11);
+    s->tx_at = base + 100;                  /* some of it went out */
+    at(219);
+    EXPECT_EQ(sockets_in_container(), 1);
+    at(220);
+    EXPECT_EQ(sockets_in_container(), 0);
+}
+
+TEST_F(IdleTimeoutTest, WebsocketPingsBeyondOneRoundAreSentInTheNext) {
+    std::vector<socket_info*> ws;
+    for (int i = 0; i < 100; i++) {
+        char guid[32];
+        snprintf(guid, sizeof(guid), "many-pings-%d", i);
+        ws.push_back(websocket(guid));
+    }
+    at(60);
+    EXPECT_EQ(eventLoopBeforeWait(), 0) << "36 pings still to send";
+    eventLoopAfterDispatch();
+    for (socket_info* s : ws) {
+        EXPECT_NE(s->ws_ping_at, 0u);
+    }
+    EXPECT_NE(eventLoopBeforeWait(), 0);
+}
+
+TEST_F(IdleTimeoutTest, MarkedForClosingWithNothingToSend) {
+    socket_info* s = client();
+    s->bytes_received = 100;
+    s->closeSocket = 1;
+    at(4);
+    EXPECT_EQ(sockets_in_container(), 1);
+    at(5);
+    EXPECT_EQ(sockets_in_container(), 0);
+}
+
+TEST_F(IdleTimeoutTest, ListenersAndUnknownSocketsAreLeftAlone) {
+    socket_info* l = make_sock();
+    l->server = 1;
+    addSocketContainer(l);
+    socket_info* backend = make_sock();     /* no header, no handler */
+    addSocketContainer(backend);
+    at(10000);
+    EXPECT_EQ(sockets_in_container(), 2);
+}
+
+TEST_F(IdleTimeoutTest, SilentWebsocketGetsAPingThenIsClosed) {
+    socket_info* s = websocket("idle-ping-test");
+    at(59);
+    EXPECT_EQ(s->ws_ping_at, 0u);
+    at(60);
+    ASSERT_NE(s->ws_ping_at, 0u) << "ping sent";
+    ASSERT_FALSE(ws_list_empty(&s->websocket_chunk_list));
+    html_chunk* chunk = (html_chunk*)ws_list_get_at(&s->websocket_chunk_list, 0);
+    ASSERT_EQ(chunk->length, 2u);
+    EXPECT_EQ((unsigned char)chunk->text[0], 0x89);
+    drain(s);                               /* the ping goes out */
+    at(61);                                 /* seen gone: answer due from here */
+    at(90);
+    EXPECT_EQ(sockets_in_container(), 1);
+    at(91);
+    EXPECT_EQ(sockets_in_container(), 0) << "no answer to the ping";
+}
+
+/* The device's /CommandSocket pushes a frame every 5 s: the client's
+ * kernel taking those says nothing about the application answering */
+TEST_F(IdleTimeoutTest, SendingProgressDoesNotStandInForThePong) {
+    socket_info* s = websocket("pushed-to");
+    at(60);
+    ASSERT_NE(s->ws_ping_at, 0u);
+    drain(s);
+    at(61);
+    for (uint32_t t = 62; t < 91; t++) {
+        sendWebsocketChunk(s, (const unsigned char*)"\x81\x01x", 3);
+        drain(s);                           /* taken right away */
+        at(t);
+    }
+    EXPECT_EQ(sockets_in_container(), 1);
+    at(91);
+    EXPECT_EQ(sockets_in_container(), 0);
+}
+
+/* Frames queued behind the ping all the time: the queue is never seen
+ * empty, but the ping itself is out, and the answer is due from then */
+TEST_F(IdleTimeoutTest, PongDeadlineRunsWhileNewFramesKeepTheQueueFull) {
+    socket_info* s = websocket("busy-queue");
+    at(60);
+    ASSERT_NE(s->ws_ping_at, 0u);
+    for (uint32_t t = 61; t < 91; t++) {
+        drain(s);                           /* ping and all before it out */
+        sendWebsocketChunk(s, (const unsigned char*)"\x81\x01x", 3);
+        at(t);
+    }
+    EXPECT_EQ(sockets_in_container(), 1);
+    drain(s);
+    sendWebsocketChunk(s, (const unsigned char*)"\x81\x01x", 3);
+    at(91);
+    EXPECT_EQ(sockets_in_container(), 0) << "no answer 30 s after the ping went out";
+}
+
+/* The ping shares its chunk with frames appended after it: written past
+ * the ping is out, even though the chunk is not done yet */
+TEST_F(IdleTimeoutTest, PingOutWhenWrittenPastItInsideItsChunk) {
+    socket_info* s = websocket("shared-chunk");
+    static const unsigned char before[100] = { 0x81 };
+    sendWebsocketChunk(s, before, sizeof(before));
+    at(60);                                 /* ping appended to that chunk */
+    ASSERT_NE(s->ws_ping_at, 0u);
+    ASSERT_EQ(ws_list_size(&s->websocket_chunk_list), 1u);
+    static const unsigned char after[500] = { 0x81 };
+    sendWebsocketChunk(s, after, sizeof(after));   /* same chunk again */
+    ASSERT_EQ(ws_list_size(&s->websocket_chunk_list), 1u);
+    s->websocket_send_pos = 101;            /* one ping byte still to go */
+    s->tx_at = base + 60;
+    at(61);
+    EXPECT_EQ(s->ws_ping_sent_at, 0u) << "ping not complete yet";
+    s->websocket_send_pos = 102;            /* ping written, the rest not */
+    at(62);
+    EXPECT_EQ(s->ws_ping_sent_at, base + 62);
+    at(91);
+    EXPECT_EQ(sockets_in_container(), 1);
+    at(92);
+    EXPECT_EQ(sockets_in_container(), 0);
+}
+
+/* Behind frames the client does not take, the ping never leaves: that is
+ * the send_idle deadline's case, not the pong's */
+TEST_F(IdleTimeoutTest, PingStuckBehindFramesFallsUnderSendIdle) {
+    socket_info* s = websocket("ping-stuck");
+    at(60);                                 /* ping queued, never taken */
+    ASSERT_NE(s->ws_ping_at, 0u);
+    at(61);                                 /* output first seen waiting */
+    at(91);
+    EXPECT_EQ(sockets_in_container(), 1) << "no pong deadline before the ping is out";
+    at(180);
+    EXPECT_EQ(sockets_in_container(), 1);
+    at(181);
+    EXPECT_EQ(sockets_in_container(), 0);
+}
+
+TEST_F(IdleTimeoutTest, AnsweredPingKeepsTheWebsocket) {
+    socket_info* s = websocket("idle-pong-test");
+    at(60);
+    ASSERT_NE(s->ws_ping_at, 0u);
+    at(65);
+    s->rx_at = g_loop_now;                  /* pong (or any frame) arrived */
+    at(66);
+    EXPECT_EQ(s->ws_ping_at, 0u);
+    at(100);
+    EXPECT_EQ(sockets_in_container(), 1);
+}
+
+TEST_F(IdleTimeoutTest, ProxyWaitsLongForTheBackendButNotForever) {
+    socket_info* s = client();
+    reverse_proxy_connection_t* p =
+        (reverse_proxy_connection_t*)WebserverMalloc(sizeof(reverse_proxy_connection_t));
+    memset(p, 0, sizeof(*p));
+    p->client_sock = s;
+    p->backend_fd = -1;
+    p->state = PROXY_STATE_RECV_BACKEND_HEADER;
+    s->extern_handle = reverse_proxy_client_handler;
+    s->extern_handle_data_ptr = p;
+    at(0);                                  /* sweep notices the state */
+    at(299);
+    EXPECT_EQ(sockets_in_container(), 1) << "long polling";
+    at(300);
+    EXPECT_EQ(sockets_in_container(), 0);
+}
+
+TEST_F(IdleTimeoutTest, ProxyStreamKeptAliveByBackendProgress) {
+    socket_info* s = client();
+    reverse_proxy_connection_t* p =
+        (reverse_proxy_connection_t*)WebserverMalloc(sizeof(reverse_proxy_connection_t));
+    memset(p, 0, sizeof(*p));
+    p->client_sock = s;
+    p->backend_fd = -1;
+    p->state = PROXY_STATE_STREAMING;
+    p->backend_at = g_loop_now;
+    s->extern_handle = reverse_proxy_client_handler;
+    s->extern_handle_data_ptr = p;
+    at(100);
+    p->backend_at = g_loop_now;             /* backend delivers */
+    at(219);
+    EXPECT_EQ(sockets_in_container(), 1);
+    at(220);
+    EXPECT_EQ(sockets_in_container(), 0);
+}
+
+TEST_F(IdleTimeoutTest, ManyExpiredAreClosedOverSeveralRounds) {
+    for (int i = 0; i < 100; i++) {
+        client();
+    }
+    at(30);
+    EXPECT_EQ(sockets_in_container(), 36) << "at most 64 per round";
+    EXPECT_EQ(eventLoopBeforeWait(), 0) << "next round right away";
+    eventLoopAfterDispatch();               /* same second, pending rest */
+    EXPECT_EQ(sockets_in_container(), 0);
+}
+
+TEST_F(IdleTimeoutTest, SwitchedOffTimeoutNeverExpires) {
+    connLimitSetConfig("timeout_request_header", 0);
+    client();
+    at(100000);
+    EXPECT_EQ(sockets_in_container(), 1);
+    connLimitSetConfig("timeout_request_header", 30);
+}
+
+/* Time spent blocked in a handler does not count against the others */
+TEST(EventLoopClockTest, BlockedTimeIsTakenOut) {
+    if (connMonotonicSec() == 0) {
+        GTEST_SKIP() << "no clock on this platform";
+    }
+    eventLoopAfterWait();
+    uint32_t before = g_loop_now;
+    sleep(3);                               /* a handler blocking for 3 s */
+    eventLoopBeforeWait();
+    eventLoopAfterWait();
+    EXPECT_LE(g_loop_now - before, 1u) << "only one of the three seconds counts";
+}
+
+/* Total limit on the accept path */
+TEST_F(AcceptLimitTest, TotalLimitClosesTheLongestIdleOfAnyAddress) {
+    connLimitSetMax(0);                     /* per address off: only the total */
+    connLimitSetConfig("max_connections_total", 4);
+    int first = connect_client();
+    for (int i = 0; i < 3; i++) {
+        connect_client();
+    }
+    handleServer(listener);
+    ASSERT_EQ(sockets_in_container(), 4);
+    int newcomer = connect_client();
+    handleServer(listener);
+    EXPECT_EQ(sockets_in_container(), 4);
+    EXPECT_TRUE(closed_by_server(first));
+    EXPECT_FALSE(closed_by_server(newcomer));
+    connLimitSetConfig("max_connections_total", 0);
+}
+
+TEST_F(AcceptLimitTest, TotalLimitRefusesWhenAllAreBusy) {
+    connLimitSetMax(0);
+    connLimitSetConfig("max_connections_total", 2);
+    int a = connect_client();
+    int b = connect_client();
+    handleServer(listener);
+    ASSERT_EQ(send(a, "GET", 3, 0), 3);     /* both have input waiting */
+    ASSERT_EQ(send(b, "GET", 3, 0), 3);
+    int third = connect_client();
+    handleServer(listener);
+    EXPECT_EQ(sockets_in_container(), 2);
+    char answer[64] = {};
+    struct timeval tv = { 1, 0 };
+    setsockopt(third, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    ASSERT_GT(recv(third, answer, sizeof(answer) - 1, 0), 0);
+    EXPECT_EQ(strncmp(answer, "HTTP/1.1 503", 12), 0) << answer;
+    connLimitSetConfig("max_connections_total", 0);
+}
+
+TEST_F(AcceptLimitTest, LoweredTotalLimitComesDownInsteadOfStaying) {
+    connLimitSetMax(0);
+    connLimitSetConfig("max_connections_total", 0);
+    for (int i = 0; i < 20; i++) {
+        connect_client();
+    }
+    handleServer(listener);
+    ASSERT_EQ(sockets_in_container(), 20);
+    connLimitSetConfig("max_connections_total", 4);
+    connect_client();
+    handleServer(listener);
+    EXPECT_EQ(sockets_in_container(), 20 - 8 + 1) << "eight per call, the new one in";
+    connect_client();
+    handleServer(listener);
+    EXPECT_EQ(sockets_in_container(), 13 - 8 + 1);
+    connect_client();
+    handleServer(listener);
+    EXPECT_EQ(sockets_in_container(), 4) << "down to the limit";
+    connLimitSetConfig("max_connections_total", 0);
+}
+
+/* Lowered limit, almost all busy: closing the one idle connection must
+ * not just make room for the next idle one, the total has to come down */
+TEST_F(AcceptLimitTest, LoweredTotalLimitWithBusyConnectionsStillComesDown) {
+    connLimitSetMax(0);
+    connLimitSetConfig("max_connections_total", 0);
+    std::vector<int> busy;
+    int idle = connect_client();
+    for (int i = 0; i < 9; i++) {
+        busy.push_back(connect_client());
+    }
+    handleServer(listener);
+    ASSERT_EQ(sockets_in_container(), 10);
+    for (int fd : busy) {
+        ASSERT_EQ(send(fd, "GET", 3, 0), 3);   /* input waiting: not evictable */
+    }
+    connLimitSetConfig("max_connections_total", 4);
+    int newcomer = connect_client();
+    handleServer(listener);
+    EXPECT_TRUE(closed_by_server(idle));
+    EXPECT_EQ(sockets_in_container(), 9) << "the newcomer would have kept it at 10";
+    char answer[64] = {};
+    struct timeval tv = { 1, 0 };
+    setsockopt(newcomer, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    ASSERT_GT(recv(newcomer, answer, sizeof(answer) - 1, 0), 0);
+    EXPECT_EQ(strncmp(answer, "HTTP/1.1 503", 12), 0) << answer;
+    connLimitSetConfig("max_connections_total", 0);
+}
+
+TEST(ConnLimitTotalTest, AutomaticLimitLeavesTheReserve) {
+    struct rlimit rl;
+    ASSERT_EQ(getrlimit(RLIMIT_NOFILE, &rl), 0);
+    if (rl.rlim_cur == RLIM_INFINITY || rl.rlim_cur > (1 << 20)) {
+        GTEST_SKIP() << "no usable descriptor limit";
+    }
+    connLimitInit();
+    int fds = (int)rl.rlim_cur;
+    connLimitSetConfig("max_connections_total", 0);
+    connLimitSetConfig("max_connections_fd_reserve", 128);
+    EXPECT_EQ(connLimitTotalMax(), fds - std::min(128, fds / 2));
+    connLimitSetConfig("max_connections_fd_reserve", fds);
+    EXPECT_EQ(connLimitTotalMax(), fds - fds / 2) << "at most half for the reserve";
+    connLimitSetConfig("max_connections_total", 7);
+    EXPECT_EQ(connLimitTotalMax(), 7) << "configured wins";
+    connLimitSetConfig("max_connections_total", 0);
+    connLimitSetConfig("max_connections_fd_reserve", 128);
 }

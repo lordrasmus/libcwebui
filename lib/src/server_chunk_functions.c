@@ -398,6 +398,9 @@ void generateOutputBuffer(socket_info* sock) {
 		output->header.buffer_size = offset;
 		sock->header->response_bytes = output->header.buffer_size + output->body.buffer_size;
 		ws_list_append( &sock->output_list, output, 0 );
+		/* timeout_send_idle counts from here, not from the end of the
+		 * previous response */
+		sock->tx_at = g_loop_now;
 		return;
 	}
 	
@@ -437,6 +440,9 @@ void generateOutputBuffer(socket_info* sock) {
 	}
 
 	ws_list_append( &sock->output_list, output, 0 );
+	/* timeout_send_idle counts from here, not from the end of the previous
+	 * response */
+	sock->tx_at = g_loop_now;
 
 }
 

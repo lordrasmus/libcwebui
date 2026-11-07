@@ -94,7 +94,15 @@ void eventSocketFreed(socket_info *sock) {
 char waitEvents(void) {
     struct kevent evlist[MAX_EVENTS];
     while (!break_loop) {
-        int n = kevent(kq, NULL, 0, evlist, MAX_EVENTS, NULL);
+        /* Woken at least once a second while there are connections, for the
+         * idle timeouts (system_sockets_container.c) */
+        int wait_ms = eventLoopBeforeWait();
+        struct timespec ts;
+        int n;
+        ts.tv_sec = wait_ms / 1000;
+        ts.tv_nsec = (long)(wait_ms % 1000) * 1000000L;
+        n = kevent(kq, NULL, 0, evlist, MAX_EVENTS, (wait_ms < 0) ? NULL : &ts);
+        eventLoopAfterWait();
         if (n < 0 && errno != EINTR) {
             perror("kevent failed");
             return -1;
@@ -129,6 +137,8 @@ char waitEvents(void) {
         }
         batch_len = 0;
         batch_events = NULL;
+        /* Only after the batch, see the epoll backend */
+        eventLoopAfterDispatch();
     }
     break_loop = 0;
     return 0;

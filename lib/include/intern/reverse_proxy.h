@@ -78,7 +78,15 @@ typedef enum {
 typedef struct reverse_proxy_connection {
     /* State Machine */
     proxy_state_t state;
-    
+
+    /* Idle timeouts (connTimeoutSweep()): the state the sweep saw last and
+     * since when (event loop seconds) - noticed by the sweep, so that none of
+     * the many state assignments has to keep it - and the last transfer on
+     * the backend descriptor, which bypasses WebserverRecv/WebserverSend. */
+    proxy_state_t timed_state;
+    uint32_t state_at;
+    uint32_t backend_at;
+
     /* Client Socket (der originale Webserver Socket) */
     socket_info* client_sock;
     

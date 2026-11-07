@@ -111,7 +111,10 @@ void eventSocketFreed(socket_info *sock) {
 char waitEvents(void) {
     struct epoll_event events[MAX_EVENTS];
     while (!break_loop) {
-        int n = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
+        /* Woken at least once a second while there are connections, for the
+         * idle timeouts (system_sockets_container.c) */
+        int n = epoll_wait(epoll_fd, events, MAX_EVENTS, eventLoopBeforeWait());
+        eventLoopAfterWait();
         if (n < 0 && errno != EINTR) {
             perror("epoll_wait failed");
             return -1;
@@ -132,6 +135,9 @@ char waitEvents(void) {
         /* Outside the dispatch loop there is no batch to invalidate. */
         batch_len = 0;
         batch_events = NULL;
+        /* Only now: closing sockets before the batch was dispatched would
+         * leave events pointing at freed memory */
+        eventLoopAfterDispatch();
     }
     break_loop = 0;
     return 0;

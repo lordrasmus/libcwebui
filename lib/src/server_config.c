@@ -42,6 +42,29 @@ void initConfig(void) {
 	   limit. The next one closes the longest idle connection of that
 	   address, see system_sockets_container.c */
 	setConfigInt( "max_connections_per_ip", 64);
+	/* All connections together, including proxy backends; 0 = automatic,
+	   the descriptor limit minus a reserve for everything else */
+	setConfigInt( "max_connections_total", 0);
+	/* Descriptors the automatic total limit leaves for everything else
+	   (listeners, files, log, handlers); at most half of the limit */
+	setConfigInt( "max_connections_fd_reserve", 128);
+	/* Idle timeouts in seconds, 0 = off, see system_sockets_container.c.
+	   request_header: from the connection or the start of a request until
+	   its header is complete (TLS handshake included). keep_alive: between
+	   two requests. receive_idle / send_idle: no byte of a request body /
+	   response for that long. websocket_ping: a silent websocket gets a
+	   ping, websocket_pong later it is closed. proxy_connect: backend
+	   connect and request; proxy_backend_header: waiting for the backend's
+	   answer (long polling). closing: marked for closing, nothing to send. */
+	setConfigInt( "timeout_request_header", 30);
+	setConfigInt( "timeout_keep_alive", 120);
+	setConfigInt( "timeout_receive_idle", 120);
+	setConfigInt( "timeout_send_idle", 120);
+	setConfigInt( "timeout_websocket_ping", 60);
+	setConfigInt( "timeout_websocket_pong", 30);
+	setConfigInt( "timeout_proxy_connect", 10);
+	setConfigInt( "timeout_proxy_backend_header", 300);
+	setConfigInt( "timeout_closing", 5);
 	#ifdef WEBSERVER_SESSION_TIMEOUT
 		setConfigInt( "session_timeout" , WEBSERVER_SESSION_TIMEOUT );
 	#else
@@ -76,12 +99,11 @@ void setConfigInt(const char* name, const int value) {
 	PlatformLockMutex(&config_v_store->lock);
 	var = newVariable(config_v_store, name, 0 );
 	setWSVariableInt(var, value);
-	/* Read on every accepted connection - kept in a plain variable so that
-	   accept() needs no lookup by name. Under the store's lock, so that two
-	   concurrent setters cannot leave store and copy disagreeing. */
-	if (strcmp(name, "max_connections_per_ip") == 0) {
-		connLimitSetMax(value);
-	}
+	/* Connection limits and timeouts are read on every accept or in the
+	   once-per-second sweep - kept in plain variables so that no lookup by
+	   name is needed there. Under the store's lock, so that two concurrent
+	   setters cannot leave store and copy disagreeing. */
+	connLimitSetConfig(name, value);
 	PlatformUnlockMutex(&config_v_store->lock);
 }
 

@@ -44,7 +44,7 @@ SOCKET_SEND_STATUS WebserverSend(socket_info* sock, const unsigned char *buffer,
 		size_t sent = 0;
 		status = WebserverSSLSendNonBlocking(sock, buffer, len, flags, &sent);
 		if (sent > 0) {
-			CONN_LIMIT_NOTE_IO(sock);
+			CONN_NOTE_TX(sock);
 		}
 		if (likely(bytes_send != 0)){
 			*bytes_send = sent;
@@ -56,7 +56,7 @@ SOCKET_SEND_STATUS WebserverSend(socket_info* sock, const unsigned char *buffer,
 
 	ret = PlatformSendSocketNonBlocking(sock->socket, buffer, len, flags);
 	if (ret > 0) {
-		CONN_LIMIT_NOTE_IO(sock);
+		CONN_NOTE_TX(sock);
 	}
 	if (likely(ret == len)) {
 		if (likely(bytes_send != 0)){

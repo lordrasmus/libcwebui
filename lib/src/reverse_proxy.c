@@ -360,6 +360,9 @@ static int proxy_tunnel_flush_c2b(reverse_proxy_connection_t* proxy) {
         int sent = send(proxy->backend_fd,
                         &proxy->request_buffer[proxy->tunnel_c2b_sent],
                         proxy->tunnel_c2b_len - proxy->tunnel_c2b_sent, 0);
+        if (sent > 0) {
+            proxy->backend_at = g_loop_now;
+        }
         if (sent < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 return 0;   /* stays pending, retried on the next write event */
@@ -688,6 +691,11 @@ static reverse_proxy_connection_t* proxy_create_connection(socket_info* client_s
 #endif
 
     proxy->state = PROXY_STATE_RECV_CLIENT_HEADER;
+    /* Idle timeouts (connTimeoutSweep()): state and backend progress start
+     * now, an unset stamp would never expire */
+    proxy->timed_state = proxy->state;
+    proxy->state_at = g_loop_now;
+    proxy->backend_at = g_loop_now;
     proxy->client_sock = client_sock;
     proxy->backend_fd = -1;
     proxy->backend_path = strdup(reg->backend_path);
@@ -1052,6 +1060,9 @@ void reverse_proxy_backend_handler(int fd, void* ptr) {
                                   &proxy->response_buffer[proxy->response_buffer_pos],
                                   proxy->response_buffer_size - proxy->response_buffer_pos,
                                   0);
+                if (bytes_read > 0) {
+                    proxy->backend_at = g_loop_now;
+                }
 #if _WEBSERVER_PROXY_DEBUG_ >= 5
                 LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "backend recv (header): %d bytes", bytes_read);
 #endif
@@ -1124,6 +1135,9 @@ void reverse_proxy_backend_handler(int fd, void* ptr) {
                 bytes_read = recv(proxy->backend_fd,
                                   proxy->response_buffer,
                                   proxy->response_buffer_size, 0);
+                if (bytes_read > 0) {
+                    proxy->backend_at = g_loop_now;
+                }
 #if _WEBSERVER_PROXY_DEBUG_ >= 5
                 LOG(PROXY_LOG, NOTICE_LEVEL, proxy->backend_fd, "backend recv (streaming): %d bytes", bytes_read);
 #endif
@@ -1226,6 +1240,9 @@ void reverse_proxy_backend_handler(int fd, void* ptr) {
             if (proxy->tunnel_b2c_len == 0) {
                 bytes_read = recv(proxy->backend_fd, proxy->response_buffer,
                                   proxy->response_buffer_size, 0);
+                if (bytes_read > 0) {
+                    proxy->backend_at = g_loop_now;
+                }
 
                 if (bytes_read <= 0) {
                     if (bytes_read == 0 || (errno != EAGAIN && errno != EWOULDBLOCK)) {
@@ -1556,6 +1573,9 @@ static int proxy_process_state(reverse_proxy_connection_t* proxy) {
                 sent = send(proxy->backend_fd,
                             &proxy->request_buffer[proxy->send_pos],
                             to_send, 0);
+                if (sent > 0) {
+                    proxy->backend_at = g_loop_now;
+                }
 
                 /* Backend-Handler registrieren, damit Write-Events (partieller
                  * Send / EAGAIN bei grossen Uploads) wieder hier landen und der
@@ -2010,6 +2030,13 @@ static int proxy_connect_backend(reverse_proxy_connection_t* proxy) {
     struct sockaddr_un addr;
     int sock_fd;
     int flags;
+
+    /* The backend descriptor counts against the total limit like a
+     * connection; make room by closing an idle one if needed */
+    if (!connLimitEnsureTotalRoom()) {
+        LOG(PROXY_LOG, ERROR_LEVEL, 0, "%s", "No room for a backend connection, all connections busy");
+        return -1;
+    }
 
     sock_fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (sock_fd < 0) {

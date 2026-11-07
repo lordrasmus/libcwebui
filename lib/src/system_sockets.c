@@ -238,6 +238,12 @@ static socket_info* addClientSocket(int s, char ssl) {
 		info->server = 0;
 		info->active = 1;
 		info->socket = s;
+		/* Idle timeouts start now; a stamp left at 0 would count as unset
+		 * and never expire */
+		info->rx_at = g_loop_now;
+		info->tx_at = g_loop_now;
+		info->phase_at = g_loop_now;
+		CONN_LIMIT_NOTE_IO(info);
 		enable_tcp_keepalive(s);
 		addSocketContainer(info);
 		addEventSocketRead(info); /*  | EV_PERSIST| EV_WRITE */
@@ -688,6 +694,14 @@ static int handleClientHeaderData(socket_info* sock) {
 
 			if ( ( len > 0 ) && ( sock->header->request_start_ms == 0 ) ){
 				sock->header->request_start_ms = accessLogNowMs();
+				/* A further request: its header has timeout_request_header
+				 * from here, after a keep-alive pause of any length. Not the
+				 * first one, that counts from the connection or the end of
+				 * the TLS handshake - a client taking its time to start
+				 * must not get the deadline twice. */
+				if (sock->bytes_received > (uint64_t)len) {
+					sock->phase_at = g_loop_now;
+				}
 			}
 
 			if ((len == CLIENT_DISCONNECTED) || (len == CLIENT_UNKNOWN_ERROR) || (len == SSL_PROTOCOL_ERROR)) {
@@ -1065,7 +1079,7 @@ static CLIENT_WRITE_DATA_STATUS handleClientWriteDataSendFileSystem_sendfile(soc
 
 	if (send > 0) {
 		/* Bypasses WebserverSend(), so note the transfer here */
-		CONN_LIMIT_NOTE_IO(sock);
+		CONN_NOTE_TX(sock);
 		file->file_send_pos += send;
 
 		if ( file->file_info->DataLenght > file->file_send_pos ){
@@ -1295,9 +1309,9 @@ static void accept_reject_one(socket_info* sock) {
  * in the kernel buffer, in the TLS layer, or a complete request header
  * waiting in the header buffer (pipelined). Such a connection is about to
  * work, even if its state still says "waiting". One system call; asked only
- * for the connection picked to be closed, not for every member.
+ * for a connection picked to be closed, not for every member.
  */
-static int conn_limit_has_pending_input(socket_info* sock) {
+int connHasPendingInput(socket_info* sock) {
 	/* The header buffer only while the HTTP parser owns it: after a proxy
 	 * took the connection over, the already forwarded header stays in it */
 	if ((sock->extern_handle == NULL) &&
@@ -1326,6 +1340,42 @@ static int conn_limit_has_pending_input(socket_info* sock) {
 }
 
 /*
+ * Turn away the connection just accepted on c: same as accept_reject_one(),
+ * a status line only on a plain port - on the TLS port the peer expects a
+ * handshake. Non-blocking, so that a client not reading cannot hold up the
+ * accept loop. Logged at most once per second, a flood would bury the rest.
+ */
+static void conn_limit_refuse(socket_info* listener, int c, const char* why) {
+	static time_t last_logged = 0;
+	time_t now;
+
+	PlatformSetNonBlocking(c);
+#ifdef WEBSERVER_USE_SSL
+	if (listener->use_ssl == 0)
+#endif
+	{
+		static const char busy[] =
+			"HTTP/1.1 503 Service Unavailable\r\n"
+			"Connection: close\r\n"
+			"Content-Length: 0\r\n"
+			"\r\n";
+#ifdef MSG_NOSIGNAL
+		(void)PlatformSendSocketNonBlocking(c, (const unsigned char*) busy, sizeof(busy) - 1, MSG_NOSIGNAL);
+#else
+		(void)PlatformSendSocketNonBlocking(c, (const unsigned char*) busy, sizeof(busy) - 1, 0);
+#endif
+	}
+	PlatformClose(c);
+
+	now = time(NULL);
+	if (now != last_logged) {
+		last_logged = now;
+		LOG(CONNECTION_LOG, WARNING_LEVEL, c, "refusing connection from %s: %s",
+		    listener->client_ip_str, why);
+	}
+}
+
+/*
  * Per-address connection limit for the connection just accepted on c from
  * the address in listener->peer_key: if its group is full, close the
  * connection of that address whose last transfer is the oldest among those
@@ -1338,7 +1388,6 @@ static int conn_limit_has_pending_input(socket_info* sock) {
  */
 static int conn_limit_admit(socket_info* listener, struct conn_group_s* group, int c) {
 	static time_t last_closed_log = 0;
-	static time_t last_refused_log = 0;
 	int limit = connLimitGetMax();
 	int closed = 0;
 	/* Members found with input waiting get a last_io after this; meeting
@@ -1360,7 +1409,7 @@ static int conn_limit_admit(socket_info* listener, struct conn_group_s* group, i
 		if ((victim == NULL) || (victim->last_io > start_seq)) {
 			break;
 		}
-		if (conn_limit_has_pending_input(victim)) {
+		if (connHasPendingInput(victim)) {
 			/* Its request is here, it just has not been read yet: count it
 			 * as active and look at the next one */
 			CONN_LIMIT_NOTE_IO(victim);
@@ -1384,35 +1433,61 @@ static int conn_limit_admit(socket_info* listener, struct conn_group_s* group, i
 		return 1;
 	}
 
-	/* Same as accept_reject_one(): a status line only on a plain port, on
-	 * the TLS port the peer expects a handshake. Non-blocking, so that a
-	 * client not reading cannot hold up the accept loop. */
-	PlatformSetNonBlocking(c);
-#ifdef WEBSERVER_USE_SSL
-	if (listener->use_ssl == 0)
-#endif
-	{
-		static const char busy[] =
-			"HTTP/1.1 503 Service Unavailable\r\n"
-			"Connection: close\r\n"
-			"Content-Length: 0\r\n"
-			"\r\n";
-#ifdef MSG_NOSIGNAL
-		(void)PlatformSendSocketNonBlocking(c, (const unsigned char*) busy, sizeof(busy) - 1, MSG_NOSIGNAL);
-#else
-		(void)PlatformSendSocketNonBlocking(c, (const unsigned char*) busy, sizeof(busy) - 1, 0);
-#endif
-	}
-	PlatformClose(c);
-
-	now = time(NULL);
-	if (now != last_refused_log) {
-		last_refused_log = now;
-		LOG(CONNECTION_LOG, WARNING_LEVEL, c,
-		    "%s has %d connections, all busy or with input waiting - refusing more",
-		    listener->client_ip_str, limit);
-	}
+	conn_limit_refuse(listener, c, "its connections are all busy or have input waiting");
 	return 0;
+}
+
+/*
+ * Make room below the total limit (all connections, proxy backends
+ * included) by closing the longest idle connection found by
+ * connLimitPickGlobalVictim(). Returns 1 if there is room afterwards.
+ * Used before accepting and before a proxy opens its backend descriptor.
+ */
+#define CONN_TOTAL_MAX_TRIES	8
+
+int connLimitEnsureTotalRoom(void) {
+	static time_t last_logged = 0;
+	int limit = connLimitTotalMax();
+	int tries;
+	int closed = 0;
+	uint32_t before;
+	uint32_t after;
+	time_t now;
+
+	before = connLimitTotalCount();
+	if ((limit <= 0) || (before < (uint32_t)limit)) {
+		return 1;
+	}
+	/* Down to below the limit, not just one: after the limit has been
+	 * lowered, closing one per new connection would keep the old number
+	 * for ever. A large step down is worked off over several calls. */
+	for (tries = 0; (tries < CONN_TOTAL_MAX_TRIES) &&
+	                (connLimitTotalCount() >= (uint32_t)limit); tries++) {
+		socket_info* victim = connLimitPickGlobalVictim();
+		if (victim == NULL) {
+			break;
+		}
+		if (connHasPendingInput(victim)) {
+			CONN_LIMIT_NOTE_IO(victim);
+			continue;
+		}
+		WebserverConnectionManagerCloseRequest(victim);
+		closed++;
+	}
+	if (closed > 0) {
+		now = time(NULL);
+		if (now != last_logged) {
+			last_logged = now;
+			LOG(CONNECTION_LOG, NOTICE_LEVEL, 0,
+			    "%d connections in total, closed the %d longest idle", limit, closed);
+		}
+	}
+	/* Still above after a lowered limit: let the new one in all the same
+	 * only if the total, the new one included, still comes down. With
+	 * mostly busy connections and few to close it would otherwise stay
+	 * where it is for ever. */
+	after = connLimitTotalCount();
+	return (after < (uint32_t)limit) || (after + 1 < before);
 }
 
 /* Connections taken per call of handleServer(). Under a constant stream of
@@ -1469,6 +1544,16 @@ void handleServer(socket_info* sock) {
 				connLimitRelease(group);
 				continue;
 			}
+		}
+
+		/* Total limit after the per-address one: a single address makes
+		 * room among its own connections first, before anyone else's */
+		if (!connLimitEnsureTotalRoom()) {
+			conn_limit_refuse(sock, c, "all connections are busy");
+			if (group != NULL) {
+				connLimitRelease(group);
+			}
+			continue;
 		}
 
 #ifdef WEBSERVER_USE_SSL
@@ -1841,7 +1926,7 @@ void handleer( int a, short b, void *t ) {
 				if (sock->run_ssl_accept == 1) {
 					/* Handshake data arrived; SSL_accept() reads it past
 					 * WebserverRecv(), so note the activity here */
-					CONN_LIMIT_NOTE_IO(sock);
+					CONN_NOTE_RX(sock);
 					if ((sock->ssl_context == 0) && (WebserverSSLInit(sock) != 0)) {
 						WebserverConnectionManagerCloseRequest(sock);
 						return;
@@ -1853,6 +1938,9 @@ void handleer( int a, short b, void *t ) {
 					}
 					if (ret == SSL_ACCEPT_OK) {
 						// Wenn das SSL Accept OK ist das normale HTTP Header handling starten
+						/* The first request gets its own timeout_request_header,
+						 * not what the handshake left of it */
+						sock->phase_at = g_loop_now;
 					}
 					if (ret == SSL_PROTOCOL_ERROR) {
 						WebserverConnectionManagerCloseRequest(sock);

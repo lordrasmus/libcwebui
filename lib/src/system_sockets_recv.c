@@ -59,7 +59,7 @@ int     WebserverRecv(socket_info* sock, unsigned char *buf, int len, int flags)
 	 * which is why it is kept here and not at the call sites. */
 	if (ret > 0) {
 		sock->bytes_received += (uint64_t)ret;
-		CONN_LIMIT_NOTE_IO(sock);
+		CONN_NOTE_RX(sock);
 	}
 
 	return ret;

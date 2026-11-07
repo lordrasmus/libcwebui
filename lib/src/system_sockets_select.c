@@ -340,6 +340,10 @@ char waitEvents( void ) {
 	while( !break_loop ){
 
 		while(1){
+			/* Woken at least once a second while there are connections, for
+			 * the idle timeouts (system_sockets_container.c) */
+			int wait_ms = eventLoopBeforeWait();
+			struct timeval tv;
 
 			/* fd_sets und die Grenzen konsistent unter Lock schnappschiessen,
 			 * damit select() und die Dispatch-Schleife denselben Stand sehen. */
@@ -352,9 +356,19 @@ char waitEvents( void ) {
 
 			FD_SET( select_signal_pipe[0], &lese_sock );
 
-			ready = select( local_sock_max+1, &lese_sock, &send_sock, NULL, NULL );
-			if ( ready != EINTR )
+			tv.tv_sec = wait_ms / 1000;
+			tv.tv_usec = (wait_ms % 1000) * 1000;
+			ready = select( local_sock_max+1, &lese_sock, &send_sock, NULL, (wait_ms < 0) ? NULL : &tv );
+			eventLoopAfterWait();
+			/* Retry only an interrupted call; the return value is a count,
+			 * the reason of a failure is in errno */
+			if ( ( ready >= 0 ) || ( errno != EINTR ) )
 				break;
+		}
+		if ( ready < 0 ) {
+			/* The sets are undefined after a failure: dispatch nothing */
+			FD_ZERO( &lese_sock );
+			FD_ZERO( &send_sock );
 		}
 
 
@@ -417,6 +431,9 @@ char waitEvents( void ) {
 		if(FD_ISSET(select_signal_pipe[0], &lese_sock)){
 			_read_select_pipe();
 		}
+
+		/* Only after the dispatch, see the epoll backend */
+		eventLoopAfterDispatch();
 	}
 
 	break_loop = 0;

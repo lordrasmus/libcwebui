@@ -361,6 +361,31 @@ typedef struct socket_info_s {
 	struct socket_info_s *grp_next;
 	uint64_t last_io;
 
+	/* Idle timeouts (system_sockets_container.c): event loop time in seconds
+	 * (g_loop_now) of the last receive, the last send, the start of the
+	 * current phase with a fixed deadline (connection, TLS handshake done,
+	 * request), and of an unanswered websocket ping (0 = none). Kept next to
+	 * the fields above, the sweep reads them for every connection.
+	 * ws_out_since: since when the sweep has seen websocket output waiting
+	 * (0 = none). ws_ping_sent_at: when the sweep first saw the ping gone out
+	 * (0 = not yet). spared_at: an expired connection was kept because input
+	 * had arrived (0 = not); a sweep in a later second closes it if that is
+	 * still unread. These three are written by the sweep only.
+	 * ws_chunks_sent counts websocket chunks fully written, ws_ping_seq is
+	 * the count at which the queued ping's chunk is fully out, ws_ping_end
+	 * where in that chunk the ping ends (later frames may be appended to
+	 * it); all three under socket_mutex. */
+	uint32_t rx_at;
+	uint32_t tx_at;
+	uint32_t phase_at;
+	uint32_t ws_ping_at;
+	uint32_t ws_out_since;
+	uint32_t ws_ping_sent_at;
+	uint32_t spared_at;
+	uint32_t ws_chunks_sent;
+	uint32_t ws_ping_seq;
+	uint32_t ws_ping_end;
+
 	int reverse_proxy_checked;
 	int reverse_proxy_error;
 	
