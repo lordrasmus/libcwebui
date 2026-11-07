@@ -1328,6 +1328,104 @@ TEST_F(WebsocketFrameTest, SmallBinaryFrameStillGoesThrough) {
 #endif
 
 /*
+ * Request headers through the real read path. Each line is limited, the
+ * header as a whole was not: Cookie lines kept adding to a list until the
+ * header ended, which a client never has to do.
+ */
+class RequestHeaderSizeTest : public WebsocketCloseTest {
+protected:
+    int peer = -1;
+    socket_info* s = nullptr;
+
+    void SetUp() override {
+        WebsocketCloseTest::SetUp();
+        int fds[2];
+        ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, fds), 0);
+        fcntl(fds[0], F_SETFL, fcntl(fds[0], F_GETFL) | O_NONBLOCK);
+        peer = fds[1];
+        s = WebserverMallocSocketInfo();
+        s->socket = fds[0];
+        s->client = 1;
+        s->header = WebserverMallocHttpRequestHeader();
+        s->rx_at = s->tx_at = s->phase_at = g_loop_now;
+        addSocketContainer(s);
+    }
+
+    void TearDown() override {
+        if (peer >= 0) {
+            close(peer);
+        }
+        WebsocketCloseTest::TearDown();
+    }
+
+    /* Everything the server answered so far */
+    std::string answer() {
+        if (sockets_in_container() > 0) {
+            handleer(s->socket, EVENT_WRITE, s);
+        }
+        std::string a;
+        char buf[4096];
+        struct timeval tv = { 0, 200000 };
+        setsockopt(peer, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+        ssize_t n;
+        while ((n = recv(peer, buf, sizeof(buf), 0)) > 0) {
+            a.append(buf, (size_t)n);
+        }
+        return a;
+    }
+};
+
+TEST_F(RequestHeaderSizeTest, EndlessHeaderLinesGet431) {
+    std::string req = "GET / HTTP/1.1\r\nHost: x\r\n";
+    for (int i = 0; i < 2000; i++) {
+        req += "Cookie: a=b\r\n";                   /* no end of header */
+    }
+    ASSERT_EQ(send(peer, req.data(), req.size(), 0), (ssize_t)req.size());
+    handleer(s->socket, EVENT_READ, s);
+    if (sockets_in_container() > 0) {
+        EXPECT_LE(ws_list_size(&s->header->cookie_list),
+                  (unsigned)(WEBSERVER_MAX_HEADER_SIZE / 13 + 1))
+            << "cookies only up to the limit";
+    }
+    std::string a = answer();
+    EXPECT_EQ(a.compare(0, 12, "HTTP/1.1 431"), 0) << a.substr(0, 60);
+}
+
+/* Line by line through the parser, as handleClientHeaderData() does it -
+ * serving the request would need the whole server set up */
+static int parse_all(socket_info* s, std::string req) {
+    unsigned int off = 0;
+    unsigned int parsed = 0;
+    int r;
+    do {
+        r = ParseHeader(s, s->header, &req[off], (unsigned int)(req.size() - off), &parsed);
+        off += parsed;
+    } while (r > 0);
+    return r;
+}
+
+TEST_F(RequestHeaderSizeTest, LargeHeaderBelowTheLimitIsParsed) {
+    std::string req = "GET /x HTTP/1.1\r\nHost: x\r\n";
+    for (int i = 0; i < 15; i++) {
+        req += "X-Filler: " + std::string(1000, 'f') + "\r\n";   /* ~15 KB */
+    }
+    req += "\r\n";
+    ASSERT_LT(req.size(), (size_t)WEBSERVER_MAX_HEADER_SIZE);
+    EXPECT_EQ(parse_all(s, req), -2) << "header complete";
+    EXPECT_EQ(s->header->header_complete, 1);
+}
+
+TEST_F(RequestHeaderSizeTest, HeaderJustAboveTheLimitIsRefused) {
+    std::string req = "GET /x HTTP/1.1\r\nHost: x\r\n";
+    while (req.size() < (size_t)WEBSERVER_MAX_HEADER_SIZE) {
+        req += "X-Filler: " + std::string(1000, 'f') + "\r\n";
+    }
+    req += "\r\n";
+    EXPECT_EQ(parse_all(s, req), -8);
+    EXPECT_EQ(s->header->header_complete, 0);
+}
+
+/*
  * Compressed responses (Accept-Encoding: deflate on a template page). The
  * body buffer used to be the size of the page, while deflate output can be
  * larger: data that does not compress grows a little, and every chunk is

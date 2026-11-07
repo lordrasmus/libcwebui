@@ -640,6 +640,7 @@ static int matchHeaderFields(char *line, unsigned int length, HttpRequestHeader 
  *		-3  = Header zuende aber noch weitere daten vorhanden
  * 		-2  = Header ist zuende und keine weiteren Daten vorhanden
  * 		-7  = Reverse Proxy Handler
+ * 		-8  = Header larger than WEBSERVER_MAX_HEADER_SIZE
  *
  *
  *
@@ -701,7 +702,12 @@ int ParseHeader(socket_info* sock, HttpRequestHeader* header, char* buffer, unsi
 			if ( checkReverseProxy( sock, buffer, length ) == 0 ){
 				return -7;
 			}
-			
+
+			/* Before anything is taken from the line */
+			if ( header->parsed_bytes + i + 1 > WEBSERVER_MAX_HEADER_SIZE ){
+				return -8;
+			}
+
 			buffer[i - 1] = '\0';
 			line_length = &buffer[i - 1] - pos;
 			if ( analyseHeaderLine(sock, pos, line_length, header) < 0 ){

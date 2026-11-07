@@ -28,6 +28,15 @@ SPDX-License-Identifier: MPL-2.0
 	#error WEBSERVER_MAX_HEADER_LINE_LENGHT not defined
 #endif
 
+/* The whole request header, request line included. Each line is limited by
+ * WEBSERVER_MAX_HEADER_LINE_LENGHT; without a limit on all of them a client
+ * could send header lines for ever, and every Cookie line adds to a list
+ * that is only released when the header ends. Same size as the reverse
+ * proxy's limit. */
+#ifndef WEBSERVER_MAX_HEADER_SIZE
+	#define WEBSERVER_MAX_HEADER_SIZE ( 16 * 1024 )
+#endif
+
 #define MAX_HEADER_LINE_ERROR 	( -20 )
 #define NO_SSL_CONNECTION_ERROR ( -21 )
 #define SSL_ACCEPT_OK 			( 2 )

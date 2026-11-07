@@ -790,6 +790,13 @@ static int handleClientHeaderData(socket_info* sock) {
 		if (len2 == -7) {
 			return 2;
 		}
+
+		/* Header as a whole too large (RFC 6585) */
+		if (len2 == -8) {
+			sendHttpErrorPage(sock, 431, 0);
+			LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"request header larger than %d bytes",WEBSERVER_MAX_HEADER_SIZE );
+			return finish_error_response(sock);
+		}
 #ifdef WEBSERVER_USE_WEBSOCKETS
 		if ( 1 == checkIskWebsocketConnection(sock) ){
 			sock->header->header_complete = 0;

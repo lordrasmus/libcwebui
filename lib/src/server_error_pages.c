@@ -85,6 +85,8 @@ static const http_error_page http_error_pages[] = {
 	       "The Method is not allowed on this server." },
 	{ 413, "Request Entity Too Large",
 	       "The request body is larger than this server accepts for this URL." },
+	{ 431, "Request Header Fields Too Large",
+	       "The request header is larger than this server accepts." },
 	{ 500, "Internal Server Error",
 	       "The request could not be handled." },
 	/* The request is fine, the server is just out of memory to buffer the
