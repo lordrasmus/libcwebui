@@ -338,3 +338,40 @@ TEST_F(VariableArrayTest, GetVariableSize) {
 TEST_F(VariableArrayTest, GetNullVariableSize) {
     EXPECT_EQ(getWSVariableSize(nullptr), 0u);
 }
+
+/* A string that is not a number used to return whatever was on the stack:
+ * sscanf() does not touch the result then. URL parameters arrive as such
+ * strings. The stack is filled with a pattern first, so a value left over
+ * would show. */
+static __attribute__((noinline)) void dirty_stack() {
+    volatile unsigned char junk[512];
+    for (size_t i = 0; i < sizeof(junk); i++) {
+        junk[i] = 0x5a;
+    }
+}
+
+TEST(VariableNumberTest, StringThatIsNotANumberIsZero) {
+    ws_variable* var = newWSVariable("param");
+    for (const char* text : { "abc", "", "-", " x1" }) {
+        setWSVariableString(var, text);
+        dirty_stack();
+        EXPECT_EQ(getWSVariableInt(var), 0) << "\"" << text << "\"";
+        dirty_stack();
+        EXPECT_EQ(getWSVariableULong(var), 0u) << "\"" << text << "\"";
+        dirty_stack();
+        EXPECT_EQ(getWSVariableLong(var), 0) << "\"" << text << "\"";
+    }
+    freeWSVariable(var);
+}
+
+TEST(VariableNumberTest, StringStartingWithANumberKeepsItsValue) {
+    ws_variable* var = newWSVariable("param");
+    setWSVariableString(var, "12abc");
+    EXPECT_EQ(getWSVariableInt(var), 12);
+    EXPECT_EQ(getWSVariableULong(var), 12u);
+    EXPECT_EQ(getWSVariableLong(var), 12);
+    setWSVariableString(var, "-7");
+    EXPECT_EQ(getWSVariableInt(var), -7);
+    EXPECT_EQ(getWSVariableLong(var), -7);
+    freeWSVariable(var);
+}

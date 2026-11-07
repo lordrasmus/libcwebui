@@ -270,7 +270,12 @@ int getWSVariableInt(ws_variable* var) {
 		case VAR_TYPE_REF:
 			return 0;
 		case VAR_TYPE_STRING:
-			sscanf(var->val.value_string, "%d", &ret);
+			/* A string that does not start with a number is 0, not
+			 * whatever was on the stack: sscanf() leaves ret alone then,
+			 * and the value usually comes straight from a URL parameter */
+			if (sscanf(var->val.value_string, "%d", &ret) != 1) {
+				return 0;
+			}
 			return ret;
 		case VAR_TYPE_INT:
 			return var->val.value_int;
@@ -296,7 +301,10 @@ uint64_t getWSVariableULong(ws_variable* var) {
 		case VAR_TYPE_REF:
 			return 0;
 		case VAR_TYPE_STRING:
-			sscanf(var->val.value_string, "%"PRIu64, &ret);
+			/* See getWSVariableInt() */
+			if (sscanf(var->val.value_string, "%"PRIu64, &ret) != 1) {
+				return 0;
+			}
 			return ret;
 		case VAR_TYPE_INT:
 			return var->val.value_int;
@@ -322,7 +330,10 @@ int64_t getWSVariableLong(ws_variable* var) {
 		case VAR_TYPE_REF:
 			return 0;
 		case VAR_TYPE_STRING:
-			sscanf(var->val.value_string, "%"PRId64, &ret);
+			/* See getWSVariableInt() */
+			if (sscanf(var->val.value_string, "%"PRId64, &ret) != 1) {
+				return 0;
+			}
 			return ret;
 		case VAR_TYPE_INT:
 			return var->val.value_int;
