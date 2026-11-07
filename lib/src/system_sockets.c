@@ -1819,6 +1819,43 @@ static int run_extern_handler( socket_info* sock ) {
 	return 0;
 }
 
+#ifdef WEBSERVER_USE_SSL
+#include <errno.h>
+
+#define TLS_FIRST_READ_DATA		1	/* something arrived, start the handshake */
+#define TLS_FIRST_READ_NOTHING	0	/* woken without data, wait for more */
+#define TLS_FIRST_READ_CLOSED	-1	/* peer closed or reset, nothing to do */
+
+/*
+ * First read event on a TLS connection, before any SSL object exists: is
+ * there a ClientHello to work on at all? Scanners, health checks and
+ * browsers dropping a speculative connection open and close without one.
+ * Building the SSL object for them costs allocations, and SSL_accept() on
+ * the EOF reports SSL_R_UNEXPECTED_EOF_WHILE_READING - not filtered on
+ * purpose, and already behind a log flood in the field. The byte stays in
+ * the kernel buffer for SSL_accept().
+ */
+static int tls_first_read(socket_info* sock) {
+#if defined(MSG_PEEK) && defined(MSG_DONTWAIT)
+	char byte;
+	ssize_t r = recv(sock->socket, &byte, 1, MSG_PEEK | MSG_DONTWAIT);
+	if (r > 0) {
+		return TLS_FIRST_READ_DATA;
+	}
+	if (r == 0) {
+		return TLS_FIRST_READ_CLOSED;
+	}
+	if ((errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == EINTR)) {
+		return TLS_FIRST_READ_NOTHING;
+	}
+	return TLS_FIRST_READ_CLOSED;
+#else
+	(void)sock;
+	return TLS_FIRST_READ_DATA;
+#endif
+}
+#endif
+
 void handleer( int a, short b, void *t ) {
 	int ret;
 	socket_info* sock = (socket_info*) t;
@@ -1924,13 +1961,25 @@ void handleer( int a, short b, void *t ) {
 			if(sock->use_ssl == 1){
 
 				if (sock->run_ssl_accept == 1) {
+					if (sock->ssl_context == 0) {
+						switch (tls_first_read(sock)) {
+						case TLS_FIRST_READ_CLOSED:
+							WebserverConnectionManagerCloseRequest(sock);
+							return;
+						case TLS_FIRST_READ_NOTHING:
+							addEventSocketRead(sock);
+							return;
+						default:
+							break;
+						}
+						if (WebserverSSLInit(sock) != 0) {
+							WebserverConnectionManagerCloseRequest(sock);
+							return;
+						}
+					}
 					/* Handshake data arrived; SSL_accept() reads it past
 					 * WebserverRecv(), so note the activity here */
 					CONN_NOTE_RX(sock);
-					if ((sock->ssl_context == 0) && (WebserverSSLInit(sock) != 0)) {
-						WebserverConnectionManagerCloseRequest(sock);
-						return;
-					}
 					ret = WebserverSSLAccept(sock);
 					if (ret == CLIENT_NO_MORE_DATA) {
 						addEventSocketRead(sock);

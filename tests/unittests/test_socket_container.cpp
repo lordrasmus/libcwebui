@@ -1153,3 +1153,55 @@ TEST(ConnLimitTotalTest, AutomaticLimitLeavesTheReserve) {
     connLimitSetConfig("max_connections_total", 0);
     connLimitSetConfig("max_connections_fd_reserve", 128);
 }
+
+#ifdef WEBSERVER_USE_SSL
+/*
+ * First read event on the TLS port, before the SSL object exists. The unit
+ * tests have no SSL_CTX, so building the object always fails here - which
+ * makes "was it built" visible: the connection would be closed.
+ */
+class TlsFirstReadTest : public WebsocketCloseTest {
+protected:
+    int peer = -1;
+
+    socket_info* tls_client() {
+        int fds[2];
+        EXPECT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, fds), 0);
+        fcntl(fds[0], F_SETFL, fcntl(fds[0], F_GETFL) | O_NONBLOCK);
+        peer = fds[1];
+        socket_info* s = WebserverMallocSocketInfo();
+        s->socket = fds[0];
+        s->client = 1;
+        s->use_ssl = 1;
+        s->run_ssl_accept = 1;
+        s->header = WebserverMallocHttpRequestHeader();
+        s->rx_at = s->tx_at = s->phase_at = g_loop_now;
+        addSocketContainer(s);
+        return s;
+    }
+
+    void TearDown() override {
+        if (peer >= 0) {
+            close(peer);
+        }
+        WebsocketCloseTest::TearDown();
+    }
+};
+
+TEST_F(TlsFirstReadTest, ClosedBeforeTheClientHelloBuildsNoSslObject) {
+    socket_info* s = tls_client();
+    close(peer);
+    peer = -1;
+    handleer(s->socket, EVENT_READ, s);
+    EXPECT_EQ(sockets_in_container(), 0);
+}
+
+TEST_F(TlsFirstReadTest, WokenWithoutDataWaitsWithoutSslObject) {
+    socket_info* s = tls_client();
+    uint64_t io_before = s->last_io;
+    handleer(s->socket, EVENT_READ, s);
+    ASSERT_EQ(sockets_in_container(), 1) << "an SSL object was attempted";
+    EXPECT_EQ(s->ssl_context, nullptr);
+    EXPECT_EQ(s->last_io, io_before) << "nothing arrived, no activity";
+}
+#endif
