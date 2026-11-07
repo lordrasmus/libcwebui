@@ -456,6 +456,8 @@ typedef struct socket_info_s {
 
 	unsigned int websocket_fragment_start_opcode;
 	unsigned int websocket_fragments_length;
+	/* Frames of the fragmented message being received, empty ones included */
+	unsigned int websocket_fragment_count;
 
 
 

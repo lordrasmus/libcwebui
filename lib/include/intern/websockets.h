@@ -22,6 +22,13 @@ SPDX-License-Identifier: MPL-2.0
 
 #ifdef WEBSERVER_USE_WEBSOCKETS
 
+/* Frames one fragmented message may consist of. Each stored fragment costs
+ * a list node and an allocation besides its payload, so the byte limit
+ * alone let tiny fragments use many times their size in memory. Browsers
+ * do not fragment what they send at all. */
+#ifndef WEBSOCKET_MAX_FRAGMENTS
+	#define WEBSOCKET_MAX_FRAGMENTS 1024
+#endif
 
 #define SHORT_WS_FRAMES_T 1
 

@@ -33,7 +33,6 @@ SPDX-License-Identifier: MPL-2.0
 #ifdef WEBSOCKET_INBUFFER_SIZE
 	#warning WEBSOCKET_INBUFFER_SIZE depricated
 #endif
-
 typedef enum {
 	WSF_CONTINUE = 0x0,
 	WSF_TEXT = 0x1,
@@ -557,6 +556,7 @@ static int recFrameV8(socket_info *sock) {
 
 						sock->websocket_fragment_start_opcode = wsf.opcode;
 						sock->websocket_fragments_length = wsf.real_length;
+						sock->websocket_fragment_count = 1;
 					}
 				}
 				break;
@@ -642,21 +642,33 @@ static int recFrameV8(socket_info *sock) {
 							WEBSOCKET_MAX_INBUFFER_SIZE);
 						goto close_socket_too_big;
 					}
-					tmp = WebserverMalloc( wsf.real_length ) ;
-					if (!tmp) {
-						goto close_socket_error;
+					/* Empty frames add nothing to the length checked above:
+					 * without a count of its own an endless stream of them
+					 * grew the list without bound */
+					if (++sock->websocket_fragment_count > WEBSOCKET_MAX_FRAGMENTS) {
+						LOG(WEBSOCKET_LOG, ERROR_LEVEL, sock->socket,
+							"Fragmented message has too many frames: more than %d",
+							WEBSOCKET_MAX_FRAGMENTS);
+						goto close_socket_too_big;
 					}
-
-					ws_list_append(&sock->websocket_fragments, tmp,0);
-					for (ui = 0; ui < wsf.real_length; ui++){
-						if (wsf.mask_bit == 1) {
-							tmp[ui] = sock->websocket_buffer[offset + ui] ^ wsf.mask[ui % 4];
-						}else{
-							tmp[ui] = sock->websocket_buffer[offset + ui];
+					/* Nothing to keep from an empty one */
+					if (wsf.real_length > 0) {
+						tmp = WebserverMalloc( wsf.real_length ) ;
+						if (!tmp) {
+							goto close_socket_error;
 						}
+
+						ws_list_append(&sock->websocket_fragments, tmp,0);
+						for (ui = 0; ui < wsf.real_length; ui++){
+							if (wsf.mask_bit == 1) {
+								tmp[ui] = sock->websocket_buffer[offset + ui] ^ wsf.mask[ui % 4];
+							}else{
+								tmp[ui] = sock->websocket_buffer[offset + ui];
+							}
+						}
+						offset += ui;
+						sock->websocket_fragments_length += ui;
 					}
-					offset += ui;
-					sock->websocket_fragments_length += ui;
 
 					if ( wsf.fin == 1 ){
 						if ( sock->websocket_fragment_start_opcode == WSF_TEXT ){
@@ -696,12 +708,14 @@ static int recFrameV8(socket_info *sock) {
 								WebserverFree(msg);
 								sock->websocket_fragment_start_opcode = 0;
 								sock->websocket_fragments_length = 0;
+								sock->websocket_fragment_count = 0;
 								goto close_socket_invalid_utf8;
 							}
 						}
 
 						sock->websocket_fragment_start_opcode = 0;
 						sock->websocket_fragments_length = 0;
+						sock->websocket_fragment_count = 0;
 						insert_websocket_input_queue(msg);
 
 					}

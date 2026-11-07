@@ -1254,7 +1254,57 @@ protected:
         /* mask 00 00 00 00: the payload goes through unchanged */
         ASSERT_EQ(send(peer, h, sizeof(h), 0), (ssize_t)sizeof(h));
     }
+
+    /* A masked frame with a short payload (mask 00 00 00 00) */
+    static void add_frame(std::vector<unsigned char>& out, unsigned char first,
+                          const char* payload, size_t len) {
+        unsigned char h[6] = { first, (unsigned char)(0x80 | len), 0, 0, 0, 0 };
+        out.insert(out.end(), h, h + sizeof(h));
+        out.insert(out.end(), payload, payload + len);
+    }
+
+    /* One send for all of them: many small sends fill a unix socket's
+     * buffer with per-message overhead long before the bytes add up */
+    void send_frames(const std::vector<unsigned char>& frames) {
+        ASSERT_EQ(send(peer, frames.data(), frames.size(), 0), (ssize_t)frames.size());
+    }
+
+    /* Read until the socket has nothing more or is closed */
+    int receive_all() {
+        int ret;
+        do {
+            ret = recFrame(ws);
+        } while (ret > 0);
+        return ret;
+    }
 };
+
+/* Empty continuation frames used to cost an allocation and a list node
+ * each without counting against any limit */
+TEST_F(WebsocketFrameTest, EndlessEmptyContinuationFramesAreStopped) {
+    std::vector<unsigned char> frames;
+    add_frame(frames, 0x01, "a", 1);                /* text, not final */
+    for (int i = 0; i < WEBSOCKET_MAX_FRAGMENTS + 100; i++) {
+        add_frame(frames, 0x00, "", 0);             /* continuation, not final */
+    }
+    send_frames(frames);
+    receive_all();
+    EXPECT_EQ(ws->closeSocket, 1) << "more frames than a message may have";
+    EXPECT_LE(ws_list_size(&ws->websocket_fragments), 1u) << "empty frames are not stored";
+}
+
+TEST_F(WebsocketFrameTest, FragmentedMessageWithAnEmptyFrameStillArrives) {
+    std::vector<unsigned char> frames;
+    add_frame(frames, 0x01, "he", 2);
+    add_frame(frames, 0x00, "", 0);
+    add_frame(frames, 0x80, "llo", 3);              /* continuation, final */
+    send_frames(frames);
+    receive_all();
+    EXPECT_EQ(ws->closeSocket, 0);
+    EXPECT_EQ(ws->websocket_fragment_start_opcode, 0u) << "message complete";
+    EXPECT_EQ(ws->websocket_fragment_count, 0u);
+    EXPECT_EQ(ws_list_size(&ws->websocket_fragments), 0u);
+}
 
 /* 14 bytes announcing almost 4 GB: the length check used to wrap around */
 TEST_F(WebsocketFrameTest, HugeAnnouncedBinaryFrameIsRefusedNotAllocated) {
