@@ -1252,6 +1252,9 @@ CLIENT_WRITE_DATA_STATUS handleClientWriteData(socket_info* sock) {
 		}
 
 		ws_list_delete( &sock->output_list, output );
+		if( output != 0 ){
+			releaseOutputFile( output );
+		}
 		WebserverFree( output );
 
 	}

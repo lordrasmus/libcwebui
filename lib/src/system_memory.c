@@ -146,6 +146,8 @@ void WebserverFreeSocketInfo(socket_info* sock) {
 			if ( output->body.buffer != 0 ){
 				WebserverFree( output->body.buffer );
 			}
+			/* A file still being sent when the connection goes */
+			releaseOutputFile( output );
 		}
 		WebserverFree( output );
 
@@ -472,4 +474,14 @@ void WebserverFreeHtml_chunk(html_chunk* chunk) {
 	}
 	WebserverFree(chunk);
 	/*}*/
+}
+
+/* End of a response that sent a file, however it ended: sent, failed or
+ * the connection closed. Every output is released through here exactly
+ * once, so the count cannot stay up and hold back updates for good. */
+void releaseOutputFile(output_struct* output) {
+	if (output->counted_file != 0) {
+		output->counted_file->transfers--;
+		output->counted_file = 0;
+	}
 }

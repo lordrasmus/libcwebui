@@ -13,6 +13,7 @@
 extern "C" {
 #include "webserver.h"
 #include "reverse_proxy.h"
+#include "intern/system_file_access.h"
 #include <miniz.h>
 }
 
@@ -1514,9 +1515,31 @@ protected:
 
     void TearDown() override {
         unlink(path);
+        if (s != nullptr) {
+            WebserverFreeSocketInfo(s);
+        }
+        /* Set by the modification check; free_empty_file() is meant for
+         * files that never get one, the cache releases it itself */
+        if (f->lastmodified != nullptr) {
+            WebserverFree(f->lastmodified);
+            f->lastmodified = nullptr;
+        }
         free_empty_file(f);
-        WebserverFreeSocketInfo(s);
         close(peer);
+    }
+
+    /* A response sending f from the RAM cache, as sendFile() leaves it */
+    void queue_file_response() {
+        s->header = WebserverMallocHttpRequestHeader();
+        s->send_file_info = f;
+        generateOutputBuffer(s);
+    }
+
+    void rewrite(const std::string& content) {
+        FILE* fp = fopen(path, "wb");
+        ASSERT_NE(fp, nullptr);
+        fwrite(content.data(), 1, content.size(), fp);
+        fclose(fp);
     }
 
     std::string received() {
@@ -1541,6 +1564,51 @@ TEST_F(FileSendTest, VanishedFileEndsTheResponse) {
     socket_file_infos info = { 0, f };
     EXPECT_EQ(handleClientWriteDataNotCachedReadWrite(s, &info), CLIENT_DICONNECTED);
     EXPECT_EQ(received().size(), 0u);
+}
+
+/* A response holds its file until it is released, however it ends */
+TEST_F(FileSendTest, ResponseCountsAsTransferUntilItIsDone) {
+    f->RamCached = 1;
+    f->fs_type = FS_LOCAL_FILE_SYSTEM;
+    ASSERT_EQ(local_file_system_check_file_modified(f), 1);   /* loads Data */
+    queue_file_response();
+    EXPECT_EQ(f->transfers, 1u);
+    EXPECT_EQ(handleClientWriteData(s), NO_MORE_DATA);
+    EXPECT_EQ(f->transfers, 0u) << "sent completely";
+    EXPECT_EQ(received(), std::string(1000, 'A'));
+}
+
+TEST_F(FileSendTest, ClosingMidResponseEndsTheTransfer) {
+    f->RamCached = 1;
+    f->fs_type = FS_LOCAL_FILE_SYSTEM;
+    ASSERT_EQ(local_file_system_check_file_modified(f), 1);
+    queue_file_response();
+    ASSERT_EQ(f->transfers, 1u);
+    WebserverFreeSocketInfo(s);             /* connection gone, nothing sent */
+    s = nullptr;
+    EXPECT_EQ(f->transfers, 0u);
+}
+
+/* Changed while being sent: the response keeps getting the content its
+ * header described, the change is loaded once it is done */
+TEST_F(FileSendTest, ChangeWhileSendingIsLoadedAfterwards) {
+    f->RamCached = 1;
+    f->fs_type = FS_LOCAL_FILE_SYSTEM;
+    ASSERT_EQ(local_file_system_check_file_modified(f), 1);
+    queue_file_response();
+
+    sleep(1);                               /* a modification time of its own */
+    rewrite(std::string(3000, 'N'));
+    EXPECT_EQ(local_file_system_check_file_modified(f), 0) << "not while sending";
+    EXPECT_EQ(f->DataLenght, 1000);
+    EXPECT_EQ(f->Data[0], 'A');
+
+    EXPECT_EQ(handleClientWriteData(s), NO_MORE_DATA);
+    EXPECT_EQ(received(), std::string(1000, 'A')) << "old content, complete";
+
+    EXPECT_EQ(local_file_system_check_file_modified(f), 1) << "loaded now";
+    EXPECT_EQ(f->DataLenght, 3000);
+    EXPECT_EQ(f->Data[0], 'N');
 }
 
 TEST_F(FileSendTest, ShrunkFileSendsNothingThatIsNotInIt) {

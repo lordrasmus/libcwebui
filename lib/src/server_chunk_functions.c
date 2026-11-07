@@ -484,6 +484,9 @@ void generateOutputBuffer(socket_info* sock) {
 
 		output->file_infos.file_info= sock->send_file_info;
 		output->file_infos.file_send_pos = 0;
+		/* Released with the output, see releaseOutputFile() */
+		output->counted_file = sock->send_file_info;
+		output->counted_file->transfers++;
 
 		sock->send_file_info = 0;
 	}

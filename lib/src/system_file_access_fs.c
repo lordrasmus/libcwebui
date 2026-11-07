@@ -50,7 +50,16 @@ int local_file_system_check_file_modified( WebserverFileInfo *file ){
 	int time_changed = 0;
 	FILE_OFFSET new_size = 0;
 
-	// TODO(lordrasmus) : Problem mit clients die die datei noch laden lösen
+	/* Responses still sending the cached content read Data and DataLenght
+	 * anew on every write event: reloading now would let them go on with
+	 * the new content from their old position, under the Content-Length of
+	 * the old one. Not even checked meanwhile - the check itself already
+	 * takes over the new modification time and Last-Modified text, and the
+	 * change would be forgotten. The first request after the last of those
+	 * responses has finished finds the change and loads it. */
+	if ( ( file->RamCached == 1 ) && ( file->transfers > 0 ) ){
+		return 0;
+	}
 
 	if ( 0 == PlatformGetFileInfo( file, &time_changed, &new_size )){
 		printf("local_file_system_check_file_modified: Error file not found %s\n",file->FilePath);

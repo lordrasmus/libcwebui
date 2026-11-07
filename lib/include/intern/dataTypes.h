@@ -169,6 +169,12 @@ typedef struct {
 
 	enum fs_types fs_type;
 
+	/* Responses sending Data right now. While there are any, a change of
+	 * the file on disk is not loaded: they read Data and DataLenght anew on
+	 * every write event and would go on with the new content from their old
+	 * position, under the old Content-Length. Event loop thread only. */
+	unsigned int transfers;
+
 } WebserverFileInfo;
 
 
@@ -270,6 +276,12 @@ typedef struct{
 	output_buffer body;
 
 	socket_file_infos file_infos;
+
+	/* The file whose transfers count this response holds (see
+	 * WebserverFileInfo::transfers) until the response is released. Kept
+	 * apart from file_infos.file_info, which the send paths clear as soon as
+	 * the file is out or fails. */
+	WebserverFileInfo* counted_file;
 
 } output_struct;
 

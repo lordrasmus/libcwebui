@@ -104,6 +104,7 @@ void WebserverFreeFunctionParas(FUNCTION_PARAS *func);
 
 html_chunk* WebserverMallocHtml_chunk(void);
 void WebserverFreeHtml_chunk(html_chunk* chunk);
+void releaseOutputFile(output_struct* output);
 void WebserverFreeHtml_chunk_list(void* chunk);
 
 
