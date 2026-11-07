@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
+#include <atomic>
 #include <cstring>
 #include <string>
+#include <thread>
 
 extern "C" {
 #include "webserver.h"
@@ -337,4 +339,44 @@ TEST_F(WebSocketCloseCodeTest, MessageTooBig) {
 
     uint16_t decoded = ((uint16_t)payload[0] << 8) | payload[1];
     EXPECT_EQ(decoded, 1009);
+}
+
+/*
+ * The handlers of a URL are called from two threads: CONNECT from the event
+ * loop, messages and DISCONNECT from the websocket input thread. Walking the
+ * handler list used the iterator kept in the list itself, shared by both.
+ */
+extern "C" hashmap_t* websocket_handler_map;
+
+static std::atomic<long> handler_calls[3];
+
+static void count_a(WEBSOCKET_SIGNALS, const char*, const char, const char*, const unsigned long long) { handler_calls[0]++; }
+static void count_b(WEBSOCKET_SIGNALS, const char*, const char, const char*, const unsigned long long) { handler_calls[1]++; }
+static void count_c(WEBSOCKET_SIGNALS, const char*, const char, const char*, const unsigned long long) { handler_calls[2]++; }
+
+TEST(WebsocketHandlerDispatchTest, TwoThreadsAtOnceCallEveryHandlerEveryTime) {
+    if (websocket_handler_map == NULL) {
+        websocket_handler_map = hashmap_create();
+    }
+    register_function_websocket_handler("dispatch-race", count_a, __FILE__, __LINE__);
+    register_function_websocket_handler("dispatch-race", count_b, __FILE__, __LINE__);
+    register_function_websocket_handler("dispatch-race", count_c, __FILE__, __LINE__);
+
+    const long rounds = 200000;
+    std::thread loop([&] {          /* like the event loop: connects */
+        for (long i = 0; i < rounds; i++) {
+            handleWebsocketConnection(WEBSOCKET_SIGNAL_CONNECT, "g1", "dispatch-race", 0, 0, 0);
+        }
+    });
+    std::thread input([&] {         /* like the input thread: messages */
+        for (long i = 0; i < rounds; i++) {
+            handleWebsocketConnection(WEBSOCKET_SIGNAL_MSG, "g2", "dispatch-race", 0, "x", 1);
+        }
+    });
+    loop.join();
+    input.join();
+
+    for (int h = 0; h < 3; h++) {
+        EXPECT_EQ(handler_calls[h].load(), 2 * rounds) << "handler " << h;
+    }
 }

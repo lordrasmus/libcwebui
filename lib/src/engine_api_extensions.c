@@ -416,18 +416,25 @@ void register_function_websocket_handler(const char* url, websocket_handler f, c
 
 }
 
+/*
+ * Called from two threads: CONNECT from the event loop, messages and
+ * DISCONNECT from the websocket input thread. The list's own iterator is
+ * state kept in the list, shared by both - one thread could reset or end
+ * the other's walk, and ws_list_iterator_next() then returned NULL for a
+ * handler to be called. Walked with a local pointer instead; the handler
+ * lists only change while modules register their handlers at start-up.
+ */
 int handleWebsocketConnection(WEBSOCKET_SIGNALS signal, const char* guid, const char* url, const char binary , const char* msg, const unsigned long long len) {
 	websocket_handler_s *handler;
 	websocket_handler_list_s *list;
+	const struct list_entry *entry;
 
 	list = (websocket_handler_list_s*) hashmap_get(websocket_handler_map, url);
 	if (list != NULL) {
-		ws_list_iterator_start(list->handler_list);
-		while (ws_list_iterator_hasnext(list->handler_list)) {
-			handler = (websocket_handler_s*) ws_list_iterator_next(list->handler_list);
+		for (entry = list->handler_list->first; entry != NULL; entry = entry->next) {
+			handler = (websocket_handler_s*) entry->data;
 			handler->wsh(signal, guid,binary, msg, len);
 		}
-		ws_list_iterator_stop(list->handler_list);
 	}
 	return 0;
 }
