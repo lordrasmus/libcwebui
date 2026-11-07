@@ -154,8 +154,6 @@ typedef struct {
 	unsigned char RamCached;
 
 	unsigned char NoRamCache;
-	unsigned char ForceDownload;
-	unsigned char ForceDownloadName[FORCE_DOWNLOAD_NAME_LENGTH];
 
 	unsigned char auth_only;
 
@@ -557,7 +555,10 @@ typedef struct {
 	unsigned char create_cookie;
 	unsigned char create_cookie_ssl;
 
-
+	/* ?download[=name]: offer this response as a file to save. Kept with
+	 * the request - the file info comes from the cache all clients share */
+	unsigned char force_download;
+	char force_download_name[FORCE_DOWNLOAD_NAME_LENGTH];
 
 	list_t upload_files;
 	list_t custom_response_headers;

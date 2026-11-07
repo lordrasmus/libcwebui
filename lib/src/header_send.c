@@ -333,9 +333,7 @@ static void addContentTypeLines(http_request *s, WebserverFileInfo *info) {
 		break;
 
 	case FILE_TYPE_JSON:
-		/* if ( info->ForceDownload == 0){ */
-			printHeaderChunk(s->socket, "%s", "Content-Type: application/json\r\n");
-		/* } */
+		printHeaderChunk(s->socket, "%s", "Content-Type: application/json\r\n");
 		break;
 
 	case FILE_TYPE_PDF:
@@ -513,15 +511,15 @@ int sendHeader(http_request* s, WebserverFileInfo *info, FILE_OFFSET p_lenght) {
 	}
 	ws_list_iterator_stop(&s->custom_response_headers);
 
-	if ( info->ForceDownload == 1){
+	if ( s->force_download == 1){
 		printHeaderChunk(s->socket, "Content-Description: File Transfer\r\n");
 		/*
 		printHeaderChunk(s->socket, "Content-Type: application/octet-stream\r\n");
 		*/
-		if ( 0 == strcmp("",(char*)info->ForceDownloadName)){
+		if ( s->force_download_name[0] == '\0' ){
 			printHeaderChunk(s->socket, "Content-Disposition: attachment; filename=\"%s\"\r\n",info->Url);
 		}else{
-			printHeaderChunk(s->socket, "Content-Disposition: attachment; filename=\"%s\"\r\n",info->ForceDownloadName);
+			printHeaderChunk(s->socket, "Content-Disposition: attachment; filename=\"%s\"\r\n",s->force_download_name);
 		}
 		printHeaderChunk(s->socket, "Content-Transfer-Encoding: binary\r\n");
 		printHeaderChunk(s->socket, "Expires: 0\r\n");

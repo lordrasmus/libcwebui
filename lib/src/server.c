@@ -325,15 +325,18 @@ int check_url_functions(http_request* p){
  *
  ***************************************************************************/
 
-static void sanitize_header_value(char* dest, const char* src, size_t dest_size) {
+/* For the file name in Content-Disposition: filename="...". Besides CR/LF
+ * (response splitting) the quote and the backslash go, either would end
+ * or escape the quoted value, and so does every other control character. */
+static void sanitize_download_name(char* dest, const char* src, size_t dest_size) {
 	size_t j = 0;
 
 	if (dest_size == 0) return;
 
 	for (size_t i = 0; src[i] != '\0' && j < dest_size - 1; i++) {
-		/* Filter CR, LF to prevent header injection */
-		if (src[i] != '\r' && src[i] != '\n') {
-			dest[j++] = src[i];
+		unsigned char c = (unsigned char)src[i];
+		if ((c >= 0x20) && (c != 0x7f) && (c != '"') && (c != '\\')) {
+			dest[j++] = (char)c;
 		}
 	}
 	dest[j] = '\0';
@@ -433,17 +436,17 @@ int getHttpRequest(socket_info* sock) {
 		}
 		
 		
-		/* durch Eingabe von zB http://192.168.2.80/test.dat?download runterladen durch den Browser erzwingen */
+		/* durch Eingabe von zB http://192.168.2.80/test.dat?download runterladen durch den Browser erzwingen.
+		 * For this request only: it used to be set on the cached file
+		 * info and never cleared, so one request - no login needed -
+		 * turned the page into a download for every client after it. */
 		download = getParameter(&s, "download");
 		if ( file && download ) {
-			file->ForceDownload = 1;
+			s.force_download = 1;
 			if ( download->type == VAR_TYPE_STRING ){
-				/* Sanitize to prevent HTTP Response Splitting via CR/LF injection */
-				sanitize_header_value((char*)file->ForceDownloadName,
-				                      download->val.value_string,
-				                      FORCE_DOWNLOAD_NAME_LENGTH);
-			}else{
-				file->ForceDownloadName[0] = '\0';
+				sanitize_download_name(s.force_download_name,
+				                       download->val.value_string,
+				                       sizeof(s.force_download_name));
 			}
 		}
 
