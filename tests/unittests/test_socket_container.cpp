@@ -1279,6 +1279,23 @@ protected:
     }
 };
 
+/* Payload fits into the initial input buffer, the whole frame (header and
+ * mask) does not: the buffer has to grow anyway */
+TEST_F(WebsocketFrameTest, FrameJustLargerThanTheBufferIsReceived) {
+    for (unsigned int len : { (unsigned int)WEBSOCKET_INIT_INBUFFER_SIZE - 4,
+                              (unsigned int)WEBSOCKET_INIT_INBUFFER_SIZE }) {
+        std::vector<unsigned char> f = { 0x82, 0x80 | 126,
+                                         (unsigned char)(len >> 8), (unsigned char)len,
+                                         0, 0, 0, 0 };
+        f.insert(f.end(), len, 'x');
+        ASSERT_GT(f.size(), (size_t)WEBSOCKET_INIT_INBUFFER_SIZE);
+        send_frames(f);
+        receive_all();
+        EXPECT_EQ(ws->closeSocket, 0) << "payload " << len;
+        EXPECT_EQ(ws->websocket_buffer_offset, 0u) << "frame consumed, payload " << len;
+    }
+}
+
 /* Empty continuation frames used to cost an allocation and a list node
  * each without counting against any limit */
 TEST_F(WebsocketFrameTest, EndlessEmptyContinuationFramesAreStopped) {

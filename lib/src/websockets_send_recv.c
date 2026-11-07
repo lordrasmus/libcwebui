@@ -422,13 +422,13 @@ static int recFrameV8(socket_info *sock) {
 			}
 
 			if (diff < (2 + extra_bytes + wsf.real_length)){
-				if ( ( last_frame_start == 0 ) && ( wsf.real_length > WebserverMallocedSize(sock->websocket_buffer) ) ){
-
-					if ( wsf.real_length > WEBSOCKET_MAX_INBUFFER_SIZE  ){
-						printf("Websocket Frame ( %d ) > Max Input Buffer ( %d ) \n", wsf.real_length, WEBSOCKET_MAX_INBUFFER_SIZE);
-						goto close_socket_error;
-					}
-
+				/* The whole frame has to fit, header and mask included.
+				 * Comparing only the payload with the buffer size left a
+				 * frame whose payload fits but the frame does not (with the
+				 * 2000 byte buffer: about 1992 to 2000 bytes of payload)
+				 * with a full buffer and nothing left to read into. */
+				if ( ( last_frame_start == 0 ) &&
+				     ( 2 + extra_bytes + wsf.real_length > WebserverMallocedSize(sock->websocket_buffer) ) ){
 					sock->websocket_buffer = WebserverRealloc( sock->websocket_buffer, 2 + extra_bytes + wsf.real_length + 10 );
 					offset = 0;
 					goto read_more_data;
