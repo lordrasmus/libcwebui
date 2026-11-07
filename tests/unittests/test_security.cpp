@@ -1,8 +1,11 @@
 #include <gtest/gtest.h>
 #include <cstring>
+#include <string>
+#include <unistd.h>
 
 extern "C" {
 #include "webserver.h"
+#include "intern/webserver_ssl.h"
 }
 
 class SecurityTest : public ::testing::Test {
@@ -336,3 +339,37 @@ TEST_F(UrlDecodeSecurityTest, MixedValidInvalid) {
     // Result should contain at least the valid decoded spaces
     EXPECT_NE(strchr(buffer, ' '), nullptr);
 }
+
+#ifdef WEBSERVER_USE_SSL
+/*
+ * WebserverSSLTestKeyfile() loads certificate and key into a context of its
+ * own to check them. With OpenSSL that context was never released - the
+ * leak shows when LeakSanitizer checks at the end of the run.
+ */
+TEST(SslKeyfileTest, ValidAndInvalidKeyfilesAreToldApart) {
+    char dir[] = "/tmp/libcwebui_cert_XXXXXX";
+    ASSERT_NE(mkdtemp(dir), nullptr);
+    std::string good = std::string(dir) + "/good.pem";
+    std::string bad = std::string(dir) + "/bad.pem";
+    std::string cmd = "openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes"
+                      " -keyout " + good + " -out " + good + ".crt -days 1 -subj /CN=test"
+                      " >/dev/null 2>&1 && cat " + good + ".crt >> " + good;
+    if (system(cmd.c_str()) != 0) {
+        GTEST_SKIP() << "openssl command not available";
+    }
+    FILE* f = fopen(bad.c_str(), "w");
+    ASSERT_NE(f, nullptr);
+    fputs("not a certificate\n", f);
+    fclose(f);
+
+    for (int i = 0; i < 20; i++) {
+        EXPECT_EQ(WebserverSSLTestKeyfile((char*)good.c_str()), 0);
+        EXPECT_EQ(WebserverSSLTestKeyfile((char*)bad.c_str()), 1);
+    }
+
+    unlink(good.c_str());
+    unlink((good + ".crt").c_str());
+    unlink(bad.c_str());
+    rmdir(dir);
+}
+#endif

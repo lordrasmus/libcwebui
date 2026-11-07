@@ -288,6 +288,10 @@ int VISIBLE_ATTR WebserverSSLTestKeyfile( char* keyfile ){
 	int error = 0;
 	meth = (SSL_METHOD*) SSLv23_server_method();
 	ctx = SSL_CTX_new(meth);
+	if (ctx == NULL) {
+		LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "Can't test %s: no SSL context", keyfile);
+		return 1;
+	}
 
 	if (!(SSL_CTX_use_certificate_chain_file(ctx, keyfile))) {
 		LOG(CONNECTION_LOG, ERROR_LEVEL, 0, "Can't read certificate: file %s", keyfile);
@@ -299,9 +303,9 @@ int VISIBLE_ATTR WebserverSSLTestKeyfile( char* keyfile ){
 		error = 1;
 	}
 
-#ifdef ENABLE_DEVEL_WARNINGS
-	#warning Memory Leak
-#endif	
+	/* Only a test: the context with the certificate and key loaded into it
+	 * was kept for good on every certificate check */
+	SSL_CTX_free(ctx);
 
 	return error;
 }
