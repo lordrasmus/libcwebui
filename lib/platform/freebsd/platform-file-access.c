@@ -51,13 +51,19 @@ int PlatformOpenDataReadStream( const char* name ) {
 		return false;
 	}
 
-	/* Auf normale Datei Prüfen */
+	/* Regular files only. fopen() also opens a directory, so this is where a
+	 * request for one ends up: close it again, or every such request keeps
+	 * a descriptor for good. */
 	if ( 0 != fstat(fileno(g_fp), &st) ){
 		printf("fstat error : %m\n");
+		fclose(g_fp);
+		g_fp = NULL;
 		return false;
 	}
 
 	if (!S_ISREG(st.st_mode)){
+		fclose(g_fp);
+		g_fp = NULL;
 		return false;
 	}
 
@@ -75,8 +81,12 @@ FILE_OFFSET PlatformGetFileSize(void) {
 	return st.st_size;
 }
 
+/* Some callers close without checking whether the open succeeded */
 char PlatformCloseDataStream(void) {
-	fclose(g_fp);
+	if (g_fp != NULL) {
+		fclose(g_fp);
+		g_fp = NULL;
+	}
 	return true;
 }
 

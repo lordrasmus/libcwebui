@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 #include <cstring>
+#include <dirent.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 extern "C" {
 #include "webserver.h"
@@ -386,4 +389,62 @@ TEST_F(BlockedFilesTest, BlockedFileWithLeadingSlash) {
     // URL normalization strips leading slash
     int blocked = check_blocked_urls("private.html");
     EXPECT_EQ(blocked, 1);
+}
+
+/*
+ * The platform's file stream: a request for a registered directory itself
+ * (GET /download/) opens the directory, which is not a regular file. Each
+ * such request used to keep that descriptor for good.
+ */
+static int open_descriptors() {
+    int n = 0;
+    DIR* d = opendir("/proc/self/fd");
+    if (d == NULL) {
+        return -1;
+    }
+    while (readdir(d) != NULL) {
+        n++;
+    }
+    closedir(d);
+    return n;
+}
+
+TEST(PlatformFileStreamTest, DirectoryIsRefusedWithoutKeepingADescriptor) {
+    char dir[] = "/tmp/libcwebui_dir_XXXXXX";
+    ASSERT_NE(mkdtemp(dir), nullptr);
+    int before = open_descriptors();
+    ASSERT_GT(before, 0);
+    for (int i = 0; i < 100; i++) {
+        EXPECT_FALSE(PlatformOpenDataReadStream(dir));
+    }
+    EXPECT_EQ(open_descriptors(), before);
+    rmdir(dir);
+}
+
+TEST(PlatformFileStreamTest, CloseAfterAFailedOpenIsHarmless) {
+    char dir[] = "/tmp/libcwebui_dir_XXXXXX";
+    ASSERT_NE(mkdtemp(dir), nullptr);
+    EXPECT_FALSE(PlatformOpenDataReadStream(dir));
+    PlatformCloseDataStream();              /* callers that do not check */
+    EXPECT_FALSE(PlatformOpenDataReadStream("/tmp/libcwebui_does_not_exist"));
+    PlatformCloseDataStream();
+    rmdir(dir);
+}
+
+TEST(PlatformFileStreamTest, RegularFileStillOpensReadsAndCloses) {
+    char path[] = "/tmp/libcwebui_file_XXXXXX";
+    int fd = mkstemp(path);
+    ASSERT_GE(fd, 0);
+    ASSERT_EQ(write(fd, "hello", 5), 5);
+    close(fd);
+    int before = open_descriptors();
+    ASSERT_TRUE(PlatformOpenDataReadStream(path));
+    EXPECT_EQ(PlatformGetFileSize(), 5);
+    unsigned char buf[8] = {};
+    EXPECT_EQ(PlatformReadBytes(buf, 5), 5);
+    EXPECT_EQ(memcmp(buf, "hello", 5), 0);
+    PlatformCloseDataStream();
+    PlatformCloseDataStream();              /* twice: still harmless */
+    EXPECT_EQ(open_descriptors(), before);
+    unlink(path);
 }
