@@ -142,6 +142,7 @@ void add_local_file_system_dir(const char* alias, const char* dir, const int use
 
 	ws_variable *tmp;
 	size_t len;
+	char* alias_slash;
 
 	struct dir_info* info = WebserverMalloc( sizeof( struct dir_info ) ) ;
 	/* WebserverMalloc() does not clear: use_ram_cache was only ever set to
@@ -152,16 +153,32 @@ void add_local_file_system_dir(const char* alias, const char* dir, const int use
 	info->use_ram_cache = ( use_cache == 1 ) ? 1 : 0;
 
 	info->auth_only = auth_only;
-	
-	tmp = getWSVariableArray( file_dirs , alias);
+
+	/* The alias always ends with '/'. search_file_dir() compares it as a
+	 * prefix of the URL; without the '/' "down" also matched "download/x"
+	 * and looked for load/x in down's directory - only the order of
+	 * registration kept that away. With it the alias only matches a URL
+	 * going on below it, in any order. An alias always names a directory:
+	 * search_file_dir() needs something after it.
+	 * The empty alias stays empty: it is the root (the web interface
+	 * registers its pages that way) and is meant to match every URL. */
+	len = strlen( alias );
+	alias_slash = WebserverMalloc( len + 2 );
+	memcpy( alias_slash, alias, len );
+	if ( ( len > 0 ) && ( alias[len - 1] != '/' ) ){
+		alias_slash[len++] = '/';
+	}
+	alias_slash[len] = '\0';
+
+	tmp = getWSVariableArray( file_dirs , alias_slash);
 	if (tmp != 0) {
-		LOG( FILESYSTEM_LOG, ERROR_LEVEL, 0, "Error: dir alias %s exists",alias);
+		LOG( FILESYSTEM_LOG, ERROR_LEVEL, 0, "Error: dir alias %s exists",alias_slash);
 		exit(0);
 	}
-	
-	LOG( FILESYSTEM_LOG, NOTICE_LEVEL, 0, "New dir alias /%s -> %s",alias,dir);
-	
-	tmp = addWSVariableArray( file_dirs , alias, 0 );
+
+	LOG( FILESYSTEM_LOG, NOTICE_LEVEL, 0, "New dir alias /%s -> %s",alias_slash,dir);
+
+	tmp = addWSVariableArray( file_dirs , alias_slash, 0 );
 	
 	/* The directory with exactly one '/' at the end. The old copy through
 	 * a 1000 byte buffer left it unterminated for 990 characters or more,
@@ -175,9 +192,8 @@ void add_local_file_system_dir(const char* alias, const char* dir, const int use
 	}
 	info->dir[len] = '\0';
 	
-	info->alias = WebserverMalloc( strlen( alias ) + 1 );
-	strcpy( info->alias, alias);
-	
+	info->alias = alias_slash;
+
 	setWSVariableCustomData(tmp, 0, info);
 	
 }

@@ -531,6 +531,50 @@ TEST_F(LocalDirTest, DirectoryWithoutRamCacheIsNotCached) {
     rmdir(dir.c_str());
 }
 
+/* An alias that is the start of another one, registered first: the URL of
+ * the longer one used to match the shorter alias, and a file of that name
+ * in its directory was served instead. */
+TEST_F(LocalDirTest, ShorterAliasDoesNotCatchTheLongerOne) {
+    std::string pre_dir = make_dir(0);
+    std::string prefix_dir = make_dir(0);
+    mkdir((pre_dir + "/fix").c_str(), 0700);
+    write_file(pre_dir + "/fix/x.txt", "wrong");      /* "pre" + "fix/x.txt" */
+    write_file(prefix_dir + "/x.txt", "right!");
+    write_file(pre_dir + "/y", "y");
+
+    add_local_file_system_dir("pre", pre_dir.c_str(), 0, 0);      /* first */
+    add_local_file_system_dir("prefix", prefix_dir.c_str(), 0, 0);
+
+    WebserverFileInfo* f = getFileLocalFileSystem("prefix/x.txt");
+    ASSERT_NE(f, nullptr);
+    EXPECT_EQ(std::string(f->FilePath), prefix_dir + "/x.txt");
+    EXPECT_EQ(f->DataLenght, 6);
+
+    EXPECT_EQ(getFileLocalFileSystem("prex/y"), nullptr) << "no alias \"prex\"";
+    ASSERT_NE(getFileLocalFileSystem("pre/y"), nullptr);
+
+    unlink((pre_dir + "/fix/x.txt").c_str());
+    rmdir((pre_dir + "/fix").c_str());
+    unlink((pre_dir + "/y").c_str());
+    unlink((prefix_dir + "/x.txt").c_str());
+    rmdir(pre_dir.c_str());
+    rmdir(prefix_dir.c_str());
+}
+
+/* The empty alias is the root, as the web interface registers its pages:
+ * it must still match any URL. Registered last here, after the others,
+ * so it does not take their URLs in the tests above. */
+TEST_F(LocalDirTest, EmptyAliasIsTheRootAndMatchesEveryUrl) {
+    std::string root = make_dir(0);
+    write_file(root + "/index.html", "<html>");
+    add_local_file_system_dir("", root.c_str(), 0, 0);
+    WebserverFileInfo* f = getFileLocalFileSystem("index.html");
+    ASSERT_NE(f, nullptr);
+    EXPECT_EQ(std::string(f->FilePath), root + "/index.html");
+    unlink((root + "/index.html").c_str());
+    rmdir(root.c_str());
+}
+
 TEST_F(LocalDirTest, PathThatDoesNotFitIsNotFound) {
     std::string dir = make_dir(600);
     add_local_file_system_dir("longdir", dir.c_str(), 1, 0);
