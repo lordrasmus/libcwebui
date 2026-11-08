@@ -561,6 +561,36 @@ TEST_F(LocalDirTest, ShorterAliasDoesNotCatchTheLongerOne) {
     rmdir(prefix_dir.c_str());
 }
 
+/* Nested aliases whose directories both have the file: the longest alias
+ * is tried first, whatever the order of registration. If the file is not
+ * in its directory, the shorter one is used, as before. */
+TEST_F(LocalDirTest, LongestAliasIsTriedFirstShorterOneStillServesTheRest) {
+    std::string outer = make_dir(0);
+    std::string inner = make_dir(0);
+    mkdir((outer + "/lic").c_str(), 0700);
+    write_file(outer + "/lic/a.txt", "outer");
+    write_file(outer + "/lic/only_outer.txt", "o");
+    write_file(inner + "/a.txt", "inner!");
+
+    add_local_file_system_dir("nest", outer.c_str(), 0, 0);       /* shorter first */
+    add_local_file_system_dir("nest/lic", inner.c_str(), 0, 0);
+
+    WebserverFileInfo* f = getFileLocalFileSystem("nest/lic/a.txt");
+    ASSERT_NE(f, nullptr);
+    EXPECT_EQ(std::string(f->FilePath), inner + "/a.txt") << "longest alias first";
+
+    WebserverFileInfo* g = getFileLocalFileSystem("nest/lic/only_outer.txt");
+    ASSERT_NE(g, nullptr);
+    EXPECT_EQ(std::string(g->FilePath), outer + "/lic/only_outer.txt") << "falls back to the shorter";
+
+    unlink((outer + "/lic/a.txt").c_str());
+    unlink((outer + "/lic/only_outer.txt").c_str());
+    rmdir((outer + "/lic").c_str());
+    unlink((inner + "/a.txt").c_str());
+    rmdir(outer.c_str());
+    rmdir(inner.c_str());
+}
+
 /* The empty alias is the root, as the web interface registers its pages:
  * it must still match any URL. Registered last here, after the others,
  * so it does not take their URLs in the tests above. */

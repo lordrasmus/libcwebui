@@ -20,29 +20,49 @@ SPDX-License-Identifier: MPL-2.0
 
 #include "intern/system_file_access.h"
 
-static ws_variable* file_dirs;
-
 struct dir_info{
 	char* alias;
+	size_t alias_len;
 	char* dir;
-	
+
 	int use_ram_cache;
 	int auth_only;
+
+	struct dir_info* next;
 };
+
+/* The registered directories, longest alias first, aliases of the same
+ * length in alphabetical order - kept that way when one is added. The
+ * first alias in the list that a URL starts with is therefore the longest
+ * one: download/licence/ is tried before download/ and that before the
+ * root "", whatever order they were registered in. If the file is not in
+ * the first one, the next shorter matching alias is tried, as before. */
+static struct dir_info* dir_list;
 
 void init_local_file_system( void ){
 
-	file_dirs = newWSArray("dirs");
+	dir_list = 0;
 
 }
 
 void free_local_file_system( void ){
 
-	freeWSVariable(file_dirs);
-#ifdef ENABLE_DEVEL_WARNINGS
-	#warning free handler noch überarbeiten
-#endif
+	while ( dir_list != 0 ){
+		struct dir_info* info = dir_list;
+		dir_list = info->next;
+		WebserverFree( info->alias );
+		WebserverFree( info->dir );
+		WebserverFree( info );
+	}
 
+}
+
+/* Whether a goes before b in dir_list */
+static int dir_alias_before( const struct dir_info* a, const struct dir_info* b ){
+	if ( a->alias_len != b->alias_len ){
+		return a->alias_len > b->alias_len;
+	}
+	return strcmp( a->alias, b->alias ) < 0;
 }
 
 int local_file_system_check_file_modified( WebserverFileInfo *file ){
@@ -140,7 +160,7 @@ int local_file_system_read_content( WebserverFileInfo *file ){
 
 void add_local_file_system_dir(const char* alias, const char* dir, const int use_cache, const int auth_only ){
 
-	ws_variable *tmp;
+	struct dir_info** pos;
 	size_t len;
 	char* alias_slash;
 
@@ -170,16 +190,15 @@ void add_local_file_system_dir(const char* alias, const char* dir, const int use
 	}
 	alias_slash[len] = '\0';
 
-	tmp = getWSVariableArray( file_dirs , alias_slash);
-	if (tmp != 0) {
-		LOG( FILESYSTEM_LOG, ERROR_LEVEL, 0, "Error: dir alias %s exists",alias_slash);
-		exit(0);
+	for ( pos = &dir_list; *pos != 0; pos = &(*pos)->next ){
+		if ( 0 == strcmp( (*pos)->alias, alias_slash ) ){
+			LOG( FILESYSTEM_LOG, ERROR_LEVEL, 0, "Error: dir alias %s exists",alias_slash);
+			exit(0);
+		}
 	}
 
 	LOG( FILESYSTEM_LOG, NOTICE_LEVEL, 0, "New dir alias /%s -> %s",alias_slash,dir);
 
-	tmp = addWSVariableArray( file_dirs , alias_slash, 0 );
-	
 	/* The directory with exactly one '/' at the end. The old copy through
 	 * a 1000 byte buffer left it unterminated for 990 characters or more,
 	 * and tested the terminator instead of the last character, so every
@@ -193,27 +212,29 @@ void add_local_file_system_dir(const char* alias, const char* dir, const int use
 	info->dir[len] = '\0';
 	
 	info->alias = alias_slash;
+	info->alias_len = strlen( alias_slash );
 
-	setWSVariableCustomData(tmp, 0, info);
-	
+	/* Into its place in the order of dir_list */
+	for ( pos = &dir_list; ( *pos != 0 ) && dir_alias_before( *pos, info ); pos = &(*pos)->next ){
+	}
+	info->next = *pos;
+	*pos = info;
+
 }
 
 
 static struct dir_info *search_file_dir ( const char* name, char* real_path, int real_path_length ){
 	
-	struct dir_info *dir_tmp = 0;
-	ws_variable*tmp_var = getWSVariableArrayFirst( file_dirs );
-	
-	int found = 0;
-	
-	while (tmp_var != 0) {
-		dir_tmp = tmp_var->val.value_p;
-		
+	struct dir_info *dir_tmp;
+
+	/* Longest alias first, see dir_list */
+	for ( dir_tmp = dir_list; dir_tmp != 0; dir_tmp = dir_tmp->next ) {
+
 		real_path[0] = '\0';
-		
-		if (0 == strncmp(tmp_var->name, name, tmp_var->name_len)) {
-			
-			if (strlen( name ) > tmp_var->name_len ) {
+
+		if (0 == strncmp(dir_tmp->alias, name, dir_tmp->alias_len)) {
+
+			if (strlen( name ) > dir_tmp->alias_len ) {
 				/* Directory and the rest of the URL. strncat() with the
 				 * room left wrote its terminator one byte past the buffer,
 				 * and a path cut to fit named another file than the one
@@ -221,7 +242,7 @@ static struct dir_info *search_file_dir ( const char* name, char* real_path, int
 				 * directory. */
 				/* dir ends in exactly one '/', the rest of the URL starts
 				 * with one unless the alias was registered with it */
-				const char* rest = name + tmp_var->name_len;
+				const char* rest = name + dir_tmp->alias_len;
 				while ( rest[0] == '/' ){
 					rest++;
 				}
@@ -229,23 +250,15 @@ static struct dir_info *search_file_dir ( const char* name, char* real_path, int
 				                  dir_tmp->dir, rest );
 				if ( ( n < 0 ) || ( n >= real_path_length ) ){
 					real_path[0] = '\0';
-					tmp_var = getWSVariableArrayNext( file_dirs );
 					continue;
 				}
 				if (PlatformOpenDataReadStream( real_path )) {
-					found = 1;
-					break;
+					return dir_tmp;
 				}
 			}
 		}
-		tmp_var = getWSVariableArrayNext( file_dirs );
 	}
-	stopWSVariableArrayIterate( file_dirs );
-	
-	if ( found == 1 ){
-		return dir_tmp;
-	}
-	
+
 	return 0;
 }
 
@@ -278,7 +291,7 @@ static WebserverFileInfo* getFileInformation( const char *name) {
 	copyFilePath(file, name_tmp);
 	copyURL(file, name);
 
-	/* tmp_var ist permanent in der liste der prefixe darum pointer direkt nehmen */
+	/* dir stays in dir_list for good, so its alias can be referenced */
 	file->FilePrefix = dir->alias;
 	setFileType(file);
 
