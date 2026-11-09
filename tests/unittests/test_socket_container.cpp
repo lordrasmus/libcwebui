@@ -1908,6 +1908,24 @@ TEST(RefusedUpgradeTest, InvalidKeyGets400AndTheConnectionEnds) {
                 ::testing::ExitedWithCode(0), "");
 }
 
+/* An upgrade behind a request whose answer is still queued: the answer
+ * used to be lost - the websocket writes through its own list - and the
+ * 101 went out instead. Now the answer goes out, the upgrade is dropped
+ * and the connection closed, as the reverse proxy does. */
+TEST(RefusedUpgradeTest, UpgradeBehindAPendingAnswerKeepsTheAnswer) {
+    const char* burst = "OPTIONS / HTTP/1.1\r\nHost: t\r\n\r\n"
+                        WS_UPGRADE("dGhlIHNhbXBsZSBub25jZQ==", "13");
+    EXPECT_EXIT(keep_alive_case(burst, 1, true), ::testing::ExitedWithCode(0), "") << "one answer, closed";
+    EXPECT_EXIT(connection_line_case(burst, "HTTP/1.1 204"), ::testing::ExitedWithCode(0), "")
+        << "the answer is the OPTIONS one, not a 101";
+}
+
+/* Alone on its connection the upgrade still succeeds */
+TEST(RefusedUpgradeTest, UpgradeAloneStillSwitchesProtocols) {
+    EXPECT_EXIT(connection_line_case(WS_UPGRADE("dGhlIHNhbXBsZSBub25jZQ==", "13"), "HTTP/1.1 101"),
+                ::testing::ExitedWithCode(0), "");
+}
+
 TEST(RefusedUpgradeTest, RefusalHasALengthAndAnnouncesTheClose) {
     EXPECT_EXIT(connection_line_case(WS_UPGRADE("dGhlIHNhbXBsZSBub25jZQ==", "8"),
                                      "\r\nContent-Length: 0\r\n"),

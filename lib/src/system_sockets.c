@@ -1032,6 +1032,23 @@ static int handleClient(socket_info* sock) {
 #ifdef WEBSERVER_USE_WEBSOCKETS
 		if ( sock->header->isWebsocket == 1 )
 		{
+			/* Upgrade pipelined behind requests whose answers are still
+			 * queued: the websocket writes through its own chunk list and
+			 * its own events, output_list would never be sent - the earlier
+			 * answers were lost, the 101 went out instead. As the reverse
+			 * proxy does in the same case (checkReverseProxy()): the earlier
+			 * answers go out, this request is dropped and the connection
+			 * closes afterwards. A client that pipelines has to repeat
+			 * unanswered requests after a close (RFC 9112 9.3.2). */
+			if ( ws_list_size( &sock->output_list ) > 0 ){
+				LOG ( CONNECTION_LOG,WARNING_LEVEL,sock->socket,"%s",
+				      "websocket upgrade pipelined behind a pending response, closing instead" );
+				sock->header_buffer_pos = 0;
+				sock->closeSocket = 1;
+				WebserverResetHttpRequestHeader(sock->header);
+				sock->reverse_proxy_checked = 0;
+				return 1;
+			}
 			#if _WEBSERVER_CONNECTION_DEBUG_ > 1
 				LOG ( CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"Websocket Connected" );
 			#endif
