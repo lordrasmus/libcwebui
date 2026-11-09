@@ -1469,6 +1469,226 @@ void tls_handshake_with_full_send_buffer(int max_proto) {
 
 }  // namespace
 
+/*
+ * Requests sent one after the other without waiting for the answers. The
+ * read branch of handleer() used to answer all of them in one go, for as
+ * long as the client kept sending: no other connection was served
+ * meanwhile, and the answers piled up in output_list. Now a handful per
+ * read event, the rest once those answers are out. Driven here by the
+ * library's own epoll instance: epoll_wait() and eventHandler(), as
+ * waitEvents() does, so EPOLLONESHOT is used up as in operation.
+ */
+namespace {
+
+/* Requests answered per read event, WEBSERVER_MAX_REQUESTS_PER_READ */
+const int kRequestsPerRead = 8;
+
+int library_epoll_fd() {
+    int found = -1;
+    DIR* d = opendir("/proc/self/fd");
+    struct dirent* e;
+    while (d && (e = readdir(d))) {
+        char link[256], path[300];
+        snprintf(path, sizeof(path), "/proc/self/fd/%s", e->d_name);
+        ssize_t n = readlink(path, link, sizeof(link) - 1);
+        if (n > 0) {
+            link[n] = 0;
+            if (strcmp(link, "anon_inode:[eventpoll]") == 0) {
+                found = atoi(e->d_name);
+            }
+        }
+    }
+    if (d) {
+        closedir(d);
+    }
+    return found;
+}
+
+/* One round of the event loop. Returns the number of events handled. */
+int dispatch_once(int epfd, int timeout_ms) {
+    struct epoll_event ev[16];
+    int n = epoll_wait(epfd, ev, 16, timeout_ms);
+    for (int i = 0; i < n; i++) {
+        socket_info* p = (socket_info*)ev[i].data.ptr;
+        eventHandler(p->socket, (short)ev[i].events, p);
+    }
+    return n < 0 ? 0 : n;
+}
+
+size_t count_answers(const std::string& got) {
+    size_t answers = 0;
+    for (size_t p = got.find("HTTP/1.1 "); p != std::string::npos; p = got.find("HTTP/1.1 ", p + 1)) {
+        answers++;
+    }
+    return answers;
+}
+
+struct PlainConn {
+    int fds[2];
+    socket_info* s;
+};
+
+PlainConn plain_connection() {
+    PlainConn c;
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, c.fds) != 0) {
+        _exit(3);
+    }
+    fcntl(c.fds[0], F_SETFL, fcntl(c.fds[0], F_GETFL) | O_NONBLOCK);
+    fcntl(c.fds[1], F_SETFL, fcntl(c.fds[1], F_GETFL) | O_NONBLOCK);
+    c.s = WebserverMallocSocketInfo();
+    c.s->socket = c.fds[0];
+    c.s->client = 1;
+    c.s->active = 1;
+    c.s->header = WebserverMallocHttpRequestHeader();
+    c.s->rx_at = c.s->tx_at = c.s->phase_at = g_loop_now;
+    addSocketContainer(c.s);
+    addEventSocketRead(c.s);
+    return c;
+}
+
+/* Runs the loop while the client reads, until `want` answers are in.
+ * Exit 0 when they are, 2 when nothing happens any more, 4 closed */
+void serve_until_answered(PlainConn& c, int epfd, size_t want) {
+    std::string got;
+    for (int idle = 0; idle < 5; ) {
+        char buf[65536];
+        ssize_t r;
+        while ((r = recv(c.fds[1], buf, sizeof(buf), 0)) > 0) {
+            got.append(buf, (size_t)r);
+        }
+        if (count_answers(got) >= want) {
+            _exit(0);
+        }
+        if (fcntl(c.fds[0], F_GETFD) == -1) {
+            _exit(4);
+        }
+        idle = (dispatch_once(epfd, 20) > 0) ? 0 : idle + 1;
+    }
+    _exit(2);
+}
+
+/* Exit code: 1 the first read event answered a different number than the
+ * budget, otherwise as serve_until_answered() */
+void pipelined_requests(int n) {
+    alarm(20);
+    initWebserver();
+    initSocketContainer();
+    int epfd = library_epoll_fd();
+    PlainConn c = plain_connection();
+
+    std::string burst;
+    for (int i = 0; i < n; i++) {
+        burst += "OPTIONS / HTTP/1.1\r\nHost: t\r\n\r\n";
+    }
+    if (send(c.fds[1], burst.data(), burst.size(), 0) != (ssize_t)burst.size()) {
+        _exit(3);
+    }
+
+    dispatch_once(epfd, 100);                        /* the first read event */
+    if (ws_list_size(&c.s->output_list) != (unsigned)kRequestsPerRead) {
+        _exit(1);
+    }
+    serve_until_answered(c, epfd, (size_t)n);
+}
+
+/* Bare CRLFs answer nothing, they used to keep the loop going for as long
+ * as they came. Exit 1: more than the budget taken in the first event. */
+void pipelined_empty_lines() {
+    alarm(20);
+    initWebserver();
+    initSocketContainer();
+    int epfd = library_epoll_fd();
+    PlainConn c = plain_connection();
+
+    std::string burst;
+    for (int i = 0; i < 500; i++) {
+        burst += "\r\n";
+    }
+    burst += "OPTIONS / HTTP/1.1\r\nHost: t\r\n\r\n";
+    if (send(c.fds[1], burst.data(), burst.size(), 0) != (ssize_t)burst.size()) {
+        _exit(3);
+    }
+
+    dispatch_once(epfd, 100);
+    /* Exactly the budget taken - 8 CRLFs of 2 bytes - and the rest left
+     * for the resumed read. Had the loop gone through all 500 (they fit
+     * the header buffer), the request would already be answered. */
+    if ((ws_list_size(&c.s->output_list) != 0) ||
+        (c.s->header_buffer_pos != burst.size() - 2 * kRequestsPerRead) ||
+        (c.s->read_resume != 1)) {
+        _exit(1);
+    }
+    serve_until_answered(c, epfd, 1);
+}
+
+/* A client that sends but does not read: the answers are not piled up,
+ * the server stops taking requests. Exit 1: more answers waited than one
+ * portion; 0 when all are answered once it reads. */
+void pipelined_without_reading(int n) {
+    alarm(20);
+    initWebserver();
+    initSocketContainer();
+    int epfd = library_epoll_fd();
+    PlainConn c = plain_connection();
+    /* On a unix socket the sender's buffer is all there is between them */
+    int small = 4608;
+    setsockopt(c.fds[0], SOL_SOCKET, SO_SNDBUF, &small, sizeof(small));
+    setsockopt(c.fds[1], SOL_SOCKET, SO_SNDBUF, &small, sizeof(small));
+
+    std::string burst;
+    for (int i = 0; i < n; i++) {
+        burst += "OPTIONS / HTTP/1.1\r\nHost: t\r\n\r\n";
+    }
+    size_t sent = 0;
+    for (int round = 0; round < 2000; round++) {
+        ssize_t w = send(c.fds[1], burst.data() + sent, burst.size() - sent, 0);
+        if (w > 0) {
+            sent += (size_t)w;
+        }
+        dispatch_once(epfd, 0);
+        if (ws_list_size(&c.s->output_list) > (unsigned)kRequestsPerRead) {
+            _exit(1);
+        }
+    }
+    if (sent == burst.size()) {
+        _exit(5);                                    /* nothing held back - no backlog tested */
+    }
+    /* Now the client reads: every request is answered */
+    std::string got;
+    for (int round = 0; round < 50000; round++) {
+        if (sent < burst.size()) {
+            ssize_t w = send(c.fds[1], burst.data() + sent, burst.size() - sent, 0);
+            if (w > 0) {
+                sent += (size_t)w;
+            }
+        }
+        char buf[65536];
+        ssize_t r;
+        while ((r = recv(c.fds[1], buf, sizeof(buf), 0)) > 0) {
+            got.append(buf, (size_t)r);
+        }
+        if (count_answers(got) == (size_t)n) {
+            _exit(0);
+        }
+        dispatch_once(epfd, 0);
+    }
+    _exit(2);
+}
+
+}  // namespace
+
+TEST(PipelineBudgetTest, ManyPipelinedRequestsAreAnsweredInPortions) {
+    EXPECT_EXIT(pipelined_requests(50), ::testing::ExitedWithCode(0), "");
+}
+
+TEST(PipelineBudgetTest, EmptyLinesCountAgainstTheBudget) {
+    EXPECT_EXIT(pipelined_empty_lines(), ::testing::ExitedWithCode(0), "");
+}
+
+TEST(PipelineBudgetTest, ClientNotReadingStopsTheServerTakingRequests) {
+    EXPECT_EXIT(pipelined_without_reading(2000), ::testing::ExitedWithCode(0), "");
+}
+
 TEST(TlsHandshakeWantWriteTest, FullSendBufferDoesNotStopTheHandshake) {
     EXPECT_EXIT(tls_handshake_with_full_send_buffer(TLS1_2_VERSION), ::testing::ExitedWithCode(0), "")
         << "TLS 1.2";

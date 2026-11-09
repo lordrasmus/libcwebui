@@ -1930,8 +1930,22 @@ static int tls_first_read(socket_info* sock) {
 }
 #endif
 
+/* Requests answered per read event on one connection. A client sending
+ * request after request without taking the answers kept the loop in
+ * handleer() going for as long as it sent: every other connection waited,
+ * and the answers piled up in output_list - 300 KB per second on the
+ * device, until the memory limit. After this many the answers are written
+ * first; the requests still buffered are taken up once they are out (see
+ * the write branch), and while the client does not read them nothing more
+ * is taken from it. */
+#ifndef WEBSERVER_MAX_REQUESTS_PER_READ
+	#define WEBSERVER_MAX_REQUESTS_PER_READ	8
+#endif
+
 void handleer( int a, short b, void *t ) {
 	int ret;
+	int requests;
+	int budget_used;
 	socket_info* sock = (socket_info*) t;
 	CLIENT_WRITE_DATA_STATUS status_ret = UNDEFINED;
 
@@ -2114,10 +2128,24 @@ void handleer( int a, short b, void *t ) {
 			 * und Body im selben Record, haette die Schleife den bereits
 			 * abgewiesenen Body danach als naechsten Request verarbeitet und
 			 * eine zweite Antwort an dieselbe Verbindung gehaengt. */
+			requests = ( ret == 1 ) ? 1 : 0;
+			budget_used = 0;
 			while(( sock->closeSocket == 0 ) &&
 			      (( sock->header_buffer_pos > 0) || ( WebserverSSLPending ( sock ) > 0 ) )){
 
+				/* Enough for this event, the answers go out first; the
+				 * write branch takes up the rest. Requests without an
+				 * answer count too - a bare CRLF is one - else a stream of
+				 * them would keep the loop going as before. */
+				if ( requests >= WEBSERVER_MAX_REQUESTS_PER_READ ){
+					budget_used = 1;
+					break;
+				}
+
 				ret = handleClient(sock);
+				if ( ret == 1 ){
+					requests++;
+				}
 				if (ret < 0) {
 					WebserverConnectionManagerCloseRequest(sock);
 					return;
@@ -2153,6 +2181,18 @@ void handleer( int a, short b, void *t ) {
 
 			// Wenn Output Daten generiert wurden diese erstmal schreiben, nach dem schreiben dann wieder input daten lesen
 			if ( ws_list_size( &sock->output_list ) > 0 ){
+				addEventSocketWritePersist(sock);
+			}else if ( budget_used ){
+				/* The budget stopped the loop with nothing to send (bare
+				 * CRLFs): the rest is buffered here, no read event comes
+				 * for it. The write event comes once the socket is
+				 * writable - right away, unless earlier answers still fill
+				 * its send buffer - after the other connections had their
+				 * turn, and resumes reading. Not through the end of a
+				 * response: there was
+				 * none, and before a request line the keep-alive check
+				 * would close the connection. */
+				sock->read_resume = 1;
 				addEventSocketWritePersist(sock);
 			}else{
 				addEventSocketRead( sock );
@@ -2190,6 +2230,16 @@ void handleer( int a, short b, void *t ) {
 			}
 			#endif
 
+			if ( sock->read_resume == 1 ){
+				sock->read_resume = 0;
+				/* As at the end of a response: the persistent write
+				 * registration is not wanted any more, the read branch
+				 * registers what comes next */
+				delEventSocketWritePersist(sock);
+				handleer(a, EVENT_READ, t);
+				return;
+			}
+
 			status_ret = handleClientWriteData(sock);
 			switch (status_ret) {
 			case NO_MORE_DATA:
@@ -2200,23 +2250,23 @@ void handleer( int a, short b, void *t ) {
 
 				// TODO Keep Alive scheint nicht korrekt zu funktionieren
 				if (checkConnectionKeepAlive(sock) == 1) {
-					// TODO prüfen ob das noch gebraucht wird
-					if (sock->header_buffer_pos > 0) {
-						if (sock->closeSocket == 1) {
-							WebserverConnectionManagerCloseRequest(sock);
-							return;
-						} else {
-							addEventSocketRead(sock);
-							return;
-						}
-					} else {
-						if (sock->closeSocket == 1) {
-							WebserverConnectionManagerCloseRequest(sock);
-							return;
-						}
-						addEventSocketRead(sock);
+					if (sock->closeSocket == 1) {
+						WebserverConnectionManagerCloseRequest(sock);
 						return;
 					}
+					/* Requests already here - left by the request budget of
+					 * the read branch, in the header buffer or decrypted in
+					 * the SSL layer. No read event comes for them: they have
+					 * left the kernel buffer, and the client, waiting for
+					 * their answers, may send nothing more. Take them up now
+					 * as a read event would; a partial one there registers
+					 * for more input as usual. */
+					if ((sock->header_buffer_pos > 0) || (WebserverSSLPending(sock) > 0)) {
+						handleer(a, EVENT_READ, t);
+						return;
+					}
+					addEventSocketRead(sock);
+					return;
 				}
 
 				#ifdef WEBSERVER_USE_WEBSOCKETS

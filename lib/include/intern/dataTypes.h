@@ -453,6 +453,10 @@ typedef struct socket_info_s {
 	char *header_buffer;
 	unsigned int header_buffer_pos;
 	unsigned int header_buffer_size;
+	/* The request budget of a read event stopped with nothing to send: the
+	 * write event registered only to come back is to resume reading, it
+	 * finishes no response */
+	char read_resume;
 
 	list_t header_chunk_list;
 	list_t html_chunk_list;
