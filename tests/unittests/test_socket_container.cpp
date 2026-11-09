@@ -5,7 +5,9 @@
 #include <chrono>
 #include <cstring>
 #include <fcntl.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <string>
 #include <thread>
 #include <unistd.h>
 #include <vector>
@@ -15,6 +17,9 @@ extern "C" {
 #include "reverse_proxy.h"
 #include "intern/system_file_access.h"
 #include <miniz.h>
+#ifdef WEBSERVER_USE_SSL
+#include <openssl/ssl.h>
+#endif
 }
 
 /*
@@ -1205,6 +1210,112 @@ TEST_F(TlsFirstReadTest, WokenWithoutDataWaitsWithoutSslObject) {
     ASSERT_EQ(sockets_in_container(), 1) << "an SSL object was attempted";
     EXPECT_EQ(s->ssl_context, nullptr);
     EXPECT_EQ(s->last_io, io_before) << "nothing arrived, no activity";
+}
+
+/*
+ * A POST over TLS behind another request in the same burst. The first
+ * request finishes, the POST header is left in the header buffer, and the
+ * loop in handleer() reads the POST body without asking the SSL layer
+ * first. The 20000 byte budget ends that read in the middle of a record:
+ * the rest of the body is decrypted in OpenSSL, the kernel buffer is
+ * empty, and no read event ever comes for it - the POST hung until the
+ * idle timeout. Run in a process of its own: it needs a real SSL_CTX and
+ * the server set up, neither of which the other tests may see.
+ */
+namespace {
+
+int tls_kernel_bytes(int fd) {
+    int n = 0;
+    ioctl(fd, FIONREAD, &n);
+    return n;
+}
+
+/* Exit code: 0 both requests answered within the one read event,
+ * 1 POST left with its rest decrypted and no event to come, 2 setup */
+void tls_post_behind_another_request(size_t body_len) {
+    alarm(20);
+    initWebserver();
+    initSocketContainer();
+    initPostBufferBudget();
+    setConfigText("ssl_key_file", "../config_variants/LinuxWebsocketSelectSSL/server.pem");
+    setConfigText("ssl_ca_list_file", "../config_variants/LinuxWebsocketSelectSSL/server.pem");
+    setConfigText("ssl_dh_file", "../config_variants/LinuxWebsocketSelectSSL/dh2048.pem");
+    setConfigText("ssl_key_file_password", "x");
+    if (initOpenSSL() != 0) {
+        _exit(2);
+    }
+
+    int fds[2];
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, fds) != 0) {
+        _exit(2);
+    }
+    fcntl(fds[0], F_SETFL, fcntl(fds[0], F_GETFL) | O_NONBLOCK);
+    fcntl(fds[1], F_SETFL, fcntl(fds[1], F_GETFL) | O_NONBLOCK);
+    socket_info* s = WebserverMallocSocketInfo();
+    s->socket = fds[0];
+    s->client = 1;
+    s->active = 1;
+    s->use_ssl = 1;
+    s->run_ssl_accept = 1;
+    s->header = WebserverMallocHttpRequestHeader();
+    s->rx_at = s->tx_at = s->phase_at = g_loop_now;
+    addSocketContainer(s);
+
+    SSL_CTX* cctx = SSL_CTX_new(TLS_client_method());
+    SSL_CTX_set_verify(cctx, SSL_VERIFY_NONE, 0);
+    SSL* c = SSL_new(cctx);
+    SSL_set_fd(c, fds[1]);
+    bool connected = false;
+    for (int i = 0; i < 200 && !(connected && s->run_ssl_accept == 0); i++) {
+        if (!connected) {
+            int r = SSL_connect(c);
+            if (r == 1) {
+                connected = true;
+            } else {
+                int e = SSL_get_error(c, r);
+                if (e != SSL_ERROR_WANT_READ && e != SSL_ERROR_WANT_WRITE) {
+                    _exit(2);
+                }
+            }
+        }
+        if (tls_kernel_bytes(fds[0]) > 0) {
+            handleer(s->socket, EVENT_READ, s);
+        }
+    }
+    if (!connected || s->run_ssl_accept != 0) {
+        _exit(2);
+    }
+
+    std::string burst = "GET /nothing HTTP/1.1\r\nHost: t\r\n\r\n";
+    burst += "POST /x HTTP/1.1\r\nHost: t\r\n"
+             "Content-Type: application/x-www-form-urlencoded\r\n"
+             "Content-Length: " + std::to_string(body_len) + "\r\n\r\n";
+    burst += std::string(body_len, 'x');
+    for (size_t off = 0; off < burst.size(); ) {          /* 16 KB records */
+        size_t n = std::min((size_t)16384, burst.size() - off);
+        int r = SSL_write(c, burst.data() + off, (int)n);
+        if (r <= 0) {
+            _exit(2);
+        }
+        off += (size_t)r;
+    }
+
+    handleer(s->socket, EVENT_READ, s);                   /* one read event */
+
+    bool unfinished = s->header->post_buffer_pos < s->header->contentlenght;
+    if (unfinished && tls_kernel_bytes(fds[0]) == 0) {
+        _exit(1);
+    }
+    _exit(ws_list_size(&s->output_list) == 2 ? 0 : 3);
+}
+
+}  // namespace
+
+TEST(TlsPostBudgetTest, PostBehindAnotherRequestIsReadToTheEnd) {
+    for (size_t len : { (size_t)23000, (size_t)25000, (size_t)28000, (size_t)32000 }) {
+        EXPECT_EXIT(tls_post_behind_another_request(len), ::testing::ExitedWithCode(0), "")
+            << "body " << len;
+    }
 }
 #endif
 

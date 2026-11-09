@@ -595,6 +595,7 @@ static int handlePostStreamData(socket_info* sock) {
 
 	unsigned int this_read = 0;
 	int post_ret;
+	int drain_only = 0;
 
 	while (1) {
 
@@ -609,6 +610,17 @@ static int handlePostStreamData(socket_info* sock) {
 		to_read = sock->post_stream_read_buf_size;
 		if ( (uint64_t)to_read > remaining ){
 			to_read = (uint32_t)remaining;
+		}
+
+		/* Past the budget: only what TLS has decrypted already, see below */
+		if ( drain_only ){
+			int pending = WebserverSSLPending( sock );
+			if ( pending <= 0 ){
+				return 0;
+			}
+			if ( to_read > (uint32_t)pending ){
+				to_read = (uint32_t)pending;
+			}
 		}
 
 		len = WebserverRecv(sock, sock->post_stream_read_buf, to_read, 0);
@@ -640,7 +652,15 @@ static int handlePostStreamData(socket_info* sock) {
 
 		this_read += (unsigned int)len;
 		if ( this_read > POST_STREAM_MAX_READ_PER_EVENT ){
-			return 0;	/* andere Sockets drankommen lassen */
+			/* andere Sockets drankommen lassen - but not with bytes left in
+			 * the SSL layer: they have already left the kernel buffer, no
+			 * read event comes for them. The rest of the current record is
+			 * taken, nothing new from the socket. Same as at the 20000 byte
+			 * budget in handleClientHeaderData(), see there. */
+			if ( WebserverSSLPending( sock ) <= 0 ){
+				return 0;
+			}
+			drain_only = 1;
 		}
 	}
 }
@@ -668,6 +688,7 @@ static int handleClientHeaderData(socket_info* sock) {
 	unsigned int parsed = 0;
 
 	unsigned int this_post_read = 0;
+	int post_drain_only = 0;
 
 	sock->send_file_info = 0;
 
@@ -683,6 +704,16 @@ static int handleClientHeaderData(socket_info* sock) {
 			int len = 0;
 			unsigned char* p =(unsigned char*) &sock->header_buffer[sock->header_buffer_pos];
 			int read_length = buffer_length - sock->header_buffer_pos;
+			/* Past the POST budget: only what TLS has decrypted already */
+			if ( post_drain_only ){
+				int pending = WebserverSSLPending( sock );
+				if ( pending <= 0 ){
+					return 0;
+				}
+				if ( read_length > pending ){
+					read_length = pending;
+				}
+			}
 			len = WebserverRecv(sock, p ,read_length , 0);
 			#ifdef _WEBSERVER_SOCKET_DEBUG_
 				LOG(CONNECTION_LOG,NOTICE_LEVEL,sock->socket,"Client Header Recv %d",len);
@@ -731,7 +762,20 @@ static int handleClientHeaderData(socket_info* sock) {
 				// Die schleife unterbrechen damit andere Sockets dran kommen
 				this_post_read+=len;
 				if ( this_post_read > 20000 ){
-					return 0;
+					/* Not with bytes left in the SSL layer: they have left
+					 * the kernel buffer, no read event comes for them. A
+					 * POST alone on its connection never got here with
+					 * them - handleer() asks WebserverSSLPending() after the
+					 * first return 0, and the next call reads only what is
+					 * pending. A POST behind another request in the same
+					 * TLS burst did: the loop in handleer() sees the header
+					 * buffer filled and does not ask, this read ran in the
+					 * middle of a record into the budget, and the rest of
+					 * the body waited for the idle timeout. */
+					if ( WebserverSSLPending( sock ) <= 0 ){
+						return 0;
+					}
+					post_drain_only = 1;
 				}
 
 				if ( len == 0 ){
