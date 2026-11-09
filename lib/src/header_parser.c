@@ -207,13 +207,35 @@ static int header_attr_compare( char* text, unsigned int text_length, char* line
 		return 0;
 	}
 
-	for( i = 0; i < line_length && text[i] ; i++){
+	/* The first text_length characters: matching "Name:" of a text
+	 * "Name: " must not ask for the space as well */
+	for( i = 0; i < text_length && text[i] ; i++){
 		if ( tolower(text[i]) != tolower(line[i]) ){
 			return 0;
 		}
 	}
-	
+
 	return 1;
+}
+
+/* Where the value of a header line starts: after "Name:" (name_len) and
+ * optional whitespace - none, one or more spaces or tabs (RFC 9112 5.1,
+ * RFC 9110 5.6.3). Header fields used to be matched with exactly one
+ * space after the colon, "Host:x" was not recognised. */
+static unsigned int header_value_start( const char* line, unsigned int length, unsigned int name_len ){
+	unsigned int p = name_len;
+	while ( ( p < length ) && ( ( line[p] == ' ' ) || ( line[p] == '\t' ) ) ){
+		p++;
+	}
+	return p;
+}
+
+/* Where it ends: before trailing whitespace (RFC 9110 5.5) */
+static unsigned int header_value_end( const char* line, unsigned int start, unsigned int length ){
+	while ( ( length > start ) && ( ( line[length - 1] == ' ' ) || ( line[length - 1] == '\t' ) ) ){
+		length--;
+	}
+	return length;
 }
 
 
@@ -488,13 +510,17 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 }
 
 
-#define CHECK_HEADER_LINE(a,b)  h_len = sizeof(a) - 1; \
+/* a is "Name: " - matched as "Name:", the value taken without the
+ * whitespace around it */
+#define CHECK_HEADER_LINE(a,b)  h_len = sizeof(a) - 2; \
 if (header_attr_compare( a, h_len, line, length)) \
 { \
-	len = length - h_len; \
+	h_len = header_value_start( line, length, h_len ); \
+	len = header_value_end( line, h_len, length ) - h_len; \
 	if ( header->b != 0) WebserverFree(header->b); \
     header->b = (char*)WebserverMalloc( len + 1 ); \
     Webserver_strncpy((char*)header->b,len+1,(char*)&line[h_len],len); \
+    header->b[len] = '\0'; \
     return 0; \
 }
 
@@ -519,7 +545,8 @@ static int matchHeaderFields(char *line, unsigned int length, HttpRequestHeader 
 	case 'c':
 		if (!strncasecmp( line, "Cache-Control: ", 14)) return 0;
 
-		if (!strncasecmp( line, "Cookie: ", 8)) {
+		/* parseCookies() skips "Cookie:" and the whitespace after it */
+		if ( header_attr_compare( "Cookie:", sizeof("Cookie:") - 1, line, length ) ) {
 			parseCookies(line, length, header);
 			return 0;
 		}
@@ -564,8 +591,9 @@ static int matchHeaderFields(char *line, unsigned int length, HttpRequestHeader 
 			return 0;
 		}
 
-		if ( header_attr_compare("Content-Type: ",sizeof("Content-Type: ") - 1, line , length ) ){
-			if(stringfindCaseInsensitive(&line[14],"multipart/form-data") > 0){
+		if ( header_attr_compare("Content-Type:",sizeof("Content-Type:") - 1, line , length ) ){
+			unsigned int ct = header_value_start( line, length, sizeof("Content-Type:") - 1 );
+			if(stringfindCaseInsensitive(&line[ct],"multipart/form-data") > 0){
 				int i2=stringfind(line,"boundary=");
 				header->contenttype=MULTIPART_FORM_DATA;
 
@@ -591,6 +619,8 @@ static int matchHeaderFields(char *line, unsigned int length, HttpRequestHeader 
 						break;
 					}
 				}
+				/* without trailing whitespace, it is not part of it */
+				i = header_value_end( line, i2, i );
 
 				header->boundary=(char*)WebserverMalloc( ( i - i2 )  + 3 ); /* + 2 für -- , +1 \0 */
 				memcpy(header->boundary,"--",2);		/* nach http://www.w3.org/Protocols/rfc1341/7_2_Multipart.html */
@@ -602,7 +632,7 @@ static int matchHeaderFields(char *line, unsigned int length, HttpRequestHeader 
 				return 0;
 			}
 
-			if(!strncasecmp(&line[14],"application/x-www-form-urlencoded",sizeof("application/x-www-form-urlencoded") - 1)){
+			if(!strncasecmp(&line[ct],"application/x-www-form-urlencoded",sizeof("application/x-www-form-urlencoded") - 1)){
 				header->contenttype=APPLICATION_X_WWW_FORM_URLENCODED;
 				return 0;
 			}
@@ -646,9 +676,10 @@ static int matchHeaderFields(char *line, unsigned int length, HttpRequestHeader 
 
 	/*   ---------------------- h block ----------------------  */
 	case 'h':
-		h_len = sizeof("Host: ") - 1;
-		if (!strncasecmp( line,"Host: ",h_len)){
-			len = length - h_len;
+		/* "Host:" and optional whitespace, see header_value_start() */
+		if ( header_attr_compare( "Host:", sizeof("Host:") - 1, line, length ) ){
+			h_len = header_value_start( line, length, sizeof("Host:") - 1 );
+			len = header_value_end( line, h_len, length ) - h_len;
 			if ( header->Host != 0){
 				WebserverFree(header->Host);
 			}
@@ -659,8 +690,10 @@ static int matchHeaderFields(char *line, unsigned int length, HttpRequestHeader 
 
 			header->Host = (char*)WebserverMalloc( len + 1 );
 			Webserver_strncpy( header->Host,len+1, &line[h_len],len);
+			header->Host[len] = '\0';
 
-			char* doppelpunkt = strstr(line + h_len, ":");
+			/* The port separator within the value, not beyond its end */
+			char* doppelpunkt = (char*)memchr(line + h_len, ':', len);
 			if( doppelpunkt ) {
 
 				len = doppelpunkt - ( line + h_len );
@@ -671,6 +704,7 @@ static int matchHeaderFields(char *line, unsigned int length, HttpRequestHeader 
 				header->HostName = (char*)WebserverMalloc( len + 1 );
 				Webserver_strncpy( header->HostName,len+1, &line[h_len],len);
 			}
+			header->HostName[len] = '\0';
 
 			return 0;
 		}
@@ -703,9 +737,9 @@ static int matchHeaderFields(char *line, unsigned int length, HttpRequestHeader 
 		CHECK_HEADER_LINE("Sec-WebSocket-Key: ",SecWebSocketKey)
 		CHECK_HEADER_LINE("Sec-WebSocket-Protocol: ",SecWebSocketProtocol)
 
-		h_len = sizeof("Sec-WebSocket-Version: ") - 1;
-		if (!strncasecmp( line,"Sec-WebSocket-Version: ",h_len))
+		if ( header_attr_compare( "Sec-WebSocket-Version:", sizeof("Sec-WebSocket-Version:") - 1, line, length ) )
 		{
+			h_len = header_value_start( line, length, sizeof("Sec-WebSocket-Version:") - 1 );
 			sscanf(&line[h_len],"%d",&header->SecWebSocketVersion);
 			return 0;
 		}

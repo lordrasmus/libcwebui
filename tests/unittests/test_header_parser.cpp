@@ -264,6 +264,56 @@ TEST_F(HeaderParserTest, FirstFramingErrorDecides) {
     EXPECT_EQ(header->framing_status, 400);
 }
 
+/* Optional whitespace after the colon (RFC 9112 5.1, RFC 9110 5.6.3):
+ * none, tabs, several spaces - header fields used to be matched with
+ * exactly one space and "Host:x" was simply not seen. Trailing whitespace
+ * is not part of the value (RFC 9110 5.5). */
+TEST_F(HeaderParserTest, HeaderValuesWithAnyWhitespace) {
+    parseHeaderLine("GET / HTTP/1.1");
+    parseHeaderLine("Host:example:8080");
+    parseHeaderLine("Origin:\thttp://origin.test ");
+    parseHeaderLine("Upgrade:   websocket\t");
+    parseHeaderLine("User-Agent:agent");
+    parseHeaderLine("Sec-WebSocket-Version:13");
+    ASSERT_NE(header->Host, nullptr);
+    EXPECT_STREQ(header->Host, "example:8080");
+    ASSERT_NE(header->HostName, nullptr);
+    EXPECT_STREQ(header->HostName, "example");
+    ASSERT_NE(header->Origin, nullptr);
+    EXPECT_STREQ(header->Origin, "http://origin.test");
+    ASSERT_NE(header->Upgrade, nullptr);
+    EXPECT_STREQ(header->Upgrade, "websocket");
+    ASSERT_NE(header->UserAgent, nullptr);
+    EXPECT_STREQ(header->UserAgent, "agent");
+    EXPECT_EQ(header->SecWebSocketVersion, 13);
+}
+
+TEST_F(HeaderParserTest, ContentTypeWithAnyWhitespace) {
+    parseHeaderLine("POST / HTTP/1.1");
+    parseHeaderLine("Content-Type:multipart/form-data; boundary=xyz ");
+    EXPECT_EQ(header->contenttype, MULTIPART_FORM_DATA);
+    ASSERT_NE(header->boundary, nullptr);
+    EXPECT_STREQ(header->boundary, "--xyz");
+    WebserverResetHttpRequestHeader(header);
+    parseHeaderLine("POST / HTTP/1.1");
+    parseHeaderLine("Content-Type:\tapplication/x-www-form-urlencoded");
+    EXPECT_EQ(header->contenttype, APPLICATION_X_WWW_FORM_URLENCODED);
+}
+
+/* The usual form with one space is unchanged */
+TEST_F(HeaderParserTest, HeaderValuesWithOneSpaceUnchanged) {
+    parseHeaderLine("GET / HTTP/1.1");
+    parseHeaderLine("Host: example");
+    parseHeaderLine("Accept: text/html");
+    parseHeaderLine("Accept-Encoding: gzip");
+    ASSERT_NE(header->Host, nullptr);
+    EXPECT_STREQ(header->Host, "example");
+    ASSERT_NE(header->Accept, nullptr);
+    EXPECT_STREQ(header->Accept, "text/html");
+    ASSERT_NE(header->Accept_Encoding, nullptr);
+    EXPECT_STREQ(header->Accept_Encoding, "gzip");
+}
+
 /* Ordinary headers are not affected */
 TEST_F(HeaderParserTest, OrdinaryHeadersStillAccepted) {
     parseHeaderLine("POST / HTTP/1.1");

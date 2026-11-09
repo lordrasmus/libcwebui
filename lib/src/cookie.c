@@ -91,22 +91,34 @@ void parseCookies(char *line,int length,HttpRequestHeader *header) {
 
 	enum CookieParseStates state = PARSE_NAME;
 
-	char* name_start = line + 8;
-	char* name_end = line + 8;
+	/* The value starts after "Cookie:" and optional whitespace, and ends
+	 * before trailing whitespace (RFC 9110 5.5, 5.6.3). It used to be taken
+	 * 8 characters in, after "Cookie: " with exactly one space. */
+	int skip = sizeof("Cookie:") - 1;
+	while ( ( skip < length ) && ( ( line[skip] == ' ' ) || ( line[skip] == '\t' ) ) ){
+		skip++;
+	}
+	while ( ( length > skip ) && ( ( line[length - 1] == ' ' ) || ( line[length - 1] == '\t' ) ) ){
+		length--;
+	}
+
+	char* name_start = line + skip;
+	char* name_end = line + skip;
 
 	char* value_start = 0;
 	char* value_end = 0;
 
 	char bak1,bak2;
 
-	line += 8;
+	line += skip;
+	length -= skip;
 
 #ifdef _WEBSERVER_DEBUG_
 	WebServerPrintf("parseCookies : %s\n", line);
 #endif
 
 
-	for (i = 0; i < length - 8; i++) {
+	for (i = 0; i < length; i++) {
 
 		if ( ( state == PARSE_NAME ) && ( line[i] == ';' ) ){
 			name_end = &line[i];
@@ -123,7 +135,7 @@ void parseCookies(char *line,int length,HttpRequestHeader *header) {
 
 			/* Skip semicolon and any whitespace */
 			i++;
-			while ( i < length - 8 && line[i] == ' ' ) {
+			while ( i < length && line[i] == ' ' ) {
 				i++;
 			}
 
@@ -159,7 +171,7 @@ void parseCookies(char *line,int length,HttpRequestHeader *header) {
 
 			/* Skip semicolon and any whitespace */
 			i++;
-			while ( i < length - 8 && line[i] == ' ' ) {
+			while ( i < length && line[i] == ' ' ) {
 				i++;
 			}
 

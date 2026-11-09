@@ -159,3 +159,21 @@ TEST_F(CookieParserTest, LongValue) {
     EXPECT_EQ(checkCookie((char*)"token", value, header), 1);
     EXPECT_STREQ(value, "abcdefghijklmnopqrstuvwxyz0123456789");
 }
+
+/* Optional whitespace after the colon (RFC 9112 5.1): none, a tab, more
+ * than one space - the value used to be taken 8 characters in. Trailing
+ * whitespace is not part of it. */
+TEST_F(CookieParserTest, AnyWhitespaceAfterTheColon) {
+    const char* lines[] = { "Cookie:session=abc123", "Cookie:\tsession=abc123",
+                            "Cookie:   session=abc123", "Cookie: session=abc123  " };
+    for (const char* l : lines) {
+        WebserverFreeHttpRequestHeader(header);
+        header = WebserverMallocHttpRequestHeader();
+        char buf[64];
+        snprintf(buf, sizeof(buf), "%s", l);
+        parseCookies(buf, strlen(buf), header);
+        memset(value, 0, sizeof(value));
+        EXPECT_EQ(checkCookie((char*)"session", value, header), 1) << l;
+        EXPECT_STREQ(value, "abc123") << l;
+    }
+}
