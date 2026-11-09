@@ -1378,6 +1378,220 @@ TEST_F(WebsocketFrameTest, SmallBinaryFrameStillGoesThrough) {
     EXPECT_GE(recFrame(ws), 0);
     EXPECT_EQ(ws->closeSocket, 0);
 }
+
+/*
+ * The streaming API (RegisterWebsocketStreamHandler): payload handed to the
+ * handler in pieces as it arrives, over as many reads as it takes.
+ */
+struct StreamRecord {
+    int starts = 0;
+    std::string data;
+    std::vector<int> ends;          /* success of every on_end */
+};
+static StreamRecord g_stream;
+
+static void stream_start(websocket_stream_context*) { g_stream.starts++; }
+static void stream_chunk(websocket_stream_context*, const unsigned char* d, uint32_t len) {
+    g_stream.data.append((const char*)d, len);
+}
+static void stream_end(websocket_stream_context*, int success) { g_stream.ends.push_back(success); }
+
+class WebsocketStreamTest : public WebsocketFrameTest {
+protected:
+    void SetUp() override {
+        WebsocketFrameTest::SetUp();
+        if (findWebsocketStreamHandler("StreamSocket") == nullptr) {
+            RegisterWebsocketStreamHandler("StreamSocket", stream_start, stream_chunk, stream_end);
+        }
+        WebserverFree(ws->header->url);
+        ws->header->url = (char*)WebserverMalloc(sizeof("StreamSocket"));
+        strcpy(ws->header->url, "StreamSocket");
+        g_stream = StreamRecord();
+    }
+
+    /* Header of a masked frame of any length */
+    static std::vector<unsigned char> header(unsigned char first, uint64_t len,
+                                             const unsigned char mask[4]) {
+        std::vector<unsigned char> h = { first };
+        if (len < 126) {
+            h.push_back((unsigned char)(0x80 | len));
+        } else if (len <= 0xFFFF) {
+            h.push_back(0x80 | 126);
+            h.push_back((unsigned char)(len >> 8));
+            h.push_back((unsigned char)len);
+        } else {
+            h.push_back(0x80 | 127);
+            for (int i = 0; i < 8; i++) {
+                h.push_back((unsigned char)(len >> (56 - 8 * i)));
+            }
+        }
+        h.insert(h.end(), mask, mask + 4);
+        return h;
+    }
+
+    static std::vector<unsigned char> masked(const std::string& payload, const unsigned char mask[4]) {
+        std::vector<unsigned char> out(payload.begin(), payload.end());
+        for (size_t i = 0; i < out.size(); i++) {
+            out[i] ^= mask[i % 4];
+        }
+        return out;
+    }
+
+    static std::string pattern(size_t len) {
+        std::string s(len, '\0');
+        for (size_t i = 0; i < len; i++) {
+            s[i] = (char)('a' + (i * 7) % 26);
+        }
+        return s;
+    }
+
+    void send_bytes(const unsigned char* p, size_t len) {
+        ASSERT_EQ(send(peer, p, len, 0), (ssize_t)len);
+    }
+};
+
+/* Fragments that come in reads of their own: every later one used to be
+ * handed to the reader for the rest of a single frame, which had nothing
+ * left to read */
+TEST_F(WebsocketStreamTest, FragmentsInSeparateReadsAllArrive) {
+    std::vector<unsigned char> f;
+    add_frame(f, 0x02, "ab", 2);                    /* binary, not final */
+    send_frames(f);
+    EXPECT_EQ(receive_all(), 0);
+
+    f.clear();
+    add_frame(f, 0x00, "cd", 2);                    /* continuation */
+    send_frames(f);
+    EXPECT_EQ(receive_all(), 0);
+
+    f.clear();
+    add_frame(f, 0x80, "ef", 2);                    /* continuation, final */
+    send_frames(f);
+    EXPECT_EQ(receive_all(), 0);
+
+    EXPECT_EQ(g_stream.data, "abcdef");
+    ASSERT_EQ(g_stream.ends.size(), 1u);
+    EXPECT_EQ(g_stream.ends[0], 1);
+    EXPECT_EQ(ws->websocket_streaming_active, 0);
+    EXPECT_EQ(ws->closeSocket, 0);
+}
+
+/* A large frame in several reads, with a mask that changes the bytes, and
+ * more than one chunk of the reader in a read */
+TEST_F(WebsocketStreamTest, LargeFrameOverManyReadsArrivesUnmasked) {
+    const unsigned char mask[4] = { 0x12, 0x34, 0x56, 0x78 };
+    std::string payload = pattern(300000);
+    std::vector<unsigned char> h = header(0x82, payload.size(), mask);
+    std::vector<unsigned char> body = masked(payload, mask);
+
+    send_bytes(h.data(), h.size());
+    size_t pos = 0;
+    for (size_t piece : { (size_t)1000, (size_t)3, (size_t)150000 }) {
+        send_bytes(&body[pos], piece);
+        pos += piece;
+        EXPECT_EQ(receive_all(), 0);
+        EXPECT_EQ(g_stream.data.size(), pos);
+    }
+    send_bytes(&body[pos], body.size() - pos);
+    EXPECT_EQ(receive_all(), 0);
+
+    EXPECT_TRUE(g_stream.data == payload) << "bytes lost or unmasked wrongly";
+    ASSERT_EQ(g_stream.ends.size(), 1u);
+    EXPECT_EQ(g_stream.ends[0], 1);
+    EXPECT_EQ(ws->closeSocket, 0);
+}
+
+/* A read event with nothing to read in the middle of a frame - what
+ * WebserverRecv() reports for a TLS record not complete yet - is no
+ * reason to give up */
+TEST_F(WebsocketStreamTest, ReadWithNothingNewKeepsTheStream) {
+    const unsigned char mask[4] = { 1, 2, 3, 4 };
+    std::string payload = pattern(5000);
+    std::vector<unsigned char> h = header(0x82, payload.size(), mask);
+    std::vector<unsigned char> body = masked(payload, mask);
+
+    send_bytes(h.data(), h.size());
+    send_bytes(body.data(), 100);
+    EXPECT_EQ(receive_all(), 0);
+
+    EXPECT_EQ(recFrame(ws), 0) << "nothing new on the socket";
+    EXPECT_EQ(ws->websocket_streaming_active, 1);
+    EXPECT_TRUE(g_stream.ends.empty()) << "stream ended without its end";
+
+    send_bytes(&body[100], body.size() - 100);
+    EXPECT_EQ(receive_all(), 0);
+    EXPECT_TRUE(g_stream.data == payload);
+    ASSERT_EQ(g_stream.ends.size(), 1u);
+    EXPECT_EQ(g_stream.ends[0], 1);
+    EXPECT_EQ(ws->closeSocket, 0);
+}
+
+/* The client goes away in the middle of a frame: the stream ends as failed
+ * and the connection is closed. The end of the connection used to be
+ * looked up in errno - still EAGAIN from the read before - and the closed
+ * connection was kept, its read event coming back at once. */
+TEST_F(WebsocketStreamTest, ClientGoneInTheMiddleEndsTheStreamAndTheConnection) {
+    const unsigned char mask[4] = { 1, 2, 3, 4 };
+    std::string payload = pattern(5000);
+    std::vector<unsigned char> h = header(0x82, payload.size(), mask);
+    std::vector<unsigned char> body = masked(payload, mask);
+
+    send_bytes(h.data(), h.size());
+    send_bytes(body.data(), 100);
+    EXPECT_EQ(receive_all(), 0);
+    ASSERT_EQ(ws->websocket_streaming_active, 1);
+
+    close(peer);
+    peer = -1;
+    EXPECT_EQ(recFrame(ws), -1);
+    ASSERT_EQ(g_stream.ends.size(), 1u);
+    EXPECT_EQ(g_stream.ends[0], 0);
+    EXPECT_EQ(ws->websocket_streaming_active, 0);
+    EXPECT_EQ(ws->websocket_stream_ctx, nullptr);
+}
+
+/* An empty frame that ends the read: it stayed active with nothing left to
+ * read, and nothing after it was parsed any more */
+TEST_F(WebsocketStreamTest, EmptyFrameEndsAtOnceAndTheNextOneArrives) {
+    std::vector<unsigned char> f;
+    add_frame(f, 0x81, "", 0);                      /* text, final, empty */
+    send_frames(f);
+    EXPECT_EQ(receive_all(), 0);
+    ASSERT_EQ(g_stream.ends.size(), 1u) << "empty frame not ended";
+    EXPECT_EQ(g_stream.ends[0], 1);
+    EXPECT_EQ(ws->websocket_streaming_active, 0);
+
+    f.clear();
+    add_frame(f, 0x81, "xy", 2);
+    send_frames(f);
+    EXPECT_EQ(receive_all(), 0);
+    EXPECT_EQ(g_stream.data, "xy");
+    EXPECT_EQ(g_stream.ends.size(), 2u);
+    EXPECT_EQ(ws->closeSocket, 0);
+}
+
+/* The rest of a frame and the next frame in one read: both are taken in
+ * the same read event. Waiting for another one would stall under TLS,
+ * where the next frame may already sit decrypted in the SSL buffer. */
+TEST_F(WebsocketStreamTest, NextFrameAfterTheRestIsTakenInTheSameRead) {
+    const unsigned char mask[4] = { 9, 8, 7, 6 };
+    std::string payload = pattern(2000);
+    std::vector<unsigned char> h = header(0x82, payload.size(), mask);
+    std::vector<unsigned char> body = masked(payload, mask);
+
+    send_bytes(h.data(), h.size());
+    send_bytes(body.data(), 10);
+    EXPECT_EQ(receive_all(), 0);
+
+    std::vector<unsigned char> rest(body.begin() + 10, body.end());
+    add_frame(rest, 0x81, "next", 4);
+    send_frames(rest);
+    EXPECT_EQ(recFrame(ws), 0);                     /* one read event */
+
+    EXPECT_TRUE(g_stream.data == payload + "next");
+    EXPECT_EQ(g_stream.ends.size(), 2u);
+    EXPECT_EQ(ws->closeSocket, 0);
+}
 #endif
 
 /*

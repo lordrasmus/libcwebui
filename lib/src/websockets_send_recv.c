@@ -198,9 +198,17 @@ static int recFrameV8(socket_info *sock) {
 	websocket_frame wsf;
 	unsigned char *tmp;
 
-	/* Check if we're continuing an active stream */
-	if (sock->websocket_streaming_active) {
-		return continueWebsocketStream(sock);
+	/* The rest of a single frame being streamed comes straight from the
+	 * socket. A fragmented stream does not: its continuation frames have
+	 * headers of their own and go through the parser below - handing them
+	 * to continueWebsocketStream(), with nothing left of a frame to read,
+	 * ended the stream as soon as a fragment came in a read of its own. */
+	if (sock->websocket_streaming_active && !sock->websocket_stream_fragmented) {
+		ret = continueWebsocketStream(sock);
+		if (ret != 1) {
+			return ret;
+		}
+		/* Frame complete: whatever follows is parsed as usual */
 	}
 
 	memset( &wsf, 0 , sizeof( websocket_frame ) );
@@ -338,17 +346,16 @@ static int recFrameV8(socket_info *sock) {
 						goto close_socket_error;
 					}
 
-					/* Process any payload data already in buffer */
-					if (total_bytes_after_header > 0) {
-						uint32_t payload_in_buffer = total_bytes_after_header;
+					/* The payload already in the buffer, no more: what
+					 * follows belongs to the next frame */
+					uint32_t payload_in_buffer = total_bytes_after_header;
+					if (payload_in_buffer > wsf.real_length) {
+						payload_in_buffer = (uint32_t)wsf.real_length;
+					}
+
+					if (payload_in_buffer > 0) {
 						unsigned char* payload_start = sock->websocket_buffer + header_length;
 
-						/* IMPORTANT: Cap at actual frame length to avoid consuming next frame's data */
-						if (payload_in_buffer > wsf.real_length) {
-							payload_in_buffer = wsf.real_length;
-						}
-
-						/* Unmask the initial payload */
 						if (wsf.mask_bit == 1) {
 							for (uint32_t j = 0; j < payload_in_buffer; j++) {
 								payload_start[j] ^= wsf.mask[j % 4];
@@ -356,45 +363,63 @@ static int recFrameV8(socket_info *sock) {
 							sock->websocket_stream_mask_offset = payload_in_buffer % 4;
 						}
 
-						/* Pass to handler */
 						stream_handler->on_chunk(sock->websocket_stream_ctx, payload_start, payload_in_buffer);
 						sock->websocket_stream_ctx->received_length += payload_in_buffer;
 						sock->websocket_stream_remaining -= payload_in_buffer;
-
-						/* Check if complete or aborted */
-						if (sock->websocket_stream_remaining == 0 || sock->websocket_stream_ctx->aborted) {
-							int was_aborted = sock->websocket_stream_ctx->aborted;
-							uint64_t remaining_at_abort = sock->websocket_stream_remaining;
-
-							stream_handler->on_end(sock->websocket_stream_ctx, was_aborted ? 0 : 1);
-							freeWebsocketStreamContext(sock->websocket_stream_ctx);
-							sock->websocket_streaming_active = 0;
-							sock->websocket_stream_ctx = NULL;
-							sock->websocket_stream_handler = NULL;
-
-							/* If aborted with remaining data, close socket to prevent desync */
-							if (was_aborted && remaining_at_abort > 0) {
-								LOG(WEBSOCKET_LOG, WARNING_LEVEL, sock->socket,
-									"Closing socket due to stream abort with %llu bytes remaining",
-									(unsigned long long)remaining_at_abort);
-								goto close_socket_error;
-							}
-
-							/* Preserve bytes from next frame(s) if coalesced read occurred */
-							if (sock->websocket_buffer_offset > frame_end_pos) {
-								uint32_t remaining = sock->websocket_buffer_offset - frame_end_pos;
-								memmove(sock->websocket_buffer, sock->websocket_buffer + frame_end_pos, remaining);
-								sock->websocket_buffer_offset = remaining;
-								/* Continue parsing remaining data */
-								offset = 0;
-								continue;
-							}
-						}
 					}
 
-					/* Clear buffer, return to epoll for more data */
+					/* Complete or aborted - an empty frame is complete
+					 * right away. It used to stay active with nothing left
+					 * to read when it ended the buffer, and the next read
+					 * asked for 0 bytes. */
+					if (sock->websocket_stream_remaining == 0 || sock->websocket_stream_ctx->aborted) {
+						int was_aborted = sock->websocket_stream_ctx->aborted;
+						uint64_t remaining_at_abort = sock->websocket_stream_remaining;
+
+						stream_handler->on_end(sock->websocket_stream_ctx, was_aborted ? 0 : 1);
+						freeWebsocketStreamContext(sock->websocket_stream_ctx);
+						sock->websocket_streaming_active = 0;
+						sock->websocket_stream_remaining = 0;
+						sock->websocket_stream_ctx = NULL;
+						sock->websocket_stream_handler = NULL;
+
+						/* If aborted with remaining data, close socket to prevent desync */
+						if (was_aborted && remaining_at_abort > 0) {
+							LOG(WEBSOCKET_LOG, WARNING_LEVEL, sock->socket,
+								"Closing socket due to stream abort with %llu bytes remaining",
+								(unsigned long long)remaining_at_abort);
+							goto close_socket_error;
+						}
+
+						/* Preserve bytes from next frame(s) if coalesced read occurred */
+						if (sock->websocket_buffer_offset > frame_end_pos) {
+							uint32_t remaining = sock->websocket_buffer_offset - frame_end_pos;
+							memmove(sock->websocket_buffer, sock->websocket_buffer + frame_end_pos, remaining);
+							sock->websocket_buffer_offset = remaining;
+							/* Continue parsing remaining data */
+							offset = 0;
+							continue;
+						}
+
+						/* Buffer used up: read on */
+						sock->websocket_buffer_offset = 0;
+						offset = 0;
+						break;
+					}
+
+					/* The rest of the payload straight from the socket, as
+					 * far as it has arrived. Not waiting for the next read
+					 * event: with TLS what has arrived may already be
+					 * decrypted and buffered, and no event would come for
+					 * it. */
 					sock->websocket_buffer_offset = 0;
-					return 0;
+					ret = continueWebsocketStream(sock);
+					if (ret != 1) {
+						return ret;
+					}
+					/* Frame complete: whatever follows as usual */
+					offset = 0;
+					break;
 				}
 			}
 

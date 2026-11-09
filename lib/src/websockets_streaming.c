@@ -278,8 +278,11 @@ int startWebsocketStream(socket_info *sock, uint64_t frame_length,
 }
 
 /*
- * Continue receiving stream data
- * Called from epoll event handler when streaming_active is set
+ * Continue receiving the payload of a single (not fragmented) frame being
+ * streamed. Called from recFrameV8.
+ * Returns 1 when the frame is complete (whatever follows on the socket is
+ * the next frame), 0 when the rest has not arrived yet, -1 when the
+ * connection is to be closed.
  * Internal
  */
 int continueWebsocketStream(socket_info *sock) {
@@ -302,84 +305,87 @@ int continueWebsocketStream(socket_info *sock) {
         return -1;
     }
 
-    /* Calculate how much to read */
-    uint32_t to_read = sock->websocket_stream_remaining;
-    if (to_read > WEBSOCKET_STREAM_CHUNK_SIZE) {
-        to_read = WEBSOCKET_STREAM_CHUNK_SIZE;
-    }
-
-    /* Read what's available (non-blocking) */
-    ssize_t ret = WebserverRecv(sock, chunk_buffer, to_read, 0);
-
-    if (ret < 0) {
-        /* EAGAIN/EWOULDBLOCK - no data available, return to epoll */
-        #ifdef _WIN32
-        if (WSAGetLastError() == WSAEWOULDBLOCK) return 0;
-        #else
-        if (errno == EAGAIN || errno == EWOULDBLOCK) return 0;
-        #endif
-
-        /* Real error */
-        LOG(WEBSOCKET_LOG, ERROR_LEVEL, sock->socket, "continueWebsocketStream: recv error: %s", strerror(errno));
-        handler->on_end(ctx, 0);
-        freeWebsocketStreamContext(ctx);
-        cleanupSocketStreamState(sock);
-        return -1;
-    }
-
-    if (ret == 0) {
-        /* Connection closed */
-        LOG(WEBSOCKET_LOG, WARNING_LEVEL, sock->socket, "%s", "continueWebsocketStream: connection closed during stream");
-        handler->on_end(ctx, 0);
-        freeWebsocketStreamContext(ctx);
-        cleanupSocketStreamState(sock);
-        return -1;
-    }
-
-    /* Unmask data */
-    for (ssize_t i = 0; i < ret; i++) {
-        chunk_buffer[i] ^= sock->websocket_stream_mask[
-            (sock->websocket_stream_mask_offset + i) % 4
-        ];
-    }
-    sock->websocket_stream_mask_offset =
-        (sock->websocket_stream_mask_offset + ret) % 4;
-
-    /* Pass to handler */
-    handler->on_chunk(ctx, chunk_buffer, (uint32_t)ret);
-
-    ctx->received_length += ret;
-    sock->websocket_stream_remaining -= ret;
-
-    /* Stream complete? */
-    if (sock->websocket_stream_remaining == 0 || ctx->aborted) {
-        int was_aborted = ctx->aborted;
-        uint64_t remaining_at_abort = sock->websocket_stream_remaining;
-
-#ifdef _WEBSERVER_WEBSOCKET_STREAMING_DEBUG_
-        if (was_aborted) {
-            LOG(WEBSOCKET_LOG, INFO_LEVEL, sock->socket, "Stream aborted by handler for url '%s'", ctx->url);
-        } else {
-            LOG(WEBSOCKET_LOG, DEBUG_LEVEL, sock->socket, "Stream complete for url '%s', received %llu bytes",
-                ctx->url, (unsigned long long)ctx->received_length);
+    /* Everything that has arrived, up to the end of the frame. Reading only
+     * one chunk per read event left the rest of a TLS record decrypted in
+     * the SSL buffer, where no event announces it. */
+    while (sock->websocket_stream_remaining > 0 && !ctx->aborted) {
+        uint32_t to_read = WEBSOCKET_STREAM_CHUNK_SIZE;
+        if (sock->websocket_stream_remaining < to_read) {
+            to_read = (uint32_t)sock->websocket_stream_remaining;
         }
-#endif
-        handler->on_end(ctx, was_aborted ? 0 : 1);
-        freeWebsocketStreamContext(ctx);
-        cleanupSocketStreamState(sock);
 
-        /* If aborted with remaining data, we must close the socket.
-         * Otherwise the remaining payload bytes would be interpreted as new frames. */
-        if (was_aborted && remaining_at_abort > 0) {
-            LOG(WEBSOCKET_LOG, WARNING_LEVEL, sock->socket,
-                "Closing socket due to stream abort with %llu bytes remaining",
-                (unsigned long long)remaining_at_abort);
-            sock->closeSocket = 1;
+        /* WebserverRecv() returns a byte count or one of its status codes,
+         * errno is not part of it. CLIENT_NO_MORE_DATA (0) used to be taken
+         * for the end of the connection - with TLS a record split over two
+         * TCP segments is enough for that - and a negative status was
+         * looked up in errno, which recv() leaves alone at the end of the
+         * connection: still EAGAIN from an earlier read, the closed
+         * connection was kept and its read event came back at once,
+         * forever. */
+        int ret = WebserverRecv(sock, chunk_buffer, (int)to_read, 0);
+
+        if (ret == CLIENT_NO_MORE_DATA) {
+            return 0;   /* the rest comes with a later read event */
+        }
+
+        if (ret < 0) {
+            if (ret == CLIENT_DISCONNECTED) {
+                LOG(WEBSOCKET_LOG, WARNING_LEVEL, sock->socket,
+                    "Connection closed during stream, %llu bytes missing",
+                    (unsigned long long)sock->websocket_stream_remaining);
+            } else {
+                LOG(WEBSOCKET_LOG, ERROR_LEVEL, sock->socket,
+                    "Receive error during stream, %llu bytes missing",
+                    (unsigned long long)sock->websocket_stream_remaining);
+            }
+            handler->on_end(ctx, 0);
+            freeWebsocketStreamContext(ctx);
+            cleanupSocketStreamState(sock);
             return -1;
         }
+
+        /* Unmask data */
+        for (int i = 0; i < ret; i++) {
+            chunk_buffer[i] ^= sock->websocket_stream_mask[
+                (sock->websocket_stream_mask_offset + i) % 4
+            ];
+        }
+        sock->websocket_stream_mask_offset =
+            (sock->websocket_stream_mask_offset + (uint32_t)ret) % 4;
+
+        handler->on_chunk(ctx, chunk_buffer, (uint32_t)ret);
+
+        ctx->received_length += (uint64_t)ret;
+        sock->websocket_stream_remaining -= (uint64_t)ret;
     }
 
-    return 0;
+    /* Complete or aborted */
+    int was_aborted = ctx->aborted;
+    uint64_t remaining_at_abort = sock->websocket_stream_remaining;
+
+#ifdef _WEBSERVER_WEBSOCKET_STREAMING_DEBUG_
+    if (was_aborted) {
+        LOG(WEBSOCKET_LOG, INFO_LEVEL, sock->socket, "Stream aborted by handler for url '%s'", ctx->url);
+    } else {
+        LOG(WEBSOCKET_LOG, DEBUG_LEVEL, sock->socket, "Stream complete for url '%s', received %llu bytes",
+            ctx->url, (unsigned long long)ctx->received_length);
+    }
+#endif
+    handler->on_end(ctx, was_aborted ? 0 : 1);
+    freeWebsocketStreamContext(ctx);
+    cleanupSocketStreamState(sock);
+
+    /* If aborted with remaining data, we must close the socket.
+     * Otherwise the remaining payload bytes would be interpreted as new frames. */
+    if (was_aborted && remaining_at_abort > 0) {
+        LOG(WEBSOCKET_LOG, WARNING_LEVEL, sock->socket,
+            "Closing socket due to stream abort with %llu bytes remaining",
+            (unsigned long long)remaining_at_abort);
+        sock->closeSocket = 1;
+        return -1;
+    }
+
+    return 1;
 }
 
 #endif /* WEBSERVER_USE_WEBSOCKETS */
