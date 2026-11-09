@@ -923,20 +923,48 @@ static int handleClientHeaderData(socket_info* sock) {
 	return -1;
 }
 
-static int checkConnectionKeepAlive(socket_info *sock) {
+/* Whether the comma separated Connection header value lists token,
+ * case-insensitive (RFC 9110 7.6.1) */
+static int connectionHasToken(const char *value, const char *token) {
+	size_t token_len = strlen(token);
+	const char *p = value;
 
-	if (sock->header->Connection != 0) {
-		if (strcasecmp(sock->header->Connection, "keep-alive") != 0) {
-			return -1;
-		} else {
+	while (*p != '\0') {
+		const char *start;
+		const char *end;
+		while ((*p == ' ') || (*p == '\t') || (*p == ',')) {
+			p++;
+		}
+		start = p;
+		while ((*p != '\0') && (*p != ',')) {
+			p++;
+		}
+		end = p;
+		while ((end > start) && ((end[-1] == ' ') || (end[-1] == '\t'))) {
+			end--;
+		}
+		if (((size_t)(end - start) == token_len) && (strncasecmp(start, token, token_len) == 0)) {
 			return 1;
 		}
 	}
+	return 0;
+}
 
-	if (sock->header->isHttp1_1 == 1) {
+/* Whether the connection stays open after the answer to this request (RFC
+ * 9112 9.3): HTTP/1.1 unless the request says "close", HTTP/1.0 only if it
+ * says "keep-alive". Decided while the request header is still there - it
+ * used to be asked after the answer was out, when the header had already
+ * been reset for the next request: the Connection field was gone, only the
+ * protocol version was left. "Connection: close" was ignored, HTTP/1.0
+ * keep-alive always closed. */
+static int requestKeepsConnection(const HttpRequestHeader *header) {
+	if ((header->Connection != 0) && connectionHasToken(header->Connection, "close")) {
+		return 0;
+	}
+	if (header->isHttp1_1 == 1) {
 		return 1;
 	}
-	return -1;
+	return (header->Connection != 0) && connectionHasToken(header->Connection, "keep-alive");
 }
 
 /*
@@ -1012,6 +1040,15 @@ static int handleClient(socket_info* sock) {
 		LOG ( HANDLER_LOG,NOTICE_LEVEL,sock->socket,"Handle Web Request" );
 #endif
 		sock->use_output_compression = 0;
+
+		/* Before the answer is built: its Connection line announces this
+		 * (addConnectionStatusLines() reads closeSocket), the pipelining
+		 * loop in handleer() takes no further request after it, and the
+		 * write branch closes once the answer is out */
+		if ( ( sock->header->parsed_bytes != 0 ) && !requestKeepsConnection( sock->header ) ) {
+			sock->closeSocket = 1;
+		}
+
 		/* das hier tritt auf wenn mehrer requests ueber einen Socket im Burst gesendet werden */
 		if (handleWebRequest(sock) < 0) {
 			return -1;
@@ -2248,35 +2285,25 @@ void handleer( int a, short b, void *t ) {
 #endif
 				delEventSocketWritePersist(sock);
 
-				// TODO Keep Alive scheint nicht korrekt zu funktionieren
-				if (checkConnectionKeepAlive(sock) == 1) {
-					if (sock->closeSocket == 1) {
-						WebserverConnectionManagerCloseRequest(sock);
-						return;
-					}
-					/* Requests already here - left by the request budget of
-					 * the read branch, in the header buffer or decrypted in
-					 * the SSL layer. No read event comes for them: they have
-					 * left the kernel buffer, and the client, waiting for
-					 * their answers, may send nothing more. Take them up now
-					 * as a read event would; a partial one there registers
-					 * for more input as usual. */
-					if ((sock->header_buffer_pos > 0) || (WebserverSSLPending(sock) > 0)) {
-						handleer(a, EVENT_READ, t);
-						return;
-					}
-					addEventSocketRead(sock);
+				/* Whether the connection stays open was decided with each
+				 * request, while its header was still there (see
+				 * requestKeepsConnection()) - closeSocket says it */
+				if (sock->closeSocket == 1) {
+					WebserverConnectionManagerCloseRequest(sock);
 					return;
 				}
-
-				#ifdef WEBSERVER_USE_WEBSOCKETS
-				if( sock->header->isWebsocket == 2 ){
-					addEventSocketRead(sock);
+				/* Requests already here - left by the request budget of the
+				 * read branch, in the header buffer or decrypted in the SSL
+				 * layer. No read event comes for them: they have left the
+				 * kernel buffer, and the client, waiting for their answers,
+				 * may send nothing more. Take them up now as a read event
+				 * would; a partial one there registers for more input as
+				 * usual. */
+				if ((sock->header_buffer_pos > 0) || (WebserverSSLPending(sock) > 0)) {
+					handleer(a, EVENT_READ, t);
 					return;
 				}
-				#endif
-
-				WebserverConnectionManagerCloseRequest(sock);
+				addEventSocketRead(sock);
 				return;
 
 			case DATA_PENDING:

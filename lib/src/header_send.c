@@ -117,26 +117,17 @@ static void addConnectionStatusLines(socket_info* socket) {
 	 * at it made the answer look broken: the browser keeps the request open
 	 * waiting for a reusable connection while the server is already tearing
 	 * it down. */
+	/* closeSocket is decided before the answer is built, from the request's
+	 * protocol version and Connection header (handleClient()). The client's
+	 * header used to be mirrored back instead, whatever it listed. No early
+	 * return: the CORS headers below belong on this answer as well. Without
+	 * them a cross-origin XHR - the web interface sends withCredentials -
+	 * discards the response, and "Connection: close" is exactly what a
+	 * client sends on its last request. */
 	if (socket->closeSocket == 1) {
 		printHeaderChunk(socket, "Connection: close\r\n");
-	} else if (socket->header->Connection != 0) {
-		/* No early return here: the CORS headers below belong on this answer
-		 * as well. Without them a cross-origin XHR - the web interface sends
-		 * withCredentials - discards the response, and "Connection: close" is
-		 * exactly what a client sends on its last request. */
-		if (strcmp(socket->header->Connection, "close") == 0) {
-			printHeaderChunk(socket, "Connection: close\r\n");
-		} else {
-			sanitize_header_value(sanitized, socket->header->Connection, sizeof(sanitized));
-			printHeaderChunk(socket, "Connection: %s\r\n", sanitized);
-		}
 	} else {
-		/* HTTP/1.1 default is keep-alive, HTTP/1.0 default is close */
-		if (socket->header->isHttp1_1 == 1) {
-			printHeaderChunk(socket, "Connection: keep-alive\r\n");
-		} else {
-			printHeaderChunk(socket, "Connection: close\r\n");
-		}
+		printHeaderChunk(socket, "Connection: keep-alive\r\n");
 	}
 
 
@@ -163,6 +154,9 @@ int sendPreflightAllowed(socket_info *sock) {
 		printHeaderChunk( sock, "HTTP/1.0 204 No Content\r\n");
 	}
 	printHeaderChunk( sock, "Server: %s\r\n", "libCWebUI");
+	/* As on every other answer: what happens to the connection after it. An
+	 * HTTP/1.0 client without it assumes close. */
+	printHeaderChunk( sock, "Connection: %s\r\n", ( sock->closeSocket == 1 ) ? "close" : "keep-alive" );
 
 
 	if ( ( sock->header->Access_Control_Request_Method != 0 ) && ( COND_TRUE == checkCORS( CORS_ALLOW_METHODS, sock ) ) ){

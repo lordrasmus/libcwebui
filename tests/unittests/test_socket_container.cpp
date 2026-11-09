@@ -1517,7 +1517,8 @@ int dispatch_once(int epfd, int timeout_ms) {
 
 size_t count_answers(const std::string& got) {
     size_t answers = 0;
-    for (size_t p = got.find("HTTP/1.1 "); p != std::string::npos; p = got.find("HTTP/1.1 ", p + 1)) {
+    /* Status lines of HTTP/1.1 and HTTP/1.0 answers */
+    for (size_t p = got.find("HTTP/1."); p != std::string::npos; p = got.find("HTTP/1.", p + 1)) {
         answers++;
     }
     return answers;
@@ -1687,6 +1688,209 @@ TEST(PipelineBudgetTest, EmptyLinesCountAgainstTheBudget) {
 
 TEST(PipelineBudgetTest, ClientNotReadingStopsTheServerTakingRequests) {
     EXPECT_EXIT(pipelined_without_reading(2000), ::testing::ExitedWithCode(0), "");
+}
+
+/*
+ * Whether the connection stays open after an answer (RFC 9112 9.3): HTTP/1.1
+ * keeps it unless the request says "Connection: close", HTTP/1.0 closes it
+ * unless the request says "Connection: keep-alive". After "close" no further
+ * request on the connection is answered.
+ */
+namespace {
+
+/* A regular answer with a body through the normal header path
+ * (addConnectionStatusLines()), unlike OPTIONS */
+WS_FILE_TYPES keep_alive_page(dummy_handler* s, const char*) {
+    printHTML(s, "%s", "keep-alive-body");
+    return WS_FILE_TYPE_PLAIN;
+}
+
+/* Sends the burst, runs the loop until nothing happens any more.
+ * Exit 0 when the client got `want_answers` answers and the connection is
+ * closed or open as expected, 1 other number of answers, 2 closed but
+ * expected open, 3 open but expected closed */
+void keep_alive_case(const char* burst, int want_answers, bool want_closed) {
+    alarm(20);
+    initWebserver();
+    initSocketContainer();
+    ws_register_url_function((char*)"/ka_page", keep_alive_page);
+    int epfd = library_epoll_fd();
+    PlainConn c = plain_connection();
+
+    size_t len = strlen(burst);
+    if (send(c.fds[1], burst, len, 0) != (ssize_t)len) {
+        _exit(4);
+    }
+
+    std::string got;
+    bool eof = false;
+    for (int idle = 0; idle < 5 && !eof; ) {
+        idle = (dispatch_once(epfd, 20) > 0) ? 0 : idle + 1;
+        char buf[65536];
+        ssize_t r;
+        while ((r = recv(c.fds[1], buf, sizeof(buf), 0)) > 0) {
+            got.append(buf, (size_t)r);
+        }
+        if (r == 0) {
+            eof = true;                              /* server closed */
+        }
+    }
+    if ((int)count_answers(got) != want_answers) {
+        _exit(1);
+    }
+    if (eof && !want_closed) {
+        _exit(2);
+    }
+    if (!eof && want_closed) {
+        _exit(3);
+    }
+    _exit(0);
+}
+
+}  // namespace
+
+TEST(KeepAliveTest, Http11StaysOpen) {
+    EXPECT_EXIT(keep_alive_case("OPTIONS / HTTP/1.1\r\nHost: t\r\n\r\n", 1, false),
+                ::testing::ExitedWithCode(0), "");
+}
+
+TEST(KeepAliveTest, Http11WithConnectionCloseIsClosed) {
+    EXPECT_EXIT(keep_alive_case("OPTIONS / HTTP/1.1\r\nHost: t\r\nConnection: close\r\n\r\n", 1, true),
+                ::testing::ExitedWithCode(0), "");
+}
+
+TEST(KeepAliveTest, Http10IsClosed) {
+    EXPECT_EXIT(keep_alive_case("OPTIONS / HTTP/1.0\r\nHost: t\r\n\r\n", 1, true),
+                ::testing::ExitedWithCode(0), "");
+}
+
+TEST(KeepAliveTest, Http10WithKeepAliveStaysOpen) {
+    EXPECT_EXIT(keep_alive_case("OPTIONS / HTTP/1.0\r\nHost: t\r\nConnection: keep-alive\r\n\r\n", 1, false),
+                ::testing::ExitedWithCode(0), "");
+}
+
+/* "close" ends the connection after its answer: a request behind it in the
+ * same burst is not answered any more */
+TEST(KeepAliveTest, NothingAnsweredAfterConnectionClose) {
+    EXPECT_EXIT(keep_alive_case("OPTIONS / HTTP/1.1\r\nHost: t\r\nConnection: close\r\n\r\n"
+                                "OPTIONS / HTTP/1.1\r\nHost: t\r\n\r\n", 1, true),
+                ::testing::ExitedWithCode(0), "");
+}
+
+/* Header values are case-insensitive, and the header may list more than
+ * one token */
+TEST(KeepAliveTest, ConnectionCloseInAnyCaseAndInAList) {
+    EXPECT_EXIT(keep_alive_case("OPTIONS / HTTP/1.1\r\nHost: t\r\nConnection: Close\r\n\r\n", 1, true),
+                ::testing::ExitedWithCode(0), "") << "Close";
+    EXPECT_EXIT(keep_alive_case("OPTIONS / HTTP/1.1\r\nHost: t\r\nConnection: TE, close\r\n\r\n", 1, true),
+                ::testing::ExitedWithCode(0), "") << "TE, close";
+}
+
+/* The version is per request: an HTTP/1.0 request after an HTTP/1.1 one on
+ * the same connection used to keep the 1.1 of its predecessor */
+TEST(KeepAliveTest, Http10AfterHttp11IsClosed) {
+    EXPECT_EXIT(keep_alive_case("OPTIONS / HTTP/1.1\r\nHost: t\r\n\r\n"
+                                "OPTIONS / HTTP/1.0\r\nHost: t\r\n\r\n", 2, true),
+                ::testing::ExitedWithCode(0), "");
+}
+
+/* The answer says what happens to the connection - an HTTP/1.0 client
+ * assumes close without it. Exit 0 when every answer carries the expected
+ * Connection line. */
+static void connection_line_case(const char* request, const char* want_line) {
+    alarm(20);
+    initWebserver();
+    initSocketContainer();
+    ws_register_url_function((char*)"/ka_page", keep_alive_page);
+    int epfd = library_epoll_fd();
+    PlainConn c = plain_connection();
+    if (send(c.fds[1], request, strlen(request), 0) != (ssize_t)strlen(request)) {
+        _exit(4);
+    }
+    std::string got;
+    for (int idle = 0; idle < 5; ) {
+        idle = (dispatch_once(epfd, 20) > 0) ? 0 : idle + 1;
+        char buf[65536];
+        ssize_t r;
+        while ((r = recv(c.fds[1], buf, sizeof(buf), 0)) > 0) {
+            got.append(buf, (size_t)r);
+        }
+        if (r == 0) {
+            break;
+        }
+    }
+    _exit(got.find(want_line) != std::string::npos ? 0 : 1);
+}
+
+TEST(KeepAliveTest, AnswerAnnouncesWhatHappensToTheConnection) {
+    EXPECT_EXIT(connection_line_case("OPTIONS / HTTP/1.0\r\nHost: t\r\nConnection: keep-alive\r\n\r\n",
+                                     "\r\nConnection: keep-alive\r\n"),
+                ::testing::ExitedWithCode(0), "") << "HTTP/1.0 keep-alive";
+    EXPECT_EXIT(connection_line_case("OPTIONS / HTTP/1.1\r\nHost: t\r\nConnection: TE, close\r\n\r\n",
+                                     "\r\nConnection: close\r\n"),
+                ::testing::ExitedWithCode(0), "") << "HTTP/1.1 close in a list";
+    EXPECT_EXIT(connection_line_case("OPTIONS / HTTP/1.1\r\nHost: t\r\n\r\n",
+                                     "\r\nConnection: keep-alive\r\n"),
+                ::testing::ExitedWithCode(0), "") << "HTTP/1.1 default";
+}
+
+/* Connection is a list: a second line adds to the first - "close" in the
+ * first one used to be replaced by the second */
+TEST(KeepAliveTest, ConnectionHeaderOnTwoLines) {
+    EXPECT_EXIT(keep_alive_case("OPTIONS / HTTP/1.1\r\nHost: t\r\nConnection: close\r\n"
+                                "Connection: keep-alive\r\n\r\n", 1, true),
+                ::testing::ExitedWithCode(0), "") << "close first";
+    EXPECT_EXIT(keep_alive_case("OPTIONS / HTTP/1.1\r\nHost: t\r\nConnection: keep-alive\r\n"
+                                "Connection: close\r\n\r\n", 1, true),
+                ::testing::ExitedWithCode(0), "") << "close second";
+}
+
+/* Whitespace after the colon is optional */
+TEST(KeepAliveTest, ConnectionHeaderWithoutSpace) {
+    EXPECT_EXIT(keep_alive_case("OPTIONS / HTTP/1.1\r\nHost: t\r\nConnection:close\r\n\r\n", 1, true),
+                ::testing::ExitedWithCode(0), "") << "no space";
+    EXPECT_EXIT(keep_alive_case("OPTIONS / HTTP/1.1\r\nHost: t\r\nConnection:\tclose\r\n\r\n", 1, true),
+                ::testing::ExitedWithCode(0), "") << "tab";
+    EXPECT_EXIT(keep_alive_case("OPTIONS / HTTP/1.1\r\nHost: t\r\nConnection:\r\n\r\n", 1, false),
+                ::testing::ExitedWithCode(0), "") << "empty value";
+}
+
+/* Lines adding to Connection do not stack up without end: the header as a
+ * whole is limited (WEBSERVER_MAX_HEADER_SIZE), beyond it the answer is 431
+ * and the connection closed */
+TEST(KeepAliveTest, EndlessConnectionLinesHitTheHeaderLimit) {
+    static std::string req;
+    req = "OPTIONS / HTTP/1.1\r\nHost: t\r\n";
+    while (req.size() < (size_t)WEBSERVER_MAX_HEADER_SIZE + 4096) {
+        req += "Connection:x\r\n";
+    }
+    req += "\r\n";
+    EXPECT_EXIT(connection_line_case(req.c_str(), "HTTP/1.1 431"),
+                ::testing::ExitedWithCode(0), "");
+}
+
+/* A regular answer with a body: announces the connection and arrives
+ * complete before the connection is closed */
+TEST(KeepAliveTest, RegularAnswerWithBody) {
+    EXPECT_EXIT(connection_line_case("GET /ka_page HTTP/1.1\r\nHost: t\r\nConnection: close\r\n\r\n",
+                                     "\r\nConnection: close\r\n"),
+                ::testing::ExitedWithCode(0), "") << "close announced";
+    EXPECT_EXIT(connection_line_case("GET /ka_page HTTP/1.1\r\nHost: t\r\nConnection: close\r\n\r\n",
+                                     "keep-alive-body"),
+                ::testing::ExitedWithCode(0), "") << "body before the close";
+    EXPECT_EXIT(connection_line_case("GET /ka_page HTTP/1.0\r\nHost: t\r\nConnection: keep-alive\r\n\r\n",
+                                     "\r\nConnection: keep-alive\r\n"),
+                ::testing::ExitedWithCode(0), "") << "HTTP/1.0 keep-alive announced";
+    EXPECT_EXIT(keep_alive_case("GET /ka_page HTTP/1.0\r\nHost: t\r\nConnection: keep-alive\r\n\r\n"
+                                "GET /ka_page HTTP/1.0\r\nHost: t\r\n\r\n", 2, true),
+                ::testing::ExitedWithCode(0), "") << "HTTP/1.0 keep-alive, then one without";
+}
+
+/* A keep-alive request behind an HTTP/1.1 one: both answered, still open */
+TEST(KeepAliveTest, TwoRequestsOnAnOpenConnection) {
+    EXPECT_EXIT(keep_alive_case("OPTIONS / HTTP/1.1\r\nHost: t\r\n\r\n"
+                                "OPTIONS / HTTP/1.1\r\nHost: t\r\n\r\n", 2, false),
+                ::testing::ExitedWithCode(0), "");
 }
 
 TEST(TlsHandshakeWantWriteTest, FullSendBufferDoesNotStopTheHandshake) {

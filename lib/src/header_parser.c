@@ -294,6 +294,9 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 			return -1;
 		}
 
+		/* Set either way: the header is reused for the next request on the
+		 * connection, and an HTTP/1.0 request after an HTTP/1.1 one kept the
+		 * 1.1 of its predecessor */
 		if(0 == strcmp ( &line[length - 9 ], " HTTP/1.1" ) ){
 			sock->header->isHttp1_1 = 1;
 		}else{
@@ -301,6 +304,7 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 				header->error = 1;
 				return -1;
 			}
+			sock->header->isHttp1_1 = 0;
 		}
 
 		c_pos = &line[length - 9 ];
@@ -562,7 +566,40 @@ static int matchHeaderFields(char *line, unsigned int length, HttpRequestHeader 
 			}
 		}
 
-		CHECK_HEADER_LINE("Connection: ", Connection)
+		/* Connection is a list (RFC 9110 5.2, 7.6.1): a further line adds to
+		 * it - it used to replace the value, and "close" in the first line
+		 * was lost behind a second one. Optional whitespace after the colon:
+		 * "Connection:close" was not recognised at all. */
+		if ( header_attr_compare( "Connection:", sizeof("Connection:") - 1, line, length ) ){
+			unsigned int start = sizeof("Connection:") - 1;
+			unsigned int end;
+			size_t old_len = 0;
+			char* merged;
+
+			while ( ( start < length ) && ( ( line[start] == ' ' ) || ( line[start] == '\t' ) ) ){
+				start++;
+			}
+			/* Up to the end of the line - the parser leaves a NUL or CR there,
+			 * which must not end up in the middle of a merged value */
+			for ( end = start; ( end < length ) && ( line[end] != '\0' ) && ( line[end] != '\r' ); end++ ){
+			}
+			if ( header->Connection != 0 ){
+				old_len = strlen( header->Connection );
+			}
+			merged = (char*)WebserverMalloc( old_len + 2 + ( end - start ) + 1 );
+			if ( old_len > 0 ){
+				memcpy( merged, header->Connection, old_len );
+				memcpy( merged + old_len, ", ", 2 );
+				old_len += 2;
+			}
+			memcpy( merged + old_len, &line[start], end - start );
+			merged[ old_len + ( end - start ) ] = '\0';
+			if ( header->Connection != 0 ){
+				WebserverFree( header->Connection );
+			}
+			header->Connection = merged;
+			return 0;
+		}
 		break;
 
 	/*   ---------------------- h block ----------------------  */
