@@ -1886,6 +1886,40 @@ TEST(KeepAliveTest, RegularAnswerWithBody) {
                 ::testing::ExitedWithCode(0), "") << "HTTP/1.0 keep-alive, then one without";
 }
 
+/*
+ * A refused websocket upgrade (426 for an old version, 400 for an invalid
+ * key) ends the connection. It was kept open without the request being
+ * reset: every further request on it got the refusal again. The 426 had
+ * no length either.
+ */
+#define WS_UPGRADE(key, version) \
+    "GET /ws HTTP/1.1\r\nHost: t\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n" \
+    "Sec-WebSocket-Key: " key "\r\nSec-WebSocket-Version: " version "\r\n\r\n"
+
+TEST(RefusedUpgradeTest, OldVersionGets426AndTheConnectionEnds) {
+    EXPECT_EXIT(keep_alive_case(WS_UPGRADE("dGhlIHNhbXBsZSBub25jZQ==", "8")
+                                "OPTIONS / HTTP/1.1\r\nHost: t\r\n\r\n", 1, true),
+                ::testing::ExitedWithCode(0), "");
+}
+
+TEST(RefusedUpgradeTest, InvalidKeyGets400AndTheConnectionEnds) {
+    EXPECT_EXIT(keep_alive_case(WS_UPGRADE("short", "13")
+                                "OPTIONS / HTTP/1.1\r\nHost: t\r\n\r\n", 1, true),
+                ::testing::ExitedWithCode(0), "");
+}
+
+TEST(RefusedUpgradeTest, RefusalHasALengthAndAnnouncesTheClose) {
+    EXPECT_EXIT(connection_line_case(WS_UPGRADE("dGhlIHNhbXBsZSBub25jZQ==", "8"),
+                                     "\r\nContent-Length: 0\r\n"),
+                ::testing::ExitedWithCode(0), "") << "426 length";
+    EXPECT_EXIT(connection_line_case(WS_UPGRADE("dGhlIHNhbXBsZSBub25jZQ==", "8"),
+                                     "\r\nConnection: close\r\n"),
+                ::testing::ExitedWithCode(0), "") << "426 close";
+    EXPECT_EXIT(connection_line_case(WS_UPGRADE("short", "13"),
+                                     "\r\nConnection: close\r\n"),
+                ::testing::ExitedWithCode(0), "") << "400 close";
+}
+
 /* A keep-alive request behind an HTTP/1.1 one: both answered, still open */
 TEST(KeepAliveTest, TwoRequestsOnAnOpenConnection) {
     EXPECT_EXIT(keep_alive_case("OPTIONS / HTTP/1.1\r\nHost: t\r\n\r\n"

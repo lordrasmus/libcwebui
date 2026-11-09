@@ -308,10 +308,18 @@ int checkIskWebsocketConnection(socket_info* sock) {
 	if (0 == strcasecmp(header->Upgrade, "websocket")) {
 
 		if ( header->SecWebSocketVersion < 13 ){
-			/* RFC 6455 Section 4.4: Send supported version(s) in response */
+			/* RFC 6455 Section 4.4: Send supported version(s) in response.
+			 * A refused upgrade ends the connection. It was kept open,
+			 * but nothing reset the request for the next one: every
+			 * further request on it got 426 again, after a POST it waited
+			 * for a body that never came. And the answer had no length -
+			 * on an open connection its end was not defined. */
+			sock->closeSocket = 1;
 			printHeaderChunk(sock,"HTTP/1.1 426 Upgrade Required\r\n");
 			header->response_status = 426;
 			printHeaderChunk(sock,"Sec-WebSocket-Version: 13\r\n");
+			printHeaderChunk(sock,"Content-Length: 0\r\n");
+			printHeaderChunk(sock,"Connection: close\r\n");
 			printHeaderChunk(sock,"\r\n");
 			#ifdef _WEBSERVER_HEADER_DEBUG_
 			LOG(HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"Websocket Handshake Error: Version ( %d ) is < 13",header->SecWebSocketVersion);
@@ -325,9 +333,12 @@ int checkIskWebsocketConnection(socket_info* sock) {
 		 * key used to be copied without its terminator into a fixed
 		 * buffer on the stack and then appended to. */
 		if (!validWebsocketKey(header->SecWebSocketKey)) {
+			/* Ends the connection, as the 426 above */
+			sock->closeSocket = 1;
 			printHeaderChunk(sock,"HTTP/1.1 400 Bad Request\r\n");
 			header->response_status = 400;
 			printHeaderChunk(sock,"Content-Length: 0\r\n");
+			printHeaderChunk(sock,"Connection: close\r\n");
 			printHeaderChunk(sock,"\r\n");
 			header->isWebsocket = 2; /* refused, the response is prepared */
 			return 1;
