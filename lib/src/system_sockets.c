@@ -819,13 +819,20 @@ static int handleClientHeaderData(socket_info* sock) {
 			return finish_error_response(sock);
 		}
 
-		/* methode nicht erlaubt */
+		/* Request line refused. 405 only for a method that is not
+		 * supported - error_method holds it then. A URL refused by
+		 * url_sanity_check() (NUL byte, "..", script tags), a request line
+		 * too short or with another HTTP version came here as well and got
+		 * 405 too: the method was fine, the request was not - 400. */
 		if (len2 == -4) {
 			if ( sock->header->no_websocket_support == 1 ){
 				LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","Websocket Support disabled" );
-			}else{
+			}else if ( sock->header->error_method[0] != '\0' ){
 				sendHttpErrorPage(sock, 405, 0);
 				LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"methodNotAllowed -> %s",sock->header->error_method );
+			}else{
+				sendHttpErrorPage(sock, 400, "The request line or its URL is not accepted.");
+				LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","request line refused" );
 			}
 			return finish_error_response(sock);
 		}

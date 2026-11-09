@@ -2032,6 +2032,28 @@ TEST(RequestFramingTest, StreamingUploadIsRefusedBeforeTheHandlerStarts) {
                 ::testing::ExitedWithCode(0), "") << "two lengths";
 }
 
+/* A refused request line: 405 only for a method that is not supported.
+ * A URL refused by the sanity check or a broken request line used to get
+ * 405 as well. */
+TEST(RequestLineTest, RefusedUrlGets400) {
+    EXPECT_EXIT(connection_line_case("GET /x%%00.png HTTP/1.1\r\nHost: t\r\n\r\n", "HTTP/1.1 400"),
+                ::testing::ExitedWithCode(0), "") << "NUL byte";
+    EXPECT_EXIT(connection_line_case("GET /../etc/passwd HTTP/1.1\r\nHost: t\r\n\r\n", "HTTP/1.1 400"),
+                ::testing::ExitedWithCode(0), "") << "traversal";
+    EXPECT_EXIT(connection_line_case("GET /x<script>y HTTP/1.1\r\nHost: t\r\n\r\n", "HTTP/1.1 400"),
+                ::testing::ExitedWithCode(0), "") << "script";
+}
+
+TEST(RequestLineTest, OtherHttpVersionGets400) {
+    EXPECT_EXIT(connection_line_case("GET / HTTP/2.0\r\nHost: t\r\n\r\n", " 400 "),
+                ::testing::ExitedWithCode(0), "");
+}
+
+TEST(RequestLineTest, UnknownMethodStillGets405) {
+    EXPECT_EXIT(connection_line_case("BREW /pot HTTP/1.1\r\nHost: t\r\n\r\n", " 405 "),
+                ::testing::ExitedWithCode(0), "");
+}
+
 TEST(RequestFramingTest, DifferentContentLengthsAreRefused) {
     const char* req = "POST /ka_page HTTP/1.1\r\nHost: t\r\nContent-Length: 5\r\nContent-Length: 30\r\n\r\n"
                       "a=bcdGET /ka_page HTTP/1.1\r\n\r\n";
