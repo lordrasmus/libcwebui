@@ -260,8 +260,11 @@ int WebserverSSLAccept(socket_info *s) {
 
 	error = wolfSSL_get_error(ctx->ssl, ret);
 
-	if (error == WOLFSSL_ERROR_WANT_READ || error == WOLFSSL_ERROR_WANT_WRITE) {
+	if (error == WOLFSSL_ERROR_WANT_READ) {
 		return CLIENT_NO_MORE_DATA;
+	}
+	if (error == WOLFSSL_ERROR_WANT_WRITE) {
+		return SSL_ACCEPT_WANT_WRITE;	/* continue when writable */
 	}
 
 	/* Suppress expected errors when clients reject self-signed certificates */

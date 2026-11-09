@@ -5,6 +5,9 @@
 #include <chrono>
 #include <cstring>
 #include <fcntl.h>
+#include <dirent.h>
+#include <poll.h>
+#include <sys/epoll.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <string>
@@ -1316,6 +1319,161 @@ TEST(TlsPostBudgetTest, PostBehindAnotherRequestIsReadToTheEnd) {
         EXPECT_EXIT(tls_post_behind_another_request(len), ::testing::ExitedWithCode(0), "")
             << "body " << len;
     }
+}
+
+/*
+ * The handshake has to write its flight and the socket takes nothing more:
+ * SSL_accept() returns SSL_ERROR_WANT_WRITE. That used to be reported like
+ * WANT_READ, the server waited for input - and the client, waiting for the
+ * rest of the flight, never sent any: the connection stood until the header
+ * timeout. Driven here the way the event loop would: the server is only
+ * woken for what it has registered in epoll.
+ */
+namespace {
+
+/* Events registered for fd in this process's epoll set, from /proc */
+unsigned epoll_events_of(int fd) {
+    unsigned found = 0;
+    DIR* d = opendir("/proc/self/fd");
+    struct dirent* e;
+    while (d && (e = readdir(d))) {
+        char link[256], path[300];
+        snprintf(path, sizeof(path), "/proc/self/fd/%s", e->d_name);
+        ssize_t n = readlink(path, link, sizeof(link) - 1);
+        if (n <= 0) {
+            continue;
+        }
+        link[n] = 0;
+        if (strcmp(link, "anon_inode:[eventpoll]") != 0) {
+            continue;
+        }
+        snprintf(path, sizeof(path), "/proc/self/fdinfo/%s", e->d_name);
+        FILE* f = fopen(path, "r");
+        char line[512];
+        while (f && fgets(line, sizeof(line), f)) {
+            int tfd;
+            unsigned ev;
+            if (sscanf(line, "tfd: %d events: %x", &tfd, &ev) == 2 && tfd == fd) {
+                found = ev;
+            }
+        }
+        if (f) {
+            fclose(f);
+        }
+    }
+    if (d) {
+        closedir(d);
+    }
+    return found;
+}
+
+/* Exit code: 0 handshake completed, 1 stuck (registered for nothing that
+ * comes), 2 setup, 3 connection closed */
+void tls_handshake_with_full_send_buffer(int max_proto) {
+    alarm(20);
+    initWebserver();
+    initSocketContainer();
+    setConfigText("ssl_key_file", "../config_variants/LinuxWebsocketSelectSSL/server.pem");
+    setConfigText("ssl_ca_list_file", "../config_variants/LinuxWebsocketSelectSSL/server.pem");
+    setConfigText("ssl_dh_file", "../config_variants/LinuxWebsocketSelectSSL/dh2048.pem");
+    setConfigText("ssl_key_file_password", "x");
+    if (initOpenSSL() != 0) {
+        _exit(2);
+    }
+
+    int fds[2];
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, fds) != 0) {
+        _exit(2);
+    }
+    fcntl(fds[0], F_SETFL, fcntl(fds[0], F_GETFL) | O_NONBLOCK);
+    fcntl(fds[1], F_SETFL, fcntl(fds[1], F_GETFL) | O_NONBLOCK);
+
+    /* Smallest send buffer, filled up before the handshake: the server's
+     * flight finds no room. The client skips these bytes. */
+    int one = 1;
+    setsockopt(fds[0], SOL_SOCKET, SO_SNDBUF, &one, sizeof(one));
+    size_t filler = 0;
+    char junk[256];
+    memset(junk, 'F', sizeof(junk));
+    for (;;) {
+        ssize_t w = write(fds[0], junk, sizeof(junk));
+        if (w <= 0) {
+            break;
+        }
+        filler += (size_t)w;
+    }
+
+    socket_info* s = WebserverMallocSocketInfo();
+    s->socket = fds[0];
+    s->client = 1;
+    s->active = 1;
+    s->use_ssl = 1;
+    s->run_ssl_accept = 1;
+    s->header = WebserverMallocHttpRequestHeader();
+    s->rx_at = s->tx_at = s->phase_at = g_loop_now;
+    addSocketContainer(s);
+
+    /* Client: reads through a memory BIO, so the filler can be dropped */
+    SSL_CTX* cctx = SSL_CTX_new(TLS_client_method());
+    SSL_CTX_set_verify(cctx, SSL_VERIFY_NONE, 0);
+    SSL_CTX_set_max_proto_version(cctx, max_proto);
+    SSL* c = SSL_new(cctx);
+    BIO* rbio = BIO_new(BIO_s_mem());
+    BIO_set_mem_eof_return(rbio, -1);
+    SSL_set_bio(c, rbio, BIO_new_socket(fds[1], BIO_NOCLOSE));
+    size_t skipped = 0;
+    auto client_step = [&]() {
+        char buf[8192];
+        ssize_t n;
+        while ((n = read(fds[1], buf, sizeof(buf))) > 0) {
+            size_t off = 0;
+            if (skipped < filler) {
+                off = std::min(filler - skipped, (size_t)n);
+                skipped += off;
+            }
+            if ((size_t)n > off) {
+                BIO_write(rbio, buf + off, (int)((size_t)n - off));
+            }
+        }
+        return SSL_connect(c);
+    };
+
+    SSL_connect(c);                                  /* ClientHello, reading nothing:
+                                                      * the filler keeps the buffer full */
+    handleer(s->socket, EVENT_READ, s);              /* flight -> no room */
+
+    bool client_done = false;
+    for (int round = 0; round < 50; round++) {
+        if (!client_done) {
+            client_done = (client_step() == 1);      /* client reads now */
+        }
+        if (client_done && s->run_ssl_accept == 0) {
+            _exit(0);
+        }
+        if (fcntl(fds[0], F_GETFD) == -1) {
+            _exit(3);
+        }
+        unsigned reg = epoll_events_of(fds[0]);
+        struct pollfd pf = { fds[0], POLLIN | POLLOUT, 0 };
+        poll(&pf, 1, 0);
+        if ((reg & EPOLLIN) && (pf.revents & POLLIN)) {
+            handleer(s->socket, EVENT_READ, s);
+        } else if ((reg & EPOLLOUT) && (pf.revents & POLLOUT)) {
+            handleer(s->socket, EVENT_WRITE, s);
+        } else if (round > 2) {
+            _exit(1);                                /* no event will come */
+        }
+    }
+    _exit(1);
+}
+
+}  // namespace
+
+TEST(TlsHandshakeWantWriteTest, FullSendBufferDoesNotStopTheHandshake) {
+    EXPECT_EXIT(tls_handshake_with_full_send_buffer(TLS1_2_VERSION), ::testing::ExitedWithCode(0), "")
+        << "TLS 1.2";
+    EXPECT_EXIT(tls_handshake_with_full_send_buffer(TLS1_3_VERSION), ::testing::ExitedWithCode(0), "")
+        << "TLS 1.3";
 }
 #endif
 

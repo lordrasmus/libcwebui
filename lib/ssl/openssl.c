@@ -504,11 +504,15 @@ int WebserverSSLAccept(socket_info* s) {
 				// SSL_read() or SSL_peek() may want to write data and SSL_write() may want to read data.
 				// This is mainly because TLS/SSL handshakes may occur at any time during the protocol (initiated by either the client or the server);
 				// SSL_read(), SSL_peek(), and SSL_write() will handle any pending handshakes.
-				printSSLErrorQueue(s);
-//#if _WEBSERVER_CONNECTION_DEBUG_ >= 4
-				LOG ( CONNECTION_LOG,ERROR_LEVEL,s->socket,"%s","SSL_ERROR_WANT_WRITE" );
-//#endif
-				return CLIENT_NO_MORE_DATA;
+				/* Not an error: the handshake waits for the socket to take
+				 * more. Reported as CLIENT_NO_MORE_DATA it used to wait for
+				 * input instead - which the client, still waiting for the
+				 * rest of the server's flight, never sends: the connection
+				 * stood until the header timeout. */
+#if _WEBSERVER_CONNECTION_DEBUG_ > 4
+				LOG ( CONNECTION_LOG,NOTICE_LEVEL,s->socket,"%s","SSL_ERROR_WANT_WRITE" );
+#endif
+				return SSL_ACCEPT_WANT_WRITE;
 				break;
 
 			case SSL_ERROR_WANT_CONNECT:

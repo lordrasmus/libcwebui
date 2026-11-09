@@ -40,6 +40,9 @@ SPDX-License-Identifier: MPL-2.0
 #define MAX_HEADER_LINE_ERROR 	( -20 )
 #define NO_SSL_CONNECTION_ERROR ( -21 )
 #define SSL_ACCEPT_OK 			( 2 )
+/* The handshake has to write and the socket takes nothing more for now:
+ * continue it once the socket is writable */
+#define SSL_ACCEPT_WANT_WRITE	( 3 )
 
 
 

@@ -324,8 +324,11 @@ int WebserverSSLAccept(socket_info *s) {
 		return SSL_ACCEPT_OK;
 	}
 
-	if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
+	if (ret == MBEDTLS_ERR_SSL_WANT_READ) {
 		return CLIENT_NO_MORE_DATA;
+	}
+	if (ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
+		return SSL_ACCEPT_WANT_WRITE;	/* continue when writable */
 	}
 
 	/* Suppress expected errors when clients reject self-signed certificates */

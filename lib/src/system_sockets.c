@@ -2059,6 +2059,15 @@ void handleer( int a, short b, void *t ) {
 						addEventSocketRead(sock);
 						return;
 					}
+					/* The socket takes nothing more of the server's flight
+					 * for now. Waiting for input here, as it used to, waits
+					 * for a client that is itself waiting for the rest of
+					 * that flight - until the header timeout. The write
+					 * branch below continues the handshake. */
+					if (ret == SSL_ACCEPT_WANT_WRITE) {
+						addEventSocketWritePersist(sock);
+						return;
+					}
 					if (ret == SSL_ACCEPT_OK) {
 						// Wenn das SSL Accept OK ist das normale HTTP Header handling starten
 						/* The first request gets its own timeout_request_header,
@@ -2153,6 +2162,34 @@ void handleer( int a, short b, void *t ) {
 
 		}
 		if (b == EVENT_WRITE) {
+			#ifdef WEBSERVER_USE_SSL
+			/* Writable during the TLS handshake: only registered after
+			 * SSL_ACCEPT_WANT_WRITE. There is no response yet - the code
+			 * below would find the output list empty and close the
+			 * connection. Continue the handshake and register what it
+			 * asks for next. */
+			if ((sock->use_ssl == 1) && (sock->run_ssl_accept == 1) && (sock->ssl_context != 0)) {
+				ret = WebserverSSLAccept(sock);
+				if (ret == SSL_ACCEPT_WANT_WRITE) {
+					return;		/* still registered for writing */
+				}
+				if (ret == CLIENT_NO_MORE_DATA) {
+					addEventSocketRead(sock);
+					return;
+				}
+				if (ret == SSL_ACCEPT_OK) {
+					/* The first request gets its own timeout_request_header.
+					 * It comes as a read event: SSL_accept() does not read
+					 * ahead, application data stays in the kernel buffer. */
+					sock->phase_at = g_loop_now;
+					addEventSocketRead(sock);
+					return;
+				}
+				WebserverConnectionManagerCloseRequest(sock);
+				return;
+			}
+			#endif
+
 			status_ret = handleClientWriteData(sock);
 			switch (status_ret) {
 			case NO_MORE_DATA:
