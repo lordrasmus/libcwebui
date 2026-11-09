@@ -841,6 +841,27 @@ static int handleClientHeaderData(socket_info* sock) {
 			LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"request header larger than %d bytes",WEBSERVER_MAX_HEADER_SIZE );
 			return finish_error_response(sock);
 		}
+
+		/* Header complete: can the end of this request be told? (RFC 9112
+		 * 6.3) Not if Content-Length is unusable or a transfer coding is
+		 * used - those were read past, and the body became the next
+		 * request on the connection. Nor with a body on anything but POST:
+		 * only POST reads one, any other method left its body to be parsed
+		 * as the next request. */
+		if ( ( len2 == -2 ) || ( len2 == -3 ) ){
+			if ( sock->header->framing_status != 0 ){
+				sendHttpErrorPage(sock, sock->header->framing_status,
+				                  ( sock->header->framing_status == 501 ) ? "Transfer-Encoding is not supported." :
+				                                                            "The Content-Length header is not usable." );
+				LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"request framing refused, status %d",sock->header->framing_status );
+				return finish_error_response(sock);
+			}
+			if ( ( sock->header->method != HTTP_POST ) && ( sock->header->contentlenght > 0 ) ){
+				sendHttpErrorPage(sock, 400, "A request body is only accepted with POST.");
+				LOG ( HEADER_PARSER_LOG,NOTICE_LEVEL,sock->socket,"%s","request body on a method other than POST refused" );
+				return finish_error_response(sock);
+			}
+		}
 #ifdef WEBSERVER_USE_WEBSOCKETS
 		if ( 1 == checkIskWebsocketConnection(sock) ){
 			sock->header->header_complete = 0;

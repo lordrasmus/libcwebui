@@ -313,6 +313,8 @@ void WebserverResetHttpRequestHeader(HttpRequestHeader *header) {
 	header->post_buffer_pos = 0;
 	header->contenttype = 0;
 	header->contentlenght = 0;
+	header->content_length_seen = 0;
+	header->framing_status = 0;
 	header->method = 0;
 
 	header->error_method[0] = '\0';

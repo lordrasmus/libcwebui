@@ -1920,6 +1920,106 @@ TEST(RefusedUpgradeTest, RefusalHasALengthAndAnnouncesTheClose) {
                 ::testing::ExitedWithCode(0), "") << "400 close";
 }
 
+/*
+ * Where a request ends (RFC 9112 6.3). Only POST read a body: the body of
+ * any other request was parsed as the next one, Content-Length was not
+ * seen without exactly one space after the colon, and a transfer coding
+ * was not looked at - a chunked body became requests of its own.
+ */
+TEST(RequestFramingTest, BodyOnGetIsRefusedNotParsedAsARequest) {
+    /* the 27 bytes of body are a request of their own */
+    EXPECT_EXIT(keep_alive_case("GET /ka_page HTTP/1.1\r\nHost: t\r\nContent-Length: 27\r\n\r\n"
+                                "GET /ka_page HTTP/1.1\r\n\r\n", 1, true),
+                ::testing::ExitedWithCode(0), "") << "one answer, then closed";
+    EXPECT_EXIT(connection_line_case("GET /ka_page HTTP/1.1\r\nHost: t\r\nContent-Length: 27\r\n\r\n"
+                                     "GET /ka_page HTTP/1.1\r\n\r\n", "HTTP/1.1 400"),
+                ::testing::ExitedWithCode(0), "") << "400";
+}
+
+TEST(RequestFramingTest, ContentLengthWithoutSpaceDelimitsThePost) {
+    /* body "a=bcd", then a second request: both answered, still open */
+    EXPECT_EXIT(keep_alive_case("POST /ka_page HTTP/1.1\r\nHost: t\r\n"
+                                "Content-Type: application/x-www-form-urlencoded\r\n"
+                                "Content-Length:5\r\n\r\na=bcd"
+                                "GET /ka_page HTTP/1.1\r\nHost: t\r\n\r\n", 2, false),
+                ::testing::ExitedWithCode(0), "");
+}
+
+TEST(RequestFramingTest, ChunkedBodyGets501) {
+    const char* req = "POST /ka_page HTTP/1.1\r\nHost: t\r\nTransfer-Encoding: chunked\r\n\r\n"
+                      "1b\r\nGET /ka_page HTTP/1.1\r\n\r\n\r\n0\r\n\r\n";
+    EXPECT_EXIT(keep_alive_case(req, 1, true), ::testing::ExitedWithCode(0), "") << "one answer, closed";
+    EXPECT_EXIT(connection_line_case(req, "HTTP/1.1 501"), ::testing::ExitedWithCode(0), "") << "501";
+}
+
+/* Uploads to a streaming handler (firmware, plugins): a request whose end
+ * cannot be told is refused before the handler is started - no callback,
+ * nothing written anywhere. */
+static int g_stream_starts = 0;
+static int g_stream_chunks = 0;
+static void framing_stream_start(post_stream_context*) { g_stream_starts++; }
+static void framing_stream_chunk(post_stream_context*, const unsigned char*, uint32_t) { g_stream_chunks++; }
+static void framing_stream_end(post_stream_context*, int) {}
+
+/* Exit 0 when the answer contains want_status and the handler was started
+ * (want_started) or not; 1 wrong status, 2 handler started or not as
+ * expected */
+static void stream_framing_case(const char* request, const char* want_status, bool want_started) {
+    alarm(20);
+    initWebserver();
+    initSocketContainer();
+    RegisterPostStreamHandler("/up", NULL, 0, framing_stream_start, framing_stream_chunk, framing_stream_end);
+    int epfd = library_epoll_fd();
+    PlainConn c = plain_connection();
+    if (send(c.fds[1], request, strlen(request), 0) != (ssize_t)strlen(request)) {
+        _exit(4);
+    }
+    std::string got;
+    for (int idle = 0; idle < 5; ) {
+        idle = (dispatch_once(epfd, 20) > 0) ? 0 : idle + 1;
+        char buf[65536];
+        ssize_t r;
+        while ((r = recv(c.fds[1], buf, sizeof(buf), 0)) > 0) {
+            got.append(buf, (size_t)r);
+        }
+        if (r == 0) {
+            break;
+        }
+    }
+    if (got.find(want_status) == std::string::npos) {
+        _exit(1);
+    }
+    if ((g_stream_starts > 0) != want_started) {
+        _exit(2);
+    }
+    _exit(0);
+}
+
+#define UPLOAD_BODY "--B\r\nContent-Disposition: form-data; name=\"f\"; filename=\"a.bin\"\r\n\r\nxyz\r\n--B--\r\n"
+
+TEST(RequestFramingTest, StreamingUploadIsRefusedBeforeTheHandlerStarts) {
+    /* positive control: the same upload with a usable length reaches the handler */
+    EXPECT_EXIT(stream_framing_case("POST /up HTTP/1.1\r\nHost: t\r\nContent-Type: multipart/form-data; boundary=B\r\n"
+                                    "Content-Length: 79\r\n\r\n" UPLOAD_BODY, "HTTP/1.1 ", true),
+                ::testing::ExitedWithCode(0), "") << "handler reached with a usable length";
+    EXPECT_EXIT(stream_framing_case("POST /up HTTP/1.1\r\nHost: t\r\nContent-Type: multipart/form-data; boundary=B\r\n"
+                                    "Transfer-Encoding: chunked\r\n\r\n4f\r\n" UPLOAD_BODY "\r\n0\r\n\r\n",
+                                    "HTTP/1.1 501", false),
+                ::testing::ExitedWithCode(0), "") << "chunked";
+    EXPECT_EXIT(stream_framing_case("POST /up HTTP/1.1\r\nHost: t\r\nContent-Type: multipart/form-data; boundary=B\r\n"
+                                    "Content-Length : 79\r\n\r\n" UPLOAD_BODY, "HTTP/1.1 400", false),
+                ::testing::ExitedWithCode(0), "") << "whitespace before colon";
+    EXPECT_EXIT(stream_framing_case("POST /up HTTP/1.1\r\nHost: t\r\nContent-Type: multipart/form-data; boundary=B\r\n"
+                                    "Content-Length: 79\r\nContent-Length: 78\r\n\r\n" UPLOAD_BODY, "HTTP/1.1 400", false),
+                ::testing::ExitedWithCode(0), "") << "two lengths";
+}
+
+TEST(RequestFramingTest, DifferentContentLengthsAreRefused) {
+    const char* req = "POST /ka_page HTTP/1.1\r\nHost: t\r\nContent-Length: 5\r\nContent-Length: 30\r\n\r\n"
+                      "a=bcdGET /ka_page HTTP/1.1\r\n\r\n";
+    EXPECT_EXIT(connection_line_case(req, "HTTP/1.1 400"), ::testing::ExitedWithCode(0), "");
+}
+
 /* A keep-alive request behind an HTTP/1.1 one: both answered, still open */
 TEST(KeepAliveTest, TwoRequestsOnAnOpenConnection) {
     EXPECT_EXIT(keep_alive_case("OPTIONS / HTTP/1.1\r\nHost: t\r\n\r\n"

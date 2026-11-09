@@ -279,6 +279,13 @@ int analyseFormDataLine(socket_info* sock, char *line, unsigned int length, Http
 
 static int matchHeaderFields(char *line, unsigned int length, HttpRequestHeader *header);
 
+/* The first reason to refuse the request decides its status */
+static void setFramingStatus(HttpRequestHeader *header, short status) {
+	if ( header->framing_status == 0 ){
+		header->framing_status = status;
+	}
+}
+
 int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRequestHeader *header) {
 	int pos;
 	char* c_pos = 0;
@@ -461,7 +468,21 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 		return -1;
 	}
 
-
+	/* RFC 9112 5.1/5.2: no whitespace between field name and colon, no
+	 * obs-fold (a line continued with leading whitespace). Both were simply
+	 * not recognised - "Content-Length : 5" or a folded Transfer-Encoding
+	 * meant no body here, where a lenient proxy in front sees one. Refused
+	 * with 400 once the header is complete. */
+	if ( ( length > 0 ) && ( ( line[0] == ' ' ) || ( line[0] == '\t' ) ) ){
+		setFramingStatus( header, 400 );
+		return 0;
+	}
+	for ( unsigned int i = 0; ( i < length ) && ( line[i] != ':' ); i++ ){
+		if ( ( line[i] == ' ' ) || ( line[i] == '\t' ) ){
+			setFramingStatus( header, 400 );
+			return 0;
+		}
+	}
 
 	return matchHeaderFields(line, length, header);
 }
@@ -503,22 +524,43 @@ static int matchHeaderFields(char *line, unsigned int length, HttpRequestHeader 
 			return 0;
 		}
 
-		if ( (!strncasecmp( line, "Content-Length: ", 16)) && ( strlen( &line[15]  ) > 1  ) ) {
-			const char* val = &line[16];
-			/* Reject negative values and non-numeric input */
-			if (*val == '-' || *val < '0' || *val > '9') {
-				header->contentlenght = 0;
-			} else {
-				/* Note: strtoull overflow returns ULLONG_MAX which is safely rejected
-				 * by the max_post_size check in check_post_header() */
-				char* endptr;
-				header->contentlenght = strtoull(val, &endptr, 10);
-				/* Reject trailing garbage after number (HTTP Request Smuggling prevention) */
-				if (*endptr != '\0' && *endptr != '\r' && *endptr != '\n' && *endptr != ' ') {
-					header->contentlenght = 0;
-					header->error = 1;
-				}
+		/* The length decides where the request ends and the next begins
+		 * (RFC 9112 6.3), so anything that is not plainly one number is
+		 * refused rather than guessed: digits only, optional whitespace
+		 * around them, a repeated header with the same value. It used to
+		 * need exactly one space after the colon - "Content-Length:27" was
+		 * not seen at all and its body parsed as the next request - took
+		 * "  5" as 0, and a second header simply replaced the first. */
+		if ( header_attr_compare( "Content-Length:", sizeof("Content-Length:") - 1, line, length ) ){
+			unsigned int p = sizeof("Content-Length:") - 1;
+			uint64_t value = 0;
+			unsigned int digits = 0;
+
+			while ( ( p < length ) && ( ( line[p] == ' ' ) || ( line[p] == '\t' ) ) ){
+				p++;
 			}
+			while ( ( p < length ) && ( line[p] >= '0' ) && ( line[p] <= '9' ) ){
+				value = value * 10 + (uint64_t)( line[p] - '0' );
+				digits++;
+				p++;
+			}
+			while ( ( p < length ) && ( ( line[p] == ' ' ) || ( line[p] == '\t' ) ) ){
+				p++;
+			}
+			/* 19 digits stay below UINT64_MAX; check_post_header() limits
+			 * the size anyway. The line ends right there: length excludes
+			 * the CRLF, a NUL or CR before it is part of the value and not
+			 * an end of it. */
+			if ( ( digits == 0 ) || ( digits > 19 ) || ( p < length ) ){
+				setFramingStatus( header, 400 );
+				return 0;
+			}
+			if ( header->content_length_seen && ( value != header->contentlenght ) ){
+				setFramingStatus( header, 400 );	/* two lengths for one body */
+				return 0;
+			}
+			header->contentlenght = value;
+			header->content_length_seen = 1;
 			return 0;
 		}
 
@@ -671,6 +713,17 @@ static int matchHeaderFields(char *line, unsigned int length, HttpRequestHeader 
 #endif
 
 	/*   ---------------------- u block ----------------------  */
+	/*   ---------------------- t block ----------------------  */
+	case 't':
+		/* No transfer coding is implemented here - a chunked body would be
+		 * read as the next request. RFC 9112 6.1: 501 for a coding the
+		 * server does not understand. */
+		if ( header_attr_compare( "Transfer-Encoding:", sizeof("Transfer-Encoding:") - 1, line, length ) ){
+			setFramingStatus( header, 501 );
+			return 0;
+		}
+		break;
+
 	case 'u':
 		CHECK_HEADER_LINE("Upgrade: ", Upgrade)
 		CHECK_HEADER_LINE("User-Agent: ", UserAgent)

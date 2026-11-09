@@ -89,6 +89,9 @@ static const http_error_page http_error_pages[] = {
 	       "The request header is larger than this server accepts." },
 	{ 500, "Internal Server Error",
 	       "The request could not be handled." },
+	/* RFC 9112 6.1: a transfer coding the server does not understand */
+	{ 501, "Not Implemented",
+	       "The request uses a transfer coding this server does not support." },
 	/* The request is fine, the server is just out of memory to buffer the
 	 * body right now. 503 rather than 4xx: the cause is on our side and the
 	 * client may retry later. */

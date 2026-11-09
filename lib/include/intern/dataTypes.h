@@ -189,6 +189,11 @@ typedef struct {
 	short gzip;
 	short deflate;
 	uint64_t contentlenght;
+	/* Content-Length seen: a further one has to say the same */
+	char content_length_seen;
+	/* Status to refuse the request with because its body cannot be
+	 * delimited (400 Content-Length unusable, 501 Transfer-Encoding), 0 ok */
+	short framing_status;
 	short contenttype;
 	char *If_Modified_Since; /* Wed, 12 Dec 2007 13:13:08 GMT */
 	char *etag;

@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 #include <cstring>
+#include <string>
+#include <vector>
 
 extern "C" {
 #include "webserver.h"
@@ -158,6 +160,118 @@ TEST_F(HeaderParserTest, ContentLengthNegative) {
     parseHeaderLine("Content-Length: -1");
 
     EXPECT_EQ(header->contentlenght, 0u);
+    EXPECT_EQ(header->framing_status, 400);
+}
+
+/* Optional whitespace around the value (RFC 9110 5.5): "Content-Length:27"
+ * used to be ignored, "  5" taken as 0 */
+TEST_F(HeaderParserTest, ContentLengthWithAnyWhitespace) {
+    const char* lines[] = { "Content-Length:27", "Content-Length:\t27", "Content-Length:  27  ",
+                            "content-length: 27" };
+    for (const char* l : lines) {
+        WebserverResetHttpRequestHeader(header);
+        parseHeaderLine("POST / HTTP/1.1");
+        parseHeaderLine(l);
+        EXPECT_EQ(header->contentlenght, 27u) << l;
+        EXPECT_EQ(header->framing_status, 0) << l;
+    }
+}
+
+TEST_F(HeaderParserTest, ContentLengthNotPlainlyANumberIsRefused) {
+    const char* lines[] = { "Content-Length: 12ab34", "Content-Length: 1 2", "Content-Length:",
+                            "Content-Length: +5", "Content-Length: 99999999999999999999" };
+    for (const char* l : lines) {
+        WebserverResetHttpRequestHeader(header);
+        parseHeaderLine("POST / HTTP/1.1");
+        parseHeaderLine(l);
+        EXPECT_EQ(header->framing_status, 400) << l;
+    }
+}
+
+/* Two lengths for one body: the same value is allowed, different ones
+ * are refused - a second header used to replace the first */
+TEST_F(HeaderParserTest, RepeatedContentLength) {
+    parseHeaderLine("POST / HTTP/1.1");
+    parseHeaderLine("Content-Length: 5");
+    parseHeaderLine("Content-Length: 5");
+    EXPECT_EQ(header->framing_status, 0);
+    EXPECT_EQ(header->contentlenght, 5u);
+    parseHeaderLine("Content-Length: 6");
+    EXPECT_EQ(header->framing_status, 400);
+}
+
+TEST_F(HeaderParserTest, TransferEncodingIsNotImplemented) {
+    parseHeaderLine("POST / HTTP/1.1");
+    parseHeaderLine("Transfer-Encoding: chunked");
+    EXPECT_EQ(header->framing_status, 501);
+}
+
+/* The line length handed over excludes the CRLF: a NUL or CR inside it
+ * belongs to the value and does not end it - "5\0garbage" was taken as 5 */
+TEST_F(HeaderParserTest, ContentLengthWithNulOrCrInsideIsRefused) {
+    const char nul[] = "Content-Length: 5\0garbage";
+    const char cr[] = "Content-Length: 5\r10";
+    for (auto line : { std::string(nul, sizeof(nul) - 1), std::string(cr, sizeof(cr) - 1) }) {
+        WebserverResetHttpRequestHeader(header);
+        parseHeaderLine("POST / HTTP/1.1");
+        std::vector<char> buf(line.begin(), line.end());
+        buf.push_back('\0');
+        analyseHeaderLine(sock, buf.data(), (unsigned int)line.size(), header);
+        EXPECT_EQ(header->framing_status, 400) << line.size();
+    }
+}
+
+TEST_F(HeaderParserTest, ContentLengthListInOneLineIsRefused) {
+    parseHeaderLine("POST / HTTP/1.1");
+    parseHeaderLine("Content-Length: 5, 5");
+    EXPECT_EQ(header->framing_status, 400);
+}
+
+/* RFC 9112 5.1: whitespace before the colon; 5.2: obs-fold. Both used to
+ * be ignored - no body here, where a lenient proxy in front sees one */
+TEST_F(HeaderParserTest, WhitespaceBeforeColonIsRefused) {
+    const char* lines[] = { "Content-Length : 5", "Transfer-Encoding\t: chunked", "X-Other :x" };
+    for (const char* l : lines) {
+        WebserverResetHttpRequestHeader(header);
+        parseHeaderLine("POST / HTTP/1.1");
+        parseHeaderLine(l);
+        EXPECT_EQ(header->framing_status, 400) << l;
+    }
+}
+
+TEST_F(HeaderParserTest, FoldedHeaderLineIsRefused) {
+    parseHeaderLine("POST / HTTP/1.1");
+    parseHeaderLine("Transfer-Encoding: gzip,");
+    parseHeaderLine(" chunked");
+    EXPECT_NE(header->framing_status, 0);
+    WebserverResetHttpRequestHeader(header);
+    parseHeaderLine("POST / HTTP/1.1");
+    parseHeaderLine("X-Other: a");
+    parseHeaderLine("\tb");
+    EXPECT_EQ(header->framing_status, 400);
+}
+
+/* The first reason decides the status, whichever order */
+TEST_F(HeaderParserTest, FirstFramingErrorDecides) {
+    parseHeaderLine("POST / HTTP/1.1");
+    parseHeaderLine("Transfer-Encoding: chunked");
+    parseHeaderLine("Content-Length: x");
+    EXPECT_EQ(header->framing_status, 501);
+    WebserverResetHttpRequestHeader(header);
+    parseHeaderLine("POST / HTTP/1.1");
+    parseHeaderLine("Content-Length: x");
+    parseHeaderLine("Transfer-Encoding: chunked");
+    EXPECT_EQ(header->framing_status, 400);
+}
+
+/* Ordinary headers are not affected */
+TEST_F(HeaderParserTest, OrdinaryHeadersStillAccepted) {
+    parseHeaderLine("POST / HTTP/1.1");
+    parseHeaderLine("Host: example");
+    parseHeaderLine("User-Agent: Mozilla/5.0 (X11; Linux x86_64)");
+    parseHeaderLine("Content-Length: 12");
+    EXPECT_EQ(header->framing_status, 0);
+    EXPECT_EQ(header->contentlenght, 12u);
 }
 
 // NOTE: This test exposes a memory leak bug - UserAgent is not freed in WebserverResetHttpRequestHeader
