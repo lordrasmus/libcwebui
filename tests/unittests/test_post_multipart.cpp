@@ -2,6 +2,8 @@
 #include <cstring>
 #include <unistd.h>
 #include <string>
+#include <chrono>
+#include <vector>
 
 extern "C" {
 #include "webserver.h"
@@ -26,10 +28,10 @@ extern "C" {
  * behind it. With the boundary sitting right there, the inner loop in
  * parsePostData matches on its first iteration and the difference is zero.
  *
- * These tests pin down that intermediate value. parsePostData() itself is
- * static and not reachable from here, but the arithmetic on top of it is
- * unambiguous once the value is known - see also test_memory_overflow.cpp
- * for the second half of the chain.
+ * These tests pin down that intermediate value; the arithmetic on top of it
+ * is unambiguous once the value is known - see also test_memory_overflow.cpp
+ * for the second half of the chain. parsePostData() as a whole is tested at
+ * the end of this file.
  */
 class PostMultipartTest : public ::testing::Test {
 protected:
@@ -171,4 +173,93 @@ TEST_F(PostMultipartTest, FilenameWithoutValue) {
 
 TEST_F(PostMultipartTest, FilenameOnlyOpeningQuote) {
     EXPECT_EQ(filenameOf("form-data; filename=\""), "");
+}
+
+/*
+ * parsePostData() on a whole buffered body.
+ */
+struct ParsedPart {
+    std::string name;
+    std::string data;
+};
+
+static std::vector<ParsedPart> parse_body(const char* boundary, const std::string& body,
+                                          double* seconds = nullptr) {
+    socket_info* sock = (socket_info*)calloc(1, sizeof(socket_info));
+    sock->header = WebserverMallocHttpRequestHeader();
+    std::string b = std::string("--") + boundary;
+    sock->header->boundary = (char*)WebserverMalloc(b.size() + 1);
+    memcpy(sock->header->boundary, b.c_str(), b.size() + 1);
+    sock->header->contentlenght = body.size();
+    sock->header->post_buffer = (char*)WebserverMalloc(body.size() + 1);
+    memcpy(sock->header->post_buffer, body.data(), body.size());
+    sock->header->post_buffer[body.size()] = '\0';
+
+    http_request s;
+    memset(&s, 0, sizeof(s));
+    ws_list_init(&s.upload_files);
+    s.socket = sock;
+    s.header = sock->header;
+
+    auto t0 = std::chrono::steady_clock::now();
+    parsePostData(&s);
+    if (seconds) {
+        *seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+    }
+
+    std::vector<ParsedPart> parts;
+    upload_file_info* f;
+    ws_list_iterator_start(&s.upload_files);
+    while ((f = (upload_file_info*)ws_list_iterator_next(&s.upload_files))) {
+        parts.push_back({ f->name, std::string(f->data, (size_t)f->length) });
+        WebserverFree(f->name);
+        WebserverFree(f->data);
+        WebserverFree(f);
+    }
+    ws_list_iterator_stop(&s.upload_files);
+    ws_list_clear(&s.upload_files);
+    ws_list_destroy(&s.upload_files);
+
+    WebserverFreeHttpRequestHeader(sock->header);
+    free(sock);
+    return parts;
+}
+
+TEST(ParsePostDataTest, TwoFilesAreFound) {
+    std::string body =
+        "--xyz\r\n"
+        "Content-Disposition: form-data; name=\"a\"; filename=\"one.txt\"\r\n"
+        "Content-Type: text/plain\r\n\r\n"
+        "first\r\n"
+        "--xyz\r\n"
+        "Content-Disposition: form-data; name=\"b\"; filename=\"two.bin\"\r\n\r\n"
+        "sec\r\nond\r\n"
+        "--xyz--\r\n";
+    std::vector<ParsedPart> p = parse_body("xyz", body);
+    ASSERT_EQ(p.size(), 2u);
+    EXPECT_EQ(p[0].name, "one.txt");
+    EXPECT_EQ(p[0].data, "first");
+    EXPECT_EQ(p[1].name, "two.bin");
+    EXPECT_EQ(p[1].data, "sec\r\nond");
+}
+
+TEST(ParsePostDataTest, PartWithoutClosingBoundaryYieldsNothing) {
+    std::string body =
+        "--xyz\r\n"
+        "Content-Disposition: form-data; name=\"a\"; filename=\"one.txt\"\r\n\r\n"
+        "no end";
+    EXPECT_EQ(parse_body("xyz", body).size(), 0u);
+}
+
+/* Nothing but boundaries without a part header end: each one used to
+ * search the whole rest of the body for it, and the next byte started
+ * over. 32 KB kept a device busy for 51 seconds. */
+TEST(ParsePostDataTest, BareBoundariesTakeLinearTime) {
+    std::string body;
+    for (int i = 0; i < 16384; i++) {
+        body += "--xZ";
+    }
+    double secs = 0;
+    EXPECT_EQ(parse_body("x", body, &secs).size(), 0u);
+    EXPECT_LT(secs, 0.5) << "64 KB took " << secs << " s";
 }

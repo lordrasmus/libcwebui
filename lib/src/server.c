@@ -72,7 +72,7 @@ static void endHTTPRequest(http_request *s) {
 }
 
 
-static void parsePostData(http_request *s){
+void parsePostData(http_request *s){
 
 	char *pos, *pos2;
 	char *data = 0;
@@ -81,6 +81,7 @@ static void parsePostData(http_request *s){
 	uint64_t offset2 = 0;
 	uint64_t offset3 = 0;
 	char end= 0;
+	char part_closed;
 	HttpRequestHeader *header;
 	uint32_t bound_len;
 	char* bound_end;
@@ -129,6 +130,7 @@ static void parsePostData(http_request *s){
 			offset2 = analyseFormDataLine( s->socket, pos , s->socket->header->contentlenght - ( offset + bound_len ), header );
 
 			data_start = &pos[offset2];
+			part_closed = 0;
 
 			for ( offset3 = offset2 ; offset3 < ( s->socket->header->contentlenght - ( offset + bound_len ) ) ; offset3++ ){
 
@@ -152,6 +154,7 @@ static void parsePostData(http_request *s){
 						LOG ( CONNECTION_LOG,WARNING_LEVEL,s->socket->socket,
 						      "%s","multipart part without a delimiter before the boundary, skipping" );
 						offset = offset3 + offset + bound_len - 1;
+						part_closed = 1;
 						break;
 					}
 
@@ -174,6 +177,7 @@ static void parsePostData(http_request *s){
 
 					ws_list_append(&s->upload_files, file_info, 0);
 					offset = offset3 + offset + bound_len - 1;	/* -1 weil die Hauptschelife +1 macht */
+					part_closed = 1;
 					break;
 				}
 
@@ -183,6 +187,17 @@ static void parsePostData(http_request *s){
 					break;
 				}
 
+			}
+
+			/* No boundary after this part - with the part header end
+			 * missing the search above did not even start. Then there is no
+			 * further boundary in the rest of the body either, and nothing
+			 * left to find. Going on byte by byte made every boundary in
+			 * that rest search it all again for its part header end:
+			 * quadratic, on the event loop - 32 KB of "--x" kept a device
+			 * busy for 51 seconds, a few MB for hours. */
+			if ( part_closed == 0 ){
+				break;
 			}
 
 		}

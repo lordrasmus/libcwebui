@@ -38,6 +38,9 @@ extern "C" {
 #endif
 
 int getHttpRequest(socket_info* sock);
+/* Splits a buffered multipart body into s->upload_files. Internal, visible
+ * for the unit tests */
+void parsePostData(http_request *s);
 int sendHTMLFile(http_request* s, WebserverFileInfo *file);
 
 void sendWebsocketChunk ( socket_info* sock,const unsigned char* text,const unsigned int length );
