@@ -234,6 +234,42 @@ TEST_F(HeaderParserTest, ContentTypeMultipart) {
     EXPECT_TRUE(strstr(header->boundary, "WebKitFormBoundary") != nullptr);
 }
 
+extern "C" unsigned long allocated;
+
+/* Several multipart Content-Type lines in one request: every one but the
+ * last used to stay allocated for good */
+TEST(HeaderParserBoundaryTest, RepeatedMultipartContentTypeDoesNotLeak) {
+    unsigned long before = allocated;
+
+    HttpRequestHeader* h = WebserverMallocHttpRequestHeader();
+    socket_info* s = (socket_info*)calloc(1, sizeof(socket_info));
+    s->header = h;
+    const char* lines[] = {
+        "POST / HTTP/1.1",
+        "Content-Type: multipart/form-data; boundary=AAAAAAAAAAAAAAAAAAAA",
+        "Content-Type: multipart/form-data; boundary=BBBBBBBBBBBBBBBBBBBB",
+        "Content-Type: multipart/form-data; boundary=CCCC",
+    };
+    for (const char* l : lines) {
+        char buf[256];
+        snprintf(buf, sizeof(buf), "%s", l);
+        analyseHeaderLine(s, buf, strlen(buf), h);
+    }
+    ASSERT_NE(h->boundary, nullptr);
+    EXPECT_STREQ(h->boundary, "--CCCC") << "the last one counts";
+
+    WebserverFreeHttpRequestHeader(h);
+    free(s);
+    EXPECT_EQ(allocated, before) << "boundaries of the earlier lines lost";
+}
+
+TEST_F(HeaderParserTest, MultipartWithoutBoundaryIsAnError) {
+    parseHeaderLine("POST / HTTP/1.1");
+    parseHeaderLine("Content-Type: multipart/form-data");
+    EXPECT_EQ(header->boundary, nullptr) << "no pseudo boundary from the rest of the line";
+    EXPECT_EQ(header->error, 1);
+}
+
 // ParseHeader full tests
 // The parser returns the number of bytes parsed per line, needs to be called repeatedly
 TEST_F(HeaderParserTest, ParseCompleteHeader) {

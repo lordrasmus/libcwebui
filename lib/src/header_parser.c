@@ -523,6 +523,21 @@ static int matchHeaderFields(char *line, unsigned int length, HttpRequestHeader 
 				int i2=stringfind(line,"boundary=");
 				header->contenttype=MULTIPART_FORM_DATA;
 
+				/* The last one counts. Each further Content-Type line used
+				 * to allocate its boundary anew and lose the one before, for
+				 * good: seven lines of 1.9 KB leaked 11 KB per request */
+				if ( header->boundary != 0 ){
+					WebserverFree( header->boundary );
+					header->boundary = 0;
+				}
+
+				/* Without boundary= stringfind() gives 0, and half the line
+				 * became a boundary nothing is ever split by */
+				if ( i2 == 0 ){
+					header->error = 1;
+					return 0;
+				}
+
 				i2++;
 				unsigned int i;
 				for( i=i2;i<length;i++){
