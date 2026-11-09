@@ -37,6 +37,27 @@ TEST_F(StringFindTest, SingleCharPattern) {
     EXPECT_GT(stringfind("hello", "e"), 0);
 }
 
+/* A match that begins inside a partial one: after a mismatch only the
+ * pattern position was reset, the search went on with the next character
+ * and missed it */
+TEST_F(StringFindTest, MatchStartingInsideAPartialMatch) {
+    EXPECT_EQ(stringfind("x%%00", "%00"), 4) << "doubled first character";
+    EXPECT_EQ(stringfind("x<<script>", "<script>"), 9);
+    EXPECT_EQ(stringfind("xaab", "ab"), 3);
+    EXPECT_EQ(stringfind("xabab c", "abc"), 0) << "no match stays no match";
+    EXPECT_EQ(stringfind("xababc", "abc"), 5) << "restart after two characters";
+    EXPECT_EQ(stringfind("; bboundary=x", "boundary="), 11);
+}
+
+TEST_F(StringFindTest, ReturnsTheLastCharacterOfTheFirstMatch) {
+    EXPECT_EQ(stringfind("xab ab", "ab"), 2);
+}
+
+TEST(StringFindCaseInsensitiveTest, MatchStartingInsideAPartialMatch) {
+    EXPECT_EQ(stringfindCaseInsensitive("x MMultipart/Form-Data", "multipart/form-data"), 21);
+    EXPECT_EQ(stringfindCaseInsensitive("xAaB", "ab"), 3);
+}
+
 // stringnfind tests
 class StringNFindTest : public ::testing::Test {};
 
@@ -47,6 +68,12 @@ TEST_F(StringNFindTest, PatternFound) {
 TEST_F(StringNFindTest, PatternNotFoundInLimit) {
     // "world" starts at position 6, but we only search up to 5
     EXPECT_EQ(stringnfind("hello world", "world", 5), -1);
+}
+
+TEST_F(StringNFindTest, MatchStartingInsideAPartialMatch) {
+    EXPECT_EQ(stringnfind("ab\r\r\ncd", "\r\n", 7), 4) << "CR CR LF";
+    EXPECT_EQ(stringnfind("{{endloop}", "{endloop}", 10), 9);
+    EXPECT_EQ(stringnfind("xaab", "ab", 3), -1) << "limit still applies";
 }
 
 TEST_F(StringNFindTest, NullBuffer) {

@@ -53,7 +53,13 @@ int stringfind(const char *buffer, const char *pattern) {
 			if (pattern[i2] == '\0'){
 				return i;
 			}
-		} else {
+		} else if (i2 > 0) {
+			/* Start over one past the start of the partial match. Only
+			 * resetting i2 went on with the next character and missed a
+			 * match that began inside the partial one: "%%00" has no
+			 * "%00" to it, "<<script>" no "<script>" - the URL checks in
+			 * url_sanity_check() were passed that way. */
+			i -= i2;
 			i2 = 0;
 		}
 	}
@@ -74,7 +80,8 @@ int stringfindCaseInsensitive(const char *buffer, const char *pattern) {
 			if (pattern[i2] == '\0'){
 				return i;
 			}
-		} else {
+		} else if (i2 > 0) {
+			i -= i2;	/* start over, see stringfind() */
 			i2 = 0;
 		}
 	}
@@ -94,7 +101,9 @@ long stringnfind(const char *buffer, const char *pattern, unsigned int buffer_le
 			if (pattern[i2] == '\0'){
 				 return i;
 			}
-		} else {
+		} else if (i2 > 0) {
+			/* start over, see stringfind(): "\r\r\n" has a "\r\n" */
+			i -= i2;
 			i2 = 0;
 		}
 	}

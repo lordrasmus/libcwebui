@@ -217,6 +217,20 @@ TEST_F(HeaderParserTest, DirectoryTraversal) {
     EXPECT_EQ(header->error, 1);
 }
 
+/* The URL checks used stringfind(), which missed a match beginning inside
+ * a partial one: a doubled first character passed them. On the device
+ * /Vue/favicon.ico%%00.png was answered with the favicon - the NUL cut the
+ * path short. */
+TEST_F(HeaderParserTest, NulByteWithDoubledPercentIsRefused) {
+    parseHeaderLine("GET /Vue/favicon.ico%%00.png HTTP/1.1");
+    EXPECT_EQ(header->error, 1);
+}
+
+TEST_F(HeaderParserTest, ScriptWithDoubledBracketIsRefused) {
+    parseHeaderLine("GET /x<<script>y HTTP/1.1");
+    EXPECT_EQ(header->error, 1);
+}
+
 // Content-Type header tests
 TEST_F(HeaderParserTest, ContentTypeFormUrlEncoded) {
     parseHeaderLine("POST / HTTP/1.1");
