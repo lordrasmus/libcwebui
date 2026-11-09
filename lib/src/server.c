@@ -170,7 +170,12 @@ void parsePostData(http_request *s){
 
 					file_info->name = getFormDataFilename( header->Content_Disposition );
 					if ( file_info->name == 0 ){
-						LOG ( CONNECTION_LOG,ERROR_LEVEL,s->socket->socket,"Kein filename in Content_Disposition ( %s )", s->socket->header->Content_Disposition);
+						/* The part header is parsed into the local header, not
+						 * into the request's - that one was logged, always
+						 * NULL. A part without Content-Disposition has none
+						 * either. */
+						LOG ( CONNECTION_LOG,ERROR_LEVEL,s->socket->socket,"Kein filename in Content_Disposition ( %s )",
+						      ( header->Content_Disposition != 0 ) ? header->Content_Disposition : "-" );
 						file_info->name= WebserverMalloc( 2 );
 						file_info->name[0] = '\0';
 					}

@@ -263,3 +263,23 @@ TEST(ParsePostDataTest, BareBoundariesTakeLinearTime) {
     EXPECT_EQ(parse_body("x", body, &secs).size(), 0u);
     EXPECT_LT(secs, 0.5) << "64 KB took " << secs << " s";
 }
+
+/* A part without a filename: kept with an empty name, and the log line
+ * names its Content-Disposition - it used to print the request header's
+ * field, which the part header never goes into: always (null) */
+TEST(ParsePostDataTest, PartWithoutFilenameIsLoggedWithItsDisposition) {
+    std::string body =
+        "--xyz\r\n"
+        "Content-Disposition: form-data; name=\"field\"\r\n\r\n"
+        "value\r\n"
+        "--xyz--\r\n";
+    testing::internal::CaptureStdout();
+    testing::internal::CaptureStderr();
+    std::vector<ParsedPart> p = parse_body("xyz", body);
+    std::string out = testing::internal::GetCapturedStdout() + testing::internal::GetCapturedStderr();
+    ASSERT_EQ(p.size(), 1u);
+    EXPECT_EQ(p[0].name, "");
+    EXPECT_EQ(p[0].data, "value");
+    EXPECT_NE(out.find("name=\"field\""), std::string::npos) << out;
+    EXPECT_EQ(out.find("(null)"), std::string::npos) << out;
+}
