@@ -2069,6 +2069,56 @@ TEST(KeepAliveTest, ErrorOfOneRequestDoesNotStayForTheNext) {
                 ::testing::ExitedWithCode(0), "");
 }
 
+/* An empty line before the request line is ignored (RFC 9112 2.2), also
+ * when it arrives in a read of its own - e.g. an extra CRLF after a POST
+ * body. It used to be taken for the end of a header: 405 and closed.
+ * Exit 0: every request answered (want answers), none of them 405, the
+ * connection still open; 1 wrong number, 2 a 405, 3 closed. */
+static void separate_reads_case(const std::vector<std::string>& parts, int want) {
+    alarm(20);
+    initWebserver();
+    initSocketContainer();
+    ws_register_url_function((char*)"/ka_page", keep_alive_page);
+    int epfd = library_epoll_fd();
+    PlainConn c = plain_connection();
+    std::string got;
+    bool eof = false;
+    for (const std::string& part : parts) {
+        if (send(c.fds[1], part.data(), part.size(), 0) != (ssize_t)part.size()) {
+            _exit(4);
+        }
+        for (int idle = 0; idle < 3 && !eof; ) {
+            idle = (dispatch_once(epfd, 20) > 0) ? 0 : idle + 1;
+            char buf[65536];
+            ssize_t r;
+            while ((r = recv(c.fds[1], buf, sizeof(buf), 0)) > 0) {
+                got.append(buf, (size_t)r);
+            }
+            if (r == 0) {
+                eof = true;
+            }
+        }
+    }
+    if (got.find(" 405 ") != std::string::npos) {
+        _exit(2);
+    }
+    if ((int)count_answers(got) != want) {
+        _exit(1);
+    }
+    _exit(eof ? 3 : 0);
+}
+
+TEST(KeepAliveTest, EmptyLineInAReadOfItsOwnIsIgnored) {
+    EXPECT_EXIT(separate_reads_case({ "\r\n", "OPTIONS / HTTP/1.1\r\nHost: t\r\n\r\n" }, 1),
+                ::testing::ExitedWithCode(0), "") << "before the first request";
+    EXPECT_EXIT(separate_reads_case({ "POST /ka_page HTTP/1.1\r\nHost: t\r\n"
+                                      "Content-Type: application/x-www-form-urlencoded\r\n"
+                                      "Content-Length: 5\r\n\r\na=bcd",
+                                      "\r\n",
+                                      "GET /ka_page HTTP/1.1\r\nHost: t\r\n\r\n" }, 2),
+                ::testing::ExitedWithCode(0), "") << "extra CRLF after a POST body";
+}
+
 /* A keep-alive request behind an HTTP/1.1 one: both answered, still open */
 TEST(KeepAliveTest, TwoRequestsOnAnOpenConnection) {
     EXPECT_EXIT(keep_alive_case("OPTIONS / HTTP/1.1\r\nHost: t\r\n\r\n"

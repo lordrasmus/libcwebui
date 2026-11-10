@@ -807,11 +807,14 @@ int ParseHeader(socket_info* sock, HttpRequestHeader* header, char* buffer, unsi
 		*bytes_parsed = 2;
 
 		// Das ist ein Sonderfall wenn nur \r\n hinereinander weg gesendet wird, in dem Fall das \r\n aus dem Buffer entfernen und nichts tun
+		/* An empty line before the request line is ignored (RFC 9112 2.2) -
+		 * also when it is all there is in this read, an extra CRLF after a
+		 * POST body arriving on its own. That case used to be taken for the
+		 * end of a header: a request without method, answered 405, and the
+		 * connection closed. Ignored lines count against the request budget
+		 * of the read event like any other. */
 		if ( header->parsed_bytes == 0 ){
-			if ( length > 2 ){
-				/* es sind weiterer daten im datenstrom vorhanden */
-				return -3;
-			}
+			return -3;
 		}
 
 
