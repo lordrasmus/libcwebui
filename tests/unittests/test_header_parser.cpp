@@ -300,6 +300,16 @@ TEST_F(HeaderParserTest, ContentTypeWithAnyWhitespace) {
     EXPECT_EQ(header->contenttype, APPLICATION_X_WWW_FORM_URLENCODED);
 }
 
+/* Nothing of one request stays for the next on the connection */
+TEST_F(HeaderParserTest, ResetClearsErrorAndWebsocketVersion) {
+    parseHeaderLine("GET / HTTP/1.1");
+    parseHeaderLine("Sec-WebSocket-Version: 13");
+    header->error = 1;
+    WebserverResetHttpRequestHeader(header);
+    EXPECT_EQ(header->error, 0);
+    EXPECT_EQ(header->SecWebSocketVersion, 0);
+}
+
 /* The usual form with one space is unchanged */
 TEST_F(HeaderParserTest, HeaderValuesWithOneSpaceUnchanged) {
     parseHeaderLine("GET / HTTP/1.1");

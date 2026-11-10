@@ -2060,6 +2060,15 @@ TEST(RequestFramingTest, DifferentContentLengthsAreRefused) {
     EXPECT_EXIT(connection_line_case(req, "HTTP/1.1 400"), ::testing::ExitedWithCode(0), "");
 }
 
+/* A request that sets header->error but is answered without closing - an
+ * OPTIONS is answered before the error is looked at - must not leave the
+ * error behind for the next request on the connection */
+TEST(KeepAliveTest, ErrorOfOneRequestDoesNotStayForTheNext) {
+    EXPECT_EXIT(keep_alive_case("OPTIONS / HTTP/1.1\r\nHost: t\r\nContent-Type: multipart/form-data\r\n\r\n"
+                                "OPTIONS / HTTP/1.1\r\nHost: t\r\n\r\n", 2, false),
+                ::testing::ExitedWithCode(0), "");
+}
+
 /* A keep-alive request behind an HTTP/1.1 one: both answered, still open */
 TEST(KeepAliveTest, TwoRequestsOnAnOpenConnection) {
     EXPECT_EXIT(keep_alive_case("OPTIONS / HTTP/1.1\r\nHost: t\r\n\r\n"

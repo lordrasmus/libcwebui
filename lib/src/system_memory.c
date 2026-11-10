@@ -316,6 +316,16 @@ void WebserverResetHttpRequestHeader(HttpRequestHeader *header) {
 	header->content_length_seen = 0;
 	header->framing_status = 0;
 	header->method = 0;
+	/* Per request as well. error was kept: a request answered without
+	 * closing (OPTIONS goes out before error is looked at) left it set, and
+	 * url_sanity_check(), which keeps an error found earlier in the same
+	 * request, refused the next request on the connection with 400. */
+	header->error = 0;
+#ifdef WEBSERVER_USE_WEBSOCKETS
+	/* else the version of an earlier upgrade request was taken for a
+	 * later one without the header */
+	header->SecWebSocketVersion = 0;
+#endif
 
 	header->error_method[0] = '\0';
 	header->request_start_ms = 0;
