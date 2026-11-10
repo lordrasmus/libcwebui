@@ -251,6 +251,22 @@ TEST_F(HeaderParserTest, FoldedHeaderLineIsRefused) {
     EXPECT_EQ(header->framing_status, 400);
 }
 
+/* RFC 9112 5.1: a field line needs a name and a colon - lines without
+ * were silently ignored */
+TEST_F(HeaderParserTest, FieldLineWithoutNameOrColonIsRefused) {
+    const char* lines[] = { "X-Junk", "Transfer-Encoding", ":x", ":" };
+    for (const char* l : lines) {
+        WebserverResetHttpRequestHeader(header);
+        parseHeaderLine("POST / HTTP/1.1");
+        parseHeaderLine(l);
+        EXPECT_EQ(header->framing_status, 400) << l;
+    }
+    WebserverResetHttpRequestHeader(header);
+    parseHeaderLine("POST / HTTP/1.1");
+    parseHeaderLine("X-Empty:");
+    EXPECT_EQ(header->framing_status, 0) << "an empty value is fine";
+}
+
 /* The first reason decides the status, whichever order */
 TEST_F(HeaderParserTest, FirstFramingErrorDecides) {
     parseHeaderLine("POST / HTTP/1.1");

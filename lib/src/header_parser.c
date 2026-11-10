@@ -499,11 +499,19 @@ int analyseHeaderLine(socket_info* sock, char *line, unsigned int length, HttpRe
 		setFramingStatus( header, 400 );
 		return 0;
 	}
-	for ( unsigned int i = 0; ( i < length ) && ( line[i] != ':' ); i++ ){
-		if ( ( line[i] == ' ' ) || ( line[i] == '\t' ) ){
+	unsigned int colon;
+	for ( colon = 0; ( colon < length ) && ( line[colon] != ':' ); colon++ ){
+		if ( ( line[colon] == ' ' ) || ( line[colon] == '\t' ) ){
 			setFramingStatus( header, 400 );
 			return 0;
 		}
+	}
+	/* A field line needs a name and a colon (RFC 9112 5.1). "X-Junk" or
+	 * ":x" were silently ignored - a field a proxy in front may read
+	 * differently. */
+	if ( ( colon == 0 ) || ( colon == length ) ){
+		setFramingStatus( header, 400 );
+		return 0;
 	}
 
 	return matchHeaderFields(line, length, header);
