@@ -113,6 +113,23 @@ int sendFile(http_request* s, WebserverFileInfo *file) {
 		return 0;
 	}
 
+	/* Packed in the binary: gzip as is, raw deflate for clients that take
+	 * only that, unpacked for clients that take neither (RFC 9110, a coding
+	 * the client does not accept is not used). */
+	if ( file->Compressed != 0 ){
+		const char* accept = s->header->Accept_Encoding;
+		if ( ( file->Compressed == 1 ) && ( accept != 0 ) && ( 0 != strstr( accept, "gzip" ) ) ){
+			/* as it is */
+		}else if ( ( accept != 0 ) && ( 0 != strstr( accept, "deflate" ) ) ){
+			file = get_deflate_file( file );
+		}else{
+			file = get_uncompressed_file( file );
+		}
+		if ( file == 0 ){
+			return -1;
+		}
+	}
+
 	if (0 > sendHeader(s, file, file->DataLenght)){
 		return -1;
 	}

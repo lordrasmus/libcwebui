@@ -48,6 +48,9 @@ void free_file_access( void );
 
 int prepare_file_content(WebserverFileInfo* file);
 void release_file_content(WebserverFileInfo* file);
+WebserverFileInfo* get_uncompressed_file(WebserverFileInfo* file);
+WebserverFileInfo* get_deflate_file(WebserverFileInfo* file);
+size_t unpack_file_data(unsigned char* out, size_t out_size, unsigned int compressed, const unsigned char* data, FILE_OFFSET length);
 
 
 #ifndef DISABLE_OLD_TEMPLATE_SYSTEM

@@ -494,6 +494,12 @@ int sendHeader(http_request* s, WebserverFileInfo *info, FILE_OFFSET p_lenght) {
 
 	addCSPHeaderLines(s);
 
+	/* The body depends on Accept-Encoding: packed files are sent unpacked to
+	 * clients without deflate, template pages compressed only on request. */
+	if ( ( info->CompressedData != 0 ) || ( s->socket->use_output_compression != 0 ) ){
+		printHeaderChunk(s->socket, "%s", "Vary: Accept-Encoding\r\n");
+	}
+
 	addContentTypeLines(s, info);
 	addCacheControlLines(s, info);
 	addConnectionStatusLines(s->socket);

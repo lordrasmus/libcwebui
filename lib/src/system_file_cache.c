@@ -28,6 +28,15 @@ static hashmap_t* file_cache;
 
 static void fileCacheFree(void *a) {
 	WebserverFileInfo* wfi = (WebserverFileInfo*) a;
+	if (wfi->Uncompressed != 0){
+		/* shares Url, FilePath, etag ... with wfi, owns only its Data */
+		WebserverFree( (void*) wfi->Uncompressed->Data);
+		WebserverFree(wfi->Uncompressed);
+	}
+	if (wfi->Deflate != 0){
+		/* its Data points into wfi's packed data */
+		WebserverFree(wfi->Deflate);
+	}
 	if (wfi->Url != 0){
 		WebserverFree( (void*) wfi->Url);
 	}

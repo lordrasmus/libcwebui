@@ -549,10 +549,13 @@ int processHTML(http_request* s, const char* prefix, const char *pagename, const
 		//printf("s->engine_index : %d\n",s->engine_index);
 		//printf("Accept_Encoding: %s\n",s->header->Accept_Encoding);
 		
-		if ( 0 != strstr( s->header->Accept_Encoding, "deflate" ) ){
-
-			if ( 1 == isChunkListbigger(&s->socket->html_chunk_list, 1000) ){
-				s->socket->use_output_compression = 1;
+		/* gzip preferred, every client that takes deflate takes it too and
+		 * it is not ambiguous like deflate (raw or zlib) */
+		if ( 1 == isChunkListbigger(&s->socket->html_chunk_list, 1000) ){
+			if ( 0 != strstr( s->header->Accept_Encoding, "gzip" ) ){
+				s->socket->use_output_compression = OUTPUT_COMPRESSION_GZIP;
+			}else if ( 0 != strstr( s->header->Accept_Encoding, "deflate" ) ){
+				s->socket->use_output_compression = OUTPUT_COMPRESSION_DEFLATE;
 			}
 		}
 		

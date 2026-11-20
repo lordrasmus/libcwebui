@@ -152,6 +152,15 @@ def compress_data( data ):
 	return smalest
 	
 
+# gzip (RFC 1952) around the raw deflate data: fixed 10 byte header (no name,
+# mtime 0, XFL 2 = best compression, OS 255 = unknown), CRC32 and size at the
+# end. The server sends it as is for "gzip" and the raw deflate part in the
+# middle for clients that ask for "deflate" only.
+def gzip_wrap( raw, data ):
+	header = b"\x1f\x8b\x08\x00\x00\x00\x00\x00\x02\xff"
+	trailer = struct.pack( "<II", zlib.crc32( data ) & 0xffffffff, len( data ) & 0xffffffff )
+	return header + raw + trailer
+
 def write_compressed_file( stats, f, path, f_data ):
 				
 	with open( path + f_data["PATH"], 'rb') as f_in:
@@ -163,11 +172,14 @@ def write_compressed_file( stats, f, path, f_data ):
 		etag = h.hexdigest().upper()
 		
 		compressed = compress_data( s_in )
+		if compressed["strategy"] != -1:
+			compressed["data"] = gzip_wrap( compressed["data"], s_in )
+			compressed["size"] = len( compressed["data"] )
 		
 		
 		if compressed["size"] < f_data["SIZE"]:
 			
-			write_uint32( f, 2 )  # komprimiert mit deflate
+			write_uint32( f, 1 )  # komprimiert mit gzip
 			write_string( f, f_data["PATH"] )
 			write_string( f, etag )
 			tp = check_template( f, path, f_data )	# auf template prüfen

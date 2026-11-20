@@ -129,7 +129,11 @@ enum fs_types{
 	FS_WNFS
 };
 
-typedef struct {
+/* socket_info::use_output_compression: how a template page goes out */
+#define OUTPUT_COMPRESSION_DEFLATE	1	/* raw deflate */
+#define OUTPUT_COMPRESSION_GZIP		2
+
+typedef struct WebserverFileInfo_s {
 	unsigned char Id;
 
 	const char *Url;
@@ -174,6 +178,15 @@ typedef struct {
 	 * every write event and would go on with the new content from their old
 	 * position, under the old Content-Length. Event loop thread only. */
 	unsigned int transfers;
+
+	/* FS_BINARY with Compressed: the same file unpacked, for clients that do
+	 * not take deflate. Built on the first such request and kept for the
+	 * life of the process (the data of the binary never changes), so a
+	 * response sending from it never has to care about its lifetime. */
+	struct WebserverFileInfo_s *Uncompressed;
+	/* FS_BINARY packed as gzip: the raw deflate data inside it, for clients
+	 * that take deflate but not gzip. Points into CompressedData. */
+	struct WebserverFileInfo_s *Deflate;
 
 } WebserverFileInfo;
 
@@ -497,7 +510,7 @@ typedef struct socket_info_s {
 
 	WebserverFileInfo *send_file_info;
 
-	char use_output_compression;
+	char use_output_compression;	/* 0 or OUTPUT_COMPRESSION_* */
 
 
 	list_t output_list;

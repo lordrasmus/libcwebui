@@ -345,6 +345,39 @@ static unsigned long deflateCapacity(unsigned long body_size, unsigned int chunk
  * compressed size, 0 when that did not work - the chunks are still there
  * for sending the page uncompressed.
  */
+/* gzip (RFC 1952) frame around the raw deflate data: fixed header without
+ * optional fields (mtime 0, OS 255 = unknown), CRC32 and size at the end */
+#define GZIP_HEADER_SIZE	10
+#define GZIP_TRAILER_SIZE	8
+
+static void writeGzipHeader(char* out) {
+	static const unsigned char header[GZIP_HEADER_SIZE] = { 0x1f, 0x8b, 8, 0, 0, 0, 0, 0, 0, 0xff };
+	memcpy(out, header, GZIP_HEADER_SIZE);
+}
+
+static void writeLE32(char* out, mz_ulong value) {
+	out[0] = (char) ( value & 0xff );
+	out[1] = (char) ( ( value >> 8 ) & 0xff );
+	out[2] = (char) ( ( value >> 16 ) & 0xff );
+	out[3] = (char) ( ( value >> 24 ) & 0xff );
+}
+
+static void writeGzipTrailer(list_t* liste, char* out) {
+	html_chunk* chunk;
+	mz_ulong crc = mz_crc32(MZ_CRC32_INIT, 0, 0);
+	mz_ulong size = 0;
+
+	ws_list_iterator_start(liste);
+	while ( ( chunk = (html_chunk*) ws_list_iterator_next(liste) ) ) {
+		crc = mz_crc32(crc, (const unsigned char*) chunk->text, chunk->length);
+		size += chunk->length;
+	}
+	ws_list_iterator_stop(liste);
+
+	writeLE32(out, crc);
+	writeLE32(out + 4, size);
+}
+
 static unsigned long deflateChunks(list_t* liste, char* out_buffer, unsigned long capacity) {
 	html_chunk* chunk;
 	unsigned long offset = 0;
@@ -410,19 +443,30 @@ void generateOutputBuffer(socket_info* sock) {
 	output_struct *output = WebserverMalloc( sizeof( output_struct ) );
 	memset( output, 0 , sizeof( output_struct ) );
 
-	if ( ( sock->use_output_compression == 1 ) && ( sock->send_file_info == 0 ) ){
+	if ( ( sock->use_output_compression != 0 ) && ( sock->send_file_info == 0 ) ){
 		unsigned long body_size = getChunkListSize(&sock->html_chunk_list);
 		/* Room for the compressed body, which can be larger than the page
 		 * itself: deflate does not shrink everything, and every chunk is
 		 * flushed on its own. The page size alone, as before, let a page
 		 * that compresses badly run over the end of the buffer. */
 		unsigned long capacity = deflateCapacity(body_size, ws_list_size(&sock->html_chunk_list));
-		buffer = (char*) WebserverMalloc ( capacity + 1  ); /* +1 fuer Header Debug '\0' */
+		int gzip = ( sock->use_output_compression == OUTPUT_COMPRESSION_GZIP );
+		unsigned long frame = gzip ? GZIP_HEADER_SIZE + GZIP_TRAILER_SIZE : 0;
+		buffer = (char*) WebserverMalloc ( capacity + frame + 1  ); /* +1 fuer Header Debug '\0' */
 
-		offset = deflateChunks(&sock->html_chunk_list, buffer, capacity);
+		if ( gzip ){
+			offset = deflateChunks(&sock->html_chunk_list, buffer + GZIP_HEADER_SIZE, capacity);
+			if ( offset > 0 ){
+				writeGzipHeader(buffer);
+				writeGzipTrailer(&sock->html_chunk_list, buffer + GZIP_HEADER_SIZE + offset);
+				offset += GZIP_HEADER_SIZE + GZIP_TRAILER_SIZE;
+			}
+		}else{
+			offset = deflateChunks(&sock->html_chunk_list, buffer, capacity);
+		}
 		if ( offset > 0 ){
 			releaseChunks(&sock->html_chunk_list);
-			printHeaderChunk(sock, "Content-Encoding: deflate\r\n");
+			printHeaderChunk(sock, gzip ? "Content-Encoding: gzip\r\n" : "Content-Encoding: deflate\r\n");
 		}else{
 			/* Not compressed after all: the page as it is, the buffer
 			 * holds it (capacity > body_size) */

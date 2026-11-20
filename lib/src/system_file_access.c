@@ -136,11 +136,11 @@ int prepare_file_content(WebserverFileInfo* file) {
 				break;
 			case FS_BINARY :
 				//printf("compressed : %d\n",file->Compressed);
-				if ( file->Compressed == 2 ){
+				if ( file->Compressed != 0 ){
 					//printf("warning: decompressing file : %s\n", file->FilePath );
 					file->Data = WebserverMalloc( file->RealDataLenght );
 
-					size_t decompressed = tinfl_decompress_mem_to_mem( (char*)file->Data, file->RealDataLenght, file->CompressedData, file->CompressedDataLenght, 0 );
+					size_t decompressed = unpack_file_data( (unsigned char*)file->Data, file->RealDataLenght, file->Compressed, file->CompressedData, file->CompressedDataLenght );
 
 					if ( decompressed == TINFL_DECOMPRESS_MEM_TO_MEM_FAILED ){
 						printf("warning: decompressing file failed : %s\n", file->FilePath );
@@ -191,12 +191,110 @@ int prepare_file_content(WebserverFileInfo* file) {
 
 }
 
+/*
+ * The raw deflate data of a packed file: all of it for deflate (2), the part
+ * between the 10 byte header and the 8 byte trailer for gzip (1). pack_dir.py
+ * writes the gzip header without optional fields (FLG 0), nothing else is
+ * read here. Returns 0 for anything else.
+ */
+static int raw_deflate_part(unsigned int compressed, const unsigned char* data, FILE_OFFSET length,
+                            const unsigned char** raw, FILE_OFFSET* raw_length) {
+	switch ( compressed ){
+		case 2:
+			*raw = data;
+			*raw_length = length;
+			return 1;
+		case 1:
+			if ( ( length < 18 ) || ( data[0] != 0x1f ) || ( data[1] != 0x8b ) || ( data[2] != 8 ) || ( data[3] != 0 ) ){
+				return 0;
+			}
+			*raw = data + 10;
+			*raw_length = length - 18;
+			return 1;
+		default:
+			return 0;
+	}
+}
+
+/* Unpacks a packed file into out. Returns the unpacked size,
+ * TINFL_DECOMPRESS_MEM_TO_MEM_FAILED on error. */
+size_t unpack_file_data(unsigned char* out, size_t out_size, unsigned int compressed, const unsigned char* data, FILE_OFFSET length) {
+	const unsigned char* raw;
+	FILE_OFFSET raw_length;
+
+	if ( 0 == raw_deflate_part( compressed, data, length, &raw, &raw_length ) ){
+		return TINFL_DECOMPRESS_MEM_TO_MEM_FAILED;
+	}
+	return tinfl_decompress_mem_to_mem( out, out_size, raw, raw_length, 0 );
+}
+
+/* Copy of the file info for another form of the content. Url, FilePath,
+ * etag ... are shared, they live as long as the binary. */
+static WebserverFileInfo* file_variant(WebserverFileInfo* file, const unsigned char* data, FILE_OFFSET length, unsigned char compressed) {
+	WebserverFileInfo* variant = WebserverMalloc( sizeof( WebserverFileInfo ) );
+	memcpy( variant, file, sizeof( WebserverFileInfo ) );
+	variant->Data = data;
+	variant->DataLenght = length;
+	variant->Compressed = compressed;
+	variant->transfers = 0;
+	variant->Uncompressed = 0;
+	variant->Deflate = 0;
+	return variant;
+}
+
+WebserverFileInfo* get_uncompressed_file(WebserverFileInfo* file) {
+	unsigned char* data;
+	size_t decompressed;
+
+	if ( file->Uncompressed != 0 ){
+		return file->Uncompressed;
+	}
+
+	if ( file->fs_type != FS_BINARY ){
+		printf("warning: cannot unpack %s ( compression %d )\n", file->FilePath, file->Compressed );
+		return 0;
+	}
+
+	data = WebserverMalloc( file->RealDataLenght );
+	decompressed = unpack_file_data( data, file->RealDataLenght, file->Compressed, file->CompressedData, file->CompressedDataLenght );
+	if ( ( decompressed == TINFL_DECOMPRESS_MEM_TO_MEM_FAILED ) || ( (off_t) decompressed != file->RealDataLenght ) ){
+		printf("warning: decompressing file failed : %s\n", file->FilePath );
+		WebserverFree( data );
+		return 0;
+	}
+
+	file->Uncompressed = file_variant( file, data, file->RealDataLenght, 0 );
+	return file->Uncompressed;
+}
+
+/* The file as raw deflate, for clients that take deflate but not gzip.
+ * For gzip it points into the packed data, nothing is copied. */
+WebserverFileInfo* get_deflate_file(WebserverFileInfo* file) {
+	const unsigned char* raw;
+	FILE_OFFSET raw_length;
+
+	if ( file->Compressed == 2 ){
+		return file;
+	}
+	if ( file->Deflate != 0 ){
+		return file->Deflate;
+	}
+	if ( ( file->fs_type != FS_BINARY ) ||
+	     ( 0 == raw_deflate_part( file->Compressed, file->CompressedData, file->CompressedDataLenght, &raw, &raw_length ) ) ){
+		printf("warning: no deflate data for %s ( compression %d )\n", file->FilePath, file->Compressed );
+		return 0;
+	}
+
+	file->Deflate = file_variant( file, raw, raw_length, 2 );
+	return file->Deflate;
+}
+
 void release_file_content(WebserverFileInfo* file) {
 
 	if (file->RamCached == 1) {
 		switch ( file->fs_type ){
 			case FS_BINARY :	// wird für die template engine dekomprimiert
-				if ( file->Compressed == 2 ){
+				if ( file->Compressed != 0 ){
 					WebserverFree( (void*) file->Data );
 
 					file->Data = file->CompressedData;

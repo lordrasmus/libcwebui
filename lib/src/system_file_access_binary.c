@@ -163,16 +163,7 @@ static const unsigned char* read_file( const char *alias, const unsigned char* d
 
 			file->TemplateFile = 1;
 
-			size_t new_size = 0;
-
-			switch ( *compressed_p ){
-
-				case 2: 	// deflate compression
-
-					new_size = tinfl_decompress_mem_to_mem( decomp_buffer, decomp_size, ret, compresed_size, 0 );
-
-					break;
-			}
+			size_t new_size = unpack_file_data( decomp_buffer, decomp_size, *compressed_p, ret, compresed_size );
 
 			if ( new_size != real_size ){
 				printf("Decomp Size mismatch %zu != %d\n",new_size, real_size );
