@@ -224,6 +224,7 @@ typedef struct {
 	char* Accept;
 	char* Authorization;
 	char* Referer;
+	char* Accept_Language;
 	
 	char header_complete;
 	uint32_t parsed_bytes;

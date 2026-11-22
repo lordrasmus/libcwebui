@@ -359,6 +359,23 @@ dummy_var* getURLParameter(dummy_handler* s,const char* name);
 const char* getRequestHeader(dummy_handler *s, char* name);
 
 /*
+      Wert eines Cookies der Anfrage, 0 wenn nicht vorhanden
+*/
+const char* getCookie(dummy_handler *s, const char* name);
+
+/*
+      Dateien im Datei-Cache (eingebettete Dateien und bereits geladene lokale Dateien)
+      durchlaufen; cb bekommt den Pfad (z. B. "lang/de.json").
+*/
+void forEachCachedFile(void (*cb)(const char* path, void* user), void* user);
+
+/*
+      Inhalt einer Datei des Webservers (entpackt) als neu allokierter, nullterminierter
+      Puffer; *length = Länge ohne Null. Freigeben mit free(). 0 wenn nicht vorhanden.
+*/
+char* getFileContent(const char* name, size_t* length);
+
+/*
       Parameter die in der Templateengine mit {f:<name>:para1:para2:...} uebergeben wurden
 */
 char* getEngineParameter(dummy_handler* s,int index);

@@ -417,6 +417,10 @@ void WebserverResetHttpRequestHeader(HttpRequestHeader *header) {
 		header->UserAgent = 0;
 	}
 
+	if (header->Accept_Language != 0) {
+		WebserverFree(header->Accept_Language);
+		header->Accept_Language = 0;
+	}
 	if (header->Referer != 0) {
 		WebserverFree(header->Referer);
 		header->Referer = 0;

@@ -170,3 +170,22 @@ static void dumpFileCallback(const char* key, void* value, void* user_data) {
 void dumpLoadedFiles(http_request *s) {
 	hashmap_foreach(file_cache, dumpFileCallback, s);
 }
+
+/* Öffentliche Aufzählung des Datei-Caches (eingebettete Dateien und bereits geladene
+ * lokale Dateien), z. B. um eingebettete Sprachdateien zu finden. */
+typedef struct {
+	void (*cb)(const char* path, void* user);
+	void* user;
+} foreach_ctx_t;
+
+static void forEachCallback(const char* key, void* value, void* user_data) {
+	foreach_ctx_t* ctx = (foreach_ctx_t*) user_data;
+	(void)value;
+	ctx->cb(key, ctx->user);
+}
+
+void VISIBLE_ATTR forEachCachedFile(void (*cb)(const char* path, void* user), void* user) {
+	foreach_ctx_t ctx = { cb, user };
+	if (file_cache == 0 || cb == 0) return;
+	hashmap_foreach(file_cache, forEachCallback, &ctx);
+}

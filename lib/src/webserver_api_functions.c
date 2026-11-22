@@ -442,6 +442,7 @@ const char* getRequestHeader(dummy_handler *s, char* name){
 	if( 0 == strcmp( name, "Connection" ) ){	return header->Connection;		}
 	if( 0 == strcmp( name, "Upgrade" ) ){		return header->Upgrade;			}
 	if( 0 == strcmp( name, "Referer" ) ){		return header->Referer;			}
+	if( 0 == strcmp( name, "Accept-Language" ) ){	return header->Accept_Language;	}
 	
 	
 	return 0;
@@ -698,3 +699,53 @@ void ws_reverse_proxy_register_uds(const char* method, const char* url_prefix, c
 #if __GNUC__ > 2
 	#pragma GCC visibility pop
 #endif
+
+const char* VISIBLE_ATTR getCookie(dummy_handler *s, const char* name){
+	http_request* sess = (http_request*) s;
+	Cookie* cookie;
+	const char* ret = 0;
+	if ( sess == 0 || sess->header == 0 || name == 0 ) return 0;
+	ws_list_iterator_start(&sess->header->cookie_list);
+	while( ( cookie = (Cookie*)ws_list_iterator_next(&sess->header->cookie_list) ) ){
+		if ( 0 == strcmp( name, cookie->name ) ){
+			ret = cookie->value;
+			break;
+		}
+	}
+	ws_list_iterator_stop(&sess->header->cookie_list);
+	return ret;
+}
+
+/* Inhalt einer Datei des Webservers, entpackt, als neuer Puffer (free()). */
+char* VISIBLE_ATTR getFileContent(const char* name, size_t* length){
+	WebserverFileInfo* file;
+	WebserverFileInfo* src;
+	char* out;
+	int local = 0;
+
+	if ( length ) *length = 0;
+	file = getFile( (char*) name );
+	if ( file == 0 ) return 0;
+
+	src = file;
+	if ( ( file->fs_type == FS_BINARY ) && ( file->Compressed != 0 ) ){
+		src = get_uncompressed_file( file );
+		if ( src == 0 ) return 0;
+	} else if ( file->fs_type == FS_LOCAL_FILE_SYSTEM ){
+		if ( 0 == prepare_file_content( file ) ) return 0;
+		local = 1;
+	}
+	if ( src->Data == 0 ){
+		if ( local ) release_file_content( file );
+		return 0;
+	}
+
+	out = (char*) malloc( (size_t) src->DataLenght + 1 );
+	if ( out != 0 ){
+		memcpy( out, src->Data, (size_t) src->DataLenght );
+		out[ src->DataLenght ] = '\0';
+		if ( length ) *length = (size_t) src->DataLenght;
+	}
+	if ( local ) release_file_content( file );
+	return out;
+}

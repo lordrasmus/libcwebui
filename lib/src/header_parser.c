@@ -540,7 +540,7 @@ static int matchHeaderFields(char *line, unsigned int length, HttpRequestHeader 
 
 	/*   ---------------------- a block ----------------------  */
 	case 'a':
-		if (!strncasecmp( line, "Accept-Language: ", 17)) return 0;
+		CHECK_HEADER_LINE("Accept-Language: ", Accept_Language)
 		if (!strncasecmp( line, "Accept-Charset: ", 16)) return 0;
 		CHECK_HEADER_LINE("Accept-Encoding: ",Accept_Encoding )
 		CHECK_HEADER_LINE("Accept: ", Accept)
